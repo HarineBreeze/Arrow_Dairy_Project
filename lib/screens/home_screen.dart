@@ -3,6 +3,12 @@ import '../models/diary_entry.dart';
 import '../services/diary_storage.dart';
 import 'edit_screen.dart';
 
+const Color kPrimaryBlue = Color(0xFF3B6FE0);
+const Color kLightBlue = Color(0xFFDCE7FF);
+const Color kTextDark = Color(0xFF2A3B52);
+const Color kTextMid = Color(0xFF5A6B82);
+const Color kTextLight = Color(0xFF9AA8BF);
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
@@ -17,9 +23,15 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
   String _query = '';
 
+  DateTime? _selectedDate; // null = 全部
+  bool _calendarExpanded = false;
+  late DateTime _visibleMonth;
+
   @override
   void initState() {
     super.initState();
+    final now = DateTime.now();
+    _visibleMonth = DateTime(now.year, now.month, 1);
     _load();
   }
 
@@ -66,14 +78,30 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  bool _sameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
+  String _dateKey(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  Set<String> get _markedDates =>
+      _entries.map((e) => _dateKey(e.createdAt)).toSet();
+
   List<DiaryEntry> get _filtered {
-    if (_query.isEmpty) return _entries;
-    final q = _query.toLowerCase();
-    return _entries
-        .where((e) =>
-            e.title.toLowerCase().contains(q) ||
-            e.content.toLowerCase().contains(q))
-        .toList();
+    var list = _entries;
+    if (_query.isNotEmpty) {
+      final q = _query.toLowerCase();
+      list = list
+          .where((e) =>
+              e.title.toLowerCase().contains(q) ||
+              e.content.toLowerCase().contains(q))
+          .toList();
+    }
+    if (_selectedDate != null) {
+      final d = _selectedDate!;
+      list = list.where((e) => _sameDay(e.createdAt, d)).toList();
+    }
+    return list;
   }
 
   @override
@@ -90,14 +118,15 @@ class _HomeScreenState extends State<HomeScreen> {
             ? TextField(
                 controller: _searchCtrl,
                 autofocus: true,
-                style: const TextStyle(fontSize: 16),
+                style: const TextStyle(fontSize: 16, color: Colors.white),
                 decoration: const InputDecoration(
                   hintText: '搜索日记…',
+                  hintStyle: TextStyle(color: Colors.white70),
                   border: InputBorder.none,
                 ),
                 onChanged: (v) => setState(() => _query = v),
               )
-            : const Text('拾光日记'),
+            : const Text('矢量日记'),
         actions: [
           IconButton(
             icon: Icon(_searching ? Icons.close : Icons.search),
@@ -125,20 +154,234 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildBody() {
     final list = _filtered;
-    if (list.isEmpty) {
-      return _EmptyState(hasQuery: _query.isNotEmpty);
+    return Column(
+      children: [
+        _buildDateBar(),
+        if (_calendarExpanded) _buildCalendar(),
+        const Divider(height: 1, color: Color(0xFFE8EDF5)),
+        Expanded(
+          child: list.isEmpty
+              ? _EmptyState(
+                  hasQuery: _query.isNotEmpty,
+                  hasDate: _selectedDate != null,
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+                  itemCount: list.length,
+                  itemBuilder: (context, i) {
+                    final e = list[i];
+                    return _DiaryCard(
+                      entry: e,
+                      onTap: () => _openEditor(e),
+                      onDelete: () => _delete(e),
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDateBar() {
+    String label = '全部日记';
+    if (_selectedDate != null) {
+      final d = _selectedDate!;
+      label = '${d.year}年${d.month}月${d.day}日';
     }
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-      itemCount: list.length,
-      itemBuilder: (context, i) {
-        final e = list[i];
-        return _DiaryCard(
-          entry: e,
-          onTap: () => _openEditor(e),
-          onDelete: () => _delete(e),
-        );
-      },
+    return Material(
+      color: Colors.white,
+      child: InkWell(
+        onTap: () => setState(() => _calendarExpanded = !_calendarExpanded),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            children: [
+              const Icon(Icons.calendar_month, size: 18, color: kPrimaryBlue),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: kTextDark,
+                ),
+              ),
+              const Spacer(),
+              if (_selectedDate != null)
+                TextButton(
+                  onPressed: () => setState(() => _selectedDate = null),
+                  child: const Text(
+                    '全部',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: kPrimaryBlue,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              Icon(
+                _calendarExpanded ? Icons.expand_less : Icons.expand_more,
+                color: kTextLight,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCalendar() {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: Column(
+        children: [
+          _buildMonthHeader(),
+          _buildWeekHeader(),
+          const SizedBox(height: 4),
+          _buildDayGrid(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMonthHeader() {
+    return Row(
+      children: [
+        IconButton(
+          icon: const Icon(Icons.chevron_left, color: kTextMid),
+          onPressed: () => setState(() => _visibleMonth =
+              DateTime(_visibleMonth.year, _visibleMonth.month - 1, 1)),
+        ),
+        Text(
+          '${_visibleMonth.year}年${_visibleMonth.month}月',
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: kTextDark,
+          ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.chevron_right, color: kTextMid),
+          onPressed: () => setState(() => _visibleMonth =
+              DateTime(_visibleMonth.year, _visibleMonth.month + 1, 1)),
+        ),
+        const Spacer(),
+        TextButton(
+          onPressed: () => setState(() => _selectedDate = null),
+          child: const Text(
+            '全部',
+            style: TextStyle(
+              color: kPrimaryBlue,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWeekHeader() {
+    const weeks = ['一', '二', '三', '四', '五', '六', '日'];
+    return Row(
+      children: weeks
+          .map((w) => Expanded(
+                child: Center(
+                  child: Text(
+                    w,
+                    style: const TextStyle(fontSize: 12, color: kTextLight),
+                  ),
+                ),
+              ))
+          .toList(),
+    );
+  }
+
+  Widget _buildDayGrid() {
+    final year = _visibleMonth.year;
+    final month = _visibleMonth.month;
+    final firstDay = DateTime(year, month, 1);
+    final daysInMonth = DateTime(year, month + 1, 0).day;
+    final startWeekday = firstDay.weekday; // 1=周一 ... 7=周日
+
+    final cells = <Widget>[];
+    for (int i = 1; i < startWeekday; i++) {
+      cells.add(const SizedBox());
+    }
+    final today = DateTime.now();
+    for (int day = 1; day <= daysInMonth; day++) {
+      final date = DateTime(year, month, day);
+      final hasEntry = _markedDates.contains(_dateKey(date));
+      final isSelected = _selectedDate != null && _sameDay(_selectedDate!, date);
+      final isToday = _sameDay(today, date);
+      cells.add(_DayCell(
+        day: day,
+        hasEntry: hasEntry,
+        isSelected: isSelected,
+        isToday: isToday,
+        onTap: () => setState(() => _selectedDate = date),
+      ));
+    }
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 7,
+      childAspectRatio: 1.15,
+      children: cells,
+    );
+  }
+}
+
+class _DayCell extends StatelessWidget {
+  final int day;
+  final bool hasEntry;
+  final bool isSelected;
+  final bool isToday;
+  final VoidCallback onTap;
+
+  const _DayCell({
+    Key? key,
+    required this.day,
+    required this.hasEntry,
+    required this.isSelected,
+    required this.isToday,
+    required this.onTap,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    Color bg = Colors.transparent;
+    Color fg = kTextDark;
+    if (isSelected) {
+      bg = kPrimaryBlue;
+      fg = Colors.white;
+    } else if (hasEntry) {
+      bg = kLightBlue;
+      fg = kPrimaryBlue;
+    }
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.all(2),
+        decoration: BoxDecoration(
+          color: bg,
+          shape: BoxShape.circle,
+          border: (isToday && !isSelected)
+              ? Border.all(color: kPrimaryBlue, width: 1.2)
+              : null,
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          '$day',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: (hasEntry || isSelected)
+                ? FontWeight.w700
+                : FontWeight.w400,
+            color: fg,
+          ),
+        ),
+      ),
     );
   }
 }
@@ -189,19 +432,13 @@ class _DiaryCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Text(
-                    entry.mood,
-                    style: const TextStyle(fontSize: 22),
-                  ),
+                  Text(entry.mood, style: const TextStyle(fontSize: 22)),
                   const SizedBox(width: 8),
-                  Text(
-                    entry.weather,
-                    style: const TextStyle(fontSize: 18),
-                  ),
+                  Text(entry.weather, style: const TextStyle(fontSize: 18)),
                   const Spacer(),
                   Text(
                     '${_dateLabel(entry.createdAt)} ${_timeLabel(entry.createdAt)}',
-                    style: const TextStyle(fontSize: 12, color: Color(0xFF9A8A7E)),
+                    style: const TextStyle(fontSize: 12, color: kTextLight),
                   ),
                 ],
               ),
@@ -214,7 +451,7 @@ class _DiaryCard extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF4A3B33),
+                    color: kTextDark,
                   ),
                 ),
               ],
@@ -224,7 +461,7 @@ class _DiaryCard extends StatelessWidget {
                   entry.content,
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 14, color: Color(0xFF6B5B50)),
+                  style: const TextStyle(fontSize: 14, color: kTextMid),
                 ),
               ],
               const SizedBox(height: 8),
@@ -236,7 +473,7 @@ class _DiaryCard extends StatelessWidget {
                     child: const Icon(
                       Icons.delete_outline,
                       size: 20,
-                      color: Color(0xFFBBA9A0),
+                      color: kTextLight,
                     ),
                   ),
                 ],
@@ -251,10 +488,21 @@ class _DiaryCard extends StatelessWidget {
 
 class _EmptyState extends StatelessWidget {
   final bool hasQuery;
-  const _EmptyState({Key? key, required this.hasQuery}) : super(key: key);
+  final bool hasDate;
+  const _EmptyState({Key? key, required this.hasQuery, required this.hasDate})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    String message = '还没有日记';
+    String sub = '点击右下角 + 写下第一篇吧';
+    if (hasQuery) {
+      message = '没有找到相关日记';
+      sub = '换个关键词试试';
+    } else if (hasDate) {
+      message = '这一天还没有日记';
+      sub = '点击右下角 + 记录这一天';
+    }
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -262,16 +510,14 @@ class _EmptyState extends StatelessWidget {
           const Text('📖', style: TextStyle(fontSize: 56)),
           const SizedBox(height: 16),
           Text(
-            hasQuery ? '没有找到相关日记' : '还没有日记',
-            style: const TextStyle(fontSize: 16, color: Color(0xFF9A8A7E)),
+            message,
+            style: const TextStyle(fontSize: 16, color: kTextMid),
           ),
-          if (!hasQuery) ...[
-            const SizedBox(height: 8),
-            const Text(
-              '点击右下角 + 写下第一篇吧',
-              style: TextStyle(fontSize: 13, color: Color(0xFFBBA9A0)),
-            ),
-          ],
+          const SizedBox(height: 8),
+          Text(
+            sub,
+            style: const TextStyle(fontSize: 13, color: kTextLight),
+          ),
         ],
       ),
     );

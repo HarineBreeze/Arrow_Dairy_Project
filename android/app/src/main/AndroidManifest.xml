@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.shiguang.diary_app">
    <application
-        android:label="拾光日记"
+        android:label="矢量日记"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

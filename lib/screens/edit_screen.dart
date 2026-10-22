@@ -152,10 +152,10 @@ class _EditScreenState extends State<EditScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
-                  color: isSel ? const Color(0xFFD98E63) : Colors.white,
+                  color: isSel ? const Color(0xFF3B6FE0) : Colors.white,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: isSel ? const Color(0xFFD98E63) : const Color(0xFFE5D8CF),
+                    color: isSel ? const Color(0xFF3B6FE0) : const Color(0xFFDCE7FF),
                   ),
                 ),
                 child: Text(o, style: const TextStyle(fontSize: 20)),
