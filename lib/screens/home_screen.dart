@@ -503,8 +503,17 @@ class _DiaryCard extends StatelessWidget {
               ],
               const SizedBox(height: 2),
               Row(
-                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
+                  if (entry.location.isNotEmpty) ...[
+                    const Icon(Icons.location_on,
+                        size: 14, color: kTextLight),
+                    const SizedBox(width: 2),
+                    Text(
+                      entry.location,
+                      style: const TextStyle(fontSize: 12, color: kTextLight),
+                    ),
+                  ],
+                  const Spacer(),
                   GestureDetector(
                     onTap: onDelete,
                     child: const Icon(

@@ -4,6 +4,7 @@ class DiaryEntry {
   String content;
   String mood;
   String weather;
+  String location;
   final DateTime createdAt;
   DateTime updatedAt;
   DateTime publishDate;
@@ -14,6 +15,7 @@ class DiaryEntry {
     this.content = '',
     this.mood = '😊',
     this.weather = '☀️',
+    this.location = '',
     required this.createdAt,
     required this.updatedAt,
     required this.publishDate,
@@ -26,6 +28,7 @@ class DiaryEntry {
       'content': content,
       'mood': mood,
       'weather': weather,
+      'location': location,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
       'publishDate': publishDate.toIso8601String(),
@@ -40,6 +43,7 @@ class DiaryEntry {
       content: json['content'] as String? ?? '',
       mood: json['mood'] as String? ?? '😊',
       weather: json['weather'] as String? ?? '☀️',
+      location: json['location'] as String? ?? '',
       createdAt: createdAt,
       updatedAt: DateTime.parse(json['updatedAt'] as String),
       publishDate: json['publishDate'] != null

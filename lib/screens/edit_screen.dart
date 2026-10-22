@@ -16,6 +16,7 @@ class _EditScreenState extends State<EditScreen> {
   late final TextEditingController _contentCtrl;
   late String _mood;
   late String _weather;
+  late String _location;
   late DateTime _publishDate;
   bool _saving = false;
 
@@ -31,7 +32,9 @@ class _EditScreenState extends State<EditScreen> {
     _contentCtrl = TextEditingController(text: widget.entry?.content ?? '');
     _mood = widget.entry?.mood ?? '😊';
     _weather = widget.entry?.weather ?? '☀️';
-    _publishDate = widget.entry?.publishDate ?? widget.defaultDate ?? DateTime.now();
+    _location = widget.entry?.location ?? '';
+    _publishDate =
+        widget.entry?.publishDate ?? widget.defaultDate ?? DateTime.now();
   }
 
   @override
@@ -62,6 +65,7 @@ class _EditScreenState extends State<EditScreen> {
         content: content,
         mood: _mood,
         weather: _weather,
+        location: _location,
         createdAt: now,
         updatedAt: now,
         publishDate: _publishDate,
@@ -73,6 +77,7 @@ class _EditScreenState extends State<EditScreen> {
         list[idx].content = content;
         list[idx].mood = _mood;
         list[idx].weather = _weather;
+        list[idx].location = _location;
         list[idx].publishDate = _publishDate;
         list[idx].updatedAt = DateTime.now();
       }
@@ -99,23 +104,60 @@ class _EditScreenState extends State<EditScreen> {
     }
   }
 
+  Future<void> _pickLocation() async {
+    final ctrl = TextEditingController(text: _location);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('添加地点'),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          maxLength: 8,
+          decoration: const InputDecoration(
+            hintText: '输入地点（最多8字）',
+            counterText: '',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+            child: const Text('确定'),
+          ),
+        ],
+      ),
+    );
+    if (result != null) {
+      setState(() => _location = result);
+    }
+    ctrl.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isNew ? '写日记' : '编辑日记'),
+        backgroundColor: const Color(0xCC3B6FE0),
+        foregroundColor: Colors.white,
+        elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildChipRow('今天心情', _moods, _mood, (v) => setState(() => _mood = v)),
-            const SizedBox(height: 12),
-            _buildChipRow('天气', _weathers, _weather, (v) => setState(() => _weather = v)),
-            const SizedBox(height: 20),
-            _buildDateRow(),
-            const SizedBox(height: 20),
+            _buildChipRow(
+                '今天心情', _moods, _mood, (v) => setState(() => _mood = v)),
+            const SizedBox(height: 10),
+            _buildChipRow(
+                '天气', _weathers, _weather, (v) => setState(() => _weather = v)),
+            const SizedBox(height: 16),
+            _buildDateLocationRow(),
+            const SizedBox(height: 16),
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -126,7 +168,7 @@ class _EditScreenState extends State<EditScreen> {
                     style: const TextStyle(
                         fontSize: 20, fontWeight: FontWeight.w600),
                     decoration: const InputDecoration(
-                      hintText: '标题（可选）',
+                      hintText: '标题',
                       border: InputBorder.none,
                       counterText: '',
                     ),
@@ -140,7 +182,7 @@ class _EditScreenState extends State<EditScreen> {
               ],
             ),
             const Divider(height: 1),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             TextField(
               controller: _contentCtrl,
               autofocus: _isNew,
@@ -155,12 +197,20 @@ class _EditScreenState extends State<EditScreen> {
               ),
               onChanged: (_) => setState(() {}),
             ),
-            Align(
-              alignment: Alignment.centerRight,
-              child: Text(
-                '当前已输入字数 ${_contentCtrl.text.length}/2000',
-                style: const TextStyle(fontSize: 12, color: Color(0xFF9AA8BF)),
-              ),
+            Row(
+              children: [
+                if (_location.isNotEmpty)
+                  Text(
+                    '📍 $_location',
+                    style: const TextStyle(
+                        fontSize: 12, color: Color(0xFF9AA8BF)),
+                  ),
+                const Spacer(),
+                Text(
+                  '${_contentCtrl.text.length}/2000',
+                  style: const TextStyle(fontSize: 12, color: Color(0xFF9AA8BF)),
+                ),
+              ],
             ),
           ],
         ),
@@ -212,12 +262,38 @@ class _EditScreenState extends State<EditScreen> {
     );
   }
 
-  Widget _buildDateRow() {
+  Widget _buildDateLocationRow() {
     final d = _publishDate;
+    return Row(
+      children: [
+        Expanded(
+          child: _buildInfoCell(
+            icon: Icons.event,
+            label: '${d.year}年${d.month}月${d.day}日',
+            onTap: _pickDate,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildInfoCell(
+            icon: Icons.location_on,
+            label: _location.isEmpty ? '地点' : _location,
+            onTap: _pickLocation,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoCell({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
     return InkWell(
-      onTap: _pickDate,
+      onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -225,23 +301,20 @@ class _EditScreenState extends State<EditScreen> {
         ),
         child: Row(
           children: [
-            const Icon(Icons.event, size: 18, color: Color(0xFF3B6FE0)),
-            const SizedBox(width: 10),
-            const Text(
-              '发布日期',
-              style: TextStyle(fontSize: 14, color: Color(0xFF2A3B52)),
-            ),
-            const Spacer(),
-            Text(
-              '${d.year}年${d.month}月${d.day}日',
-              style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF3B6FE0),
-                fontWeight: FontWeight.w600,
+            Icon(icon, size: 16, color: const Color(0xFF3B6FE0)),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF2A3B52),
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
-            const SizedBox(width: 4),
-            const Icon(Icons.chevron_right, size: 18, color: Color(0xFF9AA8BF)),
           ],
         ),
       ),
@@ -257,24 +330,29 @@ class _EditScreenState extends State<EditScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 13, color: Color(0xFF9A8A7E))),
-        const SizedBox(height: 8),
+        Text(label,
+            style: const TextStyle(fontSize: 12, color: Color(0xFF9A8A7E))),
+        const SizedBox(height: 6),
         Wrap(
-          spacing: 8,
+          spacing: 6,
+          runSpacing: 6,
           children: options.map((o) {
             final isSel = o == selected;
             return GestureDetector(
               onTap: () => onSelect(o),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                   color: isSel ? const Color(0xFF3B6FE0) : Colors.white,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(18),
                   border: Border.all(
-                    color: isSel ? const Color(0xFF3B6FE0) : const Color(0xFFDCE7FF),
+                    color: isSel
+                        ? const Color(0xFF3B6FE0)
+                        : const Color(0xFFDCE7FF),
                   ),
                 ),
-                child: Text(o, style: const TextStyle(fontSize: 20)),
+                child: Text(o, style: const TextStyle(fontSize: 15)),
               ),
             );
           }).toList(),
