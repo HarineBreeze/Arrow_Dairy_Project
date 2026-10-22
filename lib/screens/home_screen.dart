@@ -37,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _load() async {
     final list = await DiaryStorage.load();
-    list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    list.sort((a, b) => b.publishDate.compareTo(a.publishDate));
     if (!mounted) return;
     setState(() {
       _entries = list;
@@ -48,7 +48,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _openEditor([DiaryEntry? entry]) async {
     final result = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(builder: (_) => EditScreen(entry: entry)),
+      MaterialPageRoute(
+          builder: (_) => EditScreen(entry: entry, defaultDate: _selectedDate)),
     );
     if (result == true) _load();
   }
@@ -85,7 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
   Set<String> get _markedDates =>
-      _entries.map((e) => _dateKey(e.createdAt)).toSet();
+      _entries.map((e) => _dateKey(e.publishDate)).toSet();
 
   List<DiaryEntry> get _filtered {
     var list = _entries;
@@ -99,7 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     if (_selectedDate != null) {
       final d = _selectedDate!;
-      list = list.where((e) => _sameDay(e.createdAt, d)).toList();
+      list = list.where((e) => _sameDay(e.publishDate, d)).toList();
     }
     return list;
   }
@@ -437,7 +438,7 @@ class _DiaryCard extends StatelessWidget {
                   Text(entry.weather, style: const TextStyle(fontSize: 18)),
                   const Spacer(),
                   Text(
-                    '${_dateLabel(entry.createdAt)} ${_timeLabel(entry.createdAt)}',
+                    '${_dateLabel(entry.publishDate)} ${_timeLabel(entry.createdAt)}',
                     style: const TextStyle(fontSize: 12, color: kTextLight),
                   ),
                 ],

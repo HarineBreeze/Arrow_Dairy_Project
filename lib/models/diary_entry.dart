@@ -6,6 +6,7 @@ class DiaryEntry {
   String weather;
   final DateTime createdAt;
   DateTime updatedAt;
+  DateTime publishDate;
 
   DiaryEntry({
     required this.id,
@@ -15,6 +16,7 @@ class DiaryEntry {
     this.weather = '☀️',
     required this.createdAt,
     required this.updatedAt,
+    required this.publishDate,
   });
 
   Map<String, dynamic> toJson() {
@@ -26,18 +28,23 @@ class DiaryEntry {
       'weather': weather,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      'publishDate': publishDate.toIso8601String(),
     };
   }
 
   factory DiaryEntry.fromJson(Map<String, dynamic> json) {
+    final createdAt = DateTime.parse(json['createdAt'] as String);
     return DiaryEntry(
       id: json['id'] as String,
       title: json['title'] as String? ?? '',
       content: json['content'] as String? ?? '',
       mood: json['mood'] as String? ?? '😊',
       weather: json['weather'] as String? ?? '☀️',
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt: createdAt,
       updatedAt: DateTime.parse(json['updatedAt'] as String),
+      publishDate: json['publishDate'] != null
+          ? DateTime.parse(json['publishDate'] as String)
+          : createdAt,
     );
   }
 }

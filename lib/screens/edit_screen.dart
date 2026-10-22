@@ -4,7 +4,8 @@ import '../services/diary_storage.dart';
 
 class EditScreen extends StatefulWidget {
   final DiaryEntry? entry;
-  const EditScreen({Key? key, this.entry}) : super(key: key);
+  final DateTime? defaultDate;
+  const EditScreen({Key? key, this.entry, this.defaultDate}) : super(key: key);
 
   @override
   State<EditScreen> createState() => _EditScreenState();
@@ -15,6 +16,7 @@ class _EditScreenState extends State<EditScreen> {
   late final TextEditingController _contentCtrl;
   late String _mood;
   late String _weather;
+  late DateTime _publishDate;
   bool _saving = false;
 
   static const List<String> _moods = ['😊', '😌', '😢', '😡', '😴', '🥰'];
@@ -29,6 +31,7 @@ class _EditScreenState extends State<EditScreen> {
     _contentCtrl = TextEditingController(text: widget.entry?.content ?? '');
     _mood = widget.entry?.mood ?? '😊';
     _weather = widget.entry?.weather ?? '☀️';
+    _publishDate = widget.entry?.publishDate ?? widget.defaultDate ?? DateTime.now();
   }
 
   @override
@@ -61,6 +64,7 @@ class _EditScreenState extends State<EditScreen> {
         weather: _weather,
         createdAt: now,
         updatedAt: now,
+        publishDate: _publishDate,
       ));
     } else {
       final idx = list.indexWhere((e) => e.id == widget.entry!.id);
@@ -69,6 +73,7 @@ class _EditScreenState extends State<EditScreen> {
         list[idx].content = content;
         list[idx].mood = _mood;
         list[idx].weather = _weather;
+        list[idx].publishDate = _publishDate;
         list[idx].updatedAt = DateTime.now();
       }
     }
@@ -80,6 +85,18 @@ class _EditScreenState extends State<EditScreen> {
 
   void _cancel() {
     Navigator.pop(context);
+  }
+
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _publishDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null) {
+      setState(() => _publishDate = picked);
+    }
   }
 
   @override
@@ -96,6 +113,8 @@ class _EditScreenState extends State<EditScreen> {
             _buildChipRow('今天心情', _moods, _mood, (v) => setState(() => _mood = v)),
             const SizedBox(height: 12),
             _buildChipRow('天气', _weathers, _weather, (v) => setState(() => _weather = v)),
+            const SizedBox(height: 20),
+            _buildDateRow(),
             const SizedBox(height: 20),
             TextField(
               controller: _titleCtrl,
@@ -163,6 +182,42 @@ class _EditScreenState extends State<EditScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDateRow() {
+    final d = _publishDate;
+    return InkWell(
+      onTap: _pickDate,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFDCE7FF)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.event, size: 18, color: Color(0xFF3B6FE0)),
+            const SizedBox(width: 10),
+            const Text(
+              '发布日期',
+              style: TextStyle(fontSize: 14, color: Color(0xFF2A3B52)),
+            ),
+            const Spacer(),
+            Text(
+              '${d.year}年${d.month}月${d.day}日',
+              style: const TextStyle(
+                fontSize: 14,
+                color: Color(0xFF3B6FE0),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(width: 4),
+            const Icon(Icons.chevron_right, size: 18, color: Color(0xFF9AA8BF)),
+          ],
         ),
       ),
     );
