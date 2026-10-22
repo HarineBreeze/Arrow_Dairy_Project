@@ -116,25 +116,50 @@ class _EditScreenState extends State<EditScreen> {
             const SizedBox(height: 20),
             _buildDateRow(),
             const SizedBox(height: 20),
-            TextField(
-              controller: _titleCtrl,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-              decoration: const InputDecoration(
-                hintText: '标题（可选）',
-                border: InputBorder.none,
-              ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _titleCtrl,
+                    maxLength: 15,
+                    style: const TextStyle(
+                        fontSize: 20, fontWeight: FontWeight.w600),
+                    decoration: const InputDecoration(
+                      hintText: '标题（可选）',
+                      border: InputBorder.none,
+                      counterText: '',
+                    ),
+                    onChanged: (_) => setState(() {}),
+                  ),
+                ),
+                Text(
+                  '${_titleCtrl.text.length}/15',
+                  style: const TextStyle(fontSize: 12, color: Color(0xFF9AA8BF)),
+                ),
+              ],
             ),
             const Divider(height: 1),
             const SizedBox(height: 16),
             TextField(
               controller: _contentCtrl,
               autofocus: _isNew,
+              maxLength: 2000,
               maxLines: null,
               minLines: 8,
               style: const TextStyle(fontSize: 16, height: 1.7),
               decoration: const InputDecoration(
                 hintText: '今天发生了什么…',
                 border: InputBorder.none,
+                counterText: '',
+              ),
+              onChanged: (_) => setState(() {}),
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                '当前已输入字数 ${_contentCtrl.text.length}/2000',
+                style: const TextStyle(fontSize: 12, color: Color(0xFF9AA8BF)),
               ),
             ),
           ],

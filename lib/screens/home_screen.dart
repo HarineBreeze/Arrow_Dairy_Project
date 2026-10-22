@@ -92,11 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
     var list = _entries;
     if (_query.isNotEmpty) {
       final q = _query.toLowerCase();
-      list = list
-          .where((e) =>
-              e.title.toLowerCase().contains(q) ||
-              e.content.toLowerCase().contains(q))
-          .toList();
+      list = list.where((e) => e.title.toLowerCase().contains(q)).toList();
     }
     if (_selectedDate != null) {
       final d = _selectedDate!;
@@ -114,38 +110,12 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: _searching
-            ? TextField(
-                controller: _searchCtrl,
-                autofocus: true,
-                style: const TextStyle(fontSize: 16, color: Colors.white),
-                decoration: const InputDecoration(
-                  hintText: '搜索日记…',
-                  hintStyle: TextStyle(color: Colors.white70),
-                  border: InputBorder.none,
-                ),
-                onChanged: (v) => setState(() => _query = v),
-              )
-            : const Text('矢量日记'),
-        actions: [
-          IconButton(
-            icon: Icon(_searching ? Icons.close : Icons.search),
-            onPressed: () {
-              setState(() {
-                _searching = !_searching;
-                if (!_searching) {
-                  _query = '';
-                  _searchCtrl.clear();
-                }
-              });
-            },
-          ),
-        ],
+      backgroundColor: const Color(0xFFF3F6FB),
+      body: SafeArea(
+        child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : _buildBody(),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _buildBody(),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _openEditor(),
         child: const Icon(Icons.add),
@@ -157,8 +127,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final list = _filtered;
     return Column(
       children: [
-        _buildDateBar(),
-        if (_calendarExpanded) _buildCalendar(),
+        _buildTopBar(),
+        if (_calendarExpanded && !_searching) _buildCalendar(),
         const Divider(height: 1, color: Color(0xFFE8EDF5)),
         Expanded(
           child: list.isEmpty
@@ -183,49 +153,115 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildDateBar() {
+  Widget _buildTopBar() {
+    if (_searching) {
+      return Container(
+        color: Colors.white,
+        padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _searchCtrl,
+                autofocus: true,
+                style: const TextStyle(fontSize: 15),
+                decoration: InputDecoration(
+                  hintText: '搜索标题关键词…',
+                  hintStyle: const TextStyle(color: kTextLight),
+                  prefixIcon: const Icon(Icons.search, color: kTextLight),
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                  filled: true,
+                  fillColor: const Color(0xFFF3F6FB),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                onChanged: (v) => setState(() => _query = v),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _searching = false;
+                  _query = '';
+                  _searchCtrl.clear();
+                });
+              },
+              child: const Text(
+                '全部',
+                style: TextStyle(
+                  color: kPrimaryBlue,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     String label = '全部日记';
     if (_selectedDate != null) {
       final d = _selectedDate!;
       label = '${d.year}年${d.month}月${d.day}日';
     }
-    return Material(
+    return Container(
       color: Colors.white,
-      child: InkWell(
-        onTap: () => setState(() => _calendarExpanded = !_calendarExpanded),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: Row(
-            children: [
-              const Icon(Icons.calendar_month, size: 18, color: kPrimaryBlue),
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: kTextDark,
-                ),
-              ),
-              const Spacer(),
-              if (_selectedDate != null)
-                TextButton(
-                  onPressed: () => setState(() => _selectedDate = null),
-                  child: const Text(
-                    '全部',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: kPrimaryBlue,
-                      fontWeight: FontWeight.w600,
-                    ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        child: Row(
+          children: [
+            Expanded(
+              child: InkWell(
+                onTap: () =>
+                    setState(() => _calendarExpanded = !_calendarExpanded),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.calendar_month,
+                          size: 18, color: kPrimaryBlue),
+                      const SizedBox(width: 8),
+                      Text(
+                        label,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: kTextDark,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              Icon(
+              ),
+            ),
+            if (_selectedDate != null)
+              TextButton(
+                onPressed: () => setState(() => _selectedDate = null),
+                child: const Text(
+                  '全部',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: kPrimaryBlue,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            IconButton(
+              icon: const Icon(Icons.search, color: kTextMid),
+              onPressed: () => setState(() => _searching = true),
+            ),
+            IconButton(
+              icon: Icon(
                 _calendarExpanded ? Icons.expand_less : Icons.expand_more,
                 color: kTextLight,
               ),
-            ],
-          ),
+              onPressed: () =>
+                  setState(() => _calendarExpanded = !_calendarExpanded),
+            ),
+          ],
         ),
       ),
     );
@@ -419,53 +455,53 @@ class _DiaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 10),
       elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       color: Colors.white,
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  Text(entry.mood, style: const TextStyle(fontSize: 22)),
-                  const SizedBox(width: 8),
-                  Text(entry.weather, style: const TextStyle(fontSize: 18)),
+                  Text(entry.mood, style: const TextStyle(fontSize: 20)),
+                  const SizedBox(width: 6),
+                  Text(entry.weather, style: const TextStyle(fontSize: 16)),
                   const Spacer(),
                   Text(
                     '${_dateLabel(entry.publishDate)} ${_timeLabel(entry.createdAt)}',
-                    style: const TextStyle(fontSize: 12, color: kTextLight),
+                    style: const TextStyle(fontSize: 11, color: kTextLight),
                   ),
                 ],
               ),
               if (entry.title.isNotEmpty) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Text(
                   entry.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 17,
+                    fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: kTextDark,
                   ),
                 ),
               ],
               if (entry.content.isNotEmpty) ...[
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 Text(
                   entry.content,
-                  maxLines: 3,
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 14, color: kTextMid),
+                  style: const TextStyle(fontSize: 13, color: kTextMid),
                 ),
               ],
-              const SizedBox(height: 8),
+              const SizedBox(height: 2),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -473,7 +509,7 @@ class _DiaryCard extends StatelessWidget {
                     onTap: onDelete,
                     child: const Icon(
                       Icons.delete_outline,
-                      size: 20,
+                      size: 18,
                       color: kTextLight,
                     ),
                   ),
