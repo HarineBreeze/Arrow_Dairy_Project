@@ -151,67 +151,94 @@ class _EditScreenState extends State<EditScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 4, 20, 40),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildChipRow('今天心情', _moods, _mood,
-                (v) => setState(() => _mood = v), _moreMoods),
-            const SizedBox(height: 10),
-            _buildChipRow('天气', _weathers, _weather,
-                (v) => setState(() => _weather = v), _moreWeathers),
-            const SizedBox(height: 16),
-            _buildDateLocationRow(),
-            const SizedBox(height: 16),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _titleCtrl,
-                    maxLength: 15,
-                    style: const TextStyle(
-                        fontSize: 20, fontWeight: FontWeight.w600),
-                    decoration: const InputDecoration(
-                      hintText: '标题',
-                      border: InputBorder.none,
-                      counterText: '',
+                _buildChipRow('今天心情', _moods, _mood,
+                    (v) => setState(() => _mood = v), _moreMoods),
+                const SizedBox(height: 10),
+                _buildChipRow('天气', _weathers, _weather,
+                    (v) => setState(() => _weather = v), _moreWeathers),
+                const SizedBox(height: 16),
+                _buildDateLocationRow(),
+                const SizedBox(height: 16),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _titleCtrl,
+                        maxLength: 15,
+                        style: const TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.w600),
+                        decoration: const InputDecoration(
+                          hintText: '标题',
+                          border: InputBorder.none,
+                          counterText: '',
+                        ),
+                        onChanged: (_) => setState(() {}),
+                      ),
                     ),
-                    onChanged: (_) => setState(() {}),
-                  ),
+                    Text(
+                      '${_titleCtrl.text.length}/15',
+                      style: const TextStyle(
+                          fontSize: 12, color: Color(0xFF9AA8BF)),
+                    ),
+                  ],
                 ),
-                Text(
-                  '${_titleCtrl.text.length}/15',
-                  style: const TextStyle(fontSize: 12, color: Color(0xFF9AA8BF)),
-                ),
+                const Divider(height: 1),
               ],
             ),
-            const Divider(height: 1),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _contentCtrl,
-              autofocus: _isNew,
-              maxLength: 2000,
-              maxLines: null,
-              minLines: 8,
-              style: const TextStyle(fontSize: 16, height: 1.7),
-              decoration: const InputDecoration(
-                hintText: '今天发生了什么…',
-                border: InputBorder.none,
-                counterText: '',
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Stack(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 4, 12, 24),
+                      child: TextField(
+                        controller: _contentCtrl,
+                        autofocus: _isNew,
+                        maxLength: 2000,
+                        maxLines: null,
+                        minLines: null,
+                        expands: true,
+                        textAlignVertical: TextAlignVertical.top,
+                        style: const TextStyle(fontSize: 16, height: 1.7),
+                        decoration: const InputDecoration(
+                          hintText: '今天发生了什么…',
+                          border: InputBorder.none,
+                          counterText: '',
+                        ),
+                        onChanged: (_) => setState(() {}),
+                      ),
+                    ),
+                    Positioned(
+                      right: 12,
+                      bottom: 8,
+                      child: Text(
+                        '${_contentCtrl.text.length}/2000',
+                        style: const TextStyle(
+                            fontSize: 12, color: Color(0xFF9AA8BF)),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              onChanged: (_) => setState(() {}),
             ),
-            Align(
-              alignment: Alignment.centerRight,
-              child: Text(
-                '${_contentCtrl.text.length}/2000',
-                style: const TextStyle(fontSize: 12, color: Color(0xFF9AA8BF)),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
       bottomNavigationBar: SafeArea(
         child: Padding(

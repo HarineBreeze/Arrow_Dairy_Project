@@ -6,6 +6,7 @@ import '../services/user_storage.dart';
 import 'edit_screen.dart';
 import 'side_menu.dart';
 import 'profile_edit_screen.dart';
+import 'note_view_screen.dart';
 
 const Color kPrimaryBlue = Color(0xFF3B6FE0);
 const Color kLightBlue = Color(0xFFDCE7FF);
@@ -76,6 +77,14 @@ class _HomeScreenState extends State<HomeScreen>
     if (result == true) _load();
   }
 
+  Future<void> _openNoteView(DiaryEntry entry) async {
+    await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => NoteViewScreen(entry: entry)),
+    );
+    _load();
+  }
+
   Future<void> _openProfileEditor() async {
     final result = await Navigator.push<bool>(
       context,
@@ -99,6 +108,18 @@ class _HomeScreenState extends State<HomeScreen>
       _closeMenu();
       return false;
     }
+    if (_calendarExpanded) {
+      setState(() => _calendarExpanded = false);
+      return false;
+    }
+    if (_searching) {
+      setState(() {
+        _searching = false;
+        _query = '';
+        _searchCtrl.clear();
+      });
+      return false;
+    }
     final now = DateTime.now();
     if (_lastBackAt == null ||
         now.difference(_lastBackAt!) > const Duration(seconds: 2)) {
@@ -119,8 +140,8 @@ class _HomeScreenState extends State<HomeScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('删除这篇日记？'),
-        content: const Text('删除后无法恢复。'),
+        title: const Text('确认要删除这篇日记吗?'),
+        content: const Text('注意！删除后无法恢复！'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -239,7 +260,15 @@ class _HomeScreenState extends State<HomeScreen>
     return Column(
       children: [
         _buildTopBar(),
-        if (_calendarExpanded && !_searching) _buildCalendar(),
+        ClipRect(
+          child: AnimatedSize(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOutCubic,
+            child: (_calendarExpanded && !_searching)
+                ? _buildCalendar()
+                : const SizedBox(width: double.infinity),
+          ),
+        ),
         const Divider(height: 1, color: Color(0xFFE8EDF5)),
         Expanded(
           child: list.isEmpty
@@ -254,7 +283,7 @@ class _HomeScreenState extends State<HomeScreen>
                     final e = list[i];
                     return _DiaryCard(
                       entry: e,
-                      onTap: () => _openEditor(e),
+                      onTap: () => _openNoteView(e),
                       onDelete: () => _delete(e),
                     );
                   },
@@ -313,10 +342,11 @@ class _HomeScreenState extends State<HomeScreen>
       );
     }
 
-    String label = '全部日记';
+    final now = DateTime.now();
+    String label = '${now.year} - ${now.month} - ${now.day}';
     if (_selectedDate != null) {
       final d = _selectedDate!;
-      label = '${d.year}-${d.month}-${d.day}';
+      label = '${d.year} - ${d.month} - ${d.day}';
     }
     return Container(
       color: Colors.white,

@@ -1,0 +1,143 @@
+import 'package:flutter/material.dart';
+import '../models/diary_entry.dart';
+import '../services/diary_storage.dart';
+import 'edit_screen.dart';
+
+class NoteViewScreen extends StatefulWidget {
+  final DiaryEntry entry;
+  const NoteViewScreen({Key? key, required this.entry}) : super(key: key);
+
+  @override
+  State<NoteViewScreen> createState() => _NoteViewScreenState();
+}
+
+class _NoteViewScreenState extends State<NoteViewScreen> {
+  late DiaryEntry _entry;
+
+  @override
+  void initState() {
+    super.initState();
+    _entry = widget.entry;
+  }
+
+  Future<void> _openEditor() async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => EditScreen(entry: _entry)),
+    );
+    if (result == true) {
+      final list = await DiaryStorage.load();
+      final idx = list.indexWhere((e) => e.id == _entry.id);
+      if (idx >= 0 && mounted) {
+        setState(() => _entry = list[idx]);
+      }
+    }
+  }
+
+  String _timeLabel() {
+    final d = _entry.publishDate;
+    final t = _entry.createdAt;
+    final h = t.hour.toString().padLeft(2, '0');
+    final m = t.minute.toString().padLeft(2, '0');
+    return '${d.year}-${d.month}-${d.day} $h:$m';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xCC3B6FE0),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: _openEditor,
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(_entry.mood, style: const TextStyle(fontSize: 28)),
+                      const SizedBox(width: 10),
+                      Text(_entry.weather, style: const TextStyle(fontSize: 24)),
+                    ],
+                  ),
+                  if (_entry.title.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        _entry.title,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF2A3B52),
+                        ),
+                      ),
+                    ),
+                  ],
+                  if (_entry.content.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        _entry.content,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          height: 1.8,
+                          color: Color(0xFF2A3B52),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            child: Row(
+              children: [
+                if (_entry.location.isNotEmpty) ...[
+                  const Icon(Icons.location_on,
+                      size: 14, color: Color(0xFF9AA8BF)),
+                  const SizedBox(width: 4),
+                  Text(
+                    _entry.location,
+                    style: const TextStyle(
+                        fontSize: 13, color: Color(0xFF9AA8BF)),
+                  ),
+                  const SizedBox(width: 10),
+                ],
+                Text(
+                  _timeLabel(),
+                  style: const TextStyle(
+                      fontSize: 13, color: Color(0xFF9AA8BF)),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
