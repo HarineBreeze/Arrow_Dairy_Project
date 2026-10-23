@@ -104,6 +104,35 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
     Navigator.pop(context, true);
   }
 
+  Future<void> _delete() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('确认删除这件物品吗?'),
+        content: const Text('注意！删除后无法恢复！'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('删除', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    final list = await ItemStorage.load();
+    list.removeWhere((e) => e.id == widget.item!.id);
+    await ItemStorage.save(list);
+
+    if (!mounted) return;
+    Navigator.pop(context, true);
+  }
+
   Future<void> _pickAcquired() async {
     final picked = await showDatePicker(
       context: context,
@@ -132,6 +161,13 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         title: Text(_isNew ? '添加物品' : '编辑物品'),
+        actions: [
+          if (!_isNew)
+            IconButton(
+              icon: const Icon(Icons.delete_outline),
+              onPressed: _delete,
+            ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
