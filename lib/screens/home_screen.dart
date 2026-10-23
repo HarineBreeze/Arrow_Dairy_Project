@@ -100,12 +100,67 @@ class _HomeScreenState extends State<HomeScreen>
     if (result == true) _load();
   }
 
-  Future<void> _openNoteView(DiaryEntry entry) async {
+  Future<void> _openNote(DiaryEntry entry) async {
+    if (entry.encrypted) {
+      final ok = await _verifyPassword(entry);
+      if (!ok) return;
+    }
     await Navigator.push<bool>(
       context,
       _slideRoute(NoteViewScreen(entry: entry)),
     );
     _load();
+  }
+
+  Future<bool> _verifyPassword(DiaryEntry entry) async {
+    final ctrl = TextEditingController();
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        String error = '';
+        return StatefulBuilder(
+          builder: (ctx, setState) => AlertDialog(
+            title: const Text('请输入密码'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: ctrl,
+                  autofocus: true,
+                  obscureText: true,
+                  decoration: const InputDecoration(hintText: '密码'),
+                ),
+                if (error.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    error,
+                    style: const TextStyle(color: Colors.red, fontSize: 12),
+                  ),
+                ],
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('取消'),
+              ),
+              TextButton(
+                onPressed: () {
+                  if (ctrl.text == entry.password) {
+                    Navigator.pop(ctx, true);
+                  } else {
+                    setState(() => error = '密码错误，再试试吧～');
+                  }
+                },
+                child: const Text('确认'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    ctrl.dispose();
+    return result == true;
   }
 
   Future<void> _openProfileEditor() async {
@@ -364,7 +419,7 @@ class _HomeScreenState extends State<HomeScreen>
                                   padding: const EdgeInsets.only(top: 8),
                                   child: _DiaryCard(
                                     entry: e,
-                                    onTap: () => _openNoteView(e),
+                                    onTap: () => _openNote(e),
                                     onDelete: () => _delete(e),
                                   ),
                                 )),
@@ -767,78 +822,108 @@ class _DiaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isEncrypted = entry.encrypted;
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      color: Colors.white,
+      color: isEncrypted ? const Color(0xFFE4E7EC) : Colors.white,
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(entry.mood, style: const TextStyle(fontSize: 20)),
-                  const SizedBox(width: 6),
-                  Text(entry.weather, style: const TextStyle(fontSize: 16)),
-                  const Spacer(),
-                  Text(
-                    '${_dateLabel(entry.publishDate)} ${_timeLabel(entry.createdAt)}',
-                    style: const TextStyle(fontSize: 11, color: kTextLight),
+          child: isEncrypted
+              ? SizedBox(
+                  height: 56,
+                  child: Stack(
+                    children: [
+                      const Center(
+                        child: Icon(Icons.lock,
+                            size: 32, color: Color(0xFF9AA8BF)),
+                      ),
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: GestureDetector(
+                          onTap: onDelete,
+                          child: const Icon(
+                            Icons.delete_outline,
+                            size: 18,
+                            color: kTextLight,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              if (entry.title.isNotEmpty) ...[
-                const SizedBox(height: 6),
-                Text(
-                  entry.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: kTextDark,
-                  ),
-                ),
-              ],
-              if (entry.content.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Text(
-                  entry.content,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 13, color: kTextMid),
-                ),
-              ],
-              const SizedBox(height: 2),
-              Row(
-                children: [
-                  if (entry.location.isNotEmpty) ...[
-                    const Icon(Icons.location_on,
-                        size: 14, color: kTextLight),
-                    const SizedBox(width: 2),
-                    Text(
-                      entry.location,
-                      style: const TextStyle(fontSize: 12, color: kTextLight),
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(entry.mood,
+                            style: const TextStyle(fontSize: 20)),
+                        const SizedBox(width: 6),
+                        Text(entry.weather,
+                            style: const TextStyle(fontSize: 16)),
+                        const Spacer(),
+                        Text(
+                          '${_dateLabel(entry.publishDate)} ${_timeLabel(entry.createdAt)}',
+                          style: const TextStyle(
+                              fontSize: 11, color: kTextLight),
+                        ),
+                      ],
+                    ),
+                    if (entry.title.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        entry.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: kTextDark,
+                        ),
+                      ),
+                    ],
+                    if (entry.content.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        entry.content,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 13, color: kTextMid),
+                      ),
+                    ],
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        if (entry.location.isNotEmpty) ...[
+                          const Icon(Icons.location_on,
+                              size: 14, color: kTextLight),
+                          const SizedBox(width: 2),
+                          Text(
+                            entry.location,
+                            style: const TextStyle(
+                                fontSize: 12, color: kTextLight),
+                          ),
+                        ],
+                        const Spacer(),
+                        GestureDetector(
+                          onTap: onDelete,
+                          child: const Icon(
+                            Icons.delete_outline,
+                            size: 18,
+                            color: kTextLight,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
-                  const Spacer(),
-                  GestureDetector(
-                    onTap: onDelete,
-                    child: const Icon(
-                      Icons.delete_outline,
-                      size: 18,
-                      color: kTextLight,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+                ),
         ),
       ),
     );

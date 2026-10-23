@@ -18,6 +18,8 @@ class _EditScreenState extends State<EditScreen> {
   late String _weather;
   late String _location;
   late DateTime _publishDate;
+  bool _encrypted = false;
+  String _password = '';
   bool _saving = false;
 
   static const List<String> _moods = ['😊', '😌', '😢', '😡', '😴', '🥰'];
@@ -41,6 +43,8 @@ class _EditScreenState extends State<EditScreen> {
     _location = widget.entry?.location ?? '';
     _publishDate =
         widget.entry?.publishDate ?? widget.defaultDate ?? DateTime.now();
+    _encrypted = widget.entry?.encrypted ?? false;
+    _password = widget.entry?.password ?? '';
   }
 
   @override
@@ -72,6 +76,8 @@ class _EditScreenState extends State<EditScreen> {
         mood: _mood,
         weather: _weather,
         location: _location,
+        encrypted: _encrypted,
+        password: _password,
         createdAt: now,
         updatedAt: now,
         publishDate: _publishDate,
@@ -84,6 +90,8 @@ class _EditScreenState extends State<EditScreen> {
         list[idx].mood = _mood;
         list[idx].weather = _weather;
         list[idx].location = _location;
+        list[idx].encrypted = _encrypted;
+        list[idx].password = _password;
         list[idx].publishDate = _publishDate;
         list[idx].updatedAt = DateTime.now();
       }
@@ -96,6 +104,117 @@ class _EditScreenState extends State<EditScreen> {
 
   void _cancel() {
     Navigator.pop(context);
+  }
+
+  Future<void> _pickVisibility() async {
+    String choice = _encrypted ? 'encrypted' : 'public';
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setState) => AlertDialog(
+          title: const Text('可见度'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              RadioListTile<String>(
+                title: const Text('公开'),
+                value: 'public',
+                groupValue: choice,
+                onChanged: (v) => setState(() => choice = v!),
+              ),
+              RadioListTile<String>(
+                title: const Text('加密'),
+                value: 'encrypted',
+                groupValue: choice,
+                onChanged: (v) => setState(() => choice = v!),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
+            TextButton(
+                onPressed: () => Navigator.pop(ctx, choice),
+                child: const Text('确定')),
+          ],
+        ),
+      ),
+    );
+    if (result == 'encrypted') {
+      await _setPassword();
+    } else if (result == 'public') {
+      setState(() {
+        _encrypted = false;
+        _password = '';
+      });
+    }
+  }
+
+  Future<void> _setPassword() async {
+    final ctrl = TextEditingController(text: _password);
+    final pwd = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('设置密码'),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          obscureText: true,
+          decoration: const InputDecoration(hintText: '请输入密码'),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, ctrl.text),
+              child: const Text('确定')),
+        ],
+      ),
+    );
+    if (pwd != null && pwd.isNotEmpty) {
+      setState(() {
+        _encrypted = true;
+        _password = pwd;
+      });
+    }
+    ctrl.dispose();
+  }
+
+  Widget _buildVisibilityRow() {
+    return InkWell(
+      onTap: _pickVisibility,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFDCE7FF)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.lock_outline,
+                size: 16, color: Color(0xFF3B6FE0)),
+            const SizedBox(width: 6),
+            const Text(
+              '可见度',
+              style: TextStyle(fontSize: 13, color: Color(0xFF2A3B52)),
+            ),
+            const Spacer(),
+            Text(
+              _encrypted ? '加密' : '公开',
+              style: const TextStyle(
+                fontSize: 13,
+                color: Color(0xFF3B6FE0),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(width: 4),
+            const Icon(Icons.chevron_right,
+                size: 18, color: Color(0xFF9AA8BF)),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _pickDate() async {
@@ -166,6 +285,8 @@ class _EditScreenState extends State<EditScreen> {
                     (v) => setState(() => _weather = v), _moreWeathers),
                 const SizedBox(height: 16),
                 _buildDateLocationRow(),
+                const SizedBox(height: 12),
+                _buildVisibilityRow(),
                 const SizedBox(height: 16),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,

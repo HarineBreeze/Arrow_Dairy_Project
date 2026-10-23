@@ -5,6 +5,8 @@ class DiaryEntry {
   String mood;
   String weather;
   String location;
+  bool encrypted;
+  String password;
   final DateTime createdAt;
   DateTime updatedAt;
   DateTime publishDate;
@@ -16,6 +18,8 @@ class DiaryEntry {
     this.mood = '😊',
     this.weather = '☀️',
     this.location = '',
+    this.encrypted = false,
+    this.password = '',
     required this.createdAt,
     required this.updatedAt,
     required this.publishDate,
@@ -29,6 +33,8 @@ class DiaryEntry {
       'mood': mood,
       'weather': weather,
       'location': location,
+      'encrypted': encrypted,
+      'password': password,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
       'publishDate': publishDate.toIso8601String(),
@@ -44,6 +50,8 @@ class DiaryEntry {
       mood: json['mood'] as String? ?? '😊',
       weather: json['weather'] as String? ?? '☀️',
       location: json['location'] as String? ?? '',
+      encrypted: json['encrypted'] as bool? ?? false,
+      password: json['password'] as String? ?? '',
       createdAt: createdAt,
       updatedAt: DateTime.parse(json['updatedAt'] as String),
       publishDate: json['publishDate'] != null
