@@ -106,6 +106,34 @@ class _EditScreenState extends State<EditScreen> {
     Navigator.pop(context);
   }
 
+  Future<void> _delete() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('确认要删除这篇日记吗?'),
+        content: const Text('注意！删除后无法恢复！'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('删除', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      final list = await DiaryStorage.load();
+      list.removeWhere((e) => e.id == widget.entry!.id);
+      await DiaryStorage.save(list);
+      if (!mounted) return;
+      Navigator.pop(context, true);
+    }
+  }
+
   Future<void> _pickVisibility() async {
     String choice = _encrypted ? 'encrypted' : 'public';
     final result = await showDialog<String>(
@@ -269,6 +297,13 @@ class _EditScreenState extends State<EditScreen> {
         backgroundColor: const Color(0xCC3B6FE0),
         foregroundColor: Colors.white,
         elevation: 0,
+        actions: [
+          if (!_isNew)
+            IconButton(
+              icon: const Icon(Icons.delete_outline),
+              onPressed: _delete,
+            ),
+        ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

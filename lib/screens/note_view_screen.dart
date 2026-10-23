@@ -47,7 +47,37 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
       final idx = list.indexWhere((e) => e.id == _entry.id);
       if (idx >= 0 && mounted) {
         setState(() => _entry = list[idx]);
+      } else if (mounted) {
+        Navigator.pop(context, true);
       }
+    }
+  }
+
+  Future<void> _delete() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('确认要删除这篇日记吗?'),
+        content: const Text('注意！删除后无法恢复！'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('删除', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      final list = await DiaryStorage.load();
+      list.removeWhere((e) => e.id == _entry.id);
+      await DiaryStorage.save(list);
+      if (!mounted) return;
+      Navigator.pop(context, true);
     }
   }
 
@@ -67,6 +97,10 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_outline),
+            onPressed: _delete,
+          ),
           IconButton(
             icon: const Icon(Icons.edit_outlined),
             onPressed: _openEditor,

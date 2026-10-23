@@ -39,7 +39,8 @@ class _HomeScreenState extends State<HomeScreen>
   late final AnimationController _menuController;
   late final Animation<double> _menuAnim;
   DateTime? _lastBackAt;
-  final Set<String> _expandedDates = {};
+  final Set<String> _expandedKeys = {};
+  String _viewMode = 'all'; // all | month | year
 
   @override
   void initState() {
@@ -50,7 +51,7 @@ class _HomeScreenState extends State<HomeScreen>
         vsync: this, duration: const Duration(milliseconds: 280));
     _menuAnim = CurvedAnimation(
         parent: _menuController, curve: Curves.easeOutCubic);
-    _expandedDates.add(_dateKey(now));
+    _expandedKeys.add(_dateKey(now));
     _load();
     _loadProfile();
   }
@@ -196,22 +197,62 @@ class _HomeScreenState extends State<HomeScreen>
   void _showAll() {
     setState(() {
       _selectedDate = null;
-      _expandedDates.add(_dateKey(DateTime.now()));
+      _expandedKeys.add(_defaultGroupKey());
     });
   }
 
-  bool _isGroupExpanded(DateTime date) =>
-      _expandedDates.contains(_dateKey(date));
+  bool _isGroupExpanded(String key) => _expandedKeys.contains(key);
 
-  void _toggleGroup(DateTime date) {
-    final key = _dateKey(date);
+  void _toggleGroup(String key) {
     setState(() {
-      if (_expandedDates.contains(key)) {
-        _expandedDates.remove(key);
+      if (_expandedKeys.contains(key)) {
+        _expandedKeys.remove(key);
       } else {
-        _expandedDates.add(key);
+        _expandedKeys.add(key);
       }
     });
+  }
+
+  void _switchView(String mode) {
+    setState(() {
+      _viewMode = mode;
+      _expandedKeys.clear();
+      _expandedKeys.add(_defaultGroupKey());
+    });
+  }
+
+  String _defaultGroupKey() {
+    final now = DateTime.now();
+    switch (_viewMode) {
+      case 'month':
+        return '${now.year}-${now.month.toString().padLeft(2, '0')}';
+      case 'year':
+        return '${now.year}';
+      default:
+        return _dateKey(now);
+    }
+  }
+
+  String _groupKeyOf(DateTime d) {
+    switch (_viewMode) {
+      case 'month':
+        return '${d.year}-${d.month.toString().padLeft(2, '0')}';
+      case 'year':
+        return '${d.year}';
+      default:
+        return _dateKey(d);
+    }
+  }
+
+  String _groupLabelOf(DateTime d) {
+    switch (_viewMode) {
+      case 'month':
+        return '${d.year}年${d.month}月';
+      case 'year':
+        return '${d.year}年';
+      default:
+        return '${d.month}月${d.day}日 ${_weekdayLabel(d)}';
+    }
   }
 
   String _weekdayLabel(DateTime d) {
@@ -386,6 +427,7 @@ class _HomeScreenState extends State<HomeScreen>
     return Column(
       children: [
         _buildTopBar(),
+        _buildViewBar(),
         ClipRect(
           child: AnimatedSize(
             duration: const Duration(milliseconds: 250),
@@ -407,7 +449,7 @@ class _HomeScreenState extends State<HomeScreen>
                   itemCount: groups.length,
                   itemBuilder: (context, i) {
                     final group = groups[i];
-                    final expanded = _isGroupExpanded(group.date);
+                    final expanded = _isGroupExpanded(group.key);
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: Column(
@@ -433,12 +475,15 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  List<_DateGroup> _buildGroups() {
-    final groups = <_DateGroup>[];
-    _DateGroup? current;
+  List<_NoteGroup> _buildGroups() {
+    final groups = <_NoteGroup>[];
+    _NoteGroup? current;
     for (final e in _filtered) {
-      if (current == null || !_sameDay(current.date, e.publishDate)) {
-        current = _DateGroup(date: e.publishDate, entries: []);
+      final key = _groupKeyOf(e.publishDate);
+      final label = _groupLabelOf(e.publishDate);
+      if (current == null || current.key != key) {
+        current = _NoteGroup(
+            key: key, label: label, date: e.publishDate, entries: []);
         groups.add(current);
       }
       current.entries.add(e);
@@ -446,11 +491,67 @@ class _HomeScreenState extends State<HomeScreen>
     return groups;
   }
 
-  Widget _buildGroupHeader(_DateGroup group, bool expanded) {
-    final d = group.date;
-    final isToday = _sameDay(d, DateTime.now());
+  Widget _buildViewBar() {
+    final keys = ['month', 'year', 'all'];
+    final labels = ['按月', '按年', '全部'];
+    final index = keys.indexOf(_viewMode);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cellW = constraints.maxWidth / keys.length;
+        final left = index * cellW + (cellW - 40) / 2;
+        return Container(
+          height: 48,
+          color: Colors.white,
+          child: Stack(
+            children: [
+              Row(
+                children: List.generate(keys.length, (i) {
+                  final selected = keys[i] == _viewMode;
+                  return Expanded(
+                    child: InkWell(
+                      onTap: () => _switchView(keys[i]),
+                      child: Center(
+                        child: Text(
+                          labels[i],
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight:
+                                selected ? FontWeight.w600 : FontWeight.w400,
+                            color: selected
+                                ? const Color(0xFF3B6FE0)
+                                : const Color(0xFF5A6B82),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOutCubic,
+                left: left,
+                bottom: 0,
+                child: Container(
+                  width: 40,
+                  height: 3,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF3B6FE0),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildGroupHeader(_NoteGroup group, bool expanded) {
+    final isToday = _viewMode == 'all' && _sameDay(group.date, DateTime.now());
     return InkWell(
-      onTap: () => _toggleGroup(d),
+      onTap: () => _toggleGroup(group.key),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
@@ -466,7 +567,7 @@ class _HomeScreenState extends State<HomeScreen>
             ),
             const SizedBox(width: 8),
             Text(
-              '${d.month}月${d.day}日 ${_weekdayLabel(d)}',
+              group.label,
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -731,10 +832,17 @@ class _HomeScreenState extends State<HomeScreen>
   }
 }
 
-class _DateGroup {
+class _NoteGroup {
+  final String key;
+  final String label;
   final DateTime date;
   final List<DiaryEntry> entries;
-  _DateGroup({required this.date, required this.entries});
+  _NoteGroup({
+    required this.key,
+    required this.label,
+    required this.date,
+    required this.entries,
+  });
 }
 
 class _DayCell extends StatelessWidget {
@@ -834,27 +942,11 @@ class _DiaryCard extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
           child: isEncrypted
-              ? SizedBox(
+              ? const SizedBox(
                   height: 56,
-                  child: Stack(
-                    children: [
-                      const Center(
-                        child: Icon(Icons.lock,
-                            size: 32, color: Color(0xFF9AA8BF)),
-                      ),
-                      Positioned(
-                        right: 0,
-                        bottom: 0,
-                        child: GestureDetector(
-                          onTap: onDelete,
-                          child: const Icon(
-                            Icons.delete_outline,
-                            size: 18,
-                            color: kTextLight,
-                          ),
-                        ),
-                      ),
-                    ],
+                  child: Center(
+                    child: Icon(Icons.lock,
+                        size: 32, color: Color(0xFF9AA8BF)),
                   ),
                 )
               : Column(
