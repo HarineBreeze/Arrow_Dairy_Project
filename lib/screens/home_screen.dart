@@ -201,12 +201,16 @@ class _HomeScreenState extends State<HomeScreen>
                   bottom: 0,
                   child: Transform.translate(
                     offset: Offset(-menuWidth * (1 - _menuAnim.value), 0),
-                    child: SizedBox(
-                      width: menuWidth,
-                      child: SideMenu(
-                        profile: _profile,
-                        onClose: _closeMenu,
-                        onOpenProfile: _openProfileEditor,
+                    child: Material(
+                      color: Colors.white,
+                      elevation: 8,
+                      child: SizedBox(
+                        width: menuWidth,
+                        child: SideMenu(
+                          profile: _profile,
+                          onClose: _closeMenu,
+                          onOpenProfile: _openProfileEditor,
+                        ),
                       ),
                     ),
                   ),
