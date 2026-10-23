@@ -8,6 +8,7 @@ import 'edit_screen.dart';
 import 'side_menu.dart';
 import 'profile_edit_screen.dart';
 import 'note_view_screen.dart';
+import 'item_list_screen.dart';
 
 const Color kPrimaryBlue = Color(0xFF3B6FE0);
 const Color kLightBlue = Color(0xFFDCE7FF);
@@ -170,6 +171,14 @@ class _HomeScreenState extends State<HomeScreen>
       _slideRoute(ProfileEditScreen(profile: _profile)),
     );
     if (result == true) _loadProfile();
+  }
+
+  Future<void> _openItemList() async {
+    _closeMenu();
+    await Navigator.push(
+      context,
+      _slideRoute(const ItemListScreen()),
+    );
   }
 
   void _openMenu() {
@@ -397,6 +406,7 @@ class _HomeScreenState extends State<HomeScreen>
                                 profile: _profile,
                                 onClose: _closeMenu,
                                 onOpenProfile: _openProfileEditor,
+                                onOpenItems: _openItemList,
                               ),
                             ),
                           ),

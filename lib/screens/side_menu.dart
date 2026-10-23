@@ -6,12 +6,14 @@ class SideMenu extends StatelessWidget {
   final UserProfile profile;
   final VoidCallback onClose;
   final VoidCallback onOpenProfile;
+  final VoidCallback onOpenItems;
 
   const SideMenu({
     Key? key,
     required this.profile,
     required this.onClose,
     required this.onOpenProfile,
+    required this.onOpenItems,
   }) : super(key: key);
 
   @override
@@ -59,6 +61,23 @@ class SideMenu extends StatelessWidget {
                 ),
               ),
               onTap: onClose,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: ListTile(
+              leading: const Icon(Icons.inventory_2_outlined,
+                  color: Color(0xFF3B6FE0)),
+              title: const Text(
+                '物资清单',
+                style: TextStyle(fontSize: 15, color: Color(0xFF2A3B52)),
+              ),
+              onTap: onOpenItems,
             ),
           ),
         ],
