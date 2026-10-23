@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart' show CupertinoPageRoute;
 import '../models/diary_entry.dart';
 import '../services/diary_storage.dart';
 import 'edit_screen.dart';
@@ -23,7 +24,7 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
   Future<void> _openEditor() async {
     final result = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(builder: (_) => EditScreen(entry: _entry)),
+      CupertinoPageRoute(builder: (_) => EditScreen(entry: _entry)),
     );
     if (result == true) {
       final list = await DiaryStorage.load();

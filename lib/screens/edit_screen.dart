@@ -36,8 +36,8 @@ class _EditScreenState extends State<EditScreen> {
     super.initState();
     _titleCtrl = TextEditingController(text: widget.entry?.title ?? '');
     _contentCtrl = TextEditingController(text: widget.entry?.content ?? '');
-    _mood = widget.entry?.mood ?? '😊';
-    _weather = widget.entry?.weather ?? '☀️';
+    _mood = widget.entry?.mood ?? _moods.first;
+    _weather = widget.entry?.weather ?? _weathers.first;
     _location = widget.entry?.location ?? '';
     _publishDate =
         widget.entry?.publishDate ?? widget.defaultDate ?? DateTime.now();

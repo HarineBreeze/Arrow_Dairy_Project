@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart' show CupertinoPageRoute;
 import '../models/diary_entry.dart';
 import '../models/user_profile.dart';
 import '../services/diary_storage.dart';
@@ -71,7 +72,7 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _openEditor([DiaryEntry? entry]) async {
     final result = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(
+      CupertinoPageRoute(
           builder: (_) => EditScreen(entry: entry, defaultDate: _selectedDate)),
     );
     if (result == true) _load();
@@ -80,7 +81,24 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _openNoteView(DiaryEntry entry) async {
     await Navigator.push<bool>(
       context,
-      MaterialPageRoute(builder: (_) => NoteViewScreen(entry: entry)),
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 300),
+        reverseTransitionDuration: const Duration(milliseconds: 300),
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            NoteViewScreen(entry: entry),
+        transitionsBuilder:
+            (context, animation, secondaryAnimation, child) {
+          final curved = CurvedAnimation(
+              parent: animation, curve: Curves.easeOutCubic);
+          return SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(-1, 0),
+              end: Offset.zero,
+            ).animate(curved),
+            child: child,
+          );
+        },
+      ),
     );
     _load();
   }
@@ -88,7 +106,7 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _openProfileEditor() async {
     final result = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(builder: (_) => ProfileEditScreen(profile: _profile)),
+      CupertinoPageRoute(builder: (_) => ProfileEditScreen(profile: _profile)),
     );
     if (result == true) _loadProfile();
   }
@@ -103,6 +121,18 @@ class _HomeScreenState extends State<HomeScreen>
     _menuController.reverse();
   }
 
+  void _openSearch() {
+    setState(() => _searching = true);
+  }
+
+  void _closeSearch() {
+    setState(() {
+      _searching = false;
+      _query = '';
+      _searchCtrl.clear();
+    });
+  }
+
   Future<bool> _handleBack() async {
     if (_menuOpen) {
       _closeMenu();
@@ -113,11 +143,7 @@ class _HomeScreenState extends State<HomeScreen>
       return false;
     }
     if (_searching) {
-      setState(() {
-        _searching = false;
-        _query = '';
-        _searchCtrl.clear();
-      });
+      _closeSearch();
       return false;
     }
     final now = DateTime.now();
@@ -294,54 +320,66 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Widget _buildTopBar() {
-    if (_searching) {
-      return Container(
-        color: Colors.white,
-        padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
-        child: Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _searchCtrl,
-                autofocus: true,
-                style: const TextStyle(fontSize: 15),
-                decoration: InputDecoration(
-                  hintText: '搜索标题关键词…',
-                  hintStyle: const TextStyle(color: kTextLight),
-                  prefixIcon: const Icon(Icons.search, color: kTextLight),
-                  isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                  filled: true,
-                  fillColor: const Color(0xFFF3F6FB),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-                onChanged: (v) => setState(() => _query = v),
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  _searching = false;
-                  _query = '';
-                  _searchCtrl.clear();
-                });
-              },
-              child: const Text(
-                '全部',
-                style: TextStyle(
-                  color: kPrimaryBlue,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 250),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      transitionBuilder: (child, animation) {
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(1, 0),
+            end: Offset.zero,
+          ).animate(animation),
+          child: child,
+        );
+      },
+      child: _searching ? _buildSearchBar() : _buildNormalBar(),
+    );
+  }
 
+  Widget _buildSearchBar() {
+    return Container(
+      key: const ValueKey('search_bar'),
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _searchCtrl,
+              style: const TextStyle(fontSize: 15),
+              decoration: InputDecoration(
+                hintText: '搜索标题关键词…',
+                hintStyle: const TextStyle(color: kTextLight),
+                prefixIcon: const Icon(Icons.search, color: kTextLight),
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                filled: true,
+                fillColor: const Color(0xFFF3F6FB),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              onChanged: (v) => setState(() => _query = v),
+            ),
+          ),
+          TextButton(
+            onPressed: _closeSearch,
+            child: const Text(
+              '全部',
+              style: TextStyle(
+                color: kPrimaryBlue,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNormalBar() {
     final now = DateTime.now();
     String label = '${now.year} - ${now.month} - ${now.day}';
     if (_selectedDate != null) {
@@ -349,6 +387,7 @@ class _HomeScreenState extends State<HomeScreen>
       label = '${d.year} - ${d.month} - ${d.day}';
     }
     return Container(
+      key: const ValueKey('normal_bar'),
       color: Colors.white,
       child: Row(
         children: [
@@ -386,7 +425,7 @@ class _HomeScreenState extends State<HomeScreen>
           ),
           IconButton(
             icon: const Icon(Icons.search, color: kTextMid),
-            onPressed: () => setState(() => _searching = true),
+            onPressed: _openSearch,
           ),
         ],
       ),
