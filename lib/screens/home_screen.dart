@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart' show CupertinoPageRoute;
 import '../models/diary_entry.dart';
 import '../models/user_profile.dart';
 import '../services/diary_storage.dart';
@@ -39,6 +38,7 @@ class _HomeScreenState extends State<HomeScreen>
   late final AnimationController _menuController;
   late final Animation<double> _menuAnim;
   DateTime? _lastBackAt;
+  final Set<String> _expandedDates = {};
 
   @override
   void initState() {
@@ -49,6 +49,7 @@ class _HomeScreenState extends State<HomeScreen>
         vsync: this, duration: const Duration(milliseconds: 280));
     _menuAnim = CurvedAnimation(
         parent: _menuController, curve: Curves.easeOutCubic);
+    _expandedDates.add(_dateKey(now));
     _load();
     _loadProfile();
   }
@@ -69,11 +70,31 @@ class _HomeScreenState extends State<HomeScreen>
     setState(() => _profile = p);
   }
 
+  Route<T> _slideRoute<T>(Widget page) {
+    return PageRouteBuilder<T>(
+      transitionDuration: const Duration(milliseconds: 300),
+      reverseTransitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, animation, secondaryAnimation) => page,
+      transitionsBuilder:
+          (context, animation, secondaryAnimation, child) {
+        final curved = CurvedAnimation(
+            parent: animation, curve: Curves.easeOutCubic);
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(1, 0),
+            end: Offset.zero,
+          ).animate(curved),
+          child: child,
+        );
+      },
+    );
+  }
+
   Future<void> _openEditor([DiaryEntry? entry]) async {
     final result = await Navigator.push<bool>(
       context,
-      CupertinoPageRoute(
-          builder: (_) => EditScreen(entry: entry, defaultDate: _selectedDate)),
+      _slideRoute(
+          EditScreen(entry: entry, defaultDate: _selectedDate)),
     );
     if (result == true) _load();
   }
@@ -81,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _openNoteView(DiaryEntry entry) async {
     await Navigator.push<bool>(
       context,
-      CupertinoPageRoute(builder: (_) => NoteViewScreen(entry: entry)),
+      _slideRoute(NoteViewScreen(entry: entry)),
     );
     _load();
   }
@@ -89,7 +110,7 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _openProfileEditor() async {
     final result = await Navigator.push<bool>(
       context,
-      CupertinoPageRoute(builder: (_) => ProfileEditScreen(profile: _profile)),
+      _slideRoute(ProfileEditScreen(profile: _profile)),
     );
     if (result == true) _loadProfile();
   }
@@ -114,6 +135,32 @@ class _HomeScreenState extends State<HomeScreen>
       _query = '';
       _searchCtrl.clear();
     });
+  }
+
+  void _showAll() {
+    setState(() {
+      _selectedDate = null;
+      _expandedDates.add(_dateKey(DateTime.now()));
+    });
+  }
+
+  bool _isGroupExpanded(DateTime date) =>
+      _expandedDates.contains(_dateKey(date));
+
+  void _toggleGroup(DateTime date) {
+    final key = _dateKey(date);
+    setState(() {
+      if (_expandedDates.contains(key)) {
+        _expandedDates.remove(key);
+      } else {
+        _expandedDates.add(key);
+      }
+    });
+  }
+
+  String _weekdayLabel(DateTime d) {
+    const weeks = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+    return weeks[d.weekday - 1];
   }
 
   Future<bool> _handleBack() async {
@@ -265,7 +312,7 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Widget _buildBody() {
-    final list = _filtered;
+    final groups = _buildGroups();
     return Column(
       children: [
         _buildTopBar(),
@@ -280,25 +327,97 @@ class _HomeScreenState extends State<HomeScreen>
         ),
         const Divider(height: 1, color: Color(0xFFE8EDF5)),
         Expanded(
-          child: list.isEmpty
+          child: groups.isEmpty
               ? _EmptyState(
                   hasQuery: _query.isNotEmpty,
                   hasDate: _selectedDate != null,
                 )
               : ListView.builder(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-                  itemCount: list.length,
+                  itemCount: groups.length,
                   itemBuilder: (context, i) {
-                    final e = list[i];
-                    return _DiaryCard(
-                      entry: e,
-                      onTap: () => _openNoteView(e),
-                      onDelete: () => _delete(e),
+                    final group = groups[i];
+                    final expanded = _isGroupExpanded(group.date);
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildGroupHeader(group, expanded),
+                          if (expanded)
+                            ...group.entries.map((e) => Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: _DiaryCard(
+                                    entry: e,
+                                    onTap: () => _openNoteView(e),
+                                    onDelete: () => _delete(e),
+                                  ),
+                                )),
+                        ],
+                      ),
                     );
                   },
                 ),
         ),
       ],
+    );
+  }
+
+  List<_DateGroup> _buildGroups() {
+    final groups = <_DateGroup>[];
+    _DateGroup? current;
+    for (final e in _filtered) {
+      if (current == null || !_sameDay(current.date, e.publishDate)) {
+        current = _DateGroup(date: e.publishDate, entries: []);
+        groups.add(current);
+      }
+      current.entries.add(e);
+    }
+    return groups;
+  }
+
+  Widget _buildGroupHeader(_DateGroup group, bool expanded) {
+    final d = group.date;
+    final isToday = _sameDay(d, DateTime.now());
+    return InkWell(
+      onTap: () => _toggleGroup(d),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFFDCE7FF),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              expanded ? Icons.expand_less : Icons.expand_more,
+              size: 18,
+              color: const Color(0xFF3B6FE0),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              '${d.month}月${d.day}日 ${_weekdayLabel(d)}',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF2A3B52),
+              ),
+            ),
+            if (isToday) ...[
+              const SizedBox(width: 6),
+              const Text(
+                '今天',
+                style: TextStyle(fontSize: 12, color: Color(0xFF3B6FE0)),
+              ),
+            ],
+            const Spacer(),
+            Text(
+              '发布数 ${group.entries.length}',
+              style: const TextStyle(fontSize: 12, color: Color(0xFF5A6B82)),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -375,11 +494,11 @@ class _HomeScreenState extends State<HomeScreen>
     }
     return Container(
       key: const ValueKey('normal_bar'),
-      color: Colors.white,
+      color: const Color(0xB33B6FE0),
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.menu, color: kTextDark),
+            icon: const Icon(Icons.menu, color: Colors.white),
             onPressed: _openMenu,
           ),
           Expanded(
@@ -395,7 +514,7 @@ class _HomeScreenState extends State<HomeScreen>
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: kTextDark,
+                      color: Colors.white,
                     ),
                   ),
                   const SizedBox(width: 4),
@@ -404,14 +523,14 @@ class _HomeScreenState extends State<HomeScreen>
                         ? Icons.expand_less
                         : Icons.expand_more,
                     size: 18,
-                    color: kTextLight,
+                    color: Colors.white70,
                   ),
                 ],
               ),
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.search, color: kTextMid),
+            icon: const Icon(Icons.search, color: Colors.white),
             onPressed: _openSearch,
           ),
         ],
@@ -457,7 +576,7 @@ class _HomeScreenState extends State<HomeScreen>
         ),
         const Spacer(),
         TextButton(
-          onPressed: () => setState(() => _selectedDate = null),
+          onPressed: _showAll,
           child: const Text(
             '全部',
             style: TextStyle(
@@ -508,17 +627,43 @@ class _HomeScreenState extends State<HomeScreen>
         hasEntry: hasEntry,
         isSelected: isSelected,
         isToday: isToday,
-        onTap: () => setState(() => _selectedDate = date),
+        onTap: () {
+          setState(() {
+            if (_selectedDate != null && _sameDay(date, _selectedDate!)) {
+              _selectedDate = null; // 再次点击选中的日期 → 回到当日
+            } else {
+              _selectedDate = date;
+            }
+          });
+        },
       ));
     }
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 7,
-      childAspectRatio: 1.15,
-      children: cells,
+    return GestureDetector(
+      onHorizontalDragEnd: (details) {
+        final v = details.primaryVelocity ?? 0;
+        if (v < -200) {
+          setState(() => _visibleMonth =
+              DateTime(_visibleMonth.year, _visibleMonth.month + 1, 1));
+        } else if (v > 200) {
+          setState(() => _visibleMonth =
+              DateTime(_visibleMonth.year, _visibleMonth.month - 1, 1));
+        }
+      },
+      child: GridView.count(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        crossAxisCount: 7,
+        childAspectRatio: 1.15,
+        children: cells,
+      ),
     );
   }
+}
+
+class _DateGroup {
+  final DateTime date;
+  final List<DiaryEntry> entries;
+  _DateGroup({required this.date, required this.entries});
 }
 
 class _DayCell extends StatelessWidget {

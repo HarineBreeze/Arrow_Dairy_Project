@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart' show CupertinoPageRoute;
 import '../models/diary_entry.dart';
 import '../services/diary_storage.dart';
 import 'edit_screen.dart';
@@ -24,7 +23,24 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
   Future<void> _openEditor() async {
     final result = await Navigator.push<bool>(
       context,
-      CupertinoPageRoute(builder: (_) => EditScreen(entry: _entry)),
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 300),
+        reverseTransitionDuration: const Duration(milliseconds: 300),
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            EditScreen(entry: _entry),
+        transitionsBuilder:
+            (context, animation, secondaryAnimation, child) {
+          final curved = CurvedAnimation(
+              parent: animation, curve: Curves.easeOutCubic);
+          return SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(1, 0),
+              end: Offset.zero,
+            ).animate(curved),
+            child: child,
+          );
+        },
+      ),
     );
     if (result == true) {
       final list = await DiaryStorage.load();
