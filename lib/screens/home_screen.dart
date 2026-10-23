@@ -443,25 +443,26 @@ class _HomeScreenState extends State<HomeScreen>
     return Container(
       key: const ValueKey('search_bar'),
       height: 48,
-      color: Colors.white,
+      color: const Color(0xB33B6FE0),
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         children: [
           Expanded(
             child: TextField(
               controller: _searchCtrl,
-              style: const TextStyle(fontSize: 15),
+              style: const TextStyle(fontSize: 15, color: Color(0xFF2A3B52)),
               textAlignVertical: TextAlignVertical.center,
               decoration: InputDecoration(
                 hintText: '搜索标题关键词…',
-                hintStyle: const TextStyle(color: kTextLight),
-                prefixIcon: const Icon(Icons.search, size: 18, color: kTextLight),
+                hintStyle: const TextStyle(color: Color(0xFF9AA8BF)),
+                prefixIcon: const Icon(Icons.search,
+                    size: 18, color: Color(0xFF9AA8BF)),
                 prefixIconConstraints:
                     const BoxConstraints(minWidth: 32, minHeight: 32),
                 isDense: true,
                 contentPadding: const EdgeInsets.symmetric(vertical: 6),
                 filled: true,
-                fillColor: const Color(0xFFF3F6FB),
+                fillColor: Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -475,7 +476,7 @@ class _HomeScreenState extends State<HomeScreen>
             child: const Text(
               '全部',
               style: TextStyle(
-                color: kPrimaryBlue,
+                color: Colors.white,
                 fontWeight: FontWeight.w600,
               ),
             ),
