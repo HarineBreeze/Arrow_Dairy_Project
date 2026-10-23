@@ -42,6 +42,9 @@ class _HomeScreenState extends State<HomeScreen>
   DateTime? _lastBackAt;
   final Set<String> _expandedKeys = {};
   String _viewMode = 'all'; // all | month | year
+  String _currentTab = 'diary'; // diary | items
+  final GlobalKey<ItemListScreenState> _itemListKey =
+      GlobalKey<ItemListScreenState>();
 
   @override
   void initState() {
@@ -173,12 +176,9 @@ class _HomeScreenState extends State<HomeScreen>
     if (result == true) _loadProfile();
   }
 
-  Future<void> _openItemList() async {
+  void _switchTab(String tab) {
+    setState(() => _currentTab = tab);
     _closeMenu();
-    await Navigator.push(
-      context,
-      _slideRoute(const ItemListScreen()),
-    );
   }
 
   void _openMenu() {
@@ -272,6 +272,10 @@ class _HomeScreenState extends State<HomeScreen>
   Future<bool> _handleBack() async {
     if (_menuOpen) {
       _closeMenu();
+      return false;
+    }
+    if (_currentTab == 'items') {
+      _switchTab('diary');
       return false;
     }
     if (_calendarExpanded) {
@@ -404,9 +408,11 @@ class _HomeScreenState extends State<HomeScreen>
                               width: menuWidth,
                               child: SideMenu(
                                 profile: _profile,
+                                currentTab: _currentTab,
                                 onClose: _closeMenu,
                                 onOpenProfile: _openProfileEditor,
-                                onOpenItems: _openItemList,
+                                onOpenDiary: () => _switchTab('diary'),
+                                onOpenItems: () => _switchTab('items'),
                               ),
                             ),
                           ),
@@ -415,16 +421,27 @@ class _HomeScreenState extends State<HomeScreen>
                     ],
                   );
                 },
-                child: _loading
-                    ? const Center(child: CircularProgressIndicator())
-                    : _buildBody(),
+                child: _currentTab == 'items'
+                    ? ItemListScreen(
+                        key: _itemListKey,
+                        onOpenMenu: _openMenu,
+                      )
+                    : _loading
+                        ? const Center(child: CircularProgressIndicator())
+                        : _buildBody(),
               ),
             ),
           ),
           floatingActionButton: _menuOpen
               ? null
               : FloatingActionButton(
-                  onPressed: () => _openEditor(),
+                  onPressed: () {
+                    if (_currentTab == 'items') {
+                      _itemListKey.currentState?.openNewItem();
+                    } else {
+                      _openEditor();
+                    }
+                  },
                   child: const Icon(Icons.add),
                 ),
         ),

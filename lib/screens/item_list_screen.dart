@@ -4,13 +4,15 @@ import '../services/item_storage.dart';
 import 'item_edit_screen.dart';
 
 class ItemListScreen extends StatefulWidget {
-  const ItemListScreen({Key? key}) : super(key: key);
+  final VoidCallback onOpenMenu;
+
+  const ItemListScreen({Key? key, required this.onOpenMenu}) : super(key: key);
 
   @override
-  State<ItemListScreen> createState() => _ItemListScreenState();
+  State<ItemListScreen> createState() => ItemListScreenState();
 }
 
-class _ItemListScreenState extends State<ItemListScreen> {
+class ItemListScreenState extends State<ItemListScreen> {
   List<Item> _items = [];
   bool _loading = true;
   bool _searching = false;
@@ -33,12 +35,36 @@ class _ItemListScreenState extends State<ItemListScreen> {
     });
   }
 
+  Future<void> openNewItem() async {
+    await _openEditor();
+  }
+
   Future<void> _openEditor([Item? item]) async {
     final result = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(builder: (_) => ItemEditScreen(item: item)),
+      _slideRoute(ItemEditScreen(item: item)),
     );
     if (result == true) _load();
+  }
+
+  Route<T> _slideRoute<T>(Widget page) {
+    return PageRouteBuilder<T>(
+      transitionDuration: const Duration(milliseconds: 300),
+      reverseTransitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, animation, secondaryAnimation) => page,
+      transitionsBuilder:
+          (context, animation, secondaryAnimation, child) {
+        final curved = CurvedAnimation(
+            parent: animation, curve: Curves.easeOutCubic);
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(1, 0),
+            end: Offset.zero,
+          ).animate(curved),
+          child: child,
+        );
+      },
+    );
   }
 
   Future<void> _incrementUsage(Item item) async {
@@ -60,8 +86,20 @@ class _ItemListScreenState extends State<ItemListScreen> {
   double get _totalValue =>
       _items.fold(0.0, (sum, e) => sum + e.price);
 
-  double get _dailyCost =>
-      _items.fold(0.0, (sum, e) => sum + e.price / e.acquiredDays);
+  double get _dailyCost => _items.fold(0.0, (sum, e) {
+        final days = e.acquiredDays;
+        return days > 0 ? sum + e.price / days : sum;
+      });
+
+  void _toggleSearch() {
+    setState(() {
+      _searching = !_searching;
+      if (!_searching) {
+        _query = '';
+        _searchCtrl.clear();
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -71,80 +109,96 @@ class _ItemListScreenState extends State<ItemListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF3F6FB),
-      appBar: AppBar(
-        backgroundColor: const Color(0xCC3B6FE0),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        title: _searching
-            ? TextField(
-                controller: _searchCtrl,
-                autofocus: true,
-                style: const TextStyle(fontSize: 15, color: Colors.white),
-                decoration: const InputDecoration(
-                  hintText: '搜索物品…',
-                  hintStyle: TextStyle(color: Colors.white70),
-                  border: InputBorder.none,
-                ),
-                onChanged: (v) => setState(() => _query = v),
-              )
-            : const Text('物资清单'),
-        actions: [
-          IconButton(
-            icon: Icon(_searching ? Icons.close : Icons.search),
-            onPressed: () {
-              setState(() {
-                _searching = !_searching;
-                if (!_searching) {
-                  _query = '';
-                  _searchCtrl.clear();
-                }
-              });
-            },
+    return Column(
+      children: [
+        _buildTopBar(),
+        if (_loading)
+          const Expanded(
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else ...[
+          _buildDataView(),
+          const Divider(height: 1, color: Color(0xFFE8EDF5)),
+          Expanded(
+            child: _filtered.isEmpty
+                ? Center(
+                    child: Text(
+                      _searching ? '没有匹配的物品' : '还没有物品',
+                      style: const TextStyle(
+                          fontSize: 15, color: Color(0xFF9AA8BF)),
+                    ),
+                  )
+                : GridView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      childAspectRatio: 1,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                    ),
+                    itemCount: _filtered.length,
+                    itemBuilder: (context, i) {
+                      final it = _filtered[i];
+                      return _ItemCard(
+                        item: it,
+                        onTap: () => _openEditor(it),
+                        onUse: it.calcMethod == 1
+                            ? () => _incrementUsage(it)
+                            : null,
+                      );
+                    },
+                  ),
           ),
         ],
-      ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                _buildDataView(),
-                const Divider(height: 1, color: Color(0xFFE8EDF5)),
-                Expanded(
-                  child: _filtered.isEmpty
-                      ? const Center(
-                          child: Text('还没有物品',
-                              style: TextStyle(
-                                  fontSize: 15, color: Color(0xFF9AA8BF))),
-                        )
-                      : GridView.builder(
-                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            childAspectRatio: 1,
-                            crossAxisSpacing: 10,
-                            mainAxisSpacing: 10,
-                          ),
-                          itemCount: _filtered.length,
-                          itemBuilder: (context, i) {
-                            final it = _filtered[i];
-                            return _ItemCard(
-                              item: it,
-                              onTap: () => _openEditor(it),
-                              onUse: it.calcMethod == 1
-                                  ? () => _incrementUsage(it)
-                                  : null,
-                            );
-                          },
-                        ),
-                ),
-              ],
+      ],
+    );
+  }
+
+  Widget _buildTopBar() {
+    return Container(
+      height: 48,
+      color: const Color(0xB33B6FE0),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.menu, color: Colors.white),
+            onPressed: widget.onOpenMenu,
+          ),
+          Expanded(
+            child: _searching
+                ? Container(
+                    height: 36,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: TextField(
+                      controller: _searchCtrl,
+                      autofocus: true,
+                      style: const TextStyle(
+                          fontSize: 15, color: Color(0xFF2A3B52)),
+                      textAlignVertical: TextAlignVertical.center,
+                      decoration: const InputDecoration(
+                        hintText: '搜索物品…',
+                        hintStyle: TextStyle(color: Color(0xFF9AA8BF)),
+                        isDense: true,
+                        border: InputBorder.none,
+                      ),
+                      onChanged: (v) => setState(() => _query = v),
+                    ),
+                  )
+                : const SizedBox(),
+          ),
+          IconButton(
+            icon: Icon(
+              _searching ? Icons.close : Icons.search,
+              color: Colors.white,
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _openEditor(),
-        child: const Icon(Icons.add),
+            onPressed: _toggleSearch,
+          ),
+        ],
       ),
     );
   }
@@ -196,7 +250,8 @@ class _ItemCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback? onUse;
 
-  const _ItemCard({Key? key, required this.item, required this.onTap, this.onUse})
+  const _ItemCard(
+      {Key? key, required this.item, required this.onTap, this.onUse})
       : super(key: key);
 
   @override
