@@ -81,24 +81,7 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _openNoteView(DiaryEntry entry) async {
     await Navigator.push<bool>(
       context,
-      PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 300),
-        reverseTransitionDuration: const Duration(milliseconds: 300),
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            NoteViewScreen(entry: entry),
-        transitionsBuilder:
-            (context, animation, secondaryAnimation, child) {
-          final curved = CurvedAnimation(
-              parent: animation, curve: Curves.easeOutCubic);
-          return SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(-1, 0),
-              end: Offset.zero,
-            ).animate(curved),
-            child: child,
-          );
-        },
-      ),
+      CupertinoPageRoute(builder: (_) => NoteViewScreen(entry: entry)),
     );
     _load();
   }
@@ -321,7 +304,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   Widget _buildTopBar() {
     return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 250),
+      duration: const Duration(milliseconds: 400),
       switchInCurve: Curves.easeOutCubic,
       switchOutCurve: Curves.easeInCubic,
       transitionBuilder: (child, animation) {
@@ -340,8 +323,9 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _buildSearchBar() {
     return Container(
       key: const ValueKey('search_bar'),
+      height: 48,
       color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         children: [
           Expanded(
