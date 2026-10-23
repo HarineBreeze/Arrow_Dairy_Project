@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show SystemUiOverlayStyle;
 import '../models/diary_entry.dart';
 import '../models/user_profile.dart';
 import '../services/diary_storage.dart';
@@ -247,66 +248,80 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: _handleBack,
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF3F6FB),
-        body: AnimatedBuilder(
-          animation: _menuAnim,
-          builder: (context, child) {
-            final menuWidth = MediaQuery.of(context).size.width * 3 / 4;
-            final offset = menuWidth * _menuAnim.value;
-            return Stack(
-              children: [
-                Transform.translate(
-                  offset: Offset(offset, 0),
-                  child: child!,
-                ),
-                if (_menuAnim.value > 0)
-                  Positioned.fill(
-                    child: GestureDetector(
-                      onTap: _closeMenu,
-                      child: Opacity(
-                        opacity: _menuAnim.value * 0.45,
-                        child: Container(color: Colors.black),
-                      ),
-                    ),
-                  ),
-                Positioned(
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  child: Transform.translate(
-                    offset: Offset(-menuWidth * (1 - _menuAnim.value), 0),
-                    child: Material(
-                      color: Colors.white,
-                      elevation: 8,
-                      child: SizedBox(
-                        width: menuWidth,
-                        child: SideMenu(
-                          profile: _profile,
-                          onClose: _closeMenu,
-                          onOpenProfile: _openProfileEditor,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+      ),
+      child: WillPopScope(
+        onWillPop: _handleBack,
+        child: Scaffold(
+          backgroundColor: const Color(0xFFF3F6FB),
+          body: Container(
+            color: const Color(0xB33B6FE0),
+            child: SafeArea(
+              child: AnimatedBuilder(
+                animation: _menuAnim,
+                builder: (context, child) {
+                  final menuWidth =
+                      MediaQuery.of(context).size.width * 3 / 4;
+                  final offset = menuWidth * _menuAnim.value;
+                  return Stack(
+                    children: [
+                      Transform.translate(
+                        offset: Offset(offset, 0),
+                        child: Container(
+                          color: const Color(0xFFF3F6FB),
+                          child: child!,
                         ),
                       ),
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
-          child: SafeArea(
-            child: _loading
-                ? const Center(child: CircularProgressIndicator())
-                : _buildBody(),
-          ),
-        ),
-        floatingActionButton: _menuOpen
-            ? null
-            : FloatingActionButton(
-                onPressed: () => _openEditor(),
-                child: const Icon(Icons.add),
+                      if (_menuAnim.value > 0)
+                        Positioned.fill(
+                          child: GestureDetector(
+                            onTap: _closeMenu,
+                            child: Opacity(
+                              opacity: _menuAnim.value * 0.45,
+                              child: Container(color: Colors.black),
+                            ),
+                          ),
+                        ),
+                      Positioned(
+                        left: 0,
+                        top: 0,
+                        bottom: 0,
+                        child: Transform.translate(
+                          offset:
+                              Offset(-menuWidth * (1 - _menuAnim.value), 0),
+                          child: Material(
+                            color: Colors.white,
+                            elevation: 8,
+                            child: SizedBox(
+                              width: menuWidth,
+                              child: SideMenu(
+                                profile: _profile,
+                                onClose: _closeMenu,
+                                onOpenProfile: _openProfileEditor,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+                child: _loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _buildBody(),
               ),
+            ),
+          ),
+          floatingActionButton: _menuOpen
+              ? null
+              : FloatingActionButton(
+                  onPressed: () => _openEditor(),
+                  child: const Icon(Icons.add),
+                ),
+        ),
       ),
     );
   }
