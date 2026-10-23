@@ -332,12 +332,15 @@ class _HomeScreenState extends State<HomeScreen>
             child: TextField(
               controller: _searchCtrl,
               style: const TextStyle(fontSize: 15),
+              textAlignVertical: TextAlignVertical.center,
               decoration: InputDecoration(
                 hintText: '搜索标题关键词…',
                 hintStyle: const TextStyle(color: kTextLight),
-                prefixIcon: const Icon(Icons.search, color: kTextLight),
+                prefixIcon: const Icon(Icons.search, size: 18, color: kTextLight),
+                prefixIconConstraints:
+                    const BoxConstraints(minWidth: 32, minHeight: 32),
                 isDense: true,
-                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                contentPadding: const EdgeInsets.symmetric(vertical: 6),
                 filled: true,
                 fillColor: const Color(0xFFF3F6FB),
                 border: OutlineInputBorder(
