@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/diary_entry.dart';
+import '../models/user_profile.dart';
 import '../services/diary_storage.dart';
+import '../services/user_storage.dart';
 import 'edit_screen.dart';
+import 'side_menu.dart';
+import 'profile_edit_screen.dart';
 
 const Color kPrimaryBlue = Color(0xFF3B6FE0);
 const Color kLightBlue = Color(0xFFDCE7FF);
@@ -27,12 +31,16 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _calendarExpanded = false;
   late DateTime _visibleMonth;
 
+  bool _menuOpen = false;
+  UserProfile _profile = UserProfile();
+
   @override
   void initState() {
     super.initState();
     final now = DateTime.now();
     _visibleMonth = DateTime(now.year, now.month, 1);
     _load();
+    _loadProfile();
   }
 
   Future<void> _load() async {
@@ -45,6 +53,12 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  Future<void> _loadProfile() async {
+    final p = await UserStorage.load();
+    if (!mounted) return;
+    setState(() => _profile = p);
+  }
+
   Future<void> _openEditor([DiaryEntry? entry]) async {
     final result = await Navigator.push<bool>(
       context,
@@ -52,6 +66,14 @@ class _HomeScreenState extends State<HomeScreen> {
           builder: (_) => EditScreen(entry: entry, defaultDate: _selectedDate)),
     );
     if (result == true) _load();
+  }
+
+  Future<void> _openProfileEditor() async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => ProfileEditScreen(profile: _profile)),
+    );
+    if (result == true) _loadProfile();
   }
 
   Future<void> _delete(DiaryEntry entry) async {
@@ -111,15 +133,46 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF3F6FB),
-      body: SafeArea(
-        child: _loading
-            ? const Center(child: CircularProgressIndicator())
-            : _buildBody(),
+      body: Stack(
+        children: [
+          SafeArea(
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : _buildBody(),
+          ),
+          if (_menuOpen) ...[
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: () => setState(() => _menuOpen = false),
+                child: Container(color: Colors.black.withOpacity(0.45)),
+              ),
+            ),
+            Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              child: Material(
+                color: Colors.white,
+                elevation: 8,
+                child: SizedBox(
+                  width: MediaQuery.of(context).size.width * 2 / 3,
+                  child: SideMenu(
+                    profile: _profile,
+                    onClose: () => setState(() => _menuOpen = false),
+                    onOpenProfile: _openProfileEditor,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _openEditor(),
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: _menuOpen
+          ? null
+          : FloatingActionButton(
+              onPressed: () => _openEditor(),
+              child: const Icon(Icons.add),
+            ),
     );
   }
 
@@ -205,64 +258,49 @@ class _HomeScreenState extends State<HomeScreen> {
     String label = '全部日记';
     if (_selectedDate != null) {
       final d = _selectedDate!;
-      label = '${d.year}年${d.month}月${d.day}日';
+      label = '${d.year}-${d.month}-${d.day}';
     }
     return Container(
       color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        child: Row(
-          children: [
-            Expanded(
-              child: InkWell(
-                onTap: () =>
-                    setState(() => _calendarExpanded = !_calendarExpanded),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.calendar_month,
-                          size: 18, color: kPrimaryBlue),
-                      const SizedBox(width: 8),
-                      Text(
-                        label,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: kTextDark,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            if (_selectedDate != null)
-              TextButton(
-                onPressed: () => setState(() => _selectedDate = null),
-                child: const Text(
-                  '全部',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: kPrimaryBlue,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            IconButton(
-              icon: const Icon(Icons.search, color: kTextMid),
-              onPressed: () => setState(() => _searching = true),
-            ),
-            IconButton(
-              icon: Icon(
-                _calendarExpanded ? Icons.expand_less : Icons.expand_more,
-                color: kTextLight,
-              ),
-              onPressed: () =>
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.menu, color: kTextDark),
+            onPressed: () => setState(() => _menuOpen = true),
+          ),
+          Expanded(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () =>
                   setState(() => _calendarExpanded = !_calendarExpanded),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: kTextDark,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    _calendarExpanded
+                        ? Icons.expand_less
+                        : Icons.expand_more,
+                    size: 18,
+                    color: kTextLight,
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.search, color: kTextMid),
+            onPressed: () => setState(() => _searching = true),
+          ),
+        ],
       ),
     );
   }

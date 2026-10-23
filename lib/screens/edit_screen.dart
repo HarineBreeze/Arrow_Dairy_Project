@@ -113,9 +113,9 @@ class _EditScreenState extends State<EditScreen> {
         content: TextField(
           controller: ctrl,
           autofocus: true,
-          maxLength: 8,
+          maxLength: 10,
           decoration: const InputDecoration(
-            hintText: '输入地点（最多8字）',
+            hintText: '输入地点（最多10字）',
             counterText: '',
           ),
         ),
@@ -197,20 +197,12 @@ class _EditScreenState extends State<EditScreen> {
               ),
               onChanged: (_) => setState(() {}),
             ),
-            Row(
-              children: [
-                if (_location.isNotEmpty)
-                  Text(
-                    '📍 $_location',
-                    style: const TextStyle(
-                        fontSize: 12, color: Color(0xFF9AA8BF)),
-                  ),
-                const Spacer(),
-                Text(
-                  '${_contentCtrl.text.length}/2000',
-                  style: const TextStyle(fontSize: 12, color: Color(0xFF9AA8BF)),
-                ),
-              ],
+            Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                '${_contentCtrl.text.length}/2000',
+                style: const TextStyle(fontSize: 12, color: Color(0xFF9AA8BF)),
+              ),
             ),
           ],
         ),
