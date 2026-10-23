@@ -20,7 +20,8 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
   List<DiaryEntry> _entries = [];
   bool _loading = true;
   bool _searching = false;
@@ -33,12 +34,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
   bool _menuOpen = false;
   UserProfile _profile = UserProfile();
+  late final AnimationController _menuController;
+  late final Animation<double> _menuAnim;
+  DateTime? _lastBackAt;
 
   @override
   void initState() {
     super.initState();
     final now = DateTime.now();
     _visibleMonth = DateTime(now.year, now.month, 1);
+    _menuController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 280));
+    _menuAnim = CurvedAnimation(
+        parent: _menuController, curve: Curves.easeOutCubic);
     _load();
     _loadProfile();
   }
@@ -74,6 +82,36 @@ class _HomeScreenState extends State<HomeScreen> {
       MaterialPageRoute(builder: (_) => ProfileEditScreen(profile: _profile)),
     );
     if (result == true) _loadProfile();
+  }
+
+  void _openMenu() {
+    setState(() => _menuOpen = true);
+    _menuController.forward();
+  }
+
+  void _closeMenu() {
+    setState(() => _menuOpen = false);
+    _menuController.reverse();
+  }
+
+  Future<bool> _handleBack() async {
+    if (_menuOpen) {
+      _closeMenu();
+      return false;
+    }
+    final now = DateTime.now();
+    if (_lastBackAt == null ||
+        now.difference(_lastBackAt!) > const Duration(seconds: 2)) {
+      _lastBackAt = now;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('再返回一次退出应用'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return false;
+    }
+    return true;
   }
 
   Future<void> _delete(DiaryEntry entry) async {
@@ -125,54 +163,70 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    _menuController.dispose();
     _searchCtrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF3F6FB),
-      body: Stack(
-        children: [
-          SafeArea(
+    return WillPopScope(
+      onWillPop: _handleBack,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF3F6FB),
+        body: AnimatedBuilder(
+          animation: _menuAnim,
+          builder: (context, child) {
+            final menuWidth = MediaQuery.of(context).size.width * 3 / 4;
+            final offset = menuWidth * _menuAnim.value;
+            return Stack(
+              children: [
+                Transform.translate(
+                  offset: Offset(offset, 0),
+                  child: child!,
+                ),
+                if (_menuAnim.value > 0)
+                  Positioned.fill(
+                    child: GestureDetector(
+                      onTap: _closeMenu,
+                      child: Opacity(
+                        opacity: _menuAnim.value * 0.45,
+                        child: Container(color: Colors.black),
+                      ),
+                    ),
+                  ),
+                Positioned(
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  child: Transform.translate(
+                    offset: Offset(-menuWidth * (1 - _menuAnim.value), 0),
+                    child: SizedBox(
+                      width: menuWidth,
+                      child: SideMenu(
+                        profile: _profile,
+                        onClose: _closeMenu,
+                        onOpenProfile: _openProfileEditor,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+          child: SafeArea(
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
                 : _buildBody(),
           ),
-          if (_menuOpen) ...[
-            Positioned.fill(
-              child: GestureDetector(
-                onTap: () => setState(() => _menuOpen = false),
-                child: Container(color: Colors.black.withOpacity(0.45)),
+        ),
+        floatingActionButton: _menuOpen
+            ? null
+            : FloatingActionButton(
+                onPressed: () => _openEditor(),
+                child: const Icon(Icons.add),
               ),
-            ),
-            Positioned(
-              left: 0,
-              top: 0,
-              bottom: 0,
-              child: Material(
-                color: Colors.white,
-                elevation: 8,
-                child: SizedBox(
-                  width: MediaQuery.of(context).size.width * 2 / 3,
-                  child: SideMenu(
-                    profile: _profile,
-                    onClose: () => setState(() => _menuOpen = false),
-                    onOpenProfile: _openProfileEditor,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ],
       ),
-      floatingActionButton: _menuOpen
-          ? null
-          : FloatingActionButton(
-              onPressed: () => _openEditor(),
-              child: const Icon(Icons.add),
-            ),
     );
   }
 
@@ -266,7 +320,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           IconButton(
             icon: const Icon(Icons.menu, color: kTextDark),
-            onPressed: () => setState(() => _menuOpen = true),
+            onPressed: _openMenu,
           ),
           Expanded(
             child: GestureDetector(

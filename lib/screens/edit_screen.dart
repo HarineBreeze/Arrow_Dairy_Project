@@ -21,7 +21,13 @@ class _EditScreenState extends State<EditScreen> {
   bool _saving = false;
 
   static const List<String> _moods = ['😊', '😌', '😢', '😡', '😴', '🥰'];
-  static const List<String> _weathers = ['☀️', '⛅', '🌧️', '❄️', '🌙', '🌈'];
+  static const List<String> _weathers = ['🌞', '⛅', '🌧️', '❄️', '🌙', '🌈'];
+  static const List<String> _moreMoods = [
+    '🤩', '😭', '😤', '🤯', '🥳', '🤔', '😷', '🥺', '😎', '🤗', '😇', '🤪'
+  ];
+  static const List<String> _moreWeathers = [
+    '🌤️', '🌦️', '🌨️', '⛈️', '🌪️', '🌫️', '⚡', '💨', '🌈', '🌊', '☁️', '🌡️'
+  ];
 
   bool get _isNew => widget.entry == null;
 
@@ -150,11 +156,11 @@ class _EditScreenState extends State<EditScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildChipRow(
-                '今天心情', _moods, _mood, (v) => setState(() => _mood = v)),
+            _buildChipRow('今天心情', _moods, _mood,
+                (v) => setState(() => _mood = v), _moreMoods),
             const SizedBox(height: 10),
-            _buildChipRow(
-                '天气', _weathers, _weather, (v) => setState(() => _weather = v)),
+            _buildChipRow('天气', _weathers, _weather,
+                (v) => setState(() => _weather = v), _moreWeathers),
             const SizedBox(height: 16),
             _buildDateLocationRow(),
             const SizedBox(height: 16),
@@ -244,7 +250,7 @@ class _EditScreenState extends State<EditScreen> {
                             color: Colors.white,
                           ),
                         )
-                      : const Text('确认', style: TextStyle(fontSize: 16)),
+                      : const Text('完成', style: TextStyle(fontSize: 16)),
                 ),
               ),
             ],
@@ -318,7 +324,30 @@ class _EditScreenState extends State<EditScreen> {
     List<String> options,
     String selected,
     ValueChanged<String> onSelect,
+    List<String> moreOptions,
   ) {
+    Widget chip(String o, {VoidCallback? onTap, bool isMore = false}) {
+      final isSel = o == selected;
+      return GestureDetector(
+        onTap: onTap ?? () => onSelect(o),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: (isSel && !isMore)
+                ? const Color(0xFF3B6FE0)
+                : Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: (isSel && !isMore)
+                  ? const Color(0xFF3B6FE0)
+                  : const Color(0xFFDCE7FF),
+            ),
+          ),
+          child: Text(o, style: const TextStyle(fontSize: 15)),
+        ),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -328,28 +357,55 @@ class _EditScreenState extends State<EditScreen> {
         Wrap(
           spacing: 6,
           runSpacing: 6,
-          children: options.map((o) {
-            final isSel = o == selected;
-            return GestureDetector(
-              onTap: () => onSelect(o),
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: isSel ? const Color(0xFF3B6FE0) : Colors.white,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: isSel
-                        ? const Color(0xFF3B6FE0)
-                        : const Color(0xFFDCE7FF),
-                  ),
-                ),
-                child: Text(o, style: const TextStyle(fontSize: 15)),
-              ),
-            );
-          }).toList(),
+          children: [
+            ...options.map((o) => chip(o)),
+            chip('...',
+                isMore: true,
+                onTap: () => _showMoreEmoji(label, moreOptions, onSelect)),
+          ],
         ),
       ],
+    );
+  }
+
+  Future<void> _showMoreEmoji(
+      String label, List<String> options, ValueChanged<String> onSelect) async {
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('更多$label',
+                  style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF2A3B52))),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 14,
+                runSpacing: 14,
+                children: options.map((o) {
+                  return GestureDetector(
+                    onTap: () {
+                      onSelect(o);
+                      Navigator.pop(ctx);
+                    },
+                    child: Text(o, style: const TextStyle(fontSize: 30)),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
