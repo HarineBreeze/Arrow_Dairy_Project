@@ -15,6 +15,7 @@ class EditScreen extends StatefulWidget {
 
 class _EditScreenState extends State<EditScreen> {
   late final TextEditingController _titleCtrl;
+  late final TextEditingController _subtitleCtrl;
   late final HighlightEditingController _contentCtrl;
   Set<String> _itemNames = {};
   late String _mood;
@@ -40,6 +41,7 @@ class _EditScreenState extends State<EditScreen> {
   void initState() {
     super.initState();
     _titleCtrl = TextEditingController(text: widget.entry?.title ?? '');
+    _subtitleCtrl = TextEditingController(text: widget.entry?.subtitle ?? '');
     _contentCtrl = HighlightEditingController(
       itemNames: _itemNames,
       text: widget.entry?.content ?? '',
@@ -67,6 +69,7 @@ class _EditScreenState extends State<EditScreen> {
   @override
   void dispose() {
     _titleCtrl.dispose();
+    _subtitleCtrl.dispose();
     _contentCtrl.dispose();
     super.dispose();
   }
@@ -74,9 +77,16 @@ class _EditScreenState extends State<EditScreen> {
   Future<void> _save() async {
     final title = _titleCtrl.text.trim();
     final content = _contentCtrl.text.trim();
+    final subtitle = _encrypted ? _subtitleCtrl.text.trim() : '';
     if (title.isEmpty && content.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('写点什么再保存吧～')),
+      );
+      return;
+    }
+    if (_encrypted && subtitle.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('请填写副标题～')),
       );
       return;
     }
@@ -89,6 +99,7 @@ class _EditScreenState extends State<EditScreen> {
       list.add(DiaryEntry(
         id: now.microsecondsSinceEpoch.toString(),
         title: title,
+        subtitle: subtitle,
         content: content,
         mood: _mood,
         weather: _weather,
@@ -103,6 +114,7 @@ class _EditScreenState extends State<EditScreen> {
       final idx = list.indexWhere((e) => e.id == widget.entry!.id);
       if (idx >= 0) {
         list[idx].title = title;
+        list[idx].subtitle = subtitle;
         list[idx].content = content;
         list[idx].mood = _mood;
         list[idx].weather = _weather;
@@ -365,6 +377,35 @@ class _EditScreenState extends State<EditScreen> {
                   ],
                 ),
                 const Divider(height: 1),
+                if (_encrypted) ...[
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _subtitleCtrl,
+                          maxLength: 20,
+                          style: const TextStyle(
+                              fontSize: 15, color: Color(0xFF2A3B52)),
+                          decoration: const InputDecoration(
+                            hintText: '此处标题会公开显示哦～',
+                            hintStyle: TextStyle(
+                                fontSize: 14, color: Color(0xFF9AA8BF)),
+                            border: InputBorder.none,
+                            counterText: '',
+                          ),
+                          onChanged: (_) => setState(() {}),
+                        ),
+                      ),
+                      Text(
+                        '${_subtitleCtrl.text.length}/20',
+                        style: const TextStyle(
+                            fontSize: 12, color: Color(0xFF9AA8BF)),
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 1),
+                ],
               ],
             ),
           ),

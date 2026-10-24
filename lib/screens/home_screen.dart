@@ -347,7 +347,9 @@ class _HomeScreenState extends State<HomeScreen>
     if (_activeTopic != null) {
       final t = _activeTopic!;
       list = list
-          .where((e) => RichTextParser.extractTopics(e.content).contains(t))
+          .where((e) =>
+              !e.encrypted &&
+              RichTextParser.extractTopics(e.content).contains(t))
           .toList();
     }
     if (_selectedDate != null) {
@@ -361,6 +363,7 @@ class _HomeScreenState extends State<HomeScreen>
     final seen = <String>{};
     final result = <String>[];
     for (final e in _entries) {
+      if (e.encrypted) continue;
       for (final t in RichTextParser.extractTopics(e.content)) {
         if (seen.add(t)) result.add(t);
       }
@@ -1130,11 +1133,40 @@ class _DiaryCard extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
           child: isEncrypted
-              ? const SizedBox(
+              ? SizedBox(
                   height: 56,
-                  child: Center(
-                    child: Icon(Icons.lock,
-                        size: 32, color: Color(0xFF9AA8BF)),
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        left: 0,
+                        right: 26,
+                        top: 0,
+                        bottom: 0,
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            entry.subtitle.isNotEmpty
+                                ? entry.subtitle
+                                : '加密笔记',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: entry.subtitle.isNotEmpty
+                                  ? const Color(0xFF5A6B82)
+                                  : const Color(0xFF9AA8BF),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: Icon(Icons.lock,
+                            size: 18, color: Color(0xFF9AA8BF)),
+                      ),
+                    ],
                   ),
                 )
               : Column(

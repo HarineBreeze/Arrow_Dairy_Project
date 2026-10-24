@@ -1,6 +1,7 @@
 class DiaryEntry {
   final String id;
   String title;
+  String subtitle;
   String content;
   String mood;
   String weather;
@@ -14,6 +15,7 @@ class DiaryEntry {
   DiaryEntry({
     required this.id,
     this.title = '',
+    this.subtitle = '',
     this.content = '',
     this.mood = '😊',
     this.weather = '☀️',
@@ -29,6 +31,7 @@ class DiaryEntry {
     return {
       'id': id,
       'title': title,
+      'subtitle': subtitle,
       'content': content,
       'mood': mood,
       'weather': weather,
@@ -46,6 +49,7 @@ class DiaryEntry {
     return DiaryEntry(
       id: json['id'] as String,
       title: json['title'] as String? ?? '',
+      subtitle: json['subtitle'] as String? ?? '',
       content: json['content'] as String? ?? '',
       mood: json['mood'] as String? ?? '😊',
       weather: json['weather'] as String? ?? '☀️',
