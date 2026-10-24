@@ -126,14 +126,14 @@ class ItemListScreenState extends State<ItemListScreen> {
   double get _totalValue => _items.fold(0.0, (sum, e) => sum + e.price);
 
   double get _dailyCost => _items
-      .where((e) => e.calcMethod == 0)
+      .where((e) => e.calcMethod == 0 && e.lostDate == null)
       .fold(0.0, (sum, e) {
         final days = e.acquiredDays;
         return days > 0 ? sum + e.price / days : sum;
       });
 
   double get _perUseCost => _items
-      .where((e) => e.calcMethod == 1)
+      .where((e) => e.calcMethod == 1 && e.lostDate == null)
       .fold(0.0, (sum, e) {
         final n = e.usageCount < 1 ? 1 : e.usageCount;
         return sum + e.price / n;
@@ -222,31 +222,7 @@ class ItemListScreenState extends State<ItemListScreen> {
                         );
                       }).toList(),
                     ),
-                    const SizedBox(height: 18),
-                    const Text('排序顺序',
-                        style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF2A3B52))),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        _buildOrderChip(
-                          label: '升序排列',
-                          selected: _sortAscending,
-                          onTap: () => setSheetState(
-                              () => _sortAscending = true),
-                        ),
-                        const SizedBox(width: 8),
-                        _buildOrderChip(
-                          label: '降序排列',
-                          selected: !_sortAscending,
-                          onTap: () => setSheetState(
-                              () => _sortAscending = false),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 20),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -272,35 +248,6 @@ class ItemListScreenState extends State<ItemListScreen> {
           },
         );
       },
-    );
-  }
-
-  Widget _buildOrderChip({
-    required String label,
-    required bool selected,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? const Color(0xFF3B6FE0) : Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: selected
-                ? const Color(0xFF3B6FE0)
-                : const Color(0xFFDCE7FF),
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            color: selected ? Colors.white : const Color(0xFF5A6B82),
-          ),
-        ),
-      ),
     );
   }
 
@@ -494,6 +441,22 @@ class ItemListScreenState extends State<ItemListScreen> {
           _buildFilterChip('拥有中', _ItemFilter.owning),
           const SizedBox(width: 6),
           _buildFilterChip('已失去', _ItemFilter.lost),
+          const SizedBox(width: 2),
+          InkWell(
+            onTap: () =>
+                setState(() => _sortAscending = !_sortAscending),
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              child: Icon(
+                _sortAscending
+                    ? Icons.arrow_upward
+                    : Icons.arrow_downward,
+                size: 18,
+                color: const Color(0xFF3B6FE0),
+              ),
+            ),
+          ),
           const Spacer(),
           InkWell(
             onTap: _showSortSheet,
