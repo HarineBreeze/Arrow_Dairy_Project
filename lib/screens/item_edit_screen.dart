@@ -4,12 +4,12 @@ import '../services/item_storage.dart';
 
 const List<String> kCategories = ['数码设备', '衣物', '配饰', '家具'];
 const Map<String, List<String>> kCategoryIcons = {
-  '数码设备': ['📱', '💻', '📷', '🎧', '⌚', '🖥️', '🎮', '⌨️'],
-  '衣物': ['👕', '👖', '👗', '🧥', '👟', '🧢', '👔', '👘'],
-  '配饰': ['💍', '👜', '🕶️', '🧣', '🎒', '🕐', '👓', '🧤'],
-  '家具': ['🛋️', '🛏️', '💡', '🪑', '🚪', '📺', '🪴', '🛁'],
+  '数码设备': ['📱', '💻', '📷', '🎧', '⌚', '🖥️', '🎮'],
+  '衣物': ['👕', '👖', '👗', '🧥', '👟', '🧢', '👔'],
+  '配饰': ['💍', '👜', '🕶️', '🧣', '🎒', '🕐', '👓'],
+  '家具': ['🛋️', '🛏️', '💡', '🪑', '🚪', '📺', '🪴'],
 };
-const List<String> kFallbackIcons = ['📱', '💻', '📷', '🎧', '⌚', '🖥️', '🎮', '⌨️'];
+const List<String> kFallbackIcons = ['📱', '💻', '📷', '🎧', '⌚', '🖥️', '🎮'];
 
 class ItemEditScreen extends StatefulWidget {
   final Item? item;
@@ -386,13 +386,13 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
 
   Widget _buildIconRow() {
     final icons = kCategoryIcons[_category] ?? kFallbackIcons;
-    return Wrap(
-      spacing: 4,
-      runSpacing: 6,
-      children: [
-        ...icons.map((ic) => _buildIconCell(ic)),
-        _buildIconCell('…', isCustom: true),
-      ],
+    final cells = [
+      ...icons.map((ic) => _buildIconCell(ic)),
+      _buildIconCell('…', isCustom: true),
+    ];
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: cells,
     );
   }
 

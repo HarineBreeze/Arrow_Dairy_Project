@@ -125,12 +125,16 @@ class ItemListScreenState extends State<ItemListScreen> {
 
   double get _totalValue => _items.fold(0.0, (sum, e) => sum + e.price);
 
-  double get _dailyCost => _items.fold(0.0, (sum, e) {
+  double get _dailyCost => _items
+      .where((e) => e.calcMethod == 0)
+      .fold(0.0, (sum, e) {
         final days = e.acquiredDays;
         return days > 0 ? sum + e.price / days : sum;
       });
 
-  double get _perUseCost => _items.fold(0.0, (sum, e) {
+  double get _perUseCost => _items
+      .where((e) => e.calcMethod == 1)
+      .fold(0.0, (sum, e) {
         final n = e.usageCount < 1 ? 1 : e.usageCount;
         return sum + e.price / n;
       });
@@ -420,7 +424,7 @@ class ItemListScreenState extends State<ItemListScreen> {
   }
 
   Widget _buildCostItem() {
-    final label = _costByUse ? '次均成本' : '平均成本';
+    final label = _costByUse ? '次均成本' : '日均成本';
     final value = _costByUse
         ? '¥${_perUseCost.toStringAsFixed(2)}'
         : '¥${_dailyCost.toStringAsFixed(2)}';
@@ -494,21 +498,9 @@ class ItemListScreenState extends State<ItemListScreen> {
           InkWell(
             onTap: _showSortSheet,
             borderRadius: BorderRadius.circular(8),
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              child: Row(
-                children: [
-                  const Icon(Icons.sort,
-                      size: 18, color: Color(0xFF3B6FE0)),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${_sortFieldLabel(_sortField)} ${_sortAscending ? '升' : '降'}',
-                    style: const TextStyle(
-                        fontSize: 12, color: Color(0xFF3B6FE0)),
-                  ),
-                ],
-              ),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              child: Icon(Icons.sort, size: 20, color: Color(0xFF3B6FE0)),
             ),
           ),
         ],
