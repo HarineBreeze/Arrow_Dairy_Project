@@ -277,10 +277,6 @@ class _HomeScreenState extends State<HomeScreen>
       _closeMenu();
       return false;
     }
-    if (_currentTab == 'items') {
-      _switchTab('diary');
-      return false;
-    }
     if (_calendarExpanded) {
       setState(() => _calendarExpanded = false);
       return false;
