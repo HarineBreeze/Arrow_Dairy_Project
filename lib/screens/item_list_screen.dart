@@ -524,52 +524,72 @@ class _ItemCard extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Opacity(
-                opacity: lost ? 0.5 : 1,
-                child: Text(item.icon, style: const TextStyle(fontSize: 40)),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                item.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color:
-                      lost ? const Color(0xFF9AA8BF) : const Color(0xFF2A3B52),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '¥${item.unitPrice.toStringAsFixed(2)}/$unitLabel',
-                style: TextStyle(
-                  fontSize: 13,
-                  color:
-                      lost ? const Color(0xFFB0B8C4) : const Color(0xFF3B6FE0),
-                ),
-              ),
-              const SizedBox(height: 2),
-              GestureDetector(
-                onTap: onUse,
-                behavior: HitTestBehavior.opaque,
-                child: Text(
-                  usageLabel,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: lost
-                        ? const Color(0xFFB0B8C4)
-                        : const Color(0xFF9AA8BF),
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Opacity(
+                    opacity: lost ? 0.5 : 1,
+                    child:
+                        Text(item.icon, style: const TextStyle(fontSize: 40)),
                   ),
+                  const SizedBox(height: 8),
+                  Text(
+                    item.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: lost
+                          ? const Color(0xFF9AA8BF)
+                          : const Color(0xFF2A3B52),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '¥${item.unitPrice.toStringAsFixed(2)}/$unitLabel',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: lost
+                          ? const Color(0xFFB0B8C4)
+                          : const Color(0xFF3B6FE0),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  GestureDetector(
+                    onTap: onUse,
+                    behavior: HitTestBehavior.opaque,
+                    child: Text(
+                      usageLabel,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: lost
+                            ? const Color(0xFFB0B8C4)
+                            : const Color(0xFF9AA8BF),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Positioned(
+              top: 8,
+              right: 10,
+              child: Text(
+                '¥${item.price.toStringAsFixed(0)}',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: lost
+                      ? const Color(0xFFB0B8C4)
+                      : const Color(0xFF9AA8BF),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
