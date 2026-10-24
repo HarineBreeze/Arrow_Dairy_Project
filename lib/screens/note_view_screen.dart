@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/diary_entry.dart';
+import '../models/item.dart';
 import '../services/diary_storage.dart';
+import '../services/item_storage.dart';
+import '../widgets/rich_note_text.dart';
 import 'edit_screen.dart';
+import 'item_edit_screen.dart';
 
 class NoteViewScreen extends StatefulWidget {
   final DiaryEntry entry;
@@ -13,11 +17,47 @@ class NoteViewScreen extends StatefulWidget {
 
 class _NoteViewScreenState extends State<NoteViewScreen> {
   late DiaryEntry _entry;
+  List<Item> _items = [];
 
   @override
   void initState() {
     super.initState();
     _entry = widget.entry;
+    _loadItems();
+  }
+
+  Future<void> _loadItems() async {
+    final list = await ItemStorage.load();
+    if (!mounted) return;
+    setState(() => _items = list);
+  }
+
+  Future<void> _openItem(String name) async {
+    final idx = _items.indexWhere((e) => e.name == name);
+    if (idx < 0) return;
+    final item = _items[idx];
+    await Navigator.push<bool>(
+      context,
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 300),
+        reverseTransitionDuration: const Duration(milliseconds: 300),
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            ItemEditScreen(item: item),
+        transitionsBuilder:
+            (context, animation, secondaryAnimation, child) {
+          final curved = CurvedAnimation(
+              parent: animation, curve: Curves.easeOutCubic);
+          return SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(1, 0),
+              end: Offset.zero,
+            ).animate(curved),
+            child: child,
+          );
+        },
+      ),
+    );
+    await _loadItems();
   }
 
   Future<void> _openEditor() async {
@@ -150,8 +190,13 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Text(
-                        _entry.content,
+                      child: RichNoteText(
+                        text: _entry.content,
+                        itemNames: _items
+                            .map((e) => e.name)
+                            .where((n) => n.isNotEmpty)
+                            .toSet(),
+                        onTapMention: _openItem,
                         style: const TextStyle(
                           fontSize: 16,
                           height: 1.8,

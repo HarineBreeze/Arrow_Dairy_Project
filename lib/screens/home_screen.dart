@@ -4,6 +4,7 @@ import '../models/diary_entry.dart';
 import '../models/user_profile.dart';
 import '../services/diary_storage.dart';
 import '../services/user_storage.dart';
+import '../utils/rich_text.dart';
 import 'edit_screen.dart';
 import 'side_menu.dart';
 import 'profile_edit_screen.dart';
@@ -42,6 +43,7 @@ class _HomeScreenState extends State<HomeScreen>
   DateTime? _lastBackAt;
   final Set<String> _expandedKeys = {};
   String _viewMode = 'all'; // all | month | year
+  String? _activeTopic; // 当前筛选的话题（null = 未筛选）
   String _currentTab = 'diary'; // diary | items
   final GlobalKey<ItemListScreenState> _itemListKey =
       GlobalKey<ItemListScreenState>();
@@ -206,6 +208,7 @@ class _HomeScreenState extends State<HomeScreen>
   void _showAll() {
     setState(() {
       _selectedDate = null;
+      _activeTopic = null;
       _expandedKeys.add(_defaultGroupKey());
     });
   }
@@ -341,11 +344,28 @@ class _HomeScreenState extends State<HomeScreen>
       final q = _query.toLowerCase();
       list = list.where((e) => e.title.toLowerCase().contains(q)).toList();
     }
+    if (_activeTopic != null) {
+      final t = _activeTopic!;
+      list = list
+          .where((e) => RichTextParser.extractTopics(e.content).contains(t))
+          .toList();
+    }
     if (_selectedDate != null) {
       final d = _selectedDate!;
       list = list.where((e) => _sameDay(e.publishDate, d)).toList();
     }
     return list;
+  }
+
+  List<String> get _allTopics {
+    final seen = <String>{};
+    final result = <String>[];
+    for (final e in _entries) {
+      for (final t in RichTextParser.extractTopics(e.content)) {
+        if (seen.add(t)) result.add(t);
+      }
+    }
+    return result;
   }
 
   @override
@@ -455,6 +475,7 @@ class _HomeScreenState extends State<HomeScreen>
       children: [
         _buildTopBar(),
         _buildViewBar(),
+        if (_activeTopic != null) _buildTopicBar(),
         ClipRect(
           child: AnimatedSize(
             duration: const Duration(milliseconds: 250),
@@ -729,8 +750,148 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ),
           IconButton(
+            icon: Icon(
+              _activeTopic == null
+                  ? Icons.filter_alt_outlined
+                  : Icons.filter_alt,
+              color: Colors.white,
+            ),
+            onPressed: _showFilterSheet,
+          ),
+          IconButton(
             icon: const Icon(Icons.search, color: Colors.white),
             onPressed: _openSearch,
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showFilterSheet() {
+    final topics = _allTopics;
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Text(
+                      '按话题筛选',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF2A3B52),
+                      ),
+                    ),
+                    const Spacer(),
+                    TextButton(
+                      onPressed: () {
+                        setState(() => _activeTopic = null);
+                        Navigator.pop(ctx);
+                      },
+                      child: const Text(
+                        '取消',
+                        style: TextStyle(color: Color(0xFF9AA8BF)),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                if (topics.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24),
+                    child: Center(
+                      child: Text(
+                        '还没有话题\n在日记正文输入 #话题词 即可创建',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            fontSize: 13, color: Color(0xFF9AA8BF)),
+                      ),
+                    ),
+                  )
+                else
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: topics.map((t) {
+                      final active = t == _activeTopic;
+                      return GestureDetector(
+                        onTap: () {
+                          if (active) {
+                            setState(() => _activeTopic = null);
+                          } else {
+                            setState(() {
+                              _activeTopic = t;
+                              _viewMode = 'all';
+                              _expandedKeys.clear();
+                              _expandedKeys.add(_defaultGroupKey());
+                            });
+                          }
+                          Navigator.pop(ctx);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: active
+                                ? const Color(0xFF3B6FE0)
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                              color: active
+                                  ? const Color(0xFF3B6FE0)
+                                  : const Color(0xFFDCE7FF),
+                            ),
+                          ),
+                          child: Text(
+                            '#$t',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: active
+                                  ? Colors.white
+                                  : const Color(0xFF5A6B82),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTopicBar() {
+    return Container(
+      width: double.infinity,
+      color: const Color(0xFFDCE7FF),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          const Icon(Icons.tag, size: 14, color: Color(0xFF3B6FE0)),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              '正在筛选话题：#${_activeTopic}',
+              style: const TextStyle(fontSize: 13, color: Color(0xFF3B6FE0)),
+            ),
+          ),
+          GestureDetector(
+            onTap: () => setState(() => _activeTopic = null),
+            child: const Icon(Icons.close, size: 16, color: Color(0xFF3B6FE0)),
           ),
         ],
       ),

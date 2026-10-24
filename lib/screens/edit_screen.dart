@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/diary_entry.dart';
 import '../services/diary_storage.dart';
+import '../services/item_storage.dart';
+import '../widgets/highlight_controller.dart';
 
 class EditScreen extends StatefulWidget {
   final DiaryEntry? entry;
@@ -13,7 +15,8 @@ class EditScreen extends StatefulWidget {
 
 class _EditScreenState extends State<EditScreen> {
   late final TextEditingController _titleCtrl;
-  late final TextEditingController _contentCtrl;
+  late final HighlightEditingController _contentCtrl;
+  Set<String> _itemNames = {};
   late String _mood;
   late String _weather;
   late String _location;
@@ -37,7 +40,10 @@ class _EditScreenState extends State<EditScreen> {
   void initState() {
     super.initState();
     _titleCtrl = TextEditingController(text: widget.entry?.title ?? '');
-    _contentCtrl = TextEditingController(text: widget.entry?.content ?? '');
+    _contentCtrl = HighlightEditingController(
+      itemNames: _itemNames,
+      text: widget.entry?.content ?? '',
+    );
     _mood = widget.entry?.mood ?? _moods.first;
     _weather = widget.entry?.weather ?? _weathers.first;
     _location = widget.entry?.location ?? '';
@@ -45,6 +51,17 @@ class _EditScreenState extends State<EditScreen> {
         widget.entry?.publishDate ?? widget.defaultDate ?? DateTime.now();
     _encrypted = widget.entry?.encrypted ?? false;
     _password = widget.entry?.password ?? '';
+    _loadItems();
+  }
+
+  Future<void> _loadItems() async {
+    final items = await ItemStorage.load();
+    if (!mounted) return;
+    setState(() {
+      _itemNames =
+          items.map((e) => e.name).where((n) => n.isNotEmpty).toSet();
+      _contentCtrl.itemNames = _itemNames;
+    });
   }
 
   @override
