@@ -444,14 +444,37 @@ class _HomeScreenState extends State<HomeScreen>
                     ],
                   );
                 },
-                child: _currentTab == 'items'
-                    ? ItemListScreen(
-                        key: _itemListKey,
-                        onOpenMenu: _openMenu,
-                      )
-                    : _loading
-                        ? const Center(child: CircularProgressIndicator())
-                        : _buildBody(),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  transitionBuilder: (child, animation) {
+                    return SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(1, 0),
+                        end: Offset.zero,
+                      ).animate(animation),
+                      child: child,
+                    );
+                  },
+                  child: _currentTab == 'items'
+                      ? KeyedSubtree(
+                          key: const ValueKey('items'),
+                          child: ItemListScreen(
+                            key: _itemListKey,
+                            onOpenMenu: _openMenu,
+                          ),
+                        )
+                      : _loading
+                          ? const Center(
+                              key: ValueKey('loading'),
+                              child: CircularProgressIndicator(),
+                            )
+                          : KeyedSubtree(
+                              key: const ValueKey('diary'),
+                              child: _buildBody(),
+                            ),
+                ),
               ),
             ),
           ),
@@ -710,27 +733,46 @@ class _HomeScreenState extends State<HomeScreen>
 
   Widget _buildNormalBar() {
     final now = DateTime.now();
-    String label = '${now.year} - ${now.month} - ${now.day}';
+    String label = '${now.year}-${now.month.toString().padLeft(2, '0')}';
     if (_selectedDate != null) {
       final d = _selectedDate!;
-      label = '${d.year} - ${d.month} - ${d.day}';
+      label = '${d.year}-${d.month.toString().padLeft(2, '0')}';
     }
     return Container(
       key: const ValueKey('normal_bar'),
+      height: 48,
       color: const Color(0xB33B6FE0),
-      child: Row(
+      child: Stack(
         children: [
-          IconButton(
-            icon: const Icon(Icons.menu, color: Colors.white),
-            onPressed: _openMenu,
+          Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.menu, color: Colors.white),
+                onPressed: _openMenu,
+              ),
+              const Spacer(),
+              IconButton(
+                icon: Icon(
+                  _activeTopic == null
+                      ? Icons.filter_alt_outlined
+                      : Icons.filter_alt,
+                  color: Colors.white,
+                ),
+                onPressed: _showFilterSheet,
+              ),
+              IconButton(
+                icon: const Icon(Icons.search, color: Colors.white),
+                onPressed: _openSearch,
+              ),
+            ],
           ),
-          Expanded(
+          Center(
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: () =>
                   setState(() => _calendarExpanded = !_calendarExpanded),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     label,
@@ -751,19 +793,6 @@ class _HomeScreenState extends State<HomeScreen>
                 ],
               ),
             ),
-          ),
-          IconButton(
-            icon: Icon(
-              _activeTopic == null
-                  ? Icons.filter_alt_outlined
-                  : Icons.filter_alt,
-              color: Colors.white,
-            ),
-            onPressed: _showFilterSheet,
-          ),
-          IconButton(
-            icon: const Icon(Icons.search, color: Colors.white),
-            onPressed: _openSearch,
           ),
         ],
       ),
