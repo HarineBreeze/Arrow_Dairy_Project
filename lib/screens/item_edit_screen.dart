@@ -4,11 +4,12 @@ import '../services/item_storage.dart';
 
 const List<String> kCategories = ['数码设备', '衣物', '配饰', '家具'];
 const Map<String, List<String>> kCategoryIcons = {
-  '数码设备': ['📱', '💻', '📷', '🎧', '⌚', '🖥️'],
-  '衣物': ['👕', '👖', '👗', '🧥', '👟', '🧢'],
-  '配饰': ['💍', '👜', '🕶️', '🧣', '🎒', '🕐'],
-  '家具': ['🛋️', '🛏️', '💡', '🪑', '🚪', '📺'],
+  '数码设备': ['📱', '💻', '📷', '🎧', '⌚', '🖥️', '🎮', '⌨️'],
+  '衣物': ['👕', '👖', '👗', '🧥', '👟', '🧢', '👔', '👘'],
+  '配饰': ['💍', '👜', '🕶️', '🧣', '🎒', '🕐', '👓', '🧤'],
+  '家具': ['🛋️', '🛏️', '💡', '🪑', '🚪', '📺', '🪴', '🛁'],
 };
+const List<String> kFallbackIcons = ['📱', '💻', '📷', '🎧', '⌚', '🖥️', '🎮', '⌨️'];
 
 class ItemEditScreen extends StatefulWidget {
   final Item? item;
@@ -153,6 +154,68 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
     if (picked != null) setState(() => _lostDate = picked);
   }
 
+  Future<void> _addCustomCategory() async {
+    final ctrl = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('自定义类型'),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          maxLength: 8,
+          decoration: const InputDecoration(hintText: '输入类型名（最多8字）'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+            child: const Text('确定'),
+          ),
+        ],
+      ),
+    );
+    ctrl.dispose();
+    if (result != null && result.isNotEmpty) {
+      setState(() {
+        _category = result;
+        _icon = kFallbackIcons.first;
+      });
+    }
+  }
+
+  Future<void> _addCustomIcon() async {
+    final ctrl = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('自定义图标'),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          decoration: const InputDecoration(hintText: '输入一个emoji，如 🎸'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+            child: const Text('确定'),
+          ),
+        ],
+      ),
+    );
+    ctrl.dispose();
+    if (result != null && result.isNotEmpty) {
+      setState(() => _icon = result);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -270,59 +333,93 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
 
   Widget _buildCategoryRow() {
     return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: kCategories.map((c) {
-        final sel = c == _category;
-        return GestureDetector(
-          onTap: () => setState(() {
-            _category = c;
-            _icon = kCategoryIcons[c]!.first;
-          }),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: sel ? const Color(0xFF3B6FE0) : Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: sel ? const Color(0xFF3B6FE0) : const Color(0xFFDCE7FF),
+      spacing: 6,
+      runSpacing: 6,
+      children: [
+        ...kCategories.map((c) {
+          final sel = c == _category;
+          return GestureDetector(
+            onTap: () => setState(() {
+              _category = c;
+              _icon = kCategoryIcons[c]!.first;
+            }),
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              decoration: BoxDecoration(
+                color: sel ? const Color(0xFF3B6FE0) : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: sel
+                      ? const Color(0xFF3B6FE0)
+                      : const Color(0xFFDCE7FF),
+                ),
+              ),
+              child: Text(
+                c,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: sel ? Colors.white : const Color(0xFF5A6B82),
+                ),
               ),
             ),
-            child: Text(
-              c,
-              style: TextStyle(
-                fontSize: 14,
-                color: sel ? Colors.white : const Color(0xFF5A6B82),
-              ),
+          );
+        }),
+        GestureDetector(
+          onTap: _addCustomCategory,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFDCE7FF)),
+            ),
+            child: const Text(
+              '自定义',
+              style: TextStyle(fontSize: 13, color: Color(0xFF5A6B82)),
             ),
           ),
-        );
-      }).toList(),
+        ),
+      ],
     );
   }
 
   Widget _buildIconRow() {
-    final icons = kCategoryIcons[_category] ?? ['📱'];
+    final icons = kCategoryIcons[_category] ?? kFallbackIcons;
     return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: icons.map((ic) {
-        final sel = ic == _icon;
-        return GestureDetector(
-          onTap: () => setState(() => _icon = ic),
-          child: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: sel ? const Color(0xFFDCE7FF) : Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: sel ? const Color(0xFF3B6FE0) : const Color(0xFFE8EDF5),
-              ),
-            ),
-            child: Text(ic, style: const TextStyle(fontSize: 22)),
+      spacing: 4,
+      runSpacing: 6,
+      children: [
+        ...icons.map((ic) => _buildIconCell(ic)),
+        _buildIconCell('…', isCustom: true),
+      ],
+    );
+  }
+
+  Widget _buildIconCell(String value, {bool isCustom = false}) {
+    final sel = !isCustom && value == _icon;
+    return GestureDetector(
+      onTap: () =>
+          isCustom ? _addCustomIcon() : setState(() => _icon = value),
+      child: Container(
+        width: 32,
+        height: 32,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: sel ? const Color(0xFFDCE7FF) : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: sel ? const Color(0xFF3B6FE0) : const Color(0xFFE8EDF5),
           ),
-        );
-      }).toList(),
+        ),
+        child: Text(
+          value,
+          style: TextStyle(
+            fontSize: isCustom ? 18 : 18,
+            color: isCustom ? const Color(0xFF9AA8BF) : null,
+          ),
+        ),
+      ),
     );
   }
 

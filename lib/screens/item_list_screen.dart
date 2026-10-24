@@ -3,6 +3,10 @@ import '../models/item.dart';
 import '../services/item_storage.dart';
 import 'item_edit_screen.dart';
 
+enum _ItemFilter { all, owning, lost }
+
+enum _ItemSortField { usage, days, price, avgCost, acquired }
+
 class ItemListScreen extends StatefulWidget {
   final VoidCallback onOpenMenu;
 
@@ -18,6 +22,11 @@ class ItemListScreenState extends State<ItemListScreen> {
   bool _searching = false;
   final TextEditingController _searchCtrl = TextEditingController();
   String _query = '';
+
+  _ItemFilter _filter = _ItemFilter.all;
+  _ItemSortField _sortField = _ItemSortField.acquired;
+  bool _sortAscending = false;
+  bool _costByUse = false; // false=平均成本(日均), true=次均成本
 
   @override
   void initState() {
@@ -78,18 +87,68 @@ class ItemListScreenState extends State<ItemListScreen> {
   }
 
   List<Item> get _filtered {
-    if (_query.isEmpty) return _items;
-    final q = _query.toLowerCase();
-    return _items.where((e) => e.name.toLowerCase().contains(q)).toList();
+    var list = List<Item>.of(_items);
+    if (_filter == _ItemFilter.owning) {
+      list = list.where((e) => e.lostDate == null).toList();
+    } else if (_filter == _ItemFilter.lost) {
+      list = list.where((e) => e.lostDate != null).toList();
+    }
+    if (_query.isNotEmpty) {
+      final q = _query.toLowerCase();
+      list = list.where((e) => e.name.toLowerCase().contains(q)).toList();
+    }
+    list.sort(_compareItems);
+    return list;
   }
 
-  double get _totalValue =>
-      _items.fold(0.0, (sum, e) => sum + e.price);
+  int _compareItems(Item a, Item b) {
+    int cmp;
+    switch (_sortField) {
+      case _ItemSortField.usage:
+        cmp = a.usageCount.compareTo(b.usageCount);
+        break;
+      case _ItemSortField.days:
+        cmp = a.acquiredDays.compareTo(b.acquiredDays);
+        break;
+      case _ItemSortField.price:
+        cmp = a.price.compareTo(b.price);
+        break;
+      case _ItemSortField.avgCost:
+        cmp = a.unitPrice.compareTo(b.unitPrice);
+        break;
+      case _ItemSortField.acquired:
+        cmp = a.acquiredDate.compareTo(b.acquiredDate);
+        break;
+    }
+    return _sortAscending ? cmp : -cmp;
+  }
+
+  double get _totalValue => _items.fold(0.0, (sum, e) => sum + e.price);
 
   double get _dailyCost => _items.fold(0.0, (sum, e) {
         final days = e.acquiredDays;
         return days > 0 ? sum + e.price / days : sum;
       });
+
+  double get _perUseCost => _items.fold(0.0, (sum, e) {
+        final n = e.usageCount < 1 ? 1 : e.usageCount;
+        return sum + e.price / n;
+      });
+
+  String _sortFieldLabel(_ItemSortField f) {
+    switch (f) {
+      case _ItemSortField.usage:
+        return '使用次数';
+      case _ItemSortField.days:
+        return '使用天数';
+      case _ItemSortField.price:
+        return '购买价格';
+      case _ItemSortField.avgCost:
+        return '平均成本';
+      case _ItemSortField.acquired:
+        return '购买时间';
+    }
+  }
 
   void _toggleSearch() {
     setState(() {
@@ -99,6 +158,146 @@ class ItemListScreenState extends State<ItemListScreen> {
         _searchCtrl.clear();
       }
     });
+  }
+
+  void _showSortSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('排序方式',
+                        style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF2A3B52))),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _ItemSortField.values.map((f) {
+                        final sel = f == _sortField;
+                        return GestureDetector(
+                          onTap: () => setSheetState(
+                              () => _sortField = f),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: sel
+                                  ? const Color(0xFF3B6FE0)
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(
+                                color: sel
+                                    ? const Color(0xFF3B6FE0)
+                                    : const Color(0xFFDCE7FF),
+                              ),
+                            ),
+                            child: Text(
+                              _sortFieldLabel(f),
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: sel
+                                    ? Colors.white
+                                    : const Color(0xFF5A6B82),
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 18),
+                    const Text('排序顺序',
+                        style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF2A3B52))),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        _buildOrderChip(
+                          label: '升序排列',
+                          selected: _sortAscending,
+                          onTap: () => setSheetState(
+                              () => _sortAscending = true),
+                        ),
+                        const SizedBox(width: 8),
+                        _buildOrderChip(
+                          label: '降序排列',
+                          selected: !_sortAscending,
+                          onTap: () => setSheetState(
+                              () => _sortAscending = false),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          setState(() {});
+                        },
+                        style: ElevatedButton.styleFrom(
+                          padding:
+                              const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text('完成',
+                            style: TextStyle(fontSize: 16)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildOrderChip({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFF3B6FE0) : Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: selected
+                ? const Color(0xFF3B6FE0)
+                : const Color(0xFFDCE7FF),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            color: selected ? Colors.white : const Color(0xFF5A6B82),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -118,6 +317,7 @@ class ItemListScreenState extends State<ItemListScreen> {
           )
         else ...[
           _buildDataView(),
+          _buildFilterSortBar(),
           const Divider(height: 1, color: Color(0xFFE8EDF5)),
           Expanded(
             child: _filtered.isEmpty
@@ -213,8 +413,46 @@ class ItemListScreenState extends State<ItemListScreen> {
           _buildDivider(),
           _buildDataItem('总价值', '¥${_totalValue.toStringAsFixed(0)}'),
           _buildDivider(),
-          _buildDataItem('日均成本', '¥${_dailyCost.toStringAsFixed(2)}'),
+          _buildCostItem(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCostItem() {
+    final label = _costByUse ? '次均成本' : '平均成本';
+    final value = _costByUse
+        ? '¥${_perUseCost.toStringAsFixed(2)}'
+        : '¥${_dailyCost.toStringAsFixed(2)}';
+    return Expanded(
+      child: InkWell(
+        onTap: () => setState(() => _costByUse = !_costByUse),
+        child: Column(
+          children: [
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF3B6FE0),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                      fontSize: 12, color: Color(0xFF9AA8BF)),
+                ),
+                const SizedBox(width: 2),
+                const Icon(Icons.swap_vert,
+                    size: 14, color: Color(0xFF9AA8BF)),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -237,6 +475,67 @@ class ItemListScreenState extends State<ItemListScreen> {
             style: const TextStyle(fontSize: 12, color: Color(0xFF9AA8BF)),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildFilterSortBar() {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(16, 4, 8, 10),
+      child: Row(
+        children: [
+          _buildFilterChip('全部', _ItemFilter.all),
+          const SizedBox(width: 6),
+          _buildFilterChip('拥有中', _ItemFilter.owning),
+          const SizedBox(width: 6),
+          _buildFilterChip('已失去', _ItemFilter.lost),
+          const Spacer(),
+          InkWell(
+            onTap: _showSortSheet,
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              child: Row(
+                children: [
+                  const Icon(Icons.sort,
+                      size: 18, color: Color(0xFF3B6FE0)),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${_sortFieldLabel(_sortField)} ${_sortAscending ? '升' : '降'}',
+                    style: const TextStyle(
+                        fontSize: 12, color: Color(0xFF3B6FE0)),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(String label, _ItemFilter filter) {
+    final sel = _filter == filter;
+    return GestureDetector(
+      onTap: () => setState(() => _filter = filter),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: sel ? const Color(0xFF3B6FE0) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: sel ? const Color(0xFF3B6FE0) : const Color(0xFFDCE7FF),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: sel ? Colors.white : const Color(0xFF5A6B82),
+          ),
+        ),
       ),
     );
   }
@@ -296,7 +595,8 @@ class _ItemCard extends StatelessWidget {
                 '¥${item.unitPrice.toStringAsFixed(2)}/$unitLabel',
                 style: TextStyle(
                   fontSize: 13,
-                  color: lost ? const Color(0xFFB0B8C4) : const Color(0xFF3B6FE0),
+                  color:
+                      lost ? const Color(0xFFB0B8C4) : const Color(0xFF3B6FE0),
                 ),
               ),
               const SizedBox(height: 2),
