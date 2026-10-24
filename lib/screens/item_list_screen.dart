@@ -164,6 +164,12 @@ class ItemListScreenState extends State<ItemListScreen> {
     });
   }
 
+  bool get isSearching => _searching;
+
+  void closeSearch() {
+    if (_searching) _toggleSearch();
+  }
+
   void _showSortSheet() {
     showModalBottomSheet(
       context: context,
@@ -327,7 +333,7 @@ class ItemListScreenState extends State<ItemListScreen> {
                     ),
                     child: TextField(
                       controller: _searchCtrl,
-                      autofocus: true,
+                      autofocus: false,
                       style: const TextStyle(
                           fontSize: 15, color: Color(0xFF2A3B52)),
                       textAlignVertical: TextAlignVertical.center,

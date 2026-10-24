@@ -277,6 +277,13 @@ class _HomeScreenState extends State<HomeScreen>
       _closeMenu();
       return false;
     }
+    if (_currentTab == 'items') {
+      final itemsState = _itemListKey.currentState;
+      if (itemsState != null && itemsState.isSearching) {
+        itemsState.closeSearch();
+        return false;
+      }
+    }
     if (_calendarExpanded) {
       setState(() => _calendarExpanded = false);
       return false;
