@@ -525,6 +525,7 @@ class _ItemCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         onTap: onTap,
         child: Stack(
+          fit: StackFit.expand,
           children: [
             Padding(
               padding: const EdgeInsets.all(12),
