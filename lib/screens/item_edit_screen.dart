@@ -28,6 +28,9 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
   late DateTime _acquiredDate;
   DateTime? _lostDate;
   late int _calcMethod;
+  late bool _wishlist;
+  late double _savePerTime;
+  late double _savedAmount;
   bool _saving = false;
 
   bool get _isNew => widget.item == null;
@@ -46,6 +49,9 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
     _acquiredDate = it?.acquiredDate ?? DateTime.now();
     _lostDate = it?.lostDate;
     _calcMethod = it?.calcMethod ?? 0;
+    _wishlist = it?.wishlist ?? false;
+    _savePerTime = it?.savePerTime ?? 0;
+    _savedAmount = it?.savedAmount ?? 0;
   }
 
   @override
@@ -66,8 +72,17 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
     }
     if (price <= 0) {
       ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('请填写购买价格')));
+          .showSnackBar(const SnackBar(content: Text('请填写物品价格')));
       return;
+    }
+
+    // 愿望单转已拥有（攒钱完成）：默认价格/天数，拥有日为当天
+    final wasWishlist = widget.item?.wishlist ?? false;
+    DateTime acquired = _acquiredDate;
+    if (wasWishlist && !_wishlist) {
+      acquired = DateTime.now();
+      _calcMethod = 0;
+      _lostDate = null;
     }
 
     setState(() => _saving = true);
@@ -81,10 +96,13 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         category: _category,
         icon: _icon,
         price: price,
-        acquiredDate: _acquiredDate,
+        acquiredDate: acquired,
         lostDate: _lostDate,
         calcMethod: _calcMethod,
         usageCount: usage,
+        wishlist: _wishlist,
+        savePerTime: _savePerTime,
+        savedAmount: _savedAmount,
       ));
     } else {
       final idx = list.indexWhere((e) => e.id == widget.item!.id);
@@ -93,10 +111,13 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         list[idx].category = _category;
         list[idx].icon = _icon;
         list[idx].price = price;
-        list[idx].acquiredDate = _acquiredDate;
+        list[idx].acquiredDate = acquired;
         list[idx].lostDate = _lostDate;
         list[idx].calcMethod = _calcMethod;
         list[idx].usageCount = usage;
+        list[idx].wishlist = _wishlist;
+        list[idx].savePerTime = _savePerTime;
+        list[idx].savedAmount = _wishlist ? _savedAmount : 0;
       }
     }
     await ItemStorage.save(list);
@@ -237,6 +258,9 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _buildStatusRow(),
+            const Divider(height: 1),
+            const SizedBox(height: 16),
             _buildNameField(),
             const Divider(height: 1),
             const SizedBox(height: 16),
@@ -246,13 +270,22 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
             _buildCategoryRow(),
             const SizedBox(height: 16),
             _buildIconRow(),
-            const SizedBox(height: 16),
-            _buildDateRow(),
-            const SizedBox(height: 12),
-            _buildCalcMethodRow(),
-            if (_calcMethod == 1) ...[
+            if (!_wishlist) ...[
+              const SizedBox(height: 16),
+              _buildDateRow(),
               const SizedBox(height: 12),
-              _buildUsageField(),
+              _buildCalcMethodRow(),
+              if (_calcMethod == 1) ...[
+                const SizedBox(height: 12),
+                _buildUsageField(),
+              ],
+            ] else ...[
+              const SizedBox(height: 16),
+              _buildSavePerTimeRow(),
+              const SizedBox(height: 12),
+              _buildSavedAmountRow(),
+              const SizedBox(height: 16),
+              _buildProgressBarRow(),
             ],
           ],
         ),
@@ -302,6 +335,212 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
       ),
     );
   }
+
+  Widget _buildStatusRow() {
+    return Row(
+      children: [
+        const Text('物品状态',
+            style: TextStyle(fontSize: 15, color: Color(0xFF2A3B52))),
+        const Spacer(),
+        _buildStatusChip('已拥有', false),
+        const SizedBox(width: 8),
+        _buildStatusChip('愿望单', true),
+      ],
+    );
+  }
+
+  Widget _buildStatusChip(String label, bool wishlistValue) {
+    final sel = _wishlist == wishlistValue;
+    return GestureDetector(
+      onTap: () => setState(() => _wishlist = wishlistValue),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: sel
+              ? (wishlistValue
+                  ? const Color(0xFFE58BA0)
+                  : const Color(0xFF3B6FE0))
+              : Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: sel
+                ? (wishlistValue
+                    ? const Color(0xFFE58BA0)
+                    : const Color(0xFF3B6FE0))
+                : const Color(0xFFDCE7FF),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            color: sel ? Colors.white : const Color(0xFF5A6B82),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<double?> _inputAmountDialog(String title, double initial) async {
+    final ctrl = TextEditingController(
+        text: initial > 0 ? _fmtAmount(initial) : '');
+    final result = await showDialog<double>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(title),
+        content: TextField(
+          controller: ctrl,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: '0.00',
+            prefixText: '¥ ',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () =>
+                Navigator.pop(ctx, double.tryParse(ctrl.text.trim()) ?? 0),
+            child: const Text('确定'),
+          ),
+        ],
+      ),
+    );
+    return result;
+  }
+
+  String _fmtAmount(double v) {
+    return v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2);
+  }
+
+  Widget _buildSavePerTimeRow() {
+    return InkWell(
+      onTap: () async {
+        final v = await _inputAmountDialog('每次攒钱金额', _savePerTime);
+        if (v != null && v >= 0) setState(() => _savePerTime = v);
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            const Text('每次攒钱',
+                style: TextStyle(fontSize: 15, color: Color(0xFF2A3B52))),
+            const Spacer(),
+            Text(
+              _savePerTime > 0 ? '¥${_fmtAmount(_savePerTime)}' : '点击设置',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: _savePerTime > 0
+                    ? const Color(0xFF34A853)
+                    : const Color(0xFF9AA8BF),
+              ),
+            ),
+            const SizedBox(width: 4),
+            const Icon(Icons.chevron_right,
+                size: 18, color: Color(0xFFC4CEDD)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  double get _saveStep => _savePerTime > 0 ? _savePerTime : 1;
+
+  Widget _buildSavedAmountRow() {
+    return Row(
+      children: [
+        const Text('已攒金额',
+            style: TextStyle(fontSize: 15, color: Color(0xFF2A3B52))),
+        const Spacer(),
+        _buildStepButton(Icons.remove, () {
+          setState(() {
+            _savedAmount = (_savedAmount - _saveStep) < 0
+                ? 0
+                : _savedAmount - _saveStep;
+          });
+        }),
+        const SizedBox(width: 10),
+        GestureDetector(
+          onTap: () async {
+            final v = await _inputAmountDialog('已攒金额', _savedAmount);
+            if (v != null && v >= 0) setState(() => _savedAmount = v);
+          },
+          behavior: HitTestBehavior.opaque,
+          child: SizedBox(
+            width: 84,
+            child: Text(
+              '¥${_fmtAmount(_savedAmount)}',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF34A853),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        _buildStepButton(Icons.add, () {
+          setState(() => _savedAmount += _saveStep);
+        }),
+      ],
+    );
+  }
+
+  Widget _buildProgressBarRow() {
+    final percent = price > 0 ? _savedAmount / price * 100 : 0.0;
+    final ratio = price > 0
+        ? (_savedAmount / price).clamp(0.0, 1.0)
+        : 0.0;
+    final pct = (percent.round()).toString();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLabel('攒钱进度'),
+        const SizedBox(height: 10),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: SizedBox(
+            height: 24,
+            child: Stack(
+              children: [
+                Container(color: const Color(0xFFE0E4EA)),
+                FractionallySizedBox(
+                  widthFactor: ratio,
+                  child: Container(color: const Color(0xFF34A853)),
+                ),
+                Center(
+                  child: Text(
+                    '$pct%',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                      shadows: [
+                        Shadow(
+                            blurRadius: 4,
+                            color: Colors.black38,
+                            offset: Offset(0, 1))
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  double get price =>
+      double.tryParse(_priceCtrl.text.trim()) ?? 0;
 
   Widget _buildLabel(String text) => Text(
         text,
@@ -427,7 +666,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const Text('购买价格',
+        const Text('物品价格',
             style: TextStyle(fontSize: 15, color: Color(0xFF2A3B52))),
         const SizedBox(width: 16),
         Expanded(

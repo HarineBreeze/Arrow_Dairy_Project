@@ -8,6 +8,9 @@ class Item {
   DateTime? lostDate;
   int calcMethod; // 0=价格/天数, 1=价格/使用次数
   int usageCount;
+  bool wishlist; // true=愿望单
+  double savePerTime; // 每次攒钱金额
+  double savedAmount; // 已攒金额
 
   Item({
     required this.id,
@@ -19,7 +22,19 @@ class Item {
     this.lostDate,
     this.calcMethod = 0,
     this.usageCount = 0,
+    this.wishlist = false,
+    this.savePerTime = 0,
+    this.savedAmount = 0,
   });
+
+  bool get isWishlist => wishlist;
+
+  /// 攒钱进度 0~1
+  double get progress {
+    if (price <= 0) return 0;
+    final p = savedAmount / price;
+    return p < 0 ? 0 : (p > 1 ? 1 : p);
+  }
 
   int get acquiredDays {
     final end = lostDate ?? DateTime.now();
@@ -45,6 +60,9 @@ class Item {
         'lostDate': lostDate?.toIso8601String(),
         'calcMethod': calcMethod,
         'usageCount': usageCount,
+        'wishlist': wishlist,
+        'savePerTime': savePerTime,
+        'savedAmount': savedAmount,
       };
 
   factory Item.fromJson(Map<String, dynamic> json) => Item(
@@ -59,5 +77,8 @@ class Item {
             : null,
         calcMethod: json['calcMethod'] as int? ?? 0,
         usageCount: json['usageCount'] as int? ?? 0,
+        wishlist: json['wishlist'] as bool? ?? false,
+        savePerTime: (json['savePerTime'] as num?)?.toDouble() ?? 0,
+        savedAmount: (json['savedAmount'] as num?)?.toDouble() ?? 0,
       );
 }

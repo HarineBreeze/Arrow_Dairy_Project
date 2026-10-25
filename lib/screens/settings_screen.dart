@@ -54,8 +54,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _import() async {
     try {
       final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['json'],
+        // 不按扩展名过滤：部分文件管理器对 json 过滤支持差，
+        // 且微信保存的文件可能无扩展名，交给 App 自行校验内容
+        type: FileType.any,
       );
       if (result == null || result.files.single.path == null) return;
       final path = result.files.single.path!;
@@ -162,7 +163,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   icon: Icons.download,
                   iconColor: const Color(0xFF34A853),
                   title: '导入数据',
-                  subtitle: '从微信、电脑、本地文件夹选择备份文件，导入后覆盖当前数据',
+                  subtitle: '选择任意文件即可，会自动校验是否为备份文件',
                   busy: _importing,
                   onTap: _import,
                 ),
@@ -173,7 +174,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 4),
             child: Text(
-              '提示：换新手机时，先在旧手机「导出数据」并把文件传到新手机，再在新手机这里「导入数据」即可完整恢复笔记与物资清单。',
+              '换机流程：旧手机「导出数据」→ 把文件传到新手机 → 新手机「导入数据」。\n\n从微信导入：先在微信中点开文件 → 右上角「…」→「保存到手机」，再在导入的文件选择器里进入「内部存储 / Download / WeiXin」目录选择（选择器里可点左上角菜单浏览全部文件夹）。',
               style: TextStyle(fontSize: 12, color: Color(0xFF9AA8BF)),
             ),
           ),

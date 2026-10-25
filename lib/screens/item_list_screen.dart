@@ -3,7 +3,7 @@ import '../models/item.dart';
 import '../services/item_storage.dart';
 import 'item_edit_screen.dart';
 
-enum _ItemFilter { all, owning, lost }
+enum _ItemFilter { all, owning, lost, wishlist }
 
 enum _ItemSortField { usage, days, price, avgCost, acquired }
 
@@ -92,12 +92,44 @@ class ItemListScreenState extends State<ItemListScreen> {
     }
   }
 
+  /// 愿望单：按每次攒钱金额 调整已攒金额
+  Future<void> _adjustSaved(Item item, int direction) async {
+    final step = item.savePerTime > 0 ? item.savePerTime : 1;
+    final list = await ItemStorage.load();
+    final idx = list.indexWhere((e) => e.id == item.id);
+    if (idx < 0) return;
+    final it = list[idx];
+    var saved = it.savedAmount + step * direction;
+    if (saved < 0) saved = 0;
+
+    if (it.price > 0 && saved >= it.price) {
+      // 攒钱完成 → 自动转为已拥有
+      it.savedAmount = 0;
+      it.wishlist = false;
+      it.calcMethod = 0;
+      it.lostDate = null;
+      it.acquiredDate = DateTime.now();
+      await ItemStorage.save(list);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('🎉 攒钱完成，「${it.name}」已加入拥有中！')),
+      );
+      _load();
+      return;
+    }
+    it.savedAmount = saved;
+    await ItemStorage.save(list);
+    _load();
+  }
+
   List<Item> get _filtered {
     var list = List<Item>.of(_items);
     if (_filter == _ItemFilter.owning) {
-      list = list.where((e) => e.lostDate == null).toList();
+      list = list.where((e) => !e.wishlist && e.lostDate == null).toList();
     } else if (_filter == _ItemFilter.lost) {
-      list = list.where((e) => e.lostDate != null).toList();
+      list = list.where((e) => !e.wishlist && e.lostDate != null).toList();
+    } else if (_filter == _ItemFilter.wishlist) {
+      list = list.where((e) => e.wishlist).toList();
     }
     if (_query.isNotEmpty) {
       final q = _query.toLowerCase();
@@ -304,10 +336,14 @@ class ItemListScreenState extends State<ItemListScreen> {
                     itemBuilder: (context, i) {
                       final it = _filtered[i];
                       return _ItemCard(
+                        key: ValueKey(it.id),
                         item: it,
                         onTap: () => _openEditor(it),
-                        onUse: it.calcMethod == 1
+                        onUse: !it.wishlist && it.calcMethod == 1
                             ? () => _incrementUsage(it)
+                            : null,
+                        onAdjustSaved: it.wishlist
+                            ? (d) => _adjustSaved(it, d)
                             : null,
                       );
                     },
@@ -445,26 +481,28 @@ class ItemListScreenState extends State<ItemListScreen> {
   Widget _buildFilterSortBar() {
     return Container(
       color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(16, 4, 8, 10),
+      padding: const EdgeInsets.fromLTRB(12, 4, 6, 10),
       child: Row(
         children: [
           _buildFilterChip('全部', _ItemFilter.all),
-          const SizedBox(width: 6),
+          const SizedBox(width: 4),
           _buildFilterChip('拥有中', _ItemFilter.owning),
-          const SizedBox(width: 6),
+          const SizedBox(width: 4),
           _buildFilterChip('已失去', _ItemFilter.lost),
-          const SizedBox(width: 2),
+          const SizedBox(width: 4),
+          _buildFilterChip('愿望单', _ItemFilter.wishlist),
+          // 排序按钮位于【愿望单】右侧
           InkWell(
             onTap: () =>
                 setState(() => _sortAscending = !_sortAscending),
             borderRadius: BorderRadius.circular(8),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
               child: Icon(
                 _sortAscending
                     ? Icons.arrow_upward
                     : Icons.arrow_downward,
-                size: 18,
+                size: 17,
                 color: const Color(0xFF3B6FE0),
               ),
             ),
@@ -474,7 +512,7 @@ class ItemListScreenState extends State<ItemListScreen> {
             onTap: _showSortSheet,
             borderRadius: BorderRadius.circular(8),
             child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              padding: EdgeInsets.symmetric(horizontal: 6, vertical: 6),
               child: Icon(Icons.sort, size: 20, color: Color(0xFF3B6FE0)),
             ),
           ),
@@ -488,12 +526,20 @@ class ItemListScreenState extends State<ItemListScreen> {
     return GestureDetector(
       onTap: () => setState(() => _filter = filter),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: sel ? const Color(0xFF3B6FE0) : Colors.white,
+          color: sel
+              ? (filter == _ItemFilter.wishlist
+                  ? const Color(0xFFE58BA0)
+                  : const Color(0xFF3B6FE0))
+              : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: sel ? const Color(0xFF3B6FE0) : const Color(0xFFDCE7FF),
+            color: sel
+                ? (filter == _ItemFilter.wishlist
+                    ? const Color(0xFFE58BA0)
+                    : const Color(0xFF3B6FE0))
+                : const Color(0xFFDCE7FF),
           ),
         ),
         child: Text(
@@ -511,100 +557,254 @@ class ItemListScreenState extends State<ItemListScreen> {
       Container(width: 1, height: 30, color: const Color(0xFFE8EDF5));
 }
 
-class _ItemCard extends StatelessWidget {
+class _ItemCard extends StatefulWidget {
   final Item item;
   final VoidCallback onTap;
   final VoidCallback? onUse;
+  final ValueChanged<int>? onAdjustSaved; // 愿望单 +1/-1 攒钱
 
   const _ItemCard(
-      {Key? key, required this.item, required this.onTap, this.onUse})
+      {Key? key,
+      required this.item,
+      required this.onTap,
+      this.onUse,
+      this.onAdjustSaved})
       : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    final lost = item.lostDate != null;
-    final unitLabel = item.calcMethod == 1 ? '次' : '天';
-    final usageLabel = item.calcMethod == 1
-        ? '使用 ${item.usageCount} 次'
-        : '已用 ${item.acquiredDays} 天';
+  State<_ItemCard> createState() => _ItemCardState();
+}
 
-    return Card(
+class _ItemCardState extends State<_ItemCard> {
+  Item get item => widget.item;
+
+  @override
+  Widget build(BuildContext context) {
+    final wishlist = item.wishlist;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeOutCubic,
       margin: EdgeInsets.zero,
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      color: lost ? const Color(0xFFE4E7EC) : Colors.white,
+      decoration: BoxDecoration(
+        color: wishlist
+            ? const Color(0xFFFBE9EC) // 低饱和度淡粉色
+            : (item.lostDate != null ? const Color(0xFFE4E7EC) : Colors.white),
+        borderRadius: BorderRadius.circular(14),
+      ),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Opacity(
-                    opacity: lost ? 0.5 : 1,
-                    child:
-                        Text(item.icon, style: const TextStyle(fontSize: 40)),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    item.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: lost
-                          ? const Color(0xFF9AA8BF)
-                          : const Color(0xFF2A3B52),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '¥${item.unitPrice.toStringAsFixed(2)}/$unitLabel',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: lost
-                          ? const Color(0xFFB0B8C4)
-                          : const Color(0xFF3B6FE0),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  GestureDetector(
-                    onTap: onUse,
-                    behavior: HitTestBehavior.opaque,
-                    child: Text(
-                      usageLabel,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: lost
-                            ? const Color(0xFFB0B8C4)
-                            : const Color(0xFF9AA8BF),
-                      ),
-                    ),
-                  ),
-                ],
+        onTap: widget.onTap,
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 500),
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeInCubic,
+          transitionBuilder: (child, animation) => FadeTransition(
+            opacity: animation,
+            child: ScaleTransition(scale: animation, child: child),
+          ),
+          // key 随状态变化触发自然过渡
+          child: wishlist
+              ? _buildWishlistBody()
+              : _buildOwnedBody(item.lostDate != null),
+        ),
+      ),
+    );
+  }
+
+  // ---------- 愿望单卡片 ----------
+  Widget _buildWishlistBody() {
+    final pct = (item.progress * 100).round();
+    return Stack(
+      fit: StackFit.expand,
+      key: const ValueKey('wishlist'),
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(item.icon, style: const TextStyle(fontSize: 40)),
+              const SizedBox(height: 6),
+              Text(
+                item.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF2A3B52),
+                ),
               ),
+              const SizedBox(height: 4),
+              Text(
+                '已攒 ¥${_fmt(item.savedAmount)} / ¥${_fmt(item.price)}',
+                style: const TextStyle(
+                    fontSize: 12, color: Color(0xFF34A853)),
+              ),
+              const SizedBox(height: 8),
+              _buildProgressbar(),
+            ],
+          ),
+        ),
+        // 左上角 ⭐
+        const Positioned(
+          top: 8,
+          left: 10,
+          child: Text('⭐', style: TextStyle(fontSize: 14)),
+        ),
+        // 右上角：减号 + 价格 + 加号
+        Positioned(
+          top: 4,
+          right: 6,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildRoundBtn(Icons.remove, () => widget.onAdjustSaved?.call(-1)),
+              const SizedBox(width: 2),
+              Text(
+                '¥${_fmt(item.price)}',
+                style: const TextStyle(
+                    fontSize: 10, color: Color(0xFFB58793)),
+              ),
+              const SizedBox(width: 2),
+              _buildRoundBtn(Icons.add, () => widget.onAdjustSaved?.call(1)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProgressbar() {
+    final pct = (item.progress * 100).round();
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(7),
+      child: SizedBox(
+        height: 15,
+        child: Stack(
+          children: [
+            Container(color: const Color(0xFFE0E4EA)),
+            FractionallySizedBox(
+              alignment: Alignment.centerLeft,
+              widthFactor: item.progress,
+              child: Container(color: const Color(0xFF34A853)),
             ),
-            Positioned(
-              top: 8,
-              right: 10,
+            Center(
               child: Text(
-                '¥${item.price.toStringAsFixed(0)}',
-                style: TextStyle(
+                '$pct%',
+                style: const TextStyle(
                   fontSize: 10,
-                  color: lost
-                      ? const Color(0xFFB0B8C4)
-                      : const Color(0xFF9AA8BF),
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(
+                        blurRadius: 3,
+                        color: Colors.black38,
+                        offset: Offset(0, 1))
+                  ],
                 ),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildRoundBtn(IconData icon, VoidCallback? onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: 20,
+        height: 20,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.85),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: const Color(0xFFE5B9C3)),
+        ),
+        child: Icon(icon, size: 13, color: const Color(0xFFD96A85)),
+      ),
+    );
+  }
+
+  String _fmt(double v) =>
+      v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2);
+
+  // ---------- 已拥有 / 已失去卡片 ----------
+  Widget _buildOwnedBody(bool lost) {
+    final unitLabel = item.calcMethod == 1 ? '次' : '天';
+    final usageLabel = item.calcMethod == 1
+        ? '使用 ${item.usageCount} 次'
+        : '已用 ${item.acquiredDays} 天';
+    return Stack(
+      fit: StackFit.expand,
+      key: const ValueKey('owned'),
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Opacity(
+                opacity: lost ? 0.5 : 1,
+                child:
+                    Text(item.icon, style: const TextStyle(fontSize: 40)),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                item.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: lost
+                      ? const Color(0xFF9AA8BF)
+                      : const Color(0xFF2A3B52),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '¥${item.unitPrice.toStringAsFixed(2)}/$unitLabel',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: lost
+                      ? const Color(0xFFB0B8C4)
+                      : const Color(0xFF3B6FE0),
+                ),
+              ),
+              const SizedBox(height: 2),
+              GestureDetector(
+                onTap: widget.onUse,
+                behavior: HitTestBehavior.opaque,
+                child: Text(
+                  usageLabel,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: lost
+                        ? const Color(0xFFB0B8C4)
+                        : const Color(0xFF9AA8BF),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Positioned(
+          top: 8,
+          right: 10,
+          child: Text(
+            '¥${item.price.toStringAsFixed(0)}',
+            style: TextStyle(
+              fontSize: 10,
+              color: lost
+                  ? const Color(0xFFB0B8C4)
+                  : const Color(0xFF9AA8BF),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
