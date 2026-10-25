@@ -36,6 +36,10 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
 
   bool get _isNew => widget.item == null;
 
+  /// 主题强调色：愿望单=粉色，已拥有=蓝色
+  Color get _accent =>
+      _wishlist ? const Color(0xFFE58BA0) : const Color(0xFF3B6FE0);
+
   @override
   void initState() {
     super.initState();
@@ -248,7 +252,9 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xCC3B6FE0),
+        backgroundColor: _wishlist
+            ? const Color(0xFFE58BA0)
+            : const Color(0xCC3B6FE0),
         foregroundColor: Colors.white,
         elevation: 0,
         title: Text(_isNew ? '添加物品' : '编辑物品'),
@@ -326,6 +332,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
                 child: ElevatedButton(
                   onPressed: _saving ? null : _save,
                   style: ElevatedButton.styleFrom(
+                    primary: _accent,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -363,23 +370,18 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
 
   Widget _buildStatusChip(String label, bool wishlistValue) {
     final sel = _wishlist == wishlistValue;
+    final accent = wishlistValue
+        ? const Color(0xFFE58BA0)
+        : const Color(0xFF3B6FE0);
     return GestureDetector(
       onTap: () => setState(() => _wishlist = wishlistValue),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
         decoration: BoxDecoration(
-          color: sel
-              ? (wishlistValue
-                  ? const Color(0xFFE58BA0)
-                  : const Color(0xFF3B6FE0))
-              : Colors.white,
+          color: sel ? accent : Colors.white,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: sel
-                ? (wishlistValue
-                    ? const Color(0xFFE58BA0)
-                    : const Color(0xFF3B6FE0))
-                : const Color(0xFFDCE7FF),
+            color: sel ? accent : const Color(0xFFDCE7FF),
           ),
         ),
         child: Text(
@@ -514,36 +516,43 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildLabel('攒钱进度'),
+        // 与「已攒金额、每次攒钱」同行样式一致（15号、深灰、左对齐）
+        const Text('攒钱进度',
+            style: TextStyle(fontSize: 15, color: Color(0xFF2A3B52))),
         const SizedBox(height: 10),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: SizedBox(
-            height: 24,
-            child: Stack(
-              children: [
-                Container(color: const Color(0xFFE0E4EA)),
-                FractionallySizedBox(
-                  widthFactor: ratio,
-                  child: Container(color: const Color(0xFF34A853)),
-                ),
-                Center(
-                  child: Text(
-                    '$pct%',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                      shadows: [
-                        Shadow(
-                            blurRadius: 4,
-                            color: Colors.black38,
-                            offset: Offset(0, 1))
-                      ],
+        // 长度进一步缩短
+        Padding(
+          padding: const EdgeInsets.only(right: 56),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: SizedBox(
+              height: 16,
+              child: Stack(
+                children: [
+                  Container(color: const Color(0xFFE0E4EA)),
+                  FractionallySizedBox(
+                    widthFactor: ratio,
+                    child: Container(color: const Color(0xFF34A853)),
+                  ),
+                  Center(
+                    child: Text(
+                      '$pct%',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        height: 1.0,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                        shadows: [
+                          Shadow(
+                              blurRadius: 3,
+                              color: Colors.black38,
+                              offset: Offset(0, 1))
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -598,12 +607,10 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
               padding:
                   const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
               decoration: BoxDecoration(
-                color: sel ? const Color(0xFF3B6FE0) : Colors.white,
+                color: sel ? _accent : Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: sel
-                      ? const Color(0xFF3B6FE0)
-                      : const Color(0xFFDCE7FF),
+                  color: sel ? _accent : const Color(0xFFDCE7FF),
                 ),
               ),
               child: Text(
@@ -657,10 +664,10 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         height: 32,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: sel ? const Color(0xFFDCE7FF) : Colors.white,
+          color: sel ? _accent.withOpacity(0.15) : Colors.white,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: sel ? const Color(0xFF3B6FE0) : const Color(0xFFE8EDF5),
+            color: sel ? _accent : const Color(0xFFE8EDF5),
           ),
         ),
         child: Text(
@@ -825,12 +832,10 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
-                  color: sel ? const Color(0xFF3B6FE0) : Colors.white,
+                  color: sel ? _accent : Colors.white,
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(
-                    color: sel
-                        ? const Color(0xFF3B6FE0)
-                        : const Color(0xFFDCE7FF),
+                    color: sel ? _accent : const Color(0xFFDCE7FF),
                   ),
                 ),
                 child: Text(
@@ -899,7 +904,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
           shape: BoxShape.circle,
           border: Border.all(color: const Color(0xFFDCE7FF)),
         ),
-        child: Icon(icon, size: 18, color: const Color(0xFF3B6FE0)),
+        child: Icon(icon, size: 18, color: _accent),
       ),
     );
   }
