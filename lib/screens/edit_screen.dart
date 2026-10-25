@@ -24,6 +24,8 @@ class _EditScreenState extends State<EditScreen> {
   late DateTime _publishDate;
   bool _encrypted = false;
   String _password = '';
+  String _passwordHint = '';
+  String _passwordAnswer = '';
   bool _saving = false;
 
   static const List<String> _moods = ['😊', '😌', '😢', '😡', '😴', '🥰'];
@@ -53,6 +55,8 @@ class _EditScreenState extends State<EditScreen> {
         widget.entry?.publishDate ?? widget.defaultDate ?? DateTime.now();
     _encrypted = widget.entry?.encrypted ?? false;
     _password = widget.entry?.password ?? '';
+    _passwordHint = widget.entry?.passwordHint ?? '';
+    _passwordAnswer = widget.entry?.passwordAnswer ?? '';
     _loadItems();
   }
 
@@ -106,6 +110,8 @@ class _EditScreenState extends State<EditScreen> {
         location: _location,
         encrypted: _encrypted,
         password: _password,
+        passwordHint: _passwordHint,
+        passwordAnswer: _passwordAnswer,
         createdAt: now,
         updatedAt: now,
         publishDate: _publishDate,
@@ -121,6 +127,8 @@ class _EditScreenState extends State<EditScreen> {
         list[idx].location = _location;
         list[idx].encrypted = _encrypted;
         list[idx].password = _password;
+        list[idx].passwordHint = _passwordHint;
+        list[idx].passwordAnswer = _passwordAnswer;
         list[idx].publishDate = _publishDate;
         list[idx].updatedAt = DateTime.now();
       }
@@ -203,38 +211,79 @@ class _EditScreenState extends State<EditScreen> {
       setState(() {
         _encrypted = false;
         _password = '';
+        _passwordHint = '';
+        _passwordAnswer = '';
       });
     }
   }
 
   Future<void> _setPassword() async {
     final ctrl = TextEditingController(text: _password);
-    final pwd = await showDialog<String>(
+    final hintCtrl = TextEditingController(text: _passwordHint);
+    final ansCtrl = TextEditingController(text: _passwordAnswer);
+    final result = await showDialog<Map<String, String>>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('设置密码'),
-        content: TextField(
-          controller: ctrl,
-          autofocus: true,
-          obscureText: true,
-          decoration: const InputDecoration(hintText: '请输入密码'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: ctrl,
+                autofocus: true,
+                obscureText: true,
+                decoration: const InputDecoration(hintText: '请输入密码'),
+              ),
+              const SizedBox(height: 8),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text('忘记提示（选填）',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF9AA8BF))),
+              ),
+              TextField(
+                controller: hintCtrl,
+                maxLength: 20,
+                decoration: const InputDecoration(
+                  hintText: '如：我的生日是几号？',
+                  counterText: '',
+                ),
+              ),
+              TextField(
+                controller: ansCtrl,
+                maxLength: 20,
+                decoration: const InputDecoration(
+                  hintText: '提示答案',
+                  counterText: '',
+                ),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
           TextButton(
-              onPressed: () => Navigator.pop(ctx, ctrl.text),
+              onPressed: () => Navigator.pop(ctx, {
+                    'pwd': ctrl.text,
+                    'hint': hintCtrl.text.trim(),
+                    'answer': ansCtrl.text.trim(),
+                  }),
               child: const Text('确定')),
         ],
       ),
     );
-    if (pwd != null && pwd.isNotEmpty) {
+    if (result != null && (result['pwd'] ?? '').isNotEmpty) {
       setState(() {
         _encrypted = true;
-        _password = pwd;
+        _password = result['pwd']!;
+        _passwordHint = result['hint'] ?? '';
+        _passwordAnswer = result['answer'] ?? '';
       });
     }
     ctrl.dispose();
+    hintCtrl.dispose();
+    ansCtrl.dispose();
   }
 
   Widget _buildVisibilityRow() {

@@ -8,6 +8,9 @@ class DiaryEntry {
   String location;
   bool encrypted;
   String password;
+  String passwordHint; // 忘记密码提示
+  String passwordAnswer; // 提示答案
+  bool pinned; // 置顶
   final DateTime createdAt;
   DateTime updatedAt;
   DateTime publishDate;
@@ -22,6 +25,9 @@ class DiaryEntry {
     this.location = '',
     this.encrypted = false,
     this.password = '',
+    this.passwordHint = '',
+    this.passwordAnswer = '',
+    this.pinned = false,
     required this.createdAt,
     required this.updatedAt,
     required this.publishDate,
@@ -38,6 +44,9 @@ class DiaryEntry {
       'location': location,
       'encrypted': encrypted,
       'password': password,
+      'passwordHint': passwordHint,
+      'passwordAnswer': passwordAnswer,
+      'pinned': pinned,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
       'publishDate': publishDate.toIso8601String(),

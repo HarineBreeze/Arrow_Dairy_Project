@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show SystemUiOverlayStyle;
 import '../models/diary_entry.dart';
@@ -59,6 +60,7 @@ class _HomeScreenState extends State<HomeScreen>
     _menuAnim = CurvedAnimation(
         parent: _menuController, curve: Curves.easeOutCubic);
     _expandedKeys.add(_dateKey(now));
+    _expandedKeys.add('__pinned');
     _load();
     _loadProfile();
   }
@@ -97,6 +99,82 @@ class _HomeScreenState extends State<HomeScreen>
         );
       },
     );
+  }
+
+  Timer? _pinTimer;
+
+  /// 长按 3 秒后弹出操作菜单（置顶/编辑/删除）
+  void _startPinTimer(DiaryEntry entry) {
+    _cancelPinTimer();
+    _pinTimer = Timer(const Duration(seconds: 3), () {
+      _pinTimer = null;
+      _showNoteActions(entry);
+    });
+  }
+
+  void _cancelPinTimer() {
+    _pinTimer?.cancel();
+    _pinTimer = null;
+  }
+
+  Future<void> _showNoteActions(DiaryEntry entry) async {
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 6),
+            ListTile(
+              leading: Icon(
+                entry.pinned ? Icons.push_pin_outlined : Icons.push_pin,
+                color: const Color(0xFFE58BA0),
+              ),
+              title: Text(entry.pinned ? '取消置顶' : '置顶',
+                  style: const TextStyle(fontSize: 15)),
+              onTap: () => Navigator.pop(ctx, 'pin'),
+            ),
+            ListTile(
+              leading:
+                  const Icon(Icons.edit_outlined, color: Color(0xFF3B6FE0)),
+              title: const Text('编辑', style: TextStyle(fontSize: 15)),
+              onTap: () => Navigator.pop(ctx, 'edit'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_outline, color: Colors.red),
+              title: const Text('删除',
+                  style: TextStyle(fontSize: 15, color: Colors.red)),
+              onTap: () => Navigator.pop(ctx, 'delete'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (action == null || !mounted) return;
+    if (action == 'pin') {
+      final list = await DiaryStorage.load();
+      final idx = list.indexWhere((e) => e.id == entry.id);
+      if (idx >= 0) {
+        list[idx].pinned = !list[idx].pinned;
+        await DiaryStorage.save(list);
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(list.firstWhere((e) => e.id == entry.id).pinned
+                ? '已置顶该笔记 📌'
+                : '已取消置顶')),
+      );
+      _load();
+    } else if (action == 'edit') {
+      _openEditor(entry);
+    } else if (action == 'delete') {
+      _delete(entry);
+    }
   }
 
   Future<void> _openEditor([DiaryEntry? entry]) async {
@@ -148,6 +226,38 @@ class _HomeScreenState extends State<HomeScreen>
               ],
             ),
             actions: [
+              TextButton(
+                onPressed: () {
+                  // 展示设置好的忘记提示
+                  final hint = entry.passwordHint;
+                  final answer = entry.passwordAnswer;
+                  showDialog(
+                    context: ctx,
+                    builder: (hctx) => AlertDialog(
+                      title: const Text('密码提示'),
+                      content: Text(
+                        (hint.isEmpty && answer.isEmpty)
+                            ? '这条笔记没有设置密码提示哦～'
+                            : (answer.isNotEmpty
+                                ? '提示：$hint\n答案：$answer'
+                                : '提示：$hint'),
+                        style: const TextStyle(fontSize: 14, height: 1.5),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(hctx),
+                          child: const Text('好的'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                child: const Text(
+                  '忘记密码',
+                  style: TextStyle(fontSize: 13, color: Color(0xFF9AA8BF)),
+                ),
+              ),
+              const Spacer(),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
                 child: const Text('取消'),
@@ -355,6 +465,19 @@ class _HomeScreenState extends State<HomeScreen>
   Set<String> get _markedDates =>
       _entries.map((e) => _dateKey(e.publishDate)).toSet();
 
+  /// 当天第一篇（按创建时间最早）笔记的心情，用于日历小图标
+  String? _moodOfDay(DateTime d) {
+    DiaryEntry? first;
+    for (final e in _entries) {
+      if (!_sameDay(e.publishDate, d)) continue;
+      if (first == null ||
+          e.createdAt.isBefore(first.createdAt)) {
+        first = e;
+      }
+    }
+    return first?.mood;
+  }
+
   List<DiaryEntry> get _filtered {
     var list = _entries;
     if (_query.isNotEmpty) {
@@ -390,6 +513,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   void dispose() {
+    _pinTimer?.cancel();
     _menuController.dispose();
     _searchCtrl.dispose();
     super.dispose();
@@ -551,10 +675,19 @@ class _HomeScreenState extends State<HomeScreen>
                           if (expanded)
                             ...group.entries.map((e) => Padding(
                                   padding: const EdgeInsets.only(top: 8),
-                                  child: _DiaryCard(
-                                    entry: e,
-                                    onTap: () => _openNote(e),
-                                    onDelete: () => _delete(e),
+                                  child: GestureDetector(
+                                    behavior: HitTestBehavior.opaque,
+                                    // 长按 3 秒弹出操作菜单
+                                    onLongPressDown: (_) =>
+                                        _startPinTimer(e),
+                                    onLongPressCancel: _cancelPinTimer,
+                                    onLongPressUp: _cancelPinTimer,
+                                    child: _DiaryCard(
+                                      entry: e,
+                                      isPinned: e.pinned,
+                                      onTap: () => _openNote(e),
+                                      onDelete: () => _delete(e),
+                                    ),
                                   ),
                                 )),
                         ],
@@ -569,8 +702,18 @@ class _HomeScreenState extends State<HomeScreen>
 
   List<_NoteGroup> _buildGroups() {
     final groups = <_NoteGroup>[];
+    // 置顶笔记单独成栏（置顶在最前），底纹淡粉色
+    final pinned = _filtered.where((e) => e.pinned).toList();
+    if (pinned.isNotEmpty) {
+      groups.add(_NoteGroup(
+          key: '__pinned',
+          label: '置顶笔记',
+          date: pinned.first.publishDate,
+          entries: pinned));
+    }
     _NoteGroup? current;
     for (final e in _filtered) {
+      if (e.pinned) continue; // 置顶的移出普通日期分栏
       final key = _groupKeyOf(e.publishDate);
       final label = _groupLabelOf(e.publishDate);
       if (current == null || current.key != key) {
@@ -642,12 +785,15 @@ class _HomeScreenState extends State<HomeScreen>
 
   Widget _buildGroupHeader(_NoteGroup group, bool expanded) {
     final isToday = _viewMode == 'all' && _sameDay(group.date, DateTime.now());
+    final isPinnedGroup = group.key == '__pinned';
     return InkWell(
       onTap: () => _toggleGroup(group.key),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: const Color(0xFFDCE7FF),
+          color: isPinnedGroup
+              ? const Color(0xFFFBE9EC) // 置顶分栏：低饱和度淡粉色
+              : const Color(0xFFDCE7FF),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
@@ -655,9 +801,15 @@ class _HomeScreenState extends State<HomeScreen>
             Icon(
               expanded ? Icons.expand_less : Icons.expand_more,
               size: 18,
-              color: const Color(0xFF3B6FE0),
+              color: isPinnedGroup
+                  ? const Color(0xFFE58BA0)
+                  : const Color(0xFF3B6FE0),
             ),
             const SizedBox(width: 8),
+            if (isPinnedGroup) ...[
+              const Text('📌', style: TextStyle(fontSize: 13)),
+              const SizedBox(width: 4),
+            ],
             Text(
               group.label,
               style: const TextStyle(
@@ -1037,6 +1189,7 @@ class _HomeScreenState extends State<HomeScreen>
         hasEntry: hasEntry,
         isSelected: isSelected,
         isToday: isToday,
+        mood: hasEntry ? _moodOfDay(date) : null,
         onTap: () {
           setState(() {
             if (_selectedDate != null && _sameDay(date, _selectedDate!)) {
@@ -1088,6 +1241,7 @@ class _DayCell extends StatelessWidget {
   final bool hasEntry;
   final bool isSelected;
   final bool isToday;
+  final String? mood; // 当天第一篇笔记的心情
   final VoidCallback onTap;
 
   const _DayCell({
@@ -1096,6 +1250,7 @@ class _DayCell extends StatelessWidget {
     required this.hasEntry,
     required this.isSelected,
     required this.isToday,
+    this.mood,
     required this.onTap,
   }) : super(key: key);
 
@@ -1122,15 +1277,23 @@ class _DayCell extends StatelessWidget {
               : null,
         ),
         alignment: Alignment.center,
-        child: Text(
-          '$day',
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: (hasEntry || isSelected)
-                ? FontWeight.w700
-                : FontWeight.w400,
-            color: fg,
-          ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              '$day',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: (hasEntry || isSelected)
+                    ? FontWeight.w700
+                    : FontWeight.w400,
+                color: fg,
+              ),
+            ),
+            // 日历小心情：有日记的当日在日期下显示第一篇笔记的心情
+            if (mood != null && mood!.isNotEmpty)
+              Text(mood!, style: const TextStyle(fontSize: 8, height: 1.0)),
+          ],
         ),
       ),
     );
@@ -1141,12 +1304,14 @@ class _DiaryCard extends StatelessWidget {
   final DiaryEntry entry;
   final VoidCallback onTap;
   final VoidCallback onDelete;
+  final bool isPinned;
 
   const _DiaryCard({
     Key? key,
     required this.entry,
     required this.onTap,
     required this.onDelete,
+    this.isPinned = false,
   }) : super(key: key);
 
   String _dateLabel(DateTime d) {
@@ -1173,7 +1338,9 @@ class _DiaryCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      color: isEncrypted ? const Color(0xFFE4E7EC) : Colors.white,
+      color: isPinned
+          ? const Color(0xFFFBE9EC) // 置顶笔记：低饱和度淡粉色
+          : (isEncrypted ? const Color(0xFFE4E7EC) : Colors.white),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
         onTap: onTap,
@@ -1232,6 +1399,11 @@ class _DiaryCard extends StatelessWidget {
                           style: const TextStyle(
                               fontSize: 11, color: kTextLight),
                         ),
+                        if (isPinned) ...[
+                          const SizedBox(width: 4),
+                          const Text('📌',
+                              style: TextStyle(fontSize: 11)),
+                        ],
                       ],
                     ),
                     if (entry.title.isNotEmpty) ...[

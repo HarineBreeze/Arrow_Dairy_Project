@@ -589,15 +589,48 @@ class _ItemCard extends StatefulWidget {
 class _ItemCardState extends State<_ItemCard> {
   Item get item => widget.item;
 
+  double _dx = 0; // 滑动位移
+  static const double _maxDx = 90;
+  static const double _triggerDx = 55;
+
   @override
   Widget build(BuildContext context) {
     final wishlist = item.wishlist;
+    final child = wishlist
+        ? _buildWishlistBody()
+        : _buildOwnedBody(item.lostDate != null);
+    if (!wishlist) {
+      return _buildAnimatedCard(child);
+    }
+    // 愿望单：左右滑动攒钱
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onHorizontalDragUpdate: (d) =>
+          setState(() => _dx = (_dx + d.delta.dx).clamp(-_maxDx, _maxDx)),
+      onHorizontalDragEnd: (d) {
+        final v = d.primaryVelocity ?? 0;
+        if (_dx < -_triggerDx || v < -600) {
+          widget.onAdjustSaved?.call(-1);
+        } else if (_dx > _triggerDx || v > 600) {
+          widget.onAdjustSaved?.call(1);
+        }
+        setState(() => _dx = 0);
+      },
+      onHorizontalDragCancel: () => setState(() => _dx = 0),
+      child: _buildAnimatedCard(child),
+    );
+  }
+
+  Widget _buildAnimatedCard(Widget child) {
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 500),
+      duration: _dx == 0
+          ? const Duration(milliseconds: 300)
+          : Duration.zero, // 松手后自然回弹
       curve: Curves.easeOutCubic,
+      transform: Matrix4.translationValues(_dx, 0, 0),
       margin: EdgeInsets.zero,
       decoration: BoxDecoration(
-        color: wishlist
+        color: item.wishlist
             ? const Color(0xFFFBE9EC) // 低饱和度淡粉色
             : (item.lostDate != null ? const Color(0xFFE4E7EC) : Colors.white),
         borderRadius: BorderRadius.circular(14),
@@ -614,7 +647,7 @@ class _ItemCardState extends State<_ItemCard> {
             child: ScaleTransition(scale: animation, child: child),
           ),
           // key 随状态变化触发自然过渡
-          child: wishlist
+          child: item.wishlist
               ? _buildWishlistBody()
               : _buildOwnedBody(item.lostDate != null),
         ),
@@ -652,20 +685,12 @@ class _ItemCardState extends State<_ItemCard> {
                     fontSize: 12, color: Color(0xFF34A853)),
               ),
               const SizedBox(height: 8),
-              // 缩小的进度条，加减号在左右两侧
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2),
-                child: Row(
-                  children: [
-                    _buildRoundBtn(
-                        Icons.remove, () => widget.onAdjustSaved?.call(-1)),
-                    const SizedBox(width: 5),
-                    Expanded(child: _buildProgressbar()),
-                    const SizedBox(width: 5),
-                    _buildRoundBtn(
-                        Icons.add, () => widget.onAdjustSaved?.call(1)),
-                  ],
-                ),
+              _buildProgressbar(),
+              const SizedBox(height: 5),
+              Text(
+                '← 左滑退一记 · 右滑攒一记 →',
+                style: TextStyle(
+                    fontSize: 9, color: const Color(0xFFD96A85).withOpacity(0.7)),
               ),
             ],
           ),
@@ -725,23 +750,6 @@ class _ItemCardState extends State<_ItemCard> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildRoundBtn(IconData icon, VoidCallback? onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(9),
-      child: Container(
-        width: 18,
-        height: 18,
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.85),
-          borderRadius: BorderRadius.circular(5),
-          border: Border.all(color: const Color(0xFFE5B9C3)),
-        ),
-        child: Icon(icon, size: 12, color: const Color(0xFFD96A85)),
       ),
     );
   }
