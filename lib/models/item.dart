@@ -11,6 +11,7 @@ class Item {
   bool wishlist; // true=愿望单
   double savePerTime; // 每次攒钱金额
   double savedAmount; // 已攒金额
+  double extraPrice; // 附加价格（选填，可为负数）
 
   Item({
     required this.id,
@@ -25,7 +26,11 @@ class Item {
     this.wishlist = false,
     this.savePerTime = 0,
     this.savedAmount = 0,
+    this.extraPrice = 0,
   });
+
+  /// 物品实际价格 = 物品价格 + 附加价格
+  double get actualPrice => price + extraPrice;
 
   bool get isWishlist => wishlist;
 
@@ -45,9 +50,9 @@ class Item {
   double get unitPrice {
     if (calcMethod == 1) {
       final n = usageCount < 1 ? 1 : usageCount;
-      return price / n;
+      return actualPrice / n;
     }
-    return price / acquiredDays;
+    return actualPrice / acquiredDays;
   }
 
   Map<String, dynamic> toJson() => {
@@ -63,6 +68,7 @@ class Item {
         'wishlist': wishlist,
         'savePerTime': savePerTime,
         'savedAmount': savedAmount,
+        'extraPrice': extraPrice,
       };
 
   factory Item.fromJson(Map<String, dynamic> json) => Item(
@@ -80,5 +86,6 @@ class Item {
         wishlist: json['wishlist'] as bool? ?? false,
         savePerTime: (json['savePerTime'] as num?)?.toDouble() ?? 0,
         savedAmount: (json['savedAmount'] as num?)?.toDouble() ?? 0,
+        extraPrice: (json['extraPrice'] as num?)?.toDouble() ?? 0,
       );
 }

@@ -154,7 +154,7 @@ class ItemListScreenState extends State<ItemListScreen> {
       case _ItemSortField.days:
         return e.wishlist ? -ts : e.acquiredDays.toDouble();
       case _ItemSortField.price:
-        return e.price;
+        return e.actualPrice;
       case _ItemSortField.avgCost:
         return e.wishlist ? -ts : e.unitPrice;
       case _ItemSortField.acquired:
@@ -171,20 +171,21 @@ class ItemListScreenState extends State<ItemListScreen> {
   List<Item> get _ownedItems =>
       _items.where((e) => !e.wishlist).toList();
 
-  double get _totalValue => _ownedItems.fold(0.0, (sum, e) => sum + e.price);
+  double get _totalValue =>
+      _ownedItems.fold(0.0, (sum, e) => sum + e.actualPrice);
 
   double get _dailyCost => _ownedItems
       .where((e) => e.calcMethod == 0 && e.lostDate == null)
       .fold(0.0, (sum, e) {
         final days = e.acquiredDays;
-        return days > 0 ? sum + e.price / days : sum;
+        return days > 0 ? sum + e.actualPrice / days : sum;
       });
 
   double get _perUseCost => _ownedItems
       .where((e) => e.calcMethod == 1 && e.lostDate == null)
       .fold(0.0, (sum, e) {
         final n = e.usageCount < 1 ? 1 : e.usageCount;
-        return sum + e.price / n;
+        return sum + e.actualPrice / n;
       });
 
   String _sortFieldLabel(_ItemSortField f) {
@@ -812,7 +813,7 @@ class _ItemCardState extends State<_ItemCard> {
           top: 8,
           right: 10,
           child: Text(
-            '¥${item.price.toStringAsFixed(0)}',
+            '¥${item.actualPrice.toStringAsFixed(0)}',
             style: TextStyle(
               fontSize: 10,
               color: lost

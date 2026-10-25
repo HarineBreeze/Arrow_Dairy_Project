@@ -22,6 +22,7 @@ class ItemEditScreen extends StatefulWidget {
 class _ItemEditScreenState extends State<ItemEditScreen> {
   late final TextEditingController _nameCtrl;
   late final TextEditingController _priceCtrl;
+  late final TextEditingController _extraCtrl;
   late final TextEditingController _usageCtrl;
   late String _category;
   late String _icon;
@@ -42,6 +43,8 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
     _nameCtrl = TextEditingController(text: it?.name ?? '');
     _priceCtrl = TextEditingController(
         text: it != null && it.price > 0 ? it.price.toString() : '');
+    _extraCtrl = TextEditingController(
+        text: it != null && it.extraPrice != 0 ? it.extraPrice.toString() : '');
     _usageCtrl = TextEditingController(
         text: it != null && it.usageCount > 0 ? it.usageCount.toString() : '');
     _category = it?.category ?? '数码设备';
@@ -58,6 +61,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
   void dispose() {
     _nameCtrl.dispose();
     _priceCtrl.dispose();
+    _extraCtrl.dispose();
     _usageCtrl.dispose();
     super.dispose();
   }
@@ -87,6 +91,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
 
     setState(() => _saving = true);
 
+    final extra = double.tryParse(_extraCtrl.text.trim()) ?? 0;
     final list = await ItemStorage.load();
     final usage = int.tryParse(_usageCtrl.text.trim()) ?? 0;
     if (_isNew) {
@@ -103,6 +108,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         wishlist: _wishlist,
         savePerTime: _savePerTime,
         savedAmount: _savedAmount,
+        extraPrice: _wishlist ? 0 : extra,
       ));
     } else {
       final idx = list.indexWhere((e) => e.id == widget.item!.id);
@@ -118,6 +124,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         list[idx].wishlist = _wishlist;
         list[idx].savePerTime = _savePerTime;
         list[idx].savedAmount = _wishlist ? _savedAmount : 0;
+        list[idx].extraPrice = _wishlist ? 0 : extra;
       }
     }
     await ItemStorage.save(list);
@@ -267,6 +274,11 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
             _buildPriceField(),
             const Divider(height: 1),
             const SizedBox(height: 16),
+            if (!_wishlist) ...[
+              _buildExtraPriceField(),
+              const Divider(height: 1),
+              const SizedBox(height: 16),
+            ],
             _buildCategoryRow(),
             const SizedBox(height: 16),
             _buildIconRow(),
@@ -681,6 +693,43 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
             ),
           ),
         ),
+      ],
+    );
+  }
+
+  /// 附加价格：选填，可为负数；实际价格 = 物品价格 + 附加价格
+  Widget _buildExtraPriceField() {
+    final extra = double.tryParse(_extraCtrl.text.trim()) ?? 0;
+    final price = double.tryParse(_priceCtrl.text.trim()) ?? 0;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        const Text('附加价格',
+            style: TextStyle(fontSize: 15, color: Color(0xFF2A3B52))),
+        const SizedBox(width: 16),
+        Expanded(
+          child: TextField(
+            controller: _extraCtrl,
+            keyboardType:
+                const TextInputType.numberWithOptions(decimal: true, signed: true),
+            style: const TextStyle(fontSize: 16),
+            decoration: const InputDecoration(
+              hintText: '选填，可为负数',
+              prefixText: '¥ ',
+              border: InputBorder.none,
+            ),
+            onChanged: (_) => setState(() {}),
+          ),
+        ),
+        if (extra != 0 || price > 0)
+          Text(
+            '实际 ¥${_fmtAmount(price + extra)}',
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF3B6FE0),
+            ),
+          ),
       ],
     );
   }
