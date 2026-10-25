@@ -1,15 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../services/backup_service.dart';
-
-/// 当前版本号（发版时同步更新）
-const String kAppVersion = 'v2.9.5';
-
-/// 最新安装包下载页（GitHub Release）
-const String kReleaseUrl =
-    'https://github.com/HarineBreeze/Arrow_Dairy_Project/releases/latest';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -174,78 +166,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   subtitle: '选择任意文件即可，会自动校验是否为备份文件',
                   busy: _importing,
                   onTap: _import,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          const Padding(
-            padding: EdgeInsets.only(left: 4, bottom: 8),
-            child: Text('关于',
-                style: TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF9AA8BF),
-                    fontWeight: FontWeight.w600)),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFE8EDF5)),
-            ),
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 14),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF3B6FE0).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(9),
-                        ),
-                        child: const Icon(Icons.verified_user_outlined,
-                            size: 20, color: Color(0xFF3B6FE0)),
-                      ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Text('当前版本',
-                            style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF2A3B52))),
-                      ),
-                      Text(kAppVersion,
-                          style: const TextStyle(
-                              fontSize: 14, color: Color(0xFF9AA8BF))),
-                    ],
-                  ),
-                ),
-                const Divider(height: 1, indent: 52),
-                _buildItem(
-                  icon: Icons.system_update_alt,
-                  iconColor: const Color(0xFFE58BA0),
-                  title: '下载最新安装包',
-                  subtitle: '仅应用安装包，不含你的笔记、物品等个人数据',
-                  busy: false,
-                  onTap: () async {
-                    try {
-                      final uri = Uri.parse(kReleaseUrl);
-                      if (!await launchUrl(uri,
-                          mode: LaunchMode.externalApplication)) {
-                        throw '';
-                      }
-                    } catch (_) {
-                      if (!mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('打开浏览器失败，请手动访问 GitHub Releases 页面')),
-                      );
-                    }
-                  },
                 ),
               ],
             ),

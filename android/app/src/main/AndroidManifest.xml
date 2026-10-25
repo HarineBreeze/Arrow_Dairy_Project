@@ -31,11 +31,4 @@
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
-    <!-- 允许跳转浏览器（url_launcher 打开下载页） -->
-    <queries>
-        <intent>
-            <action android:name="android.intent.action.VIEW" />
-            <data android:scheme="https" />
-        </intent>
-    </queries>
 </manifest>
