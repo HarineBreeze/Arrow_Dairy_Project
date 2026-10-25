@@ -354,14 +354,14 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
     return GestureDetector(
       onTap: () => setState(() => _wishlist = wishlistValue),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
         decoration: BoxDecoration(
           color: sel
               ? (wishlistValue
                   ? const Color(0xFFE58BA0)
                   : const Color(0xFF3B6FE0))
               : Colors.white,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: sel
                 ? (wishlistValue
@@ -373,7 +373,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 12,
             color: sel ? Colors.white : const Color(0xFF5A6B82),
           ),
         ),
@@ -458,6 +458,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         const Text('已攒金额',
             style: TextStyle(fontSize: 15, color: Color(0xFF2A3B52))),
         const Spacer(),
+        // 加减号并排放置在已攒金额左侧
         _buildStepButton(Icons.remove, () {
           setState(() {
             _savedAmount = (_savedAmount - _saveStep) < 0
@@ -465,30 +466,29 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
                 : _savedAmount - _saveStep;
           });
         }),
-        const SizedBox(width: 10),
+        const SizedBox(width: 8),
+        _buildStepButton(Icons.add, () {
+          setState(() => _savedAmount += _saveStep);
+        }),
+        const SizedBox(width: 14),
+        // 金额右侧显示，与「每次攒钱」金额对齐
         GestureDetector(
           onTap: () async {
             final v = await _inputAmountDialog('已攒金额', _savedAmount);
             if (v != null && v >= 0) setState(() => _savedAmount = v);
           },
           behavior: HitTestBehavior.opaque,
-          child: SizedBox(
-            width: 84,
-            child: Text(
-              '¥${_fmtAmount(_savedAmount)}',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF34A853),
-              ),
+          child: Text(
+            '¥${_fmtAmount(_savedAmount)}',
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF34A853),
             ),
           ),
         ),
-        const SizedBox(width: 10),
-        _buildStepButton(Icons.add, () {
-          setState(() => _savedAmount += _saveStep);
-        }),
+        const SizedBox(width: 4),
+        const Icon(Icons.chevron_right, size: 18, color: Color(0xFFC4CEDD)),
       ],
     );
   }

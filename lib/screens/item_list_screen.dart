@@ -161,16 +161,20 @@ class ItemListScreenState extends State<ItemListScreen> {
     return _sortAscending ? cmp : -cmp;
   }
 
-  double get _totalValue => _items.fold(0.0, (sum, e) => sum + e.price);
+  // 统计数据不包含愿望单物品（攒满转已拥有后参与计算）
+  List<Item> get _ownedItems =>
+      _items.where((e) => !e.wishlist).toList();
 
-  double get _dailyCost => _items
+  double get _totalValue => _ownedItems.fold(0.0, (sum, e) => sum + e.price);
+
+  double get _dailyCost => _ownedItems
       .where((e) => e.calcMethod == 0 && e.lostDate == null)
       .fold(0.0, (sum, e) {
         final days = e.acquiredDays;
         return days > 0 ? sum + e.price / days : sum;
       });
 
-  double get _perUseCost => _items
+  double get _perUseCost => _ownedItems
       .where((e) => e.calcMethod == 1 && e.lostDate == null)
       .fold(0.0, (sum, e) {
         final n = e.usageCount < 1 ? 1 : e.usageCount;
@@ -408,7 +412,7 @@ class ItemListScreenState extends State<ItemListScreen> {
       padding: const EdgeInsets.symmetric(vertical: 14),
       child: Row(
         children: [
-          _buildDataItem('物品数', '${_items.length}'),
+          _buildDataItem('物品数', '${_ownedItems.length}'),
           _buildDivider(),
           _buildDataItem('总价值', '¥${_totalValue.toStringAsFixed(0)}'),
           _buildDivider(),
@@ -613,7 +617,6 @@ class _ItemCardState extends State<_ItemCard> {
 
   // ---------- 愿望单卡片 ----------
   Widget _buildWishlistBody() {
-    final pct = (item.progress * 100).round();
     return Stack(
       fit: StackFit.expand,
       key: const ValueKey('wishlist'),
@@ -637,38 +640,43 @@ class _ItemCardState extends State<_ItemCard> {
               ),
               const SizedBox(height: 4),
               Text(
-                '已攒 ¥${_fmt(item.savedAmount)} / ¥${_fmt(item.price)}',
+                '已攒 ¥${_fmt(item.savedAmount)}',
                 style: const TextStyle(
                     fontSize: 12, color: Color(0xFF34A853)),
               ),
               const SizedBox(height: 8),
-              _buildProgressbar(),
+              // 缩小的进度条，加减号在左右两侧
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: Row(
+                  children: [
+                    _buildRoundBtn(
+                        Icons.remove, () => widget.onAdjustSaved?.call(-1)),
+                    const SizedBox(width: 5),
+                    Expanded(child: _buildProgressbar()),
+                    const SizedBox(width: 5),
+                    _buildRoundBtn(
+                        Icons.add, () => widget.onAdjustSaved?.call(1)),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
-        // 左上角 ⭐
+        // 左上角 ❤️
         const Positioned(
           top: 8,
           left: 10,
-          child: Text('⭐', style: TextStyle(fontSize: 14)),
+          child: Text('❤️', style: TextStyle(fontSize: 13)),
         ),
-        // 右上角：减号 + 价格 + 加号
+        // 右上角物品总价
         Positioned(
-          top: 4,
-          right: 6,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildRoundBtn(Icons.remove, () => widget.onAdjustSaved?.call(-1)),
-              const SizedBox(width: 2),
-              Text(
-                '¥${_fmt(item.price)}',
-                style: const TextStyle(
-                    fontSize: 10, color: Color(0xFFB58793)),
-              ),
-              const SizedBox(width: 2),
-              _buildRoundBtn(Icons.add, () => widget.onAdjustSaved?.call(1)),
-            ],
+          top: 8,
+          right: 10,
+          child: Text(
+            '¥${_fmt(item.price)}',
+            style: const TextStyle(
+                fontSize: 10, color: Color(0xFFB58793)),
           ),
         ),
       ],
@@ -678,10 +686,11 @@ class _ItemCardState extends State<_ItemCard> {
   Widget _buildProgressbar() {
     final pct = (item.progress * 100).round();
     return ClipRRect(
-      borderRadius: BorderRadius.circular(7),
+      borderRadius: BorderRadius.circular(5),
       child: SizedBox(
-        height: 15,
+        height: 11,
         child: Stack(
+          alignment: Alignment.center,
           children: [
             Container(color: const Color(0xFFE0E4EA)),
             FractionallySizedBox(
@@ -689,20 +698,19 @@ class _ItemCardState extends State<_ItemCard> {
               widthFactor: item.progress,
               child: Container(color: const Color(0xFF34A853)),
             ),
-            Center(
-              child: Text(
-                '$pct%',
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                  shadows: [
-                    Shadow(
-                        blurRadius: 3,
-                        color: Colors.black38,
-                        offset: Offset(0, 1))
-                  ],
-                ),
+            Text(
+              '$pct%',
+              style: const TextStyle(
+                fontSize: 8,
+                height: 1.0,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+                shadows: [
+                  Shadow(
+                      blurRadius: 3,
+                      color: Colors.black38,
+                      offset: Offset(0, 1))
+                ],
               ),
             ),
           ],
@@ -714,16 +722,16 @@ class _ItemCardState extends State<_ItemCard> {
   Widget _buildRoundBtn(IconData icon, VoidCallback? onTap) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(9),
       child: Container(
-        width: 20,
-        height: 20,
+        width: 18,
+        height: 18,
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.85),
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(5),
           border: Border.all(color: const Color(0xFFE5B9C3)),
         ),
-        child: Icon(icon, size: 13, color: const Color(0xFFD96A85)),
+        child: Icon(icon, size: 12, color: const Color(0xFFD96A85)),
       ),
     );
   }
