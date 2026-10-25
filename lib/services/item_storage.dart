@@ -4,6 +4,7 @@ import 'package:path_provider/path_provider.dart';
 import '../models/item.dart';
 
 class ItemStorage {
+
   static Future<File> _file() async {
     final dir = await getApplicationDocumentsDirectory();
     return File('${dir.path}/items.json');

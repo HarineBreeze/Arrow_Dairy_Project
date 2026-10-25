@@ -685,12 +685,9 @@ class _ItemCardState extends State<_ItemCard> {
                     fontSize: 12, color: Color(0xFF34A853)),
               ),
               const SizedBox(height: 8),
-              _buildProgressbar(),
-              const SizedBox(height: 5),
-              Text(
-                '← 左滑退一记 · 右滑攒一记 →',
-                style: TextStyle(
-                    fontSize: 9, color: const Color(0xFFD96A85).withOpacity(0.7)),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 26),
+                child: _buildProgressbar(),
               ),
             ],
           ),

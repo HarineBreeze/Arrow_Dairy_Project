@@ -65,6 +65,9 @@ class DiaryEntry {
       location: json['location'] as String? ?? '',
       encrypted: json['encrypted'] as bool? ?? false,
       password: json['password'] as String? ?? '',
+      passwordHint: json['passwordHint'] as String? ?? '',
+      passwordAnswer: json['passwordAnswer'] as String? ?? '',
+      pinned: json['pinned'] as bool? ?? false,
       createdAt: createdAt,
       updatedAt: DateTime.parse(json['updatedAt'] as String),
       publishDate: json['publishDate'] != null

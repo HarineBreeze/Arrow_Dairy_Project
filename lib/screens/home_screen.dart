@@ -103,10 +103,10 @@ class _HomeScreenState extends State<HomeScreen>
 
   Timer? _pinTimer;
 
-  /// 长按 3 秒后弹出操作菜单（置顶/编辑/删除）
+  /// 长按 1 秒后弹出操作菜单（置顶/编辑/删除）
   void _startPinTimer(DiaryEntry entry) {
     _cancelPinTimer();
-    _pinTimer = Timer(const Duration(seconds: 3), () {
+    _pinTimer = Timer(const Duration(seconds: 1), () {
       _pinTimer = null;
       _showNoteActions(entry);
     });
@@ -226,9 +226,24 @@ class _HomeScreenState extends State<HomeScreen>
               ],
             ),
             actions: [
+              // 注意：不要在 actions（OverflowBar）里用 Spacer，会导致无限膨胀灰块
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('取消'),
+              ),
               TextButton(
                 onPressed: () {
-                  // 展示设置好的忘记提示
+                  if (ctrl.text == entry.password) {
+                    Navigator.pop(ctx, true);
+                  } else {
+                    setState(() => error = '密码错误，再试试吧～');
+                  }
+                },
+                child: const Text('确认'),
+              ),
+              TextButton(
+                onPressed: () {
+                  // 展示设置好的忘记提示（右下角）
                   final hint = entry.passwordHint;
                   final answer = entry.passwordAnswer;
                   showDialog(
@@ -256,21 +271,6 @@ class _HomeScreenState extends State<HomeScreen>
                   '忘记密码',
                   style: TextStyle(fontSize: 13, color: Color(0xFF9AA8BF)),
                 ),
-              ),
-              const Spacer(),
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('取消'),
-              ),
-              TextButton(
-                onPressed: () {
-                  if (ctrl.text == entry.password) {
-                    Navigator.pop(ctx, true);
-                  } else {
-                    setState(() => error = '密码错误，再试试吧～');
-                  }
-                },
-                child: const Text('确认'),
               ),
             ],
           ),
@@ -639,6 +639,8 @@ class _HomeScreenState extends State<HomeScreen>
 
   Widget _buildBody() {
     final groups = _buildGroups();
+    // 标签筛选 + 全部视图：不按时间分组，所有匹配笔记平铺展示
+    final flatTopicList = _activeTopic != null && _viewMode == 'all';
     return Column(
       children: [
         _buildTopBar(),
@@ -655,12 +657,36 @@ class _HomeScreenState extends State<HomeScreen>
         ),
         const Divider(height: 1, color: Color(0xFFE8EDF5)),
         Expanded(
-          child: groups.isEmpty
+          child: (groups.isEmpty && !flatTopicList) ||
+                  (flatTopicList && _filtered.isEmpty)
               ? _EmptyState(
                   hasQuery: _query.isNotEmpty,
                   hasDate: _selectedDate != null,
                 )
-              : ListView.builder(
+              : flatTopicList
+                  ? ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+                      itemCount: _filtered.length,
+                      itemBuilder: (context, i) {
+                        final e = _filtered[i];
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onLongPressDown: (_) => _startPinTimer(e),
+                            onLongPressCancel: _cancelPinTimer,
+                            onLongPressUp: _cancelPinTimer,
+                            child: _DiaryCard(
+                              entry: e,
+                              isPinned: e.pinned,
+                              onTap: () => _openNote(e),
+                              onDelete: () => _delete(e),
+                            ),
+                          ),
+                        );
+                      },
+                    )
+                  : ListView.builder(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
                   itemCount: groups.length,
                   itemBuilder: (context, i) {
@@ -818,7 +844,7 @@ class _HomeScreenState extends State<HomeScreen>
                 color: Color(0xFF2A3B52),
               ),
             ),
-            if (isToday) ...[
+            if (isToday && !isPinnedGroup) ...[
               const SizedBox(width: 6),
               const Text(
                 '今天',
@@ -826,10 +852,12 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ],
             const Spacer(),
-            Text(
-              '发布数 ${group.entries.length}',
-              style: const TextStyle(fontSize: 12, color: Color(0xFF5A6B82)),
-            ),
+            if (!isPinnedGroup)
+              Text(
+                '发布数 ${group.entries.length}',
+                style:
+                    const TextStyle(fontSize: 12, color: Color(0xFF5A6B82)),
+              ),
           ],
         ),
       ),

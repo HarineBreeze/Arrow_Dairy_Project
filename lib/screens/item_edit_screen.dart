@@ -26,7 +26,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
   late final TextEditingController _usageCtrl;
   late String _category;
   late String _icon;
-  late DateTime _acquiredDate;
+  DateTime? _acquiredDate; // 拥有日：需手动选择后才能创建已拥有物品
   DateTime? _lostDate;
   late int _calcMethod;
   late bool _wishlist;
@@ -53,7 +53,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         text: it != null && it.usageCount > 0 ? it.usageCount.toString() : '');
     _category = it?.category ?? '数码设备';
     _icon = it?.icon ?? '📱';
-    _acquiredDate = it?.acquiredDate ?? DateTime.now();
+    _acquiredDate = it?.acquiredDate;
     _lostDate = it?.lostDate;
     _calcMethod = it?.calcMethod ?? 0;
     _wishlist = it?.wishlist ?? false;
@@ -84,13 +84,23 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
       return;
     }
 
-    // 愿望单转已拥有（攒钱完成）：默认价格/天数，拥有日为当天
+    // 已拥有物品必须选择拥有日
     final wasWishlist = widget.item?.wishlist ?? false;
-    DateTime acquired = _acquiredDate;
-    if (wasWishlist && !_wishlist) {
+    DateTime acquired;
+    if (_wishlist) {
+      acquired = widget.item?.acquiredDate ?? DateTime.now();
+    } else if (wasWishlist && !_wishlist) {
+      // 愿望单转已拥有（攒钱完成/手动切换）：拥有日为当天
       acquired = DateTime.now();
       _calcMethod = 0;
       _lostDate = null;
+    } else {
+      if (_acquiredDate == null) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('请选择拥有日')));
+        return;
+      }
+      acquired = _acquiredDate!;
     }
 
     setState(() => _saving = true);
@@ -169,7 +179,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
   Future<void> _pickAcquired() async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: _acquiredDate,
+      initialDate: _acquiredDate ?? DateTime.now(),
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
     );
@@ -746,7 +756,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
       children: [
         Expanded(
           child: _buildDateCell(
-            label: '获得日',
+            label: '拥有日',
             value: _acquiredDate,
             onTap: _pickAcquired,
           ),

@@ -23,6 +23,7 @@ class _EditScreenState extends State<EditScreen> {
   late String _location;
   late DateTime _publishDate;
   bool _encrypted = false;
+  bool _pinned = false;
   String _password = '';
   String _passwordHint = '';
   String _passwordAnswer = '';
@@ -54,6 +55,7 @@ class _EditScreenState extends State<EditScreen> {
     _publishDate =
         widget.entry?.publishDate ?? widget.defaultDate ?? DateTime.now();
     _encrypted = widget.entry?.encrypted ?? false;
+    _pinned = widget.entry?.pinned ?? false;
     _password = widget.entry?.password ?? '';
     _passwordHint = widget.entry?.passwordHint ?? '';
     _passwordAnswer = widget.entry?.passwordAnswer ?? '';
@@ -112,6 +114,7 @@ class _EditScreenState extends State<EditScreen> {
         password: _password,
         passwordHint: _passwordHint,
         passwordAnswer: _passwordAnswer,
+        pinned: _pinned,
         createdAt: now,
         updatedAt: now,
         publishDate: _publishDate,
@@ -129,6 +132,7 @@ class _EditScreenState extends State<EditScreen> {
         list[idx].password = _password;
         list[idx].passwordHint = _passwordHint;
         list[idx].passwordAnswer = _passwordAnswer;
+        list[idx].pinned = _pinned;
         list[idx].publishDate = _publishDate;
         list[idx].updatedAt = DateTime.now();
       }
@@ -287,39 +291,123 @@ class _EditScreenState extends State<EditScreen> {
   }
 
   Widget _buildVisibilityRow() {
+    return Row(
+      children: [
+        Expanded(
+          child: InkWell(
+            onTap: _pickVisibility,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFDCE7FF)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.lock_outline,
+                      size: 16, color: Color(0xFF3B6FE0)),
+                  const SizedBox(width: 6),
+                  const Text(
+                    '可见度',
+                    style: TextStyle(fontSize: 13, color: Color(0xFF2A3B52)),
+                  ),
+                  const Spacer(),
+                  Text(
+                    _encrypted ? '加密' : '公开',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF3B6FE0),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.chevron_right,
+                      size: 18, color: Color(0xFF9AA8BF)),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(child: _buildMoreButton()),
+      ],
+    );
+  }
+
+  // 「更多」按钮：目前提供置顶开关，未来在此扩展其它选项
+  Widget _buildMoreButton() {
+    final active = _pinned;
     return InkWell(
-      onTap: _pickVisibility,
+      onTap: _showMoreSheet,
+      borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: active ? const Color(0xFFDCE7FF) : Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFDCE7FF)),
+          border: Border.all(
+              color:
+                  active ? const Color(0xFF3B6FE0) : const Color(0xFFDCE7FF)),
         ),
         child: Row(
           children: [
-            const Icon(Icons.lock_outline,
-                size: 16, color: Color(0xFF3B6FE0)),
+            Icon(Icons.more_horiz,
+                size: 16,
+                color: active ? const Color(0xFF3B6FE0) : Color(0xFF2A3B52)),
             const SizedBox(width: 6),
-            const Text(
-              '可见度',
-              style: TextStyle(fontSize: 13, color: Color(0xFF2A3B52)),
-            ),
-            const Spacer(),
             Text(
-              _encrypted ? '加密' : '公开',
-              style: const TextStyle(
+              '更多',
+              style: TextStyle(
                 fontSize: 13,
-                color: Color(0xFF3B6FE0),
-                fontWeight: FontWeight.w600,
+                color: active ? const Color(0xFF3B6FE0) : Color(0xFF2A3B52),
+                fontWeight: active ? FontWeight.w600 : FontWeight.normal,
               ),
             ),
-            const SizedBox(width: 4),
-            const Icon(Icons.chevron_right,
-                size: 18, color: Color(0xFF9AA8BF)),
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _showMoreSheet() async {
+    await showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 10),
+              Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE0E4EA),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              SwitchListTile(
+                secondary: const Icon(Icons.push_pin_outlined,
+                    size: 20, color: Color(0xFF3B6FE0)),
+                title: const Text('置顶',
+                    style:
+                        TextStyle(fontSize: 14, color: Color(0xFF2A3B52))),
+                value: _pinned,
+                activeColor: const Color(0xFF3B6FE0),
+                onChanged: (v) {
+                  setState(() => _pinned = v);
+                  Navigator.pop(ctx);
+                },
+              ),
+              const SizedBox(height: 6),
+            ],
+          ),
+        );
+      },
     );
   }
 
