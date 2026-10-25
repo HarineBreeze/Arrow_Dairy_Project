@@ -8,6 +8,7 @@ class SideMenu extends StatelessWidget {
   final VoidCallback onOpenProfile;
   final VoidCallback onOpenDiary;
   final VoidCallback onOpenItems;
+  final VoidCallback onOpenSettings;
   final String currentTab; // 'diary' | 'items'
 
   const SideMenu({
@@ -17,6 +18,7 @@ class SideMenu extends StatelessWidget {
     required this.onOpenProfile,
     required this.onOpenDiary,
     required this.onOpenItems,
+    required this.onOpenSettings,
     required this.currentTab,
   }) : super(key: key);
 
@@ -28,8 +30,7 @@ class SideMenu extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 28),
-          Center(
+          const SizedBox(height: 28),          Center(
             child: GestureDetector(
               onTap: onOpenProfile,
               child: buildAppAvatar(profile, radius: 42),
@@ -50,7 +51,41 @@ class SideMenu extends StatelessWidget {
           const Divider(height: 1, color: Color(0xFFE8EDF5)),
           const SizedBox(height: 8),
           _buildTabSwitcher(),
+          const Spacer(),
+          const Divider(height: 1, color: Color(0xFFE8EDF5)),
+          _buildSettingsButton(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSettingsButton() {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onOpenSettings,
+        borderRadius: BorderRadius.circular(10),
+        child: SizedBox(
+          height: 52,
+          child: Row(
+            children: [
+              const SizedBox(width: 16),
+              const Icon(Icons.settings_outlined,
+                  size: 22, color: Color(0xFF5A6B82)),
+              const SizedBox(width: 12),
+              const Text(
+                '设置',
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Color(0xFF2A3B52),
+                ),
+              ),
+              const Spacer(),
+              const Icon(Icons.chevron_right, size: 20, color: Color(0xFFC4CEDD)),
+              const SizedBox(width: 12),
+            ],
+          ),
+        ),
       ),
     );
   }

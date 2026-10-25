@@ -44,6 +44,12 @@ class ItemListScreenState extends State<ItemListScreen> {
     });
   }
 
+  /// 供外部（如导入备份后）强制刷新
+  void reload() {
+    setState(() => _loading = true);
+    _load();
+  }
+
   Future<void> openNewItem() async {
     await _openEditor();
   }

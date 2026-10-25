@@ -8,6 +8,7 @@ import '../utils/rich_text.dart';
 import 'edit_screen.dart';
 import 'side_menu.dart';
 import 'profile_edit_screen.dart';
+import 'settings_screen.dart';
 import 'note_view_screen.dart';
 import 'item_list_screen.dart';
 
@@ -176,6 +177,19 @@ class _HomeScreenState extends State<HomeScreen>
       _slideRoute(ProfileEditScreen(profile: _profile)),
     );
     if (result == true) _loadProfile();
+  }
+
+  Future<void> _openSettings() async {
+    _closeMenu();
+    final result = await Navigator.push<bool>(
+      context,
+      _slideRoute(const SettingsScreen()),
+    );
+    if (result == true) {
+      _load();
+      _loadProfile();
+      _itemListKey.currentState?.reload();
+    }
   }
 
   void _switchTab(String tab) {
@@ -439,6 +453,7 @@ class _HomeScreenState extends State<HomeScreen>
                                 onOpenProfile: _openProfileEditor,
                                 onOpenDiary: () => _switchTab('diary'),
                                 onOpenItems: () => _switchTab('items'),
+                                onOpenSettings: _openSettings,
                               ),
                             ),
                           ),
