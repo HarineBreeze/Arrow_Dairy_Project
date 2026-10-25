@@ -139,25 +139,31 @@ class ItemListScreenState extends State<ItemListScreen> {
     return list;
   }
 
-  int _compareItems(Item a, Item b) {
-    int cmp;
+  /// 排序键：愿望单物品按需求参与排序
+  /// - 使用次数/使用天数/平均成本：愿望单一律排在已拥有物品之前（值最小），
+  ///   多件愿望单之间，新添加的排更前（值更小）
+  /// - 购买价格：按物品价格正常排序
+  /// - 购买时间：愿望单一律视为最新，新添加的更新
+  /// （id 为创建时的微秒时间戳，可用来比较“新添加”的先后）
+  double _sortKey(Item e) {
+    final ts =
+        double.tryParse(e.id) ?? e.acquiredDate.millisecondsSinceEpoch.toDouble();
     switch (_sortField) {
       case _ItemSortField.usage:
-        cmp = a.usageCount.compareTo(b.usageCount);
-        break;
+        return e.wishlist ? -ts : e.usageCount.toDouble();
       case _ItemSortField.days:
-        cmp = a.acquiredDays.compareTo(b.acquiredDays);
-        break;
+        return e.wishlist ? -ts : e.acquiredDays.toDouble();
       case _ItemSortField.price:
-        cmp = a.price.compareTo(b.price);
-        break;
+        return e.price;
       case _ItemSortField.avgCost:
-        cmp = a.unitPrice.compareTo(b.unitPrice);
-        break;
+        return e.wishlist ? -ts : e.unitPrice;
       case _ItemSortField.acquired:
-        cmp = a.acquiredDate.compareTo(b.acquiredDate);
-        break;
+        return e.wishlist ? ts : e.acquiredDate.millisecondsSinceEpoch.toDouble();
     }
+  }
+
+  int _compareItems(Item a, Item b) {
+    final cmp = _sortKey(a).compareTo(_sortKey(b));
     return _sortAscending ? cmp : -cmp;
   }
 
@@ -686,31 +692,34 @@ class _ItemCardState extends State<_ItemCard> {
   Widget _buildProgressbar() {
     final pct = (item.progress * 100).round();
     return ClipRRect(
-      borderRadius: BorderRadius.circular(5),
+      borderRadius: BorderRadius.circular(4),
       child: SizedBox(
-        height: 11,
+        height: 9,
         child: Stack(
-          alignment: Alignment.center,
+          alignment: Alignment.centerLeft,
           children: [
             Container(color: const Color(0xFFE0E4EA)),
+            // 绿色完成块从左侧往右侧增加（与编辑页进度条一致）
             FractionallySizedBox(
               alignment: Alignment.centerLeft,
               widthFactor: item.progress,
               child: Container(color: const Color(0xFF34A853)),
             ),
-            Text(
-              '$pct%',
-              style: const TextStyle(
-                fontSize: 8,
-                height: 1.0,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-                shadows: [
-                  Shadow(
-                      blurRadius: 3,
-                      color: Colors.black38,
-                      offset: Offset(0, 1))
-                ],
+            Center(
+              child: Text(
+                '$pct%',
+                style: const TextStyle(
+                  fontSize: 7,
+                  height: 1.0,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(
+                        blurRadius: 3,
+                        color: Colors.black38,
+                        offset: Offset(0, 1))
+                  ],
+                ),
               ),
             ),
           ],
