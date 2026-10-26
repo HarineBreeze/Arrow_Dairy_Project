@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../models/diary_entry.dart';
 import '../services/diary_storage.dart';
 import '../services/item_storage.dart';
@@ -33,6 +34,7 @@ class _EditScreenState extends State<EditScreen> {
   List<TextFormat> _formats = [];
   bool _showToolbar = false;
   late final FocusNode _contentFocus;
+  bool _hadSelection = false;
   String _lastContent = '';
 
   static const List<String> _moods = ['😊', '😌', '😢', '😡', '😴', '🥰'];
@@ -60,6 +62,7 @@ class _EditScreenState extends State<EditScreen> {
     _lastContent = _contentCtrl.text;
     _contentFocus = FocusNode();
     _contentFocus.addListener(_onFocusChange);
+    _contentCtrl.addListener(_onSelectionChanged);
     _mood = widget.entry?.mood ?? _moods.first;
     _weather = widget.entry?.weather ?? _weathers.first;
     _location = widget.entry?.location ?? '';
@@ -75,14 +78,63 @@ class _EditScreenState extends State<EditScreen> {
 
   void _onFocusChange() {
     if (!mounted) return;
-    if (_contentFocus.hasFocus && !_showToolbar) {
-      // 延迟等键盘弹出后再显示，避免布局跳动
-      Future.delayed(const Duration(milliseconds: 120), () {
-        if (mounted && _contentFocus.hasFocus && !_showToolbar) {
-          setState(() => _showToolbar = true);
-        }
-      });
+    if (_contentFocus.hasFocus) {
+      // 获得焦点后，若存在选区则立刻收起输入法（框选时不弹键盘）
+      Future.delayed(const Duration(milliseconds: 60), _hideKeyboardIfSelected);
+    } else {
+      // 失焦时收起排版栏
+      if (_showToolbar) setState(() => _showToolbar = false);
     }
+  }
+
+  /// 选区变化：仅当「从无选区变成有选区」时，收起键盘并展开排版栏。
+  void _onSelectionChanged() {
+    if (!mounted) return;
+    final sel = _contentCtrl.selection;
+    final hasSelection = sel.isValid && !sel.isCollapsed;
+    if (hasSelection && !_hadSelection) {
+      _hadSelection = true;
+      SystemChannels.textInput.invokeMethod('TextInput.hide');
+      if (!_showToolbar) setState(() => _showToolbar = true);
+    } else if (!hasSelection) {
+      _hadSelection = false;
+    }
+  }
+
+  /// 有选区时强制收起输入法，让工具栏顶替键盘。
+  void _hideKeyboardIfSelected() {
+    if (!mounted) return;
+    final sel = _contentCtrl.selection;
+    if (sel.isValid && !sel.isCollapsed) {
+      SystemChannels.textInput.invokeMethod('TextInput.hide');
+      if (!_showToolbar) setState(() => _showToolbar = true);
+    }
+  }
+
+  /// 点击正文：有选区时只操作排版（不弹键盘）；无选区则正常进入编辑。
+  void _onContentTap() {
+    final sel = _contentCtrl.selection;
+    final hasSelection = sel.isValid && !sel.isCollapsed;
+    if (hasSelection) {
+      // 框选状态：保持键盘收起，只显示排版栏
+      if (!_showToolbar) setState(() => _showToolbar = true);
+      SystemChannels.textInput.invokeMethod('TextInput.hide');
+      return;
+    }
+    // 无选区（光标状态）：正常编辑，键盘可弹出
+    if (!_showToolbar) setState(() => _showToolbar = true);
+  }
+
+  void _closeToolbar() {
+    setState(() => _showToolbar = false);
+    _hadSelection = false;
+    // 清除选区变回光标，下次点正文才弹键盘
+    final pos = _contentCtrl.selection.isValid
+        ? _contentCtrl.selection.end
+        : _contentCtrl.text.length;
+    _contentCtrl.selection = TextSelection.collapsed(offset: pos);
+    _contentFocus.unfocus();
+    SystemChannels.textInput.invokeMethod('TextInput.hide');
   }
 
   Future<void> _loadItems() async {
@@ -101,6 +153,7 @@ class _EditScreenState extends State<EditScreen> {
     _subtitleCtrl.dispose();
     _contentCtrl.dispose();
     _contentFocus.removeListener(_onFocusChange);
+    _contentCtrl.removeListener(_onSelectionChanged);
     _contentFocus.dispose();
     super.dispose();
   }
@@ -595,7 +648,7 @@ class _EditScreenState extends State<EditScreen> {
                       child: TextField(
                         controller: _contentCtrl,
                         focusNode: _contentFocus,
-                        autofocus: _isNew,
+                        autofocus: _isNew && !_showToolbar,
                         maxLength: 2000,
                         maxLines: null,
                         minLines: null,
@@ -607,6 +660,7 @@ class _EditScreenState extends State<EditScreen> {
                           border: InputBorder.none,
                           counterText: '',
                         ),
+                        onTap: _onContentTap,
                         onChanged: (v) {
                           // 文本变化时同步调整格式区间
                           final old = _lastContent.length;
@@ -615,9 +669,7 @@ class _EditScreenState extends State<EditScreen> {
                             _contentCtrl.formats = _formats;
                             _lastContent = v;
                           }
-                          setState(() {
-                            if (_contentFocus.hasFocus) _showToolbar = true;
-                          });
+                          setState(() {});
                         },
                       ),
                     ),
