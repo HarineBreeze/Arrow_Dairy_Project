@@ -127,32 +127,77 @@ class _RichNoteTextState extends State<RichNoteText> {
       a?.backgroundColor == b?.backgroundColor &&
       a?.fontSize == b?.fontSize;
 
+  /// 判断某一行是否居中（该行的字符区间被 center 格式覆盖）。
+  bool _lineCentered(int start, int end) {
+    if (end <= start) return false;
+    for (final f in widget.formats) {
+      if (f.center != true) continue;
+      if (f.start <= start && f.end >= end) return true;
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
-    _segments = RichTextParser.parse(widget.text, widget.itemNames);
-    // 按行切分，逐行决定对齐方式
-    final lines = <Widget>[];
     final text = widget.text;
-    int lineStart = 0;
-    int offset = 0;
-    for (final s in _segments) {
-      offset += s.text.length;
+    _segments = RichTextParser.parse(text, widget.itemNames);
+
+    // 按 '\n' 切行，逐行渲染并决定对齐方式
+    final spans = _buildSpan().children ?? const <InlineSpan>[];
+
+    // 为每行收集对应的 InlineSpan 片段
+    final lines = <List<InlineSpan>>[];
+    var currentLine = <InlineSpan>[];
+    var globalPos = 0;
+
+    for (final span in spans) {
+      if (span is! TextSpan) continue;
+      final t = span.text ?? '';
+      var remaining = t;
+      while (remaining.isNotEmpty) {
+        final nl = remaining.indexOf('\n');
+        if (nl < 0) {
+          currentLine.add(TextSpan(text: remaining, style: span.style));
+          globalPos += remaining.length;
+          remaining = '';
+        } else {
+          final head = remaining.substring(0, nl);
+          if (head.isNotEmpty) {
+            currentLine.add(TextSpan(text: head, style: span.style));
+          }
+          globalPos += head.length + 1;
+          lines.add(currentLine);
+          currentLine = <InlineSpan>[];
+          remaining = remaining.substring(nl + 1);
+        }
+      }
     }
-    // 若整体被居中格式覆盖，则整段居中
-    final wholeCentered = _isParagraphCentered(0, text.length) &&
-        text.isNotEmpty;
-    final span = _buildSpan();
-    if (wholeCentered) {
-      lines.add(Text.rich(span, textAlign: TextAlign.center));
-    } else {
-      lines.add(Text.rich(span));
+    lines.add(currentLine);
+
+    // 计算每行的起始偏移，用于判断是否居中
+    final widgets = <Widget>[];
+    var lineStart = 0;
+    for (final line in lines) {
+      var lineLen = 0;
+      for (final sp in line) {
+        if (sp is TextSpan) lineLen += (sp.text ?? '').length;
+      }
+      final lineEnd = lineStart + lineLen;
+      final centered = _lineCentered(lineStart, lineEnd);
+      widgets.add(
+        Text.rich(
+          TextSpan(style: widget.style, children: line),
+          textAlign: centered ? TextAlign.center : TextAlign.start,
+        ),
+      );
+      lineStart = lineEnd + 1; // +1 为换行符
     }
-    lineStart = 0;
+
     return GestureDetector(
       onTapUp: _handleTapUp,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: lines,
+        children: widgets,
       ),
     );
   }

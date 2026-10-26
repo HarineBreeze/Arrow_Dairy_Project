@@ -3,12 +3,12 @@ import 'package:flutter/services.dart';
 import '../utils/text_format.dart';
 
 /// 富文本格式工具栏：选中文字后点击即可应用样式。
+/// 颜色 / 字号用「内嵌展开行」而非 PopupMenu，避免菜单抢焦点导致选区丢失。
 class FormatToolbar extends StatefulWidget {
   final TextEditingController controller;
   final List<TextFormat> formats;
   final ValueChanged<List<TextFormat>> onChanged;
   final VoidCallback onClose;
-  final bool compact;
 
   const FormatToolbar({
     Key? key,
@@ -16,7 +16,6 @@ class FormatToolbar extends StatefulWidget {
     required this.formats,
     required this.onChanged,
     required this.onClose,
-    this.compact = false,
   }) : super(key: key);
 
   @override
@@ -25,57 +24,77 @@ class FormatToolbar extends StatefulWidget {
 
 class _FormatToolbarState extends State<FormatToolbar> {
   static const List<String> _highlights = [
-    '#FFE58A', // 黄
-    '#B9F5C7', // 绿
-    '#BAD4FF', // 蓝
-    '#FFC7DA', // 粉
-    '#E2D1FF', // 紫
+    '#FFE58A',
+    '#B9F5C7',
+    '#BAD4FF',
+    '#FFC7DA',
+    '#E2D1FF',
   ];
+  static const List<String> _hlNames = ['黄', '绿', '蓝', '粉', '紫'];
   static const List<double> _sizes = [14, 16, 19, 23, 28];
   static const List<String> _sizeLabels = ['小', '常', '中', '大', '特大'];
+
+  /// 0=无展开，1=调色板，2=字号
+  int _panel = 0;
+
+  /// 展开面板时锁定的作用区间，防止焦点变化后选区丢失。
+  int? _lockStart;
+  int? _lockEnd;
 
   TextSelection get _sel => widget.controller.selection;
 
   bool get _hasSelection => _sel.isValid && !_sel.isCollapsed;
 
-  /// 有效作用区间：有选区用选区，无选区作用于当前行。
+  /// 有效作用区间：优先用锁定的，其次用选区，最后用当前行。
   List<int> get _range {
+    if (_lockStart != null && _lockEnd != null) {
+      return [_lockStart!, _lockEnd!];
+    }
     if (_hasSelection) return [_sel.start, _sel.end];
     final text = widget.controller.text;
     final pos = _sel.isValid ? _sel.baseOffset : text.length;
-    int s = text.lastIndexOf('\n', pos == 0 ? 0 : pos - 1);
+    final clamped = pos.clamp(0, text.length);
+    int s = clamped == 0 ? -1 : text.lastIndexOf('\n', clamped - 1);
     if (s < 0) {
-      // lastIndexOf('\n', -1) 返回 -1，处理开头
       s = 0;
     } else {
       s = s + 1;
     }
-    int e = text.indexOf('\n', pos);
+    int e = text.indexOf('\n', clamped);
     if (e < 0) e = text.length;
     if (e <= s) {
-      s = pos;
-      e = (pos + 1).clamp(0, text.length);
+      s = clamped;
+      e = (clamped + 1).clamp(0, text.length);
     }
     return [s, e];
+  }
+
+  void _lock() {
+    final rg = _range;
+    _lockStart = rg[0];
+    _lockEnd = rg[1];
+  }
+
+  void _unlock() {
+    _lockStart = null;
+    _lockEnd = null;
   }
 
   bool _isOn(String key, dynamic value) {
     final rg = _range;
     final s = rg[0], e = rg[1];
     if (e <= s) return false;
-    // 全部覆盖才认为开启
     for (int i = s; i < e; i++) {
       if (!FormatStore.hasAt(widget.formats, i, key, value)) return false;
     }
     return true;
   }
 
-  void _toggle(String key, dynamic onValue, dynamic offValue) {
+  void _toggle(String key) {
     final rg = _range;
     final s = rg[0], e = rg[1];
     if (e <= s) return;
     final st = FormatStore.stateAt(widget.formats, s, e);
-    // 基于当前状态做局部修改，保留其它属性
     TextFormat patch;
     switch (key) {
       case 'bold':
@@ -96,50 +115,72 @@ class _FormatToolbarState extends State<FormatToolbar> {
       default:
         return;
     }
-    final next = FormatStore.apply(widget.formats, s, e, patch);
-    widget.onChanged(next);
+    widget.onChanged(FormatStore.apply(widget.formats, s, e, patch));
+    _restoreSelection(s, e);
   }
-
-
 
   void _setHighlight(String? color) {
     final rg = _range;
     final s = rg[0], e = rg[1];
     if (e <= s) return;
     final st = FormatStore.stateAt(widget.formats, s, e);
-    // 显式重建，highlight=null 表示清除
     final patch = TextFormat(
-      start: s, end: e,
-      bold: st.bold, italic: st.italic, underline: st.underline,
-      strike: st.strike, highlight: color, size: st.size, center: st.center,
+      start: s,
+      end: e,
+      bold: st.bold,
+      italic: st.italic,
+      underline: st.underline,
+      strike: st.strike,
+      highlight: color,
+      size: st.size,
+      center: st.center,
     );
-    final next = FormatStore.apply(widget.formats, s, e, patch);
-    widget.onChanged(next);
+    widget.onChanged(FormatStore.apply(widget.formats, s, e, patch));
+    _restoreSelection(s, e);
   }
 
-  void _setSize(double? size) {
+  void _setSize(double size) {
     final rg = _range;
     final s = rg[0], e = rg[1];
     if (e <= s) return;
     final st = FormatStore.stateAt(widget.formats, s, e);
     final patch = TextFormat(
-      start: s, end: e,
-      bold: st.bold, italic: st.italic, underline: st.underline,
-      strike: st.strike, highlight: st.highlight, size: size, center: st.center,
+      start: s,
+      end: e,
+      bold: st.bold,
+      italic: st.italic,
+      underline: st.underline,
+      strike: st.strike,
+      highlight: st.highlight,
+      size: size == 16 ? null : size,
+      center: st.center,
     );
-    final next = FormatStore.apply(widget.formats, s, e, patch);
-    widget.onChanged(next);
+    widget.onChanged(FormatStore.apply(widget.formats, s, e, patch));
+    _restoreSelection(s, e);
   }
 
-  void _toggleCenter() {
-    final rg = _range;
-    final s = rg[0], e = rg[1];
-    if (e <= s) return;
-    final on = _isOn('center', true);
-    final patch = TextFormat(start: 0, end: 0, center: !on);
-    final next = FormatStore.apply(widget.formats, s, e, patch);
-    widget.onChanged(next);
+  /// 应用格式后把选区还回去（不主动 requestFocus，避免弹键盘）。
+  void _restoreSelection(int s, int e) {
+    if (s != e && e <= widget.controller.text.length) {
+      widget.controller.selection =
+          TextSelection(baseOffset: s, extentOffset: e);
+    }
   }
+
+  void _togglePanel(int which) {
+    HapticFeedback.selectionClick();
+    if (_panel == which) {
+      setState(() {
+        _panel = 0;
+        _unlock();
+      });
+    } else {
+      _lock();
+      setState(() => _panel = which);
+    }
+  }
+
+  // ---------- 按钮 ----------
 
   Widget _iconBtn({
     required IconData icon,
@@ -147,27 +188,24 @@ class _FormatToolbarState extends State<FormatToolbar> {
     required bool active,
     required VoidCallback onTap,
   }) {
-    return Tooltip(
-      message: tip,
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.selectionClick();
-          onTap();
-        },
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          width: 38,
-          height: 36,
-          margin: const EdgeInsets.symmetric(horizontal: 1),
-          decoration: BoxDecoration(
-            color: active ? const Color(0xFF3B6FE0) : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(
-            icon,
-            size: 19,
-            color: active ? Colors.white : const Color(0xFF2A3B52),
-          ),
+    return InkWell(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        width: 38,
+        height: 36,
+        margin: const EdgeInsets.symmetric(horizontal: 1),
+        decoration: BoxDecoration(
+          color: active ? const Color(0xFF3B6FE0) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(
+          icon,
+          size: 19,
+          color: active ? Colors.white : const Color(0xFF2A3B52),
         ),
       ),
     );
@@ -205,93 +243,6 @@ class _FormatToolbarState extends State<FormatToolbar> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final rg = _range;
-    final s = rg[0], e = rg[1];
-
-    final children = <Widget>[
-      _textBtn(
-        label: 'B',
-        active: _isOn('bold', true),
-        onTap: () => _toggle('bold', true, false),
-        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
-      ),
-      _textBtn(
-        label: 'I',
-        active: _isOn('italic', true),
-        onTap: () => _toggle('italic', true, false),
-        style: const TextStyle(fontSize: 17, fontStyle: FontStyle.italic),
-      ),
-      _textBtn(
-        label: 'U',
-        active: _isOn('underline', true),
-        onTap: () => _toggle('underline', true, false),
-        style: const TextStyle(
-            fontSize: 16, decoration: TextDecoration.underline),
-      ),
-      _textBtn(
-        label: 'S',
-        active: _isOn('strike', true),
-        onTap: () => _toggle('strike', true, false),
-        style: const TextStyle(
-            fontSize: 16, decoration: TextDecoration.lineThrough),
-      ),
-      _divider(),
-      _iconBtn(
-        icon: Icons.format_align_center,
-        tip: '居中',
-        active: _isOn('center', true),
-        onTap: _toggleCenter,
-      ),
-      _divider(),
-      _highlightBtn(),
-      _divider(),
-      _sizeBtn(),
-    ];
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: const Border(top: BorderSide(color: Color(0xFFE8EDF5))),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-          child: Row(
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(children: children),
-                ),
-              ),
-              InkWell(
-                onTap: widget.onClose,
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  height: 36,
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  alignment: Alignment.center,
-                  child: const Icon(Icons.keyboard_hide,
-                      size: 20, color: Color(0xFF9AA8BF)),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _divider() => Container(
         width: 1,
         height: 18,
@@ -299,137 +250,279 @@ class _FormatToolbarState extends State<FormatToolbar> {
         color: const Color(0xFFE8EDF5),
       );
 
-  Widget _highlightBtn() {
-    final active = _isOn('highlight', _highlights.first);
-    return PopupMenuButton<String>(
-      tooltip: '高亮',
-      offset: const Offset(0, -180),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      onSelected: (v) => _setHighlight(v == 'none' ? null : v),
-      itemBuilder: (ctx) => [
-        PopupMenuItem(
-          value: 'none',
-          child: Row(children: const [
-            Icon(Icons.format_color_reset, size: 18),
-            SizedBox(width: 8),
-            Text('取消高亮', style: TextStyle(fontSize: 14)),
-          ]),
-        ),
-        ..._highlights.map((c) => PopupMenuItem(
-              value: c,
-              child: Row(
-                children: [
-                  Container(
-                    width: 22,
-                    height: 22,
-                    decoration: BoxDecoration(
-                      color: _hex(c),
-                      borderRadius: BorderRadius.circular(5),
-                      border: Border.all(color: const Color(0xFFE0E4EA)),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(_highlightName(c),
-                      style: const TextStyle(fontSize: 14)),
-                ],
-              ),
-            )),
-      ],
-      child: Container(
-        height: 36,
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        decoration: BoxDecoration(
-          color: active ? const Color(0xFF3B6FE0) : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.border_color_outlined,
-                size: 18,
-                color: active ? Colors.white : const Color(0xFF2A3B52)),
-            const SizedBox(width: 3),
-            Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(
-                color: _hex(_highlights.first),
-                borderRadius: BorderRadius.circular(3),
-                border: Border.all(color: const Color(0xFFD6DCE8)),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  static String _highlightName(String c) {
-    switch (c) {
-      case '#FFE58A':
-        return '黄色';
-      case '#B9F5C7':
-        return '绿色';
-      case '#BAD4FF':
-        return '蓝色';
-      case '#FFC7DA':
-        return '粉色';
-      case '#E2D1FF':
-        return '紫色';
-    }
-    return '高亮';
-  }
-
   static Color _hex(String c) {
     var h = c.replaceAll('#', '');
     if (h.length == 6) h = 'FF$h';
     return Color(int.tryParse(h, radix: 16) ?? 0xFFFFE58A);
   }
 
-  Widget _sizeBtn() {
-    return PopupMenuButton<double>(
-      tooltip: '字号',
-      offset: const Offset(0, -220),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      onSelected: _setSize,
-      itemBuilder: (ctx) => [
-        for (int i = 0; i < _sizes.length; i++)
-          PopupMenuItem(
-            value: _sizes[i],
-            child: Row(
-              children: [
-                Container(
-                  width: 26,
-                  alignment: Alignment.center,
-                  child: Text('A',
-                      style: TextStyle(
-                          fontSize: 11.0 + i * 3,
-                          fontWeight: FontWeight.w600)),
-                ),
-                const SizedBox(width: 10),
-                Text(_sizeLabels[i], style: const TextStyle(fontSize: 14)),
-              ],
-            ),
+  // ---------- 构建 ----------
+
+  @override
+  Widget build(BuildContext context) {
+    final rg = _range;
+    final s = rg[0], e = rg[1];
+    final currentSize = FormatStore.stateAt(widget.formats, s, e).size ?? 16.0;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: const Border(top: BorderSide(color: Color(0xFFE8EDF5))),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
           ),
-        PopupMenuItem(
-          value: 16.0,
-          child: Row(children: const [
-            Icon(Icons.format_color_reset, size: 18),
-            SizedBox(width: 8),
-            Text('恢复默认', style: TextStyle(fontSize: 14)),
-          ]),
-        ),
-      ],
-      child: Container(
-        height: 36,
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        alignment: Alignment.center,
-        child: Row(
-          children: const [
-            Text('A', style: TextStyle(fontSize: 12)),
-            Text('A', style: TextStyle(fontSize: 17)),
-            Icon(Icons.arrow_drop_down, size: 16, color: Color(0xFF9AA8BF)),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_panel == 1) _buildColorPanel(),
+            if (_panel == 2) _buildSizePanel(currentSize),
+            _buildMainRow(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildMainRow() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      child: Row(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _textBtn(
+                    label: 'B',
+                    active: _isOn('bold', true),
+                    onTap: () => _toggle('bold'),
+                    style: const TextStyle(
+                        fontSize: 17, fontWeight: FontWeight.w800),
+                  ),
+                  _textBtn(
+                    label: 'I',
+                    active: _isOn('italic', true),
+                    onTap: () => _toggle('italic'),
+                    style: const TextStyle(
+                        fontSize: 17, fontStyle: FontStyle.italic),
+                  ),
+                  _textBtn(
+                    label: 'U',
+                    active: _isOn('underline', true),
+                    onTap: () => _toggle('underline'),
+                    style: const TextStyle(
+                        fontSize: 16, decoration: TextDecoration.underline),
+                  ),
+                  _textBtn(
+                    label: 'S',
+                    active: _isOn('strike', true),
+                    onTap: () => _toggle('strike'),
+                    style: const TextStyle(
+                        fontSize: 16, decoration: TextDecoration.lineThrough),
+                  ),
+                  _divider(),
+                  _iconBtn(
+                    icon: Icons.format_align_center,
+                    tip: '居中',
+                    active: _isOn('center', true),
+                    onTap: () => _toggle('center'),
+                  ),
+                  _divider(),
+                  // 高亮入口
+                  InkWell(
+                    onTap: () => _togglePanel(1),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      height: 36,
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      decoration: BoxDecoration(
+                        color: _panel == 1
+                            ? const Color(0xFFDCE7FF)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.border_color_outlined,
+                              size: 18, color: Color(0xFF2A3B52)),
+                          const SizedBox(width: 3),
+                          Container(
+                            width: 12,
+                            height: 12,
+                            decoration: BoxDecoration(
+                              color: _hex(_highlights.first),
+                              borderRadius: BorderRadius.circular(3),
+                              border:
+                                  Border.all(color: const Color(0xFFD6DCE8)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  _divider(),
+                  // 字号入口
+                  InkWell(
+                    onTap: () => _togglePanel(2),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      height: 36,
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      decoration: BoxDecoration(
+                        color: _panel == 2
+                            ? const Color(0xFFDCE7FF)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: const [
+                          Text('A', style: TextStyle(fontSize: 12)),
+                          Text('A', style: TextStyle(fontSize: 17)),
+                          Icon(Icons.arrow_drop_down,
+                              size: 16, color: Color(0xFF9AA8BF)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          InkWell(
+            onTap: widget.onClose,
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              height: 36,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              alignment: Alignment.center,
+              child: const Icon(Icons.keyboard_hide,
+                  size: 20, color: Color(0xFF9AA8BF)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildColorPanel() {
+    final current = FormatStore.stateAt(
+      widget.formats,
+      _range[0],
+      _range[1],
+    ).highlight;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: Color(0xFFF0F3F8))),
+      ),
+      child: Row(
+        children: [
+          const Text('高亮',
+              style: TextStyle(fontSize: 12, color: Color(0xFF9AA8BF))),
+          const SizedBox(width: 10),
+          ...List.generate(_highlights.length, (i) {
+            final c = _highlights[i];
+            final active = current == c;
+            return Padding(
+              padding: const EdgeInsets.only(right: 10),
+              child: GestureDetector(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  _setHighlight(active ? null : c);
+                },
+                child: Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: _hex(c),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: active
+                          ? const Color(0xFF3B6FE0)
+                          : const Color(0xFFE0E4EA),
+                      width: active ? 2 : 1,
+                    ),
+                  ),
+                  child: active
+                      ? const Icon(Icons.check,
+                          size: 16, color: Color(0xFF2A3B52))
+                      : null,
+                ),
+              ),
+            );
+          }),
+          const Spacer(),
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              _setHighlight(null);
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                border: Border.all(color: const Color(0xFFE0E4EA)),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Text('清除',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF5A6B82))),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSizePanel(double current) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: Color(0xFFF0F3F8))),
+      ),
+      child: Row(
+        children: [
+          const Text('字号',
+              style: TextStyle(fontSize: 12, color: Color(0xFF9AA8BF))),
+          const SizedBox(width: 10),
+          ...List.generate(_sizes.length, (i) {
+            final sz = _sizes[i];
+            final active = (current - sz).abs() < 0.5;
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: GestureDetector(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  _setSize(sz);
+                },
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: active
+                        ? const Color(0xFF3B6FE0)
+                        : const Color(0xFFF5F7FB),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    _sizeLabels[i],
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: active ? Colors.white : const Color(0xFF2A3B52),
+                      fontWeight: active ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
+        ],
       ),
     );
   }
