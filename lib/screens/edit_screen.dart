@@ -36,6 +36,7 @@ class _EditScreenState extends State<EditScreen> {
   late final FocusNode _contentFocus;
   bool _hadSelection = false;
   bool _tapStartedWithSelection = false;
+  bool _selecting = false; // 框选模式：正文只读，不弹键盘
   String _lastContent = '';
 
   static const List<String> _moods = ['😊', '😌', '😢', '😡', '😴', '🥰'];
@@ -80,36 +81,52 @@ class _EditScreenState extends State<EditScreen> {
   void _onFocusChange() {
     if (!mounted) return;
     if (_contentFocus.hasFocus) {
-      // 点击聚焦后若已存在选区（长按拖选场景），保持键盘收起
-      Future.delayed(const Duration(milliseconds: 60), _hideKeyboardIfSelected);
+      // 若已处于框选模式，聚焦后仍需压住键盘
+      if (_selecting) _suppressKeyboard();
     } else {
       // 失焦时收起排版栏
       if (_showToolbar) setState(() => _showToolbar = false);
     }
   }
 
-  /// 选区变化：出现框选说明用户想排版 → 收起键盘，只留排版栏。
+  /// 选区变化：出现框选 → 进入「框选模式」，正文变只读，系统键盘自动收起。
   void _onSelectionChanged() {
     if (!mounted) return;
     final sel = _contentCtrl.selection;
     final hasSelection = sel.isValid && !sel.isCollapsed;
     if (hasSelection && !_hadSelection) {
       _hadSelection = true;
-      SystemChannels.textInput.invokeMethod('TextInput.hide');
-      if (!_showToolbar) setState(() => _showToolbar = true);
-    } else if (!hasSelection) {
+      _enterSelectMode();
+    } else if (!hasSelection && _hadSelection) {
       _hadSelection = false;
+      // 选区消失（用户点别处或收起）：退出框选模式
+      if (_selecting) {
+        setState(() => _selecting = false);
+      }
     }
   }
 
-  /// 有选区时强制收起输入法，让工具栏顶替键盘。
-  void _hideKeyboardIfSelected() {
-    if (!mounted) return;
-    final sel = _contentCtrl.selection;
-    if (sel.isValid && !sel.isCollapsed) {
-      SystemChannels.textInput.invokeMethod('TextInput.hide');
-      if (!_showToolbar) setState(() => _showToolbar = true);
+  /// 进入框选模式：正文设只读 + 持续压住键盘 + 显示排版栏。
+  void _enterSelectMode() {
+    if (!_selecting) {
+      setState(() {
+        _selecting = true; // 切只读：系统层面就不需要键盘了
+        _showToolbar = true;
+      });
+    } else if (!_showToolbar) {
+      setState(() => _showToolbar = true);
     }
+    _suppressKeyboard();
+  }
+
+  /// 连续多次收起键盘，覆盖系统「切只读瞬间又弹一次」的行为。
+  void _suppressKeyboard([int round = 0]) {
+    if (!mounted || !_selecting) return;
+    SystemChannels.textInput.invokeMethod('TextInput.hide');
+    if (round >= 4) return;
+    Future.delayed(Duration(milliseconds: 60 + round * 80), () {
+      _suppressKeyboard(round + 1);
+    });
   }
 
   // 记录按下时是否已有选区，用于区分「在选区上单击」与「普通单击」
@@ -120,21 +137,32 @@ class _EditScreenState extends State<EditScreen> {
 
   /// 单点正文 = 想编辑文字 → 弹键盘；长按拖选 = 想排版 → 不弹键盘。
   void _onContentTap() {
-    // 点下时若有选区，说明是在选区上单击 → 取消选区、进入编辑
-    if (_tapStartedWithSelection) {
+    // 点下时若有选区：取消选区、退出框选模式，进入编辑（键盘随后弹出）
+    if (_tapStartedWithSelection || _selecting) {
       _hadSelection = false;
       _tapStartedWithSelection = false;
-      _contentCtrl.selection =
-          TextSelection.collapsed(offset: _contentCtrl.selection.end);
+      setState(() {
+        _selecting = false;
+        _showToolbar = true;
+      });
+      final pos = _contentCtrl.selection.isValid
+          ? _contentCtrl.selection.end
+          : _contentCtrl.text.length;
+      _contentCtrl.selection = TextSelection.collapsed(offset: pos);
+      // 重新聚焦以唤起键盘
+      Future.delayed(const Duration(milliseconds: 30), () {
+        if (mounted) _contentFocus.requestFocus();
+      });
+      return;
     }
-    // 只在工具栏尚未出现时补一次，避免 rebuild 打断原生选区
-    if (!_showToolbar) {
-      setState(() => _showToolbar = true);
-    }
+    if (!_showToolbar) setState(() => _showToolbar = true);
   }
 
   void _closeToolbar() {
-    setState(() => _showToolbar = false);
+    setState(() {
+      _showToolbar = false;
+      _selecting = false;
+    });
     _hadSelection = false;
     // 清除选区变回光标，下次点正文才弹键盘
     final pos = _contentCtrl.selection.isValid
@@ -658,6 +686,7 @@ class _EditScreenState extends State<EditScreen> {
                         child: TextField(
                         controller: _contentCtrl,
                         focusNode: _contentFocus,
+                        readOnly: _selecting,
                         autofocus: _isNew && !_showToolbar,
                         maxLength: 2000,
                         maxLines: null,
