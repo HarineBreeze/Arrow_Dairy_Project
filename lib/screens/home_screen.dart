@@ -27,7 +27,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   List<DiaryEntry> _entries = [];
   bool _loading = true;
   bool _searching = false;
@@ -113,7 +113,7 @@ class _HomeScreenState extends State<HomeScreen>
     _pressEntry = e;
     _pressPos = pos;
     _pressMoved = 0;
-    _stillTimer = Timer(const Duration(seconds: 1), () {
+    _stillTimer = Timer(const Duration(milliseconds: 500), () {
       _stillTimer = null;
       if (_pressEntry == e && _pressMoved < 6) {
         final entry = e;
@@ -603,6 +603,7 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void dispose() {
     _stillTimer?.cancel();
+    _shimmerCtrl?.dispose();
     _menuController.dispose();
     _searchCtrl.dispose();
     super.dispose();
@@ -697,9 +698,9 @@ class _HomeScreenState extends State<HomeScreen>
                           ),
                         )
                       : _loading
-                          ? const Center(
-                              key: ValueKey('loading'),
-                              child: CircularProgressIndicator(),
+                          ? KeyedSubtree(
+                              key: const ValueKey('loading'),
+                              child: _buildSkeleton(),
                             )
                           : KeyedSubtree(
                               key: const ValueKey('diary'),
@@ -723,6 +724,81 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
         ),
       ),
+    );
+  }
+
+  AnimationController? _shimmerCtrl;
+
+  /// 首屏骨架占位：模拟 3 张笔记卡片的布局，带呼吸动画
+  Widget _buildSkeleton() {
+    _shimmerCtrl ??= AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1100))
+      ..repeat(reverse: true);
+    return AnimatedBuilder(
+      animation: _shimmerCtrl!,
+      builder: (context, _) {
+        final op = 0.4 + 0.25 * _shimmerCtrl!.value; // 0.4 ~ 0.65
+        Color block() => const Color(0xFFE4E9F2).withOpacity(op);
+        return ListView(
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+          children: List.generate(3, (i) {
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 28,
+                        height: 28,
+                        decoration:
+                            BoxDecoration(color: block(), shape: BoxShape.circle),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Container(
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: block(),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: block(),
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  FractionallySizedBox(
+                    widthFactor: 0.6,
+                    alignment: Alignment.centerLeft,
+                    child: Container(
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: block(),
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        );
+      },
     );
   }
 
@@ -752,8 +828,11 @@ class _HomeScreenState extends State<HomeScreen>
                   hasQuery: _query.isNotEmpty,
                   hasDate: _selectedDate != null,
                 )
-              : flatTopicList
-                  ? ListView.builder(
+              : RefreshIndicator(
+                  onRefresh: _load,
+                  color: const Color(0xFF3B6FE0),
+                  child: flatTopicList
+                      ? ListView.builder(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
                       itemCount: _filtered.length,
                       itemBuilder: (context, i) {
@@ -793,7 +872,7 @@ class _HomeScreenState extends State<HomeScreen>
                             ...group.entries.map((e) => Padding(
                                   padding: const EdgeInsets.only(top: 8),
                                   child: Listener(
-                                    // 按住卡片 40ms 不动再长按 1 秒，弹出操作菜单
+                                    // 按住卡片 500ms 不动，弹出操作菜单
                                     onPointerDown: (ev) =>
                                         _onCardPointerDown(e, ev.position),
                                     onPointerMove: (ev) =>
@@ -813,6 +892,7 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                     );
                   },
+                ),
                 ),
         ),
       ],
