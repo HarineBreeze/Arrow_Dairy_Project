@@ -190,6 +190,82 @@ class _EditScreenState extends State<EditScreen> {
     SystemChannels.textInput.invokeMethod('TextInput.hide');
   }
 
+  /// 点击 # / @：在框选文字前插入符号，使其成为话题或物品引用。
+  /// - # 任意文字都可成为话题
+  /// - @ 仅当框选文字在物资清单中存在时才插入，否则提示
+  void _insertTag(bool isTopic) {
+    final s = _savedStart;
+    final e = _savedEnd;
+    if (e <= s) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('请先框选一段文字')),
+      );
+      return;
+    }
+    final text = _contentCtrl.text;
+    final word = text.substring(s, e).trim();
+    if (word.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('请先框选一段文字')),
+      );
+      return;
+    }
+
+    if (!isTopic) {
+      // 物品：必须精确存在于物资清单
+      final matched = _itemNames.firstWhere(
+        (n) => n == word,
+        orElse: () => '',
+      );
+      if (matched.isEmpty) {
+        // 尝试忽略空白的宽松匹配（选区可能带上首尾空格）
+        final loose = _itemNames.where((n) => n.trim() == word).toList();
+        if (loose.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('物资清单里没有「$word」，无法 @ 该物品'),
+              duration: const Duration(milliseconds: 1800),
+            ),
+          );
+          return;
+        }
+      }
+    }
+
+    final symbol = isTopic ? '#' : '@';
+    // 若前面已经是同一符号，避免重复插入
+    if (s > 0 && text.substring(s - 1, s) == symbol) return;
+
+    final newText = text.substring(0, s) + symbol + text.substring(s);
+    // 格式区间：插入点之后的整体右移 1
+    _formats = FormatStore.adjust(_formats, text.length, newText.length);
+    _contentCtrl.value = TextEditingValue(
+      text: newText,
+      selection: TextSelection(
+        baseOffset: s + 1 + word.length,
+        extentOffset: s + 1 + word.length,
+      ),
+    );
+    _contentCtrl.setFormats(_formats);
+    _lastContent = newText;
+
+    HapticFeedback.selectionClick();
+    setState(() {
+      _savedStart = 0;
+      _savedEnd = 0;
+      _hadSelection = false;
+      _selecting = false;
+      _showToolbar = true;
+      _toolbarKey = UniqueKey();
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(isTopic ? '已生成为话题 #$word' : '已引用物品 @$word'),
+        duration: const Duration(milliseconds: 1300),
+      ),
+    );
+  }
+
   Future<void> _loadItems() async {
     final items = await ItemStorage.load();
     if (!mounted) return;
@@ -756,6 +832,7 @@ class _EditScreenState extends State<EditScreen> {
               formats: _formats,
               rangeStart: _savedStart,
               rangeEnd: _savedEnd,
+              onInsertTag: _insertTag,
               onChanged: (v) {
                 setState(() => _formats = v);
                 _contentCtrl.setFormats(v);

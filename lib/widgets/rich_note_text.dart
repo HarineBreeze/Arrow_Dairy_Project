@@ -73,6 +73,11 @@ class _RichNoteTextState extends State<RichNoteText> {
         fontSize: f.size,
       );
     }
+    // @物品 / #话题 统一蓝色（无论是否设置了自定义字体/排版）
+    final link = _linkColorAt(pos);
+    if (link != null) {
+      st = (st ?? const TextStyle()).copyWith(color: link);
+    }
     return st;
   }
 
@@ -80,6 +85,23 @@ class _RichNoteTextState extends State<RichNoteText> {
     var h = hex.replaceAll('#', '');
     if (h.length == 6) h = 'FF$h';
     return Color(int.tryParse(h, radix: 16) ?? 0xFFFFE58A);
+  }
+
+  /// 命中 @物品 / #话题 时返回其高亮色，否则 null。
+  /// _buildLines 逐字符渲染不再走 _buildSpan，需在此单独处理蓝色。
+  Color? _linkColorAt(int pos) {
+    int offset = 0;
+    for (final s in _segments) {
+      final end = offset + s.text.length;
+      if (pos >= offset && pos < end) {
+        if (s.type == 'mention' || s.type == 'topic') {
+          return const Color(0xFF3B6FE0);
+        }
+        return null;
+      }
+      offset = end;
+    }
+    return null;
   }
 
   TextSpan _buildSpan() {
@@ -116,7 +138,8 @@ class _RichNoteTextState extends State<RichNoteText> {
       a?.fontStyle == b?.fontStyle &&
       a?.decoration == b?.decoration &&
       a?.backgroundColor == b?.backgroundColor &&
-      a?.fontSize == b?.fontSize;
+      a?.fontSize == b?.fontSize &&
+      a?.color == b?.color;
 
   /// 逐个字符生成样式，按 [换行] 分行。
   List<List<TextSpan>> _buildLines() {

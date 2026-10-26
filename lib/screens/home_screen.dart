@@ -1600,11 +1600,6 @@ class _DiaryCard extends StatelessWidget {
                           style: const TextStyle(
                               fontSize: 11, color: kTextLight),
                         ),
-                        if (isPinned) ...[
-                          const SizedBox(width: 4),
-                          const Text('📌',
-                              style: TextStyle(fontSize: 11)),
-                        ],
                       ],
                     ),
                     if (entry.title.isNotEmpty) ...[

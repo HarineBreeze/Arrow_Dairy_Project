@@ -15,6 +15,9 @@ class FormatToolbar extends StatefulWidget {
   final int? rangeStart;
   final int? rangeEnd;
 
+  /// 点击 # / @ 时回调，参数为 true 表示 #（话题），false 表示 @（物品）。
+  final void Function(bool isTopic)? onInsertTag;
+
   const FormatToolbar({
     Key? key,
     required this.controller,
@@ -23,6 +26,7 @@ class FormatToolbar extends StatefulWidget {
     required this.onClose,
     this.rangeStart,
     this.rangeEnd,
+    this.onInsertTag,
   }) : super(key: key);
 
   @override
@@ -284,6 +288,22 @@ class _FormatToolbarState extends State<FormatToolbar> {
                     onTap: () => _toggle('strike'),
                     style: const TextStyle(
                         fontSize: 16, decoration: TextDecoration.lineThrough),
+                  ),
+                  _divider(),
+                  // 话题 / 物品：把符号插到选区文字前面
+                  _textBtn(
+                    label: '#',
+                    active: false,
+                    onTap: () => widget.onInsertTag?.call(true),
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.w600),
+                  ),
+                  _textBtn(
+                    label: '@',
+                    active: false,
+                    onTap: () => widget.onInsertTag?.call(false),
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.w600),
                   ),
                   _divider(),
                   // 高亮入口
