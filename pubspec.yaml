@@ -66,30 +66,6 @@ flutter:
   uses-material-design: true
 
   fonts:
-    - family: ZhiMangXing
-      fonts:
-        - asset: assets/fonts/zhimang_sub.ttf
-    - family: MaShanZheng
-      fonts:
-        - asset: assets/fonts/mashanzheng_sub.ttf
-    - family: LongCang
-      fonts:
-        - asset: assets/fonts/longcang_sub.ttf
-    - family: LiuJianMaoCao
-      fonts:
-        - asset: assets/fonts/liujianmaocao_sub.ttf
-    - family: ZCOOLKuaiLe
-      fonts:
-        - asset: assets/fonts/zcoolkuaile_sub.ttf
-    - family: ZCOOLQingKeHuangYou
-      fonts:
-        - asset: assets/fonts/zcoolqingke_sub.ttf
-    - family: ZCOOLXiaoWei
-      fonts:
-        - asset: assets/fonts/zcoolxiaowei_sub.ttf
-    - family: LXGWMarkerGothic
-      fonts:
-        - asset: assets/fonts/lxgwmarker_sub.ttf
     - family: LXGWWenKai
       fonts:
         - asset: assets/fonts/wenkai_sub.ttf

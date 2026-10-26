@@ -7,15 +7,7 @@ import 'package:path_provider/path_provider.dart';
 class FontCatalog {
   static const List<Map<String, String>> fonts = [
     {'id': '', 'name': '默认字体', 'desc': '跟随系统'},
-    {'id': 'ZhiMangXing', 'name': '芝麻行', 'desc': '手写行书'},
-    {'id': 'MaShanZheng', 'name': '马善政', 'desc': '毛笔楷行'},
-    {'id': 'LongCang', 'name': '龙藏', 'desc': '毛笔行草'},
-    {'id': 'LiuJianMaoCao', 'name': '刘建毛草', 'desc': '硬笔草书'},
     {'id': 'LXGWWenKai', 'name': '霞鹜文楷', 'desc': '楷体阅读'},
-    {'id': 'LXGWMarkerGothic', 'name': '霞鹜漫黑', 'desc': '马克笔手写'},
-    {'id': 'ZCOOLKuaiLe', 'name': '站酷快乐体', 'desc': '圆润活泼'},
-    {'id': 'ZCOOLQingKeHuangYou', 'name': '站酷庆科黄油', 'desc': '粗黑醒目'},
-    {'id': 'ZCOOLXiaoWei', 'name': '站酷小薇', 'desc': '细宋文艺'},
     {'id': 'NotoSansSC', 'name': '思源黑体', 'desc': '现代黑体'},
     {'id': 'NotoSerifSC', 'name': '思源宋体', 'desc': '传统宋体'},
   ];
@@ -47,11 +39,17 @@ class AppSettings {
       final file = await _file();
       if (!await file.exists()) return;
       final map = jsonDecode(await file.readAsString()) as Map<String, dynamic>;
-      // 兼容旧版手写体开关：true 视作芝麻行
+      // 兼容旧版手写体开关：true 视作手写字体（现已移除 → 回落默认）
       if (map.containsKey('fontFamily')) {
         _fontFamily = map['fontFamily'] as String?;
       } else if (map['handwriting'] == true) {
-        _fontFamily = 'ZhiMangXing';
+        _fontFamily = '';
+      }
+      // 所选字体若已从 App 中移除，回落默认
+      if (_fontFamily != null &&
+          _fontFamily!.isNotEmpty &&
+          FontCatalog.nameOf(_fontFamily) == null) {
+        _fontFamily = '';
       }
     } catch (_) {
       _fontFamily = null;
