@@ -106,14 +106,14 @@ class _HomeScreenState extends State<HomeScreen>
   double _pressMoved = 0;
   DiaryEntry? _pressEntry;
 
-  /// 手指按下后 40ms 内屏幕保持不移动，即弹出操作菜单（置顶/编辑/删除）；
+  /// 手指按下后 1 秒内屏幕保持不移动，即弹出操作菜单（置顶/编辑/删除）；
   /// 期间移动或抬起则取消，避免上下滑动屏幕时误触。
   void _onCardPointerDown(DiaryEntry e, Offset pos) {
     _cancelPressTracking();
     _pressEntry = e;
     _pressPos = pos;
     _pressMoved = 0;
-    _stillTimer = Timer(const Duration(milliseconds: 40), () {
+    _stillTimer = Timer(const Duration(seconds: 1), () {
       _stillTimer = null;
       if (_pressEntry == e && _pressMoved < 6) {
         final entry = e;
