@@ -101,14 +101,13 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Timer? _pinTimer;
   Timer? _stillTimer; // 40ms 静止观察
   Offset? _pressPos;
   double _pressMoved = 0;
   DiaryEntry? _pressEntry;
 
-  /// 手指按下：先观察 40ms，期间屏幕移动则取消；保持不动才启动 1 秒菜单计时。
-  /// 这样上下滑动屏幕时即使按到卡片也不会误触选项卡。
+  /// 手指按下后 40ms 内屏幕保持不移动，即弹出操作菜单（置顶/编辑/删除）；
+  /// 期间移动或抬起则取消，避免上下滑动屏幕时误触。
   void _onCardPointerDown(DiaryEntry e, Offset pos) {
     _cancelPressTracking();
     _pressEntry = e;
@@ -116,7 +115,11 @@ class _HomeScreenState extends State<HomeScreen>
     _pressMoved = 0;
     _stillTimer = Timer(const Duration(milliseconds: 40), () {
       _stillTimer = null;
-      if (_pressEntry == e && _pressMoved < 6) _startPinTimer(e);
+      if (_pressEntry == e && _pressMoved < 6) {
+        final entry = e;
+        _cancelPressTracking();
+        _showNoteActions(entry);
+      }
     });
   }
 
@@ -130,22 +133,7 @@ class _HomeScreenState extends State<HomeScreen>
   void _cancelPressTracking() {
     _stillTimer?.cancel();
     _stillTimer = null;
-    _cancelPinTimer();
     _pressEntry = null;
-  }
-
-  /// 长按 1 秒后弹出操作菜单（置顶/编辑/删除）
-  void _startPinTimer(DiaryEntry entry) {
-    _cancelPinTimer();
-    _pinTimer = Timer(const Duration(seconds: 1), () {
-      _pinTimer = null;
-      _showNoteActions(entry);
-    });
-  }
-
-  void _cancelPinTimer() {
-    _pinTimer?.cancel();
-    _pinTimer = null;
   }
 
   Future<void> _showNoteActions(DiaryEntry entry) async {
@@ -614,7 +602,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   void dispose() {
-    _pinTimer?.cancel();
+    _stillTimer?.cancel();
     _menuController.dispose();
     _searchCtrl.dispose();
     super.dispose();
