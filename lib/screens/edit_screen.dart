@@ -7,6 +7,7 @@ import '../services/item_storage.dart';
 import '../widgets/highlight_controller.dart';
 import '../widgets/format_toolbar.dart';
 import '../utils/text_format.dart';
+import '../utils/writing_prompts.dart';
 
 class EditScreen extends StatefulWidget {
   final DiaryEntry? entry;
@@ -54,6 +55,16 @@ class _EditScreenState extends State<EditScreen> {
   ];
 
   bool get _isNew => widget.entry == null;
+
+  /// 标题为空时展示的随机话题（内置 50 条）。仅新建笔记抽取，
+  /// 编辑已有笔记若标题为空同样给一个，避免空白。
+  late String _prompt = WritingPrompts.random();
+
+  /// 换一个话题（点提示语右侧的小图标）。
+  void _shufflePrompt() {
+    setState(() => _prompt = WritingPrompts.random(exclude: _prompt));
+    HapticFeedback.selectionClick();
+  }
 
   // ---------- 撤销 / 重做 ----------
   // 栈中保存的是「某个历史状态」：文本 + 格式。
@@ -794,14 +805,32 @@ class _EditScreenState extends State<EditScreen> {
                         maxLength: 15,
                         style: const TextStyle(
                             fontSize: 20, fontWeight: FontWeight.w600),
-                        decoration: const InputDecoration(
-                          hintText: '标题',
+                        decoration: InputDecoration(
+                          // 标题为空时随机展示一条写作话题作为引导
+                          hintText: _titleCtrl.text.isEmpty ? _prompt : '标题',
+                          hintStyle: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w400,
+                            color: Color(0xFFB4C0D2),
+                          ),
                           border: InputBorder.none,
                           counterText: '',
                         ),
                         onChanged: (_) => setState(() {}),
                       ),
                     ),
+                    // 标题为空时提供「换一个」入口
+                    if (_titleCtrl.text.isEmpty)
+                      InkWell(
+                        onTap: _shufflePrompt,
+                        borderRadius: BorderRadius.circular(20),
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 4),
+                          child: Icon(Icons.refresh,
+                              size: 18, color: Color(0xFF9AA8BF)),
+                        ),
+                      ),
                     Text(
                       '${_titleCtrl.text.length}/15',
                       style: const TextStyle(
