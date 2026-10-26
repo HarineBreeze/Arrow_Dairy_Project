@@ -102,6 +102,37 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Timer? _pinTimer;
+  Timer? _stillTimer; // 40ms 静止观察
+  Offset? _pressPos;
+  double _pressMoved = 0;
+  DiaryEntry? _pressEntry;
+
+  /// 手指按下：先观察 40ms，期间屏幕移动则取消；保持不动才启动 1 秒菜单计时。
+  /// 这样上下滑动屏幕时即使按到卡片也不会误触选项卡。
+  void _onCardPointerDown(DiaryEntry e, Offset pos) {
+    _cancelPressTracking();
+    _pressEntry = e;
+    _pressPos = pos;
+    _pressMoved = 0;
+    _stillTimer = Timer(const Duration(milliseconds: 40), () {
+      _stillTimer = null;
+      if (_pressEntry == e && _pressMoved < 6) _startPinTimer(e);
+    });
+  }
+
+  void _onCardPointerMove(Offset pos) {
+    if (_pressEntry == null || _pressPos == null) return;
+    _pressMoved += (_pressPos! - pos).distance;
+    _pressPos = pos;
+    if (_pressMoved > 6) _cancelPressTracking();
+  }
+
+  void _cancelPressTracking() {
+    _stillTimer?.cancel();
+    _stillTimer = null;
+    _cancelPinTimer();
+    _pressEntry = null;
+  }
 
   /// 长按 1 秒后弹出操作菜单（置顶/编辑/删除）
   void _startPinTimer(DiaryEntry entry) {
@@ -138,18 +169,21 @@ class _HomeScreenState extends State<HomeScreen>
                   style: const TextStyle(fontSize: 15)),
               onTap: () => Navigator.pop(ctx, 'pin'),
             ),
-            ListTile(
-              leading:
-                  const Icon(Icons.edit_outlined, color: Color(0xFF3B6FE0)),
-              title: const Text('编辑', style: TextStyle(fontSize: 15)),
-              onTap: () => Navigator.pop(ctx, 'edit'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.delete_outline, color: Colors.red),
-              title: const Text('删除',
-                  style: TextStyle(fontSize: 15, color: Colors.red)),
-              onTap: () => Navigator.pop(ctx, 'delete'),
-            ),
+            // 加密笔记出于安全考虑，长按菜单仅支持置顶
+            if (!entry.encrypted) ...[
+              ListTile(
+                leading:
+                    const Icon(Icons.edit_outlined, color: Color(0xFF3B6FE0)),
+                title: const Text('编辑', style: TextStyle(fontSize: 15)),
+                onTap: () => Navigator.pop(ctx, 'edit'),
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete_outline, color: Colors.red),
+                title: const Text('删除',
+                    style: TextStyle(fontSize: 15, color: Colors.red)),
+                onTap: () => Navigator.pop(ctx, 'delete'),
+              ),
+            ],
           ],
         ),
       ),
@@ -242,31 +276,7 @@ class _HomeScreenState extends State<HomeScreen>
                 child: const Text('确认'),
               ),
               TextButton(
-                onPressed: () {
-                  // 展示设置好的忘记提示（右下角）
-                  final hint = entry.passwordHint;
-                  final answer = entry.passwordAnswer;
-                  showDialog(
-                    context: ctx,
-                    builder: (hctx) => AlertDialog(
-                      title: const Text('密码提示'),
-                      content: Text(
-                        (hint.isEmpty && answer.isEmpty)
-                            ? '这条笔记没有设置密码提示哦～'
-                            : (answer.isNotEmpty
-                                ? '提示：$hint\n答案：$answer'
-                                : '提示：$hint'),
-                        style: const TextStyle(fontSize: 14, height: 1.5),
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(hctx),
-                          child: const Text('好的'),
-                        ),
-                      ],
-                    ),
-                  );
-                },
+                onPressed: () => _showAnswerDialog(entry),
                 child: const Text(
                   '忘记密码',
                   style: TextStyle(fontSize: 13, color: Color(0xFF9AA8BF)),
@@ -279,6 +289,97 @@ class _HomeScreenState extends State<HomeScreen>
     );
     ctrl.dispose();
     return result == true;
+  }
+
+  /// 忘记密码：回答密保问题，答对后展示该笔记密码
+  Future<void> _showAnswerDialog(DiaryEntry entry) async {
+    final ctrl = TextEditingController();
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        String error = '';
+        String? revealedPwd;
+        return StatefulBuilder(
+          builder: (ctx, setState) => AlertDialog(
+            title: const Text('密保问题'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (entry.passwordHint.isEmpty)
+                  const Text(
+                    '这条笔记没有设置密保问题哦～',
+                    style: TextStyle(fontSize: 14, color: Color(0xFF5A6B82)),
+                  )
+                else ...[
+                  Text(
+                    'Q：${entry.passwordHint}',
+                    style: const TextStyle(
+                        fontSize: 14, height: 1.5, color: Color(0xFF2A3B52)),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: ctrl,
+                    autofocus: true,
+                    enabled: revealedPwd == null,
+                    decoration:
+                        const InputDecoration(hintText: '请输入答案'),
+                  ),
+                  if (error.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      error,
+                      style:
+                          const TextStyle(color: Colors.red, fontSize: 12),
+                    ),
+                  ],
+                  if (revealedPwd != null) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFDCE7FF),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '密码：$revealedPwd',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF3B6FE0),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ],
+            ),
+            actions: [
+              if (revealedPwd == null && entry.passwordHint.isNotEmpty) ...[
+                TextButton(
+                  onPressed: () {
+                    if (ctrl.text.trim() == entry.passwordAnswer.trim() &&
+                        entry.passwordAnswer.trim().isNotEmpty) {
+                      setState(() => revealedPwd = entry.password);
+                    } else {
+                      setState(() => error = '答案不正确，再想想～');
+                    }
+                  },
+                  child: const Text('确认'),
+                ),
+              ],
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('关闭'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    ctrl.dispose();
   }
 
   Future<void> _openProfileEditor() async {
@@ -671,11 +772,13 @@ class _HomeScreenState extends State<HomeScreen>
                         final e = _filtered[i];
                         return Padding(
                           padding: const EdgeInsets.only(top: 8),
-                          child: GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onLongPressDown: (_) => _startPinTimer(e),
-                            onLongPressCancel: _cancelPinTimer,
-                            onLongPressUp: _cancelPinTimer,
+                          child: Listener(
+                            onPointerDown: (ev) =>
+                                _onCardPointerDown(e, ev.position),
+                            onPointerMove: (ev) =>
+                                _onCardPointerMove(ev.position),
+                            onPointerUp: (_) => _cancelPressTracking(),
+                            onPointerCancel: (_) => _cancelPressTracking(),
                             child: _DiaryCard(
                               entry: e,
                               isPinned: e.pinned,
@@ -701,13 +804,15 @@ class _HomeScreenState extends State<HomeScreen>
                           if (expanded)
                             ...group.entries.map((e) => Padding(
                                   padding: const EdgeInsets.only(top: 8),
-                                  child: GestureDetector(
-                                    behavior: HitTestBehavior.opaque,
-                                    // 长按 3 秒弹出操作菜单
-                                    onLongPressDown: (_) =>
-                                        _startPinTimer(e),
-                                    onLongPressCancel: _cancelPinTimer,
-                                    onLongPressUp: _cancelPinTimer,
+                                  child: Listener(
+                                    // 按住卡片 40ms 不动再长按 1 秒，弹出操作菜单
+                                    onPointerDown: (ev) =>
+                                        _onCardPointerDown(e, ev.position),
+                                    onPointerMove: (ev) =>
+                                        _onCardPointerMove(ev.position),
+                                    onPointerUp: (_) => _cancelPressTracking(),
+                                    onPointerCancel: (_) =>
+                                        _cancelPressTracking(),
                                     child: _DiaryCard(
                                       entry: e,
                                       isPinned: e.pinned,

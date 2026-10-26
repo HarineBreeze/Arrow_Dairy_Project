@@ -239,10 +239,10 @@ class _EditScreenState extends State<EditScreen> {
                 obscureText: true,
                 decoration: const InputDecoration(hintText: '请输入密码'),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               const Align(
                 alignment: Alignment.centerLeft,
-                child: Text('忘记提示（选填）',
+                child: Text('密保问题（选填）',
                     style: TextStyle(fontSize: 12, color: Color(0xFF9AA8BF))),
               ),
               TextField(
@@ -253,11 +253,17 @@ class _EditScreenState extends State<EditScreen> {
                   counterText: '',
                 ),
               ),
+              const SizedBox(height: 6),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text('密保问题答案',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF9AA8BF))),
+              ),
               TextField(
                 controller: ansCtrl,
                 maxLength: 20,
                 decoration: const InputDecoration(
-                  hintText: '提示答案',
+                  hintText: '答案（忘记密码时用于找回）',
                   counterText: '',
                 ),
               ),
