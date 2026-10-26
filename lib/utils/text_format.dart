@@ -11,7 +11,6 @@ class TextFormat {
   final bool? strike;
   final String? highlight; // 高亮色值，如 '#FFE58A'
   final double? size; // 字号（相对基准的绝对值，如 16/18/22/28）
-  final bool? center; // 该段落居中（作用于所在行）
 
   const TextFormat({
     required this.start,
@@ -22,7 +21,6 @@ class TextFormat {
     this.strike,
     this.highlight,
     this.size,
-    this.center,
   });
 
   Map<String, dynamic> toJson() => {
@@ -34,7 +32,6 @@ class TextFormat {
         if (strike != null) 'k': strike,
         if (highlight != null) 'h': highlight,
         if (size != null) 'z': size,
-        if (center != null) 'c': center,
       };
 
   factory TextFormat.fromJson(Map<String, dynamic> j) => TextFormat(
@@ -46,7 +43,6 @@ class TextFormat {
         strike: j['k'] as bool?,
         highlight: j['h'] as String?,
         size: (j['z'] as num?)?.toDouble(),
-        center: j['c'] as bool?,
       );
 
   /// 把另一个片段的样式叠加到本片段（后者优先）。
@@ -59,7 +55,6 @@ class TextFormat {
         strike: o.strike ?? strike,
         highlight: o.highlight ?? highlight,
         size: o.size ?? size,
-        center: o.center ?? center,
       );
 
   TextFormat copyWith({
@@ -71,7 +66,6 @@ class TextFormat {
     bool? strike,
     String? highlight,
     double? size,
-    bool? center,
   }) =>
       TextFormat(
         start: start ?? this.start,
@@ -82,7 +76,6 @@ class TextFormat {
         strike: strike ?? this.strike,
         highlight: highlight ?? this.highlight,
         size: size ?? this.size,
-        center: center ?? this.center,
       );
 }
 
@@ -142,7 +135,6 @@ class FormatStore {
       strike: patch.strike,
       highlight: clearHighlight ? null : patch.highlight,
       size: clearSize ? null : patch.size,
-      center: patch.center,
     ));
 
     result.removeWhere((f) => f.end <= f.start);
@@ -175,8 +167,6 @@ class FormatStore {
         return f.highlight;
       case 'size':
         return f.size;
-      case 'center':
-        return f.center;
     }
     return null;
   }
@@ -201,7 +191,6 @@ class FormatStore {
           strike: f.strike,
           highlight: v as String?,
           size: f.size,
-          center: f.center,
         );
       case 'size':
         return TextFormat(
@@ -213,10 +202,7 @@ class FormatStore {
           strike: f.strike,
           highlight: f.highlight,
           size: v as double?,
-          center: f.center,
         );
-      case 'center':
-        return f.copyWith(center: v as bool? ?? false);
     }
     return f;
   }
@@ -255,15 +241,6 @@ class FormatStore {
     for (final f in list) {
       if (pos < f.start || pos >= f.end) continue;
       if (_get(f, key) == value) return true;
-    }
-    return false;
-  }
-
-  /// 段落是否居中（找出覆盖该行的格式）。
-  static bool isLineCentered(List<TextFormat> list, int lineStart, int lineEnd) {
-    for (final f in list) {
-      if (f.center != true) continue;
-      if (f.start <= lineStart && f.end >= lineEnd) return true;
     }
     return false;
   }

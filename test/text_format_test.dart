@@ -59,7 +59,7 @@ void main() {
     final patch = TextFormat(
       start: 2, end: 6,
       bold: st.bold, italic: st.italic, underline: st.underline,
-      strike: st.strike, highlight: null, size: st.size, center: st.center,
+      strike: st.strike, highlight: null, size: st.size,
     );
     final r = FormatStore.apply(base, 2, 6, patch);
     expect(r.length, 3);
@@ -97,7 +97,7 @@ void main() {
   test('encode/decode 往返一致', () {
     final list = [
       const TextFormat(start: 3, end: 9, bold: true, highlight: '#BAD4FF'),
-      const TextFormat(start: 12, end: 18, size: 28, center: true),
+      const TextFormat(start: 12, end: 18, size: 28, strike: true),
     ];
     final enc = FormatStore.encode(list);
     final dec = FormatStore.decode(enc);
@@ -105,7 +105,7 @@ void main() {
     expect(dec[0].bold, true);
     expect(dec[0].highlight, '#BAD4FF');
     expect(dec[1].size, 28);
-    expect(dec[1].center, true);
+    expect(dec[1].strike, true);
   });
 
   test('decode 兼容空值', () {

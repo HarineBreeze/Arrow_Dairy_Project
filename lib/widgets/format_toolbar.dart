@@ -119,7 +119,6 @@ class _FormatToolbarState extends State<FormatToolbar> {
       italic: key == 'italic' ? !on : null,
       underline: key == 'underline' ? !on : null,
       strike: key == 'strike' ? !on : null,
-      center: key == 'center' ? !on : null,
     );
     widget.onChanged(FormatStore.apply(widget.formats, s, e, patch));
     _restoreSelection(s, e);
@@ -168,35 +167,6 @@ class _FormatToolbarState extends State<FormatToolbar> {
   }
 
   // ---------- 按钮 ----------
-
-  Widget _iconBtn({
-    required IconData icon,
-    required String tip,
-    required bool active,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        onTap();
-      },
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        width: 38,
-        height: 36,
-        margin: const EdgeInsets.symmetric(horizontal: 1),
-        decoration: BoxDecoration(
-          color: active ? const Color(0xFF3B6FE0) : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(
-          icon,
-          size: 19,
-          color: active ? Colors.white : const Color(0xFF2A3B52),
-        ),
-      ),
-    );
-  }
 
   Widget _textBtn({
     required String label,
@@ -314,13 +284,6 @@ class _FormatToolbarState extends State<FormatToolbar> {
                     onTap: () => _toggle('strike'),
                     style: const TextStyle(
                         fontSize: 16, decoration: TextDecoration.lineThrough),
-                  ),
-                  _divider(),
-                  _iconBtn(
-                    icon: Icons.format_align_center,
-                    tip: '居中',
-                    active: _isOn('center', true),
-                    onTap: () => _toggle('center'),
                   ),
                   _divider(),
                   // 高亮入口

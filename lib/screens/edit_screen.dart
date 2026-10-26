@@ -39,6 +39,8 @@ class _EditScreenState extends State<EditScreen> {
   bool _selecting = false; // 框选模式：正文只读，不弹键盘
   int _savedStart = 0; // 切换只读前保存的选区，供工具栏使用
   int _savedEnd = 0;
+  // 选区变更时重建工具栏，避免它沿用过一次的区间锁定/展开面板
+  Key _toolbarKey = UniqueKey();
   String _lastContent = '';
 
   static const List<String> _moods = ['😊', '😌', '😢', '😡', '😴', '🥰'];
@@ -103,10 +105,15 @@ class _EditScreenState extends State<EditScreen> {
       _savedEnd = sel.end;
       _enterSelectMode();
     } else if (hasSelection) {
-      // 框选模式下继续拖动：同步区间（只读时 controller 可能仍能更新选区）
-      _savedStart = sel.start;
-      _savedEnd = sel.end;
-      // 无需 setState，工具栏按需读取
+      // 已有选区又换了新区间（重新框选/拖动）：必须 setState，
+      // 否则工具栏仍持有上一次的 rangeStart/rangeEnd，会先作用到旧选区。
+      if (_savedStart != sel.start || _savedEnd != sel.end) {
+        setState(() {
+          _savedStart = sel.start;
+          _savedEnd = sel.end;
+          _toolbarKey = UniqueKey(); // 重建工具栏，清掉旧区间锁定与展开面板
+        });
+      }
     } else if (!hasSelection && _hadSelection) {
       _hadSelection = false;
       // 选区消失（用户点别处或收起）：退出框选模式
@@ -744,6 +751,7 @@ class _EditScreenState extends State<EditScreen> {
         children: [
           if (_showToolbar)
             FormatToolbar(
+              key: _toolbarKey,
               controller: _contentCtrl,
               formats: _formats,
               rangeStart: _savedStart,

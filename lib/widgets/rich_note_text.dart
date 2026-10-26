@@ -82,15 +82,6 @@ class _RichNoteTextState extends State<RichNoteText> {
     return Color(int.tryParse(h, radix: 16) ?? 0xFFFFE58A);
   }
 
-  /// 段落是否整体居中（覆盖该行的格式为 center）。
-  bool _isParagraphCentered(int start, int end) {
-    for (final f in widget.formats) {
-      if (f.center != true) continue;
-      if (f.start <= start && f.end >= end) return true;
-    }
-    return false;
-  }
-
   TextSpan _buildSpan() {
     final children = <TextSpan>[];
     int cursor = 0;
@@ -126,16 +117,6 @@ class _RichNoteTextState extends State<RichNoteText> {
       a?.decoration == b?.decoration &&
       a?.backgroundColor == b?.backgroundColor &&
       a?.fontSize == b?.fontSize;
-
-  /// 判断某一行是否居中（该行被 center 格式完整覆盖）。
-  bool _lineCentered(int start, int end) {
-    if (end <= start) return false;
-    for (final f in widget.formats) {
-      if (f.center != true) continue;
-      if (f.start <= start && f.end >= end) return true;
-    }
-    return false;
-  }
 
   /// 逐个字符生成样式，按 [换行] 分行。
   List<List<TextSpan>> _buildLines() {
@@ -179,22 +160,13 @@ class _RichNoteTextState extends State<RichNoteText> {
 
     final lines = _buildLines();
     final widgets = <Widget>[];
-    var lineStart = 0;
-
     for (final line in lines) {
-      var len = 0;
-      for (final sp in line) {
-        len += (sp.text ?? '').length;
-      }
-      final lineEnd = lineStart + len;
-      final centered = _lineCentered(lineStart, lineEnd);
       widgets.add(
         Text.rich(
           TextSpan(style: widget.style, children: line),
-          textAlign: centered ? TextAlign.center : TextAlign.start,
+          textAlign: TextAlign.start,
         ),
       );
-      lineStart = lineEnd + 1; // 跳过换行符
     }
 
     return GestureDetector(
