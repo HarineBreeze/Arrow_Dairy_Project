@@ -112,8 +112,11 @@ class FormatStore {
     List<TextFormat> source,
     int start,
     int end,
-    TextFormat patch,
-  ) {
+    TextFormat patch, {
+    bool clearHighlight = false,
+    bool clearSize = false,
+    bool clearAll = false,
+  }) {
     if (end <= start) return source;
     final result = <TextFormat>[];
     for (final f in source) {
@@ -121,6 +124,7 @@ class FormatStore {
         result.add(f);
         continue;
       }
+      // 相交：切掉交集部分，两侧保留
       if (f.start < start) {
         result.add(f.copyWith(end: start));
       }
@@ -128,8 +132,38 @@ class FormatStore {
         result.add(f.copyWith(start: end));
       }
     }
-    final merged = patch.copyWith(start: start, end: end);
-    result.add(merged);
+
+    if (!clearAll) {
+      var merged = patch.copyWith(start: start, end: end);
+      if (clearHighlight) {
+        merged = TextFormat(
+          start: start,
+          end: end,
+          bold: merged.bold,
+          italic: merged.italic,
+          underline: merged.underline,
+          strike: merged.strike,
+          highlight: null,
+          size: merged.size,
+          center: merged.center,
+        );
+      }
+      if (clearSize) {
+        merged = TextFormat(
+          start: start,
+          end: end,
+          bold: merged.bold,
+          italic: merged.italic,
+          underline: merged.underline,
+          strike: merged.strike,
+          highlight: merged.highlight,
+          size: null,
+          center: merged.center,
+        );
+      }
+      result.add(merged);
+    }
+
     result.removeWhere((f) => f.end <= f.start);
     result.sort((a, b) => a.start.compareTo(b.start));
     return result;

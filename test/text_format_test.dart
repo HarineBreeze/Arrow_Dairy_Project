@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:diary_app/utils/text_format.dart';
 
 void main() {
+  regressionTests();
   test('apply 加粗新区间，不影响其它区间', () {
     final base = [
       const TextFormat(start: 0, end: 5, bold: true),
@@ -125,5 +126,53 @@ void main() {
     // 0-8 只剩一个 bold:false 的片段，italic 被合并进状态→被应用到全区
     // 这是「合并状态再改」的语义：斜体扩散到 0-8（可接受）
     expect(r.first.bold, false);
+  });
+}
+
+// 回归测试：格式只作用于选区，不扩散到开头段落
+void regressionTests() {
+  test('选区高亮不污染前面无格式区间', () {
+    // 全文 20 字无格式，选中 10-15 加黄底
+    final r = FormatStore.apply(
+        const [], 10, 15, const TextFormat(start: 10, end: 15, highlight: '#FFE58A'),
+        clearHighlight: true);
+    expect(r.length, 1);
+    expect(r[0].start, 10);
+    expect(r[0].end, 15);
+    expect(r[0].bold, null); // 不携带其它属性
+    expect(r[0].size, null);
+  });
+
+  test('选中加粗不复制已有高亮到整个选区外', () {
+    final base = [
+      const TextFormat(start: 0, end: 5, highlight: '#FFE58A'),
+    ];
+    // 选中 12-18 加粗
+    final r = FormatStore.apply(
+        base, 12, 18, const TextFormat(start: 12, end: 18, bold: true),
+        clearHighlight: true);
+    // 原有 0-5 高亮保留，12-18 只有加粗无高亮
+    expect(r.length, 2);
+    expect(r[0].start, 0);
+    expect(r[0].end, 5);
+    expect(r[0].highlight, '#FFE58A');
+    expect(r[1].start, 12);
+    expect(r[1].end, 18);
+    expect(r[1].bold, true);
+    expect(r[1].highlight, null); // 关键：不带高亮
+  });
+
+  test('清除高亮只影响选区', () {
+    final base = [
+      const TextFormat(start: 0, end: 20, highlight: '#FFE58A'),
+    ];
+    final r = FormatStore.apply(
+        base, 8, 12, const TextFormat(start: 8, end: 12),
+        clearHighlight: true);
+    // 0-8 有高亮 / 8-12 无 / 12-20 有高亮
+    expect(r.length, 3);
+    expect(r[0].highlight, '#FFE58A');
+    expect(r[1].highlight, null);
+    expect(r[2].highlight, '#FFE58A');
   });
 }

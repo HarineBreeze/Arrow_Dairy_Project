@@ -110,27 +110,17 @@ class _FormatToolbarState extends State<FormatToolbar> {
     final rg = _range;
     final s = rg[0], e = rg[1];
     if (e <= s) return;
-    final st = FormatStore.stateAt(widget.formats, s, e);
-    TextFormat patch;
-    switch (key) {
-      case 'bold':
-        patch = st.copyWith(bold: st.bold != true);
-        break;
-      case 'italic':
-        patch = st.copyWith(italic: st.italic != true);
-        break;
-      case 'underline':
-        patch = st.copyWith(underline: st.underline != true);
-        break;
-      case 'strike':
-        patch = st.copyWith(strike: st.strike != true);
-        break;
-      case 'center':
-        patch = st.copyWith(center: st.center != true);
-        break;
-      default:
-        return;
-    }
+    final on = _isOn(key, true);
+    // 只写这一项属性，其余字段留 null（不回带其它样式，避免扩散）
+    final patch = TextFormat(
+      start: s,
+      end: e,
+      bold: key == 'bold' ? !on : null,
+      italic: key == 'italic' ? !on : null,
+      underline: key == 'underline' ? !on : null,
+      strike: key == 'strike' ? !on : null,
+      center: key == 'center' ? !on : null,
+    );
     widget.onChanged(FormatStore.apply(widget.formats, s, e, patch));
     _restoreSelection(s, e);
   }
@@ -139,19 +129,9 @@ class _FormatToolbarState extends State<FormatToolbar> {
     final rg = _range;
     final s = rg[0], e = rg[1];
     if (e <= s) return;
-    final st = FormatStore.stateAt(widget.formats, s, e);
-    final patch = TextFormat(
-      start: s,
-      end: e,
-      bold: st.bold,
-      italic: st.italic,
-      underline: st.underline,
-      strike: st.strike,
-      highlight: color,
-      size: st.size,
-      center: st.center,
-    );
-    widget.onChanged(FormatStore.apply(widget.formats, s, e, patch));
+    final patch = TextFormat(start: s, end: e, highlight: color);
+    widget.onChanged(
+        FormatStore.apply(widget.formats, s, e, patch, clearHighlight: true));
     _restoreSelection(s, e);
   }
 
@@ -159,19 +139,9 @@ class _FormatToolbarState extends State<FormatToolbar> {
     final rg = _range;
     final s = rg[0], e = rg[1];
     if (e <= s) return;
-    final st = FormatStore.stateAt(widget.formats, s, e);
-    final patch = TextFormat(
-      start: s,
-      end: e,
-      bold: st.bold,
-      italic: st.italic,
-      underline: st.underline,
-      strike: st.strike,
-      highlight: st.highlight,
-      size: size == 16 ? null : size,
-      center: st.center,
-    );
-    widget.onChanged(FormatStore.apply(widget.formats, s, e, patch));
+    final patch = TextFormat(start: s, end: e, size: size);
+    widget.onChanged(
+        FormatStore.apply(widget.formats, s, e, patch, clearSize: true));
     _restoreSelection(s, e);
   }
 
