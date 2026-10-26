@@ -35,6 +35,7 @@ class _EditScreenState extends State<EditScreen> {
   bool _showToolbar = false;
   late final FocusNode _contentFocus;
   bool _hadSelection = false;
+  bool _tapStartedWithSelection = false;
   String _lastContent = '';
 
   static const List<String> _moods = ['😊', '😌', '😢', '😡', '😴', '🥰'];
@@ -79,7 +80,7 @@ class _EditScreenState extends State<EditScreen> {
   void _onFocusChange() {
     if (!mounted) return;
     if (_contentFocus.hasFocus) {
-      // 获得焦点后，若存在选区则立刻收起输入法（框选时不弹键盘）
+      // 点击聚焦后若已存在选区（长按拖选场景），保持键盘收起
       Future.delayed(const Duration(milliseconds: 60), _hideKeyboardIfSelected);
     } else {
       // 失焦时收起排版栏
@@ -87,7 +88,7 @@ class _EditScreenState extends State<EditScreen> {
     }
   }
 
-  /// 选区变化：仅当「从无选区变成有选区」时，收起键盘并展开排版栏。
+  /// 选区变化：出现框选说明用户想排版 → 收起键盘，只留排版栏。
   void _onSelectionChanged() {
     if (!mounted) return;
     final sel = _contentCtrl.selection;
@@ -111,18 +112,25 @@ class _EditScreenState extends State<EditScreen> {
     }
   }
 
-  /// 点击正文：有选区时只操作排版（不弹键盘）；无选区则正常进入编辑。
-  void _onContentTap() {
+  // 记录按下时是否已有选区，用于区分「在选区上单击」与「普通单击」
+  void _onPointerDown(PointerDownEvent e) {
     final sel = _contentCtrl.selection;
-    final hasSelection = sel.isValid && !sel.isCollapsed;
-    if (hasSelection) {
-      // 框选状态：保持键盘收起，只显示排版栏
-      if (!_showToolbar) setState(() => _showToolbar = true);
-      SystemChannels.textInput.invokeMethod('TextInput.hide');
-      return;
+    _tapStartedWithSelection = sel.isValid && !sel.isCollapsed;
+  }
+
+  /// 单点正文 = 想编辑文字 → 弹键盘；长按拖选 = 想排版 → 不弹键盘。
+  void _onContentTap() {
+    // 点下时若有选区，说明是在选区上单击 → 取消选区、进入编辑
+    if (_tapStartedWithSelection) {
+      _hadSelection = false;
+      _tapStartedWithSelection = false;
+      _contentCtrl.selection =
+          TextSelection.collapsed(offset: _contentCtrl.selection.end);
     }
-    // 无选区（光标状态）：正常编辑，键盘可弹出
-    if (!_showToolbar) setState(() => _showToolbar = true);
+    // 只在工具栏尚未出现时补一次，避免 rebuild 打断原生选区
+    if (!_showToolbar) {
+      setState(() => _showToolbar = true);
+    }
   }
 
   void _closeToolbar() {
@@ -645,7 +653,9 @@ class _EditScreenState extends State<EditScreen> {
                   children: [
                     Padding(
                       padding: const EdgeInsets.fromLTRB(12, 4, 12, 24),
-                      child: TextField(
+                      child: Listener(
+                        onPointerDown: _onPointerDown,
+                        child: TextField(
                         controller: _contentCtrl,
                         focusNode: _contentFocus,
                         autofocus: _isNew && !_showToolbar,
@@ -671,6 +681,7 @@ class _EditScreenState extends State<EditScreen> {
                           }
                           setState(() {});
                         },
+                      ),
                       ),
                     ),
                     Positioned(
