@@ -133,9 +133,8 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 手写体开关（设置页切换后返回本页即生效）
-    final String? fontFamily =
-        AppSettings.handwriting ? AppSettings.handwritingFont : null;
+    // 字体选择（设置页切换后返回本页即生效）
+    final String? fontFamily = AppSettings.fontFamily;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xCC3B6FE0),

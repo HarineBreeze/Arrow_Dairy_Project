@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import '../services/app_settings.dart';
 import '../services/backup_service.dart';
+import 'font_picker_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -186,29 +187,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: const Color(0xFFE8EDF5)),
             ),
-            child: SwitchListTile(
-              secondary: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF3B6FE0).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: const Icon(Icons.history_edu,
-                    size: 20, color: Color(0xFF3B6FE0)),
-              ),
-              title: const Text('手写字体',
-                  style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF2A3B52))),
-              subtitle: const Text('笔记浏览页的标题和正文使用手写风格显示',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF9AA8BF))),
-              value: AppSettings.handwriting,
-              activeColor: const Color(0xFF3B6FE0),
-              onChanged: (v) {
-                setState(() {});
-                AppSettings.setHandwriting(v);
+            child: _buildItem(
+              icon: Icons.font_download_outlined,
+              iconColor: const Color(0xFF3B6FE0),
+              title: '笔记字体',
+              subtitle:
+                  '当前：${FontCatalog.nameOf(AppSettings.fontFamilyId.isEmpty ? null : AppSettings.fontFamilyId) ?? '默认字体'}',
+              busy: false,
+              onTap: () async {
+                await Navigator.push(
+                  context,
+                  PageRouteBuilder(
+                    transitionDuration: const Duration(milliseconds: 300),
+                    reverseTransitionDuration:
+                        const Duration(milliseconds: 300),
+                    pageBuilder: (_, __, ___) => const FontPickerScreen(),
+                    transitionsBuilder: (_, animation, __, child) {
+                      final curved = CurvedAnimation(
+                          parent: animation, curve: Curves.easeOutCubic);
+                      return SlideTransition(
+                        position: Tween<Offset>(
+                          begin: const Offset(1, 0),
+                          end: Offset.zero,
+                        ).animate(curved),
+                        child: child,
+                      );
+                    },
+                  ),
+                );
+                if (mounted) setState(() {});
               },
             ),
           ),
