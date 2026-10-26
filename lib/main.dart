@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'services/app_settings.dart';
 import 'screens/home_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await AppSettings.load(); // 提前读入手写体等设置
   runApp(const DiaryApp());
 }
 

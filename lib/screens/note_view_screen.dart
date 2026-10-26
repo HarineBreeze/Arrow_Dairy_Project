@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/diary_entry.dart';
 import '../models/item.dart';
+import '../services/app_settings.dart';
 import '../services/diary_storage.dart';
 import '../services/item_storage.dart';
 import '../widgets/rich_note_text.dart';
@@ -132,6 +133,9 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // 手写体开关（设置页切换后返回本页即生效）
+    final String? fontFamily =
+        AppSettings.handwriting ? AppSettings.handwritingFont : null;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xCC3B6FE0),
@@ -174,10 +178,11 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                       ),
                       child: Text(
                         _entry.title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF2A3B52),
+                          color: const Color(0xFF2A3B52),
+                          fontFamily: fontFamily,
                         ),
                       ),
                     ),
@@ -199,10 +204,11 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                             .where((n) => n.isNotEmpty)
                             .toSet(),
                         onTapMention: _openItem,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           height: 1.8,
-                          color: Color(0xFF2A3B52),
+                          color: const Color(0xFF2A3B52),
+                          fontFamily: fontFamily,
                         ),
                       ),
                     ),

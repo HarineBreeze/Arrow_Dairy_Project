@@ -1,6 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
+import '../services/app_settings.dart';
 import '../services/backup_service.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -168,6 +169,47 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onTap: _import,
                 ),
               ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Padding(
+            padding: EdgeInsets.only(left: 4, bottom: 8),
+            child: Text('显示',
+                style: TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF9AA8BF),
+                    fontWeight: FontWeight.w600)),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFE8EDF5)),
+            ),
+            child: SwitchListTile(
+              secondary: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF3B6FE0).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: const Icon(Icons.history_edu,
+                    size: 20, color: Color(0xFF3B6FE0)),
+              ),
+              title: const Text('手写字体',
+                  style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF2A3B52))),
+              subtitle: const Text('笔记浏览页的标题和正文使用手写风格显示',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF9AA8BF))),
+              value: AppSettings.handwriting,
+              activeColor: const Color(0xFF3B6FE0),
+              onChanged: (v) {
+                setState(() {});
+                AppSettings.setHandwriting(v);
+              },
             ),
           ),
           const SizedBox(height: 16),
