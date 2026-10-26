@@ -130,8 +130,8 @@ class _FormatToolbarState extends State<FormatToolbar> {
     final s = rg[0], e = rg[1];
     if (e <= s) return;
     final patch = TextFormat(start: s, end: e, highlight: color);
-    widget.onChanged(
-        FormatStore.apply(widget.formats, s, e, patch, clearHighlight: true));
+    widget.onChanged(FormatStore.apply(widget.formats, s, e, patch,
+        clearHighlight: color == null));
     _restoreSelection(s, e);
   }
 
@@ -141,7 +141,7 @@ class _FormatToolbarState extends State<FormatToolbar> {
     if (e <= s) return;
     final patch = TextFormat(start: s, end: e, size: size);
     widget.onChanged(
-        FormatStore.apply(widget.formats, s, e, patch, clearSize: true));
+        FormatStore.apply(widget.formats, s, e, patch, clearSize: false));
     _restoreSelection(s, e);
   }
 

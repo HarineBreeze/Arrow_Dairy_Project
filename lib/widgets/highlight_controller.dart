@@ -82,19 +82,36 @@ class HighlightEditingController extends TextEditingController {
   }
 
   TextStyle? _styleAt(int pos) {
-    TextStyle? st;
+    bool bold = false, italic = false, underline = false, strike = false;
+    String? highlight;
+    double? size;
+    bool any = false;
     for (final f in formats) {
       if (pos < f.start || pos >= f.end) continue;
-      st = (st ?? const TextStyle()).copyWith(
-        fontWeight: f.bold == true ? FontWeight.w700 : null,
-        fontStyle: f.italic == true ? FontStyle.italic : null,
-        decoration: _decoration(f),
-        backgroundColor:
-            f.highlight != null ? _parseColor(f.highlight!) : null,
-        fontSize: f.size,
-      );
+      any = true;
+      if (f.bold == true) bold = true;
+      if (f.italic == true) italic = true;
+      if (f.underline == true) underline = true;
+      if (f.strike == true) strike = true;
+      if (f.highlight != null) highlight = f.highlight;
+      if (f.size != null) size = f.size;
     }
-    return st;
+    if (!any) return null;
+
+    // 只写「非默认」的属性，避免覆盖父级样式
+    final decos = <TextDecoration>[];
+    if (underline) decos.add(TextDecoration.underline);
+    if (strike) decos.add(TextDecoration.lineThrough);
+
+    return TextStyle(
+      fontWeight: bold ? FontWeight.w700 : null,
+      fontStyle: italic ? FontStyle.italic : null,
+      decoration: decos.isEmpty
+          ? null
+          : (decos.length == 1 ? decos.first : TextDecoration.combine(decos)),
+      backgroundColor: highlight != null ? _parseColor(highlight) : null,
+      fontSize: size,
+    );
   }
 
   TextDecoration? _decoration(TextFormat f) {

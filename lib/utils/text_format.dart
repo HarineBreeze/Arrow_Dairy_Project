@@ -106,8 +106,9 @@ class FormatStore {
     }
   }
 
-  /// 在 [start, end) 区间应用样式（patch 携带最终值，null 字段不生效）。
-  /// 区间内原有格式被裁剪，区间外保留。
+  /// 在 [start, end) 区间应用样式。
+  /// - patch 中为 null 的字段：表示「不修改该属性」
+  /// - clearHighlight / clearSize：为 true 时强制清除该项（用于点「清除」）
   static List<TextFormat> apply(
     List<TextFormat> source,
     int start,
@@ -115,7 +116,6 @@ class FormatStore {
     TextFormat patch, {
     bool clearHighlight = false,
     bool clearSize = false,
-    bool clearAll = false,
   }) {
     if (end <= start) return source;
     final result = <TextFormat>[];
@@ -133,36 +133,17 @@ class FormatStore {
       }
     }
 
-    if (!clearAll) {
-      var merged = patch.copyWith(start: start, end: end);
-      if (clearHighlight) {
-        merged = TextFormat(
-          start: start,
-          end: end,
-          bold: merged.bold,
-          italic: merged.italic,
-          underline: merged.underline,
-          strike: merged.strike,
-          highlight: null,
-          size: merged.size,
-          center: merged.center,
-        );
-      }
-      if (clearSize) {
-        merged = TextFormat(
-          start: start,
-          end: end,
-          bold: merged.bold,
-          italic: merged.italic,
-          underline: merged.underline,
-          strike: merged.strike,
-          highlight: merged.highlight,
-          size: null,
-          center: merged.center,
-        );
-      }
-      result.add(merged);
-    }
+    result.add(TextFormat(
+      start: start,
+      end: end,
+      bold: patch.bold,
+      italic: patch.italic,
+      underline: patch.underline,
+      strike: patch.strike,
+      highlight: clearHighlight ? null : patch.highlight,
+      size: clearSize ? null : patch.size,
+      center: patch.center,
+    ));
 
     result.removeWhere((f) => f.end <= f.start);
     result.sort((a, b) => a.start.compareTo(b.start));
