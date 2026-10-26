@@ -4,6 +4,7 @@ import '../models/item.dart';
 import '../services/diary_storage.dart';
 import '../services/item_storage.dart';
 import '../widgets/rich_note_text.dart';
+import '../utils/text_format.dart';
 import 'edit_screen.dart';
 import 'item_edit_screen.dart';
 
@@ -192,6 +193,7 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                       ),
                       child: RichNoteText(
                         text: _entry.content,
+                        formats: FormatStore.decode(_entry.formats),
                         itemNames: _items
                             .map((e) => e.name)
                             .where((n) => n.isNotEmpty)

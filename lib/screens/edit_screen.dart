@@ -3,6 +3,8 @@ import '../models/diary_entry.dart';
 import '../services/diary_storage.dart';
 import '../services/item_storage.dart';
 import '../widgets/highlight_controller.dart';
+import '../widgets/format_toolbar.dart';
+import '../utils/text_format.dart';
 
 class EditScreen extends StatefulWidget {
   final DiaryEntry? entry;
@@ -28,6 +30,10 @@ class _EditScreenState extends State<EditScreen> {
   String _passwordHint = '';
   String _passwordAnswer = '';
   bool _saving = false;
+  List<TextFormat> _formats = [];
+  bool _showToolbar = false;
+  late final FocusNode _contentFocus;
+  String _lastContent = '';
 
   static const List<String> _moods = ['😊', '😌', '😢', '😡', '😴', '🥰'];
   static const List<String> _weathers = ['🌞', '⛅', '🌧️', '❄️', '🌙', '🌈'];
@@ -45,10 +51,15 @@ class _EditScreenState extends State<EditScreen> {
     super.initState();
     _titleCtrl = TextEditingController(text: widget.entry?.title ?? '');
     _subtitleCtrl = TextEditingController(text: widget.entry?.subtitle ?? '');
+    _formats = FormatStore.decode(widget.entry?.formats);
     _contentCtrl = HighlightEditingController(
       itemNames: _itemNames,
       text: widget.entry?.content ?? '',
+      formats: _formats,
     );
+    _lastContent = _contentCtrl.text;
+    _contentFocus = FocusNode();
+    _contentFocus.addListener(_onFocusChange);
     _mood = widget.entry?.mood ?? _moods.first;
     _weather = widget.entry?.weather ?? _weathers.first;
     _location = widget.entry?.location ?? '';
@@ -60,6 +71,18 @@ class _EditScreenState extends State<EditScreen> {
     _passwordHint = widget.entry?.passwordHint ?? '';
     _passwordAnswer = widget.entry?.passwordAnswer ?? '';
     _loadItems();
+  }
+
+  void _onFocusChange() {
+    if (!mounted) return;
+    if (_contentFocus.hasFocus && !_showToolbar) {
+      // 延迟等键盘弹出后再显示，避免布局跳动
+      Future.delayed(const Duration(milliseconds: 120), () {
+        if (mounted && _contentFocus.hasFocus && !_showToolbar) {
+          setState(() => _showToolbar = true);
+        }
+      });
+    }
   }
 
   Future<void> _loadItems() async {
@@ -77,6 +100,8 @@ class _EditScreenState extends State<EditScreen> {
     _titleCtrl.dispose();
     _subtitleCtrl.dispose();
     _contentCtrl.dispose();
+    _contentFocus.removeListener(_onFocusChange);
+    _contentFocus.dispose();
     super.dispose();
   }
 
@@ -107,6 +132,7 @@ class _EditScreenState extends State<EditScreen> {
         title: title,
         subtitle: subtitle,
         content: content,
+        formats: content.isEmpty ? '' : FormatStore.encode(_formats),
         mood: _mood,
         weather: _weather,
         location: _location,
@@ -125,6 +151,8 @@ class _EditScreenState extends State<EditScreen> {
         list[idx].title = title;
         list[idx].subtitle = subtitle;
         list[idx].content = content;
+        list[idx].formats =
+            content.isEmpty ? '' : FormatStore.encode(_formats);
         list[idx].mood = _mood;
         list[idx].weather = _weather;
         list[idx].location = _location;
@@ -566,6 +594,7 @@ class _EditScreenState extends State<EditScreen> {
                       padding: const EdgeInsets.fromLTRB(12, 4, 12, 24),
                       child: TextField(
                         controller: _contentCtrl,
+                        focusNode: _contentFocus,
                         autofocus: _isNew,
                         maxLength: 2000,
                         maxLines: null,
@@ -578,7 +607,18 @@ class _EditScreenState extends State<EditScreen> {
                           border: InputBorder.none,
                           counterText: '',
                         ),
-                        onChanged: (_) => setState(() {}),
+                        onChanged: (v) {
+                          // 文本变化时同步调整格式区间
+                          final old = _lastContent.length;
+                          if (v.length != old) {
+                            _formats = FormatStore.adjust(_formats, old, v.length);
+                            _contentCtrl.formats = _formats;
+                            _lastContent = v;
+                          }
+                          setState(() {
+                            if (_contentFocus.hasFocus) _showToolbar = true;
+                          });
+                        },
                       ),
                     ),
                     Positioned(
@@ -597,10 +637,27 @@ class _EditScreenState extends State<EditScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-          child: Row(
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (_showToolbar)
+            FormatToolbar(
+              controller: _contentCtrl,
+              formats: _formats,
+              onChanged: (v) {
+                setState(() => _formats = v);
+                _contentCtrl.setFormats(v);
+              },
+              onClose: () {
+                setState(() => _showToolbar = false);
+                _contentFocus.unfocus();
+              },
+            ),
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+              child: Row(
             children: [
               Expanded(
                 child: OutlinedButton(
@@ -639,7 +696,9 @@ class _EditScreenState extends State<EditScreen> {
               ),
             ],
           ),
-        ),
+            ),
+          ),
+        ],
       ),
     );
   }

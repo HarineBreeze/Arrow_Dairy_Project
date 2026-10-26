@@ -3,6 +3,7 @@ class DiaryEntry {
   String title;
   String subtitle;
   String content;
+  String formats; // 富文本排版（JSON 字符串），空串表示无格式
   String mood;
   String weather;
   String location;
@@ -20,6 +21,7 @@ class DiaryEntry {
     this.title = '',
     this.subtitle = '',
     this.content = '',
+    this.formats = '',
     this.mood = '😊',
     this.weather = '☀️',
     this.location = '',
@@ -39,6 +41,7 @@ class DiaryEntry {
       'title': title,
       'subtitle': subtitle,
       'content': content,
+      'formats': formats,
       'mood': mood,
       'weather': weather,
       'location': location,
@@ -60,6 +63,7 @@ class DiaryEntry {
       title: json['title'] as String? ?? '',
       subtitle: json['subtitle'] as String? ?? '',
       content: json['content'] as String? ?? '',
+      formats: json['formats'] as String? ?? '',
       mood: json['mood'] as String? ?? '😊',
       weather: json['weather'] as String? ?? '☀️',
       location: json['location'] as String? ?? '',

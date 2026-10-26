@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import '../utils/rich_text.dart';
+import '../utils/text_format.dart';
 
 /// 只读富文本：正文中 `@物品` 蓝色且可点击（回调物品名），`#话题` 蓝色不可交互。
+/// 同时支持用户自定义排版（加粗/斜体/下划线/删除线/高亮/字号/居中）。
 /// 点击命中通过 TextPainter 定位，不依赖 TapGestureRecognizer，Web/Android 均可靠。
 class RichNoteText extends StatefulWidget {
   final String text;
   final Set<String> itemNames;
+  final List<TextFormat> formats;
   final void Function(String itemName)? onTapMention;
   final TextStyle style;
 
@@ -13,6 +16,7 @@ class RichNoteText extends StatefulWidget {
     Key? key,
     required this.text,
     required this.itemNames,
+    this.formats = const [],
     this.onTapMention,
     required this.style,
   }) : super(key: key);
@@ -22,6 +26,8 @@ class RichNoteText extends StatefulWidget {
 }
 
 class _RichNoteTextState extends State<RichNoteText> {
+  List<RichSegment> _segments = const [];
+
   void _handleTapUp(TapUpDetails details) {
     final box = context.findRenderObject() as RenderBox?;
     if (box == null || !box.hasSize) return;
@@ -37,7 +43,8 @@ class _RichNoteTextState extends State<RichNoteText> {
       final s = _segments[i];
       final end = offset + s.text.length;
       final isLast = i == _segments.length - 1;
-      final hit = pos.offset >= offset && (pos.offset < end || (isLast && pos.offset <= end));
+      final hit =
+          pos.offset >= offset && (pos.offset < end || (isLast && pos.offset <= end));
       if (hit) {
         if (s.type == 'mention') {
           widget.onTapMention?.call(s.value);
@@ -48,29 +55,105 @@ class _RichNoteTextState extends State<RichNoteText> {
     }
   }
 
-  List<RichSegment> _segments = const [];
+  TextStyle? _styleAt(int pos) {
+    TextStyle? st;
+    for (final f in widget.formats) {
+      if (pos < f.start || pos >= f.end) continue;
+      final decos = <TextDecoration>[];
+      if (f.underline == true) decos.add(TextDecoration.underline);
+      if (f.strike == true) decos.add(TextDecoration.lineThrough);
+      st = (st ?? const TextStyle()).copyWith(
+        fontWeight: f.bold == true ? FontWeight.w700 : null,
+        fontStyle: f.italic == true ? FontStyle.italic : null,
+        decoration: decos.isEmpty
+            ? null
+            : (decos.length == 1 ? decos.first : TextDecoration.combine(decos)),
+        backgroundColor:
+            f.highlight != null ? _parseColor(f.highlight!) : null,
+        fontSize: f.size,
+      );
+    }
+    return st;
+  }
+
+  static Color _parseColor(String hex) {
+    var h = hex.replaceAll('#', '');
+    if (h.length == 6) h = 'FF$h';
+    return Color(int.tryParse(h, radix: 16) ?? 0xFFFFE58A);
+  }
+
+  /// 段落是否整体居中（覆盖该行的格式为 center）。
+  bool _isParagraphCentered(int start, int end) {
+    for (final f in widget.formats) {
+      if (f.center != true) continue;
+      if (f.start <= start && f.end >= end) return true;
+    }
+    return false;
+  }
 
   TextSpan _buildSpan() {
-    return TextSpan(
-      style: widget.style,
-      children: _segments.map((s) {
-        if (s.type == 'mention' || s.type == 'topic') {
-          return TextSpan(
-            text: s.text,
-            style: const TextStyle(color: Color(0xFF3B6FE0)),
-          );
+    final children = <TextSpan>[];
+    int cursor = 0;
+    for (final s in _segments) {
+      final segStart = cursor;
+      cursor += s.text.length;
+      if (s.type == 'mention' || s.type == 'topic') {
+        final base = _styleAt(segStart) ?? const TextStyle();
+        children.add(TextSpan(
+          text: s.text,
+          style: base.copyWith(color: const Color(0xFF3B6FE0)),
+        ));
+        continue;
+      }
+      // 按样式切分普通文本
+      int i = 0;
+      while (i < s.text.length) {
+        final st = _styleAt(segStart + i);
+        int j = i + 1;
+        while (j < s.text.length && _sameStyle(st, _styleAt(segStart + j))) {
+          j++;
         }
-        return TextSpan(text: s.text);
-      }).toList(),
-    );
+        children.add(TextSpan(text: s.text.substring(i, j), style: st));
+        i = j;
+      }
+    }
+    return TextSpan(style: widget.style, children: children);
   }
+
+  bool _sameStyle(TextStyle? a, TextStyle? b) =>
+      a?.fontWeight == b?.fontWeight &&
+      a?.fontStyle == b?.fontStyle &&
+      a?.decoration == b?.decoration &&
+      a?.backgroundColor == b?.backgroundColor &&
+      a?.fontSize == b?.fontSize;
 
   @override
   Widget build(BuildContext context) {
     _segments = RichTextParser.parse(widget.text, widget.itemNames);
+    // 按行切分，逐行决定对齐方式
+    final lines = <Widget>[];
+    final text = widget.text;
+    int lineStart = 0;
+    int offset = 0;
+    for (final s in _segments) {
+      offset += s.text.length;
+    }
+    // 若整体被居中格式覆盖，则整段居中
+    final wholeCentered = _isParagraphCentered(0, text.length) &&
+        text.isNotEmpty;
+    final span = _buildSpan();
+    if (wholeCentered) {
+      lines.add(Text.rich(span, textAlign: TextAlign.center));
+    } else {
+      lines.add(Text.rich(span));
+    }
+    lineStart = 0;
     return GestureDetector(
       onTapUp: _handleTapUp,
-      child: Text.rich(_buildSpan()),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: lines,
+      ),
     );
   }
 }
