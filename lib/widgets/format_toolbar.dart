@@ -10,12 +10,19 @@ class FormatToolbar extends StatefulWidget {
   final ValueChanged<List<TextFormat>> onChanged;
   final VoidCallback onClose;
 
+  /// 外部（编辑页）持有的选区区间：只读模式下 controller.selection 会归零，
+  /// 因此必须以这个为准。
+  final int? rangeStart;
+  final int? rangeEnd;
+
   const FormatToolbar({
     Key? key,
     required this.controller,
     required this.formats,
     required this.onChanged,
     required this.onClose,
+    this.rangeStart,
+    this.rangeEnd,
   }) : super(key: key);
 
   @override
@@ -45,8 +52,17 @@ class _FormatToolbarState extends State<FormatToolbar> {
 
   bool get _hasSelection => _sel.isValid && !_sel.isCollapsed;
 
-  /// 有效作用区间：优先用锁定的，其次用选区，最后用当前行。
+  /// 有效作用区间优先级：
+  /// 1. 外部传入的选区（编辑页在切只读前保存的）
+  /// 2. 面板展开时锁定的区间
+  /// 3. controller 当前选区
+  /// 4. 光标所在行
   List<int> get _range {
+    if (widget.rangeStart != null &&
+        widget.rangeEnd != null &&
+        widget.rangeEnd! > widget.rangeStart!) {
+      return [widget.rangeStart!, widget.rangeEnd!];
+    }
     if (_lockStart != null && _lockEnd != null) {
       return [_lockStart!, _lockEnd!];
     }
@@ -159,8 +175,9 @@ class _FormatToolbarState extends State<FormatToolbar> {
     _restoreSelection(s, e);
   }
 
-  /// 应用格式后把选区还回去（不主动 requestFocus，避免弹键盘）。
+  /// 应用格式后同步高亮区间（只读模式下 controller 不持有选区，跳过）。
   void _restoreSelection(int s, int e) {
+    if (widget.rangeStart != null && widget.rangeEnd != null) return;
     if (s != e && e <= widget.controller.text.length) {
       widget.controller.selection =
           TextSelection(baseOffset: s, extentOffset: e);

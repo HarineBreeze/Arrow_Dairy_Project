@@ -37,6 +37,8 @@ class _EditScreenState extends State<EditScreen> {
   bool _hadSelection = false;
   bool _tapStartedWithSelection = false;
   bool _selecting = false; // 框选模式：正文只读，不弹键盘
+  int _savedStart = 0; // 切换只读前保存的选区，供工具栏使用
+  int _savedEnd = 0;
   String _lastContent = '';
 
   static const List<String> _moods = ['😊', '😌', '😢', '😡', '😴', '🥰'];
@@ -96,7 +98,15 @@ class _EditScreenState extends State<EditScreen> {
     final hasSelection = sel.isValid && !sel.isCollapsed;
     if (hasSelection && !_hadSelection) {
       _hadSelection = true;
+      // 关键：切只读会把 selection 重置为 offset 0，必须在切换前存下区间
+      _savedStart = sel.start;
+      _savedEnd = sel.end;
       _enterSelectMode();
+    } else if (hasSelection) {
+      // 框选模式下继续拖动：同步区间（只读时 controller 可能仍能更新选区）
+      _savedStart = sel.start;
+      _savedEnd = sel.end;
+      // 无需 setState，工具栏按需读取
     } else if (!hasSelection && _hadSelection) {
       _hadSelection = false;
       // 选区消失（用户点别处或收起）：退出框选模式
@@ -145,10 +155,10 @@ class _EditScreenState extends State<EditScreen> {
         _selecting = false;
         _showToolbar = true;
       });
-      final pos = _contentCtrl.selection.isValid
-          ? _contentCtrl.selection.end
-          : _contentCtrl.text.length;
+      final pos = _savedEnd > 0 ? _savedEnd : _contentCtrl.text.length;
       _contentCtrl.selection = TextSelection.collapsed(offset: pos);
+      _savedStart = 0;
+      _savedEnd = 0;
       // 重新聚焦以唤起键盘
       Future.delayed(const Duration(milliseconds: 30), () {
         if (mounted) _contentFocus.requestFocus();
@@ -736,6 +746,8 @@ class _EditScreenState extends State<EditScreen> {
             FormatToolbar(
               controller: _contentCtrl,
               formats: _formats,
+              rangeStart: _savedStart,
+              rangeEnd: _savedEnd,
               onChanged: (v) {
                 setState(() => _formats = v);
                 _contentCtrl.setFormats(v);
