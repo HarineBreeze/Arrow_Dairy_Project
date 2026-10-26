@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:async';
 import '../models/diary_entry.dart';
 import '../services/diary_storage.dart';
 import '../services/item_storage.dart';
@@ -53,6 +54,69 @@ class _EditScreenState extends State<EditScreen> {
   ];
 
   bool get _isNew => widget.entry == null;
+
+  // ---------- 撤销 / 重做 ----------
+  final List<_Snap> _undoStack = [];
+  final List<_Snap> _redoStack = [];
+  Timer? _undoDebounce;
+
+  bool get _canUndo => _undoStack.isNotEmpty;
+  bool get _canRedo => _redoStack.isNotEmpty;
+
+  _Snap _snap() => _Snap(_contentCtrl.text, List<TextFormat>.from(_formats));
+
+  /// 记录一个可撤销状态。coalesce=true 时 800ms 内的连续输入合并为一步。
+  void _record({bool coalesce = false}) {
+    if (coalesce) {
+      _undoDebounce?.cancel();
+      _undoDebounce = Timer(const Duration(milliseconds: 800), () {
+        if (!mounted) return;
+        _undoStack.add(_snap());
+        _redoStack.clear();
+        if (_undoStack.length > 100) _undoStack.removeAt(0);
+        setState(() {});
+      });
+      return;
+    }
+    _undoDebounce?.cancel();
+    _undoStack.add(_snap());
+    _redoStack.clear();
+    if (_undoStack.length > 100) _undoStack.removeAt(0);
+  }
+
+  void _undo() {
+    // 有挂起的输入记录，先落盘再撤销
+    _undoDebounce?.cancel();
+    if (_undoStack.isEmpty) return;
+    _redoStack.add(_snap());
+    final s = _undoStack.removeLast();
+    _applySnap(s);
+  }
+  void _redo() {
+    if (_redoStack.isEmpty) return;
+    _undoStack.add(_snap());
+    final s = _redoStack.removeLast();
+    _applySnap(s);
+  }
+
+  void _applySnap(_Snap s) {
+    final pos = s.text.length;
+    _contentCtrl.value = TextEditingValue(
+      text: s.text,
+      selection: TextSelection.collapsed(offset: pos),
+    );
+    _contentCtrl.setFormats(s.formats);
+    HapticFeedback.selectionClick();
+    setState(() {
+      _formats = List<TextFormat>.from(s.formats);
+      _lastContent = s.text;
+      _savedStart = 0;
+      _savedEnd = 0;
+      _hadSelection = false;
+      _selecting = false;
+      _toolbarKey = UniqueKey();
+    });
+  }
 
   @override
   void initState() {
@@ -237,6 +301,7 @@ class _EditScreenState extends State<EditScreen> {
     if (s > 0 && text.substring(s - 1, s) == symbol) return;
 
     final newText = text.substring(0, s) + symbol + text.substring(s);
+    _record();
     // 格式区间：插入点之后的整体右移 1
     _formats = FormatStore.adjust(_formats, text.length, newText.length);
     _contentCtrl.value = TextEditingValue(
@@ -278,6 +343,7 @@ class _EditScreenState extends State<EditScreen> {
 
   @override
   void dispose() {
+    _undoDebounce?.cancel();
     _titleCtrl.dispose();
     _subtitleCtrl.dispose();
     _contentCtrl.dispose();
@@ -680,6 +746,20 @@ class _EditScreenState extends State<EditScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.undo),
+            tooltip: '撤销',
+            color: Colors.white,
+            disabledColor: Colors.white.withOpacity(0.35),
+            onPressed: _canUndo ? _undo : null,
+          ),
+          IconButton(
+            icon: const Icon(Icons.redo),
+            tooltip: '重做',
+            color: Colors.white,
+            disabledColor: Colors.white.withOpacity(0.35),
+            onPressed: _canRedo ? _redo : null,
+          ),
           if (!_isNew)
             IconButton(
               icon: const Icon(Icons.delete_outline),
@@ -794,7 +874,8 @@ class _EditScreenState extends State<EditScreen> {
                         ),
                         onTap: _onContentTap,
                         onChanged: (v) {
-                          // 文本变化时同步调整格式区间
+                          // 文本变化时同步调整格式区间（先记录旧状态供撤销）
+                          _record(coalesce: true);
                           final old = _lastContent.length;
                           if (v.length != old) {
                             _formats = FormatStore.adjust(_formats, old, v.length);
@@ -834,6 +915,7 @@ class _EditScreenState extends State<EditScreen> {
               rangeEnd: _savedEnd,
               onInsertTag: _insertTag,
               onChanged: (v) {
+                _record();
                 setState(() => _formats = v);
                 _contentCtrl.setFormats(v);
               },
@@ -1040,4 +1122,11 @@ class _EditScreenState extends State<EditScreen> {
       ),
     );
   }
+}
+
+/// 撤销栈快照：正文纯文本 + 排版格式
+class _Snap {
+  final String text;
+  final List<TextFormat> formats;
+  _Snap(this.text, this.formats);
 }
