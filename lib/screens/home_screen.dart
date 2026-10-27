@@ -17,6 +17,7 @@ import 'countdown_screen.dart';
 import '../models/countdown_event.dart';
 import '../services/countdown_storage.dart';
 import '../services/countdown_reminder.dart';
+import '../services/countdown_banner_log.dart';
 import '../widgets/countdown_banner.dart';
 import '../utils/menu_gesture_gate.dart';
 
@@ -79,6 +80,7 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   /// 倒数日：同步系统提醒 + 当天到期则弹出一次 App 内横幅
+  /// 同一事件同一天只弹一次（打开多少次 App 都不重复），记录见 CountdownBannerLog
   Future<void> _initCountdown() async {
     final list = await CountdownStorage.load();
     if (!mounted) return;
@@ -86,9 +88,18 @@ class _HomeScreenState extends State<HomeScreen>
     if (!mounted) return;
     final due = list.where((e) => e.isDueToday).toList();
     if (due.isEmpty) return;
+    // 过滤掉今天已经弹过横幅的事件
+    final shown = await CountdownBannerLog.shownToday();
+    if (!mounted) return;
+    final fresh = due.where((e) => !shown.contains(e.id)).toList();
+    if (fresh.isEmpty) return;
+    final target = fresh.first;
+    // 先落记录再弹，避免 App 在这期间被反复唤醒导致重复弹出
+    await CountdownBannerLog.markShown(target.id);
+    if (!mounted) return;
     // 等首帧布局完成、页面动画稳定后再滑出横幅（避免被首屏渲染盖住）
     Future.delayed(const Duration(milliseconds: 700), () {
-      if (mounted) _bannerKey.currentState?.showFor(due.first);
+      if (mounted) _bannerKey.currentState?.showFor(target);
     });
   }
 

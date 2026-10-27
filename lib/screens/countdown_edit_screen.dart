@@ -605,6 +605,13 @@ class _DatePickerPageState extends State<_DatePickerPage> {
     setState(() => _month = DateTime(_month.year, _month.month + delta, 1));
   }
 
+  /// 按年翻页（保持当前月份）
+  void _shiftYear(int delta) {
+    HapticFeedback.selectionClick();
+    setState(() => _month = DateTime(
+        _month.year + delta, _month.month, 1));
+  }
+
   @override
   Widget build(BuildContext context) {
     final year = _month.year;
@@ -664,13 +671,28 @@ class _DatePickerPageState extends State<_DatePickerPage> {
       ),
       body: Column(
         children: [
-          // 月份切换
+          // 月份切换（◀◀ / ▶▶ 按年翻页，◀ / ▶ 按月翻页）
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
             child: Row(
               children: [
                 IconButton(
+                  icon: const Icon(Icons.keyboard_double_arrow_left,
+                      size: 18, color: Color(0xFF8A99B3)),
+                  tooltip: '上一年',
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints:
+                      const BoxConstraints(minWidth: 34, minHeight: 36),
+                  onPressed: () => _shiftYear(-1),
+                ),
+                IconButton(
                   icon: const Icon(Icons.chevron_left, color: Color(0xFF5A6B82)),
+                  tooltip: '上一月',
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints:
+                      const BoxConstraints(minWidth: 34, minHeight: 36),
                   onPressed: () => _shift(-1),
                 ),
                 Expanded(
@@ -685,7 +707,22 @@ class _DatePickerPageState extends State<_DatePickerPage> {
                 IconButton(
                   icon:
                       const Icon(Icons.chevron_right, color: Color(0xFF5A6B82)),
+                  tooltip: '下一月',
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints:
+                      const BoxConstraints(minWidth: 34, minHeight: 36),
                   onPressed: () => _shift(1),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.keyboard_double_arrow_right,
+                      size: 18, color: Color(0xFF8A99B3)),
+                  tooltip: '下一年',
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints:
+                      const BoxConstraints(minWidth: 34, minHeight: 36),
+                  onPressed: () => _shiftYear(1),
                 ),
               ],
             ),
