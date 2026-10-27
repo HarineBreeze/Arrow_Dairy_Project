@@ -69,29 +69,78 @@ void main() {
     expect(r[2].highlight, '#FFE58A');
   });
 
-  test('adjust 插入文本后顺延', () {
+  test('adjustRange 末尾插入延伸格式，其后格式顺延', () {
     final base = [
       const TextFormat(start: 5, end: 10, bold: true),
     ];
     // 末尾插入 3 字：触及末尾的格式延伸（继续打字继承格式）
-    final r = FormatStore.adjust(base, 10, 13);
+    final r = FormatStore.adjustRange(base, 10, 0, 3);
     expect(r[0].start, 5);
     expect(r[0].end, 13);
     // 末尾之后已有格式整体顺延
     final base2 = [
       const TextFormat(start: 12, end: 15, bold: true),
     ];
-    final r2 = FormatStore.adjust(base2, 10, 13);
+    final r2 = FormatStore.adjustRange(base2, 10, 0, 3);
     expect(r2[0].start, 15);
     expect(r2[0].end, 18);
   });
 
-  test('adjust 删除文本后收缩', () {
+  test('adjustToText 中间插入：后续格式平移，高亮不错位', () {
+    final base = [
+      const TextFormat(start: 0, end: 3, highlight: '#FFE58A'), // '你好呀'
+      const TextFormat(start: 6, end: 10, bold: true),
+    ];
+    // 文本 '你好呀中间的内容哦' → 在位置 3 插入 'XYZ'（3 字）
+    final oldT = '你好呀中间的内容哦';
+    final newT = '你好呀XYZ中间的内容哦';
+    final r = FormatStore.adjustToText(base, oldT, newT);
+    // 插入点恰在高亮末尾 → 高亮延伸包含新输入（继续打字继承格式）
+    expect(r[0].start, 0);
+    expect(r[0].end, 6);
+    expect(r[1].start, 9); // 6+3
+    expect(r[1].end, 13);
+  });
+
+  test('adjustToText 中间删除：跨越删除区的格式收缩', () {
+    final base = [
+      const TextFormat(start: 0, end: 10, highlight: '#FFE58A'),
+    ];
+    final oldT = '0123456789';
+    final newT = '012789'; // 删除位置 3-6 的 '4567'（4 字）
+    final r = FormatStore.adjustToText(base, oldT, newT);
+    expect(r[0].start, 0);
+    expect(r[0].end, 6);
+  });
+
+  test('adjustToText 删除区之后的格式整体平移', () {
+    final base = [
+      const TextFormat(start: 8, end: 12, bold: true),
+    ];
+    final oldT = '0123456789ab';
+    final newT = '012789ab'; // 删除 [3,7) '3456'
+    final r = FormatStore.adjustToText(base, oldT, newT);
+    // 格式 8-12 → 整体左移 4 → 4-8
+    expect(r[0].start, 4);
+    expect(r[0].end, 8);
+  });
+
+  test('adjustToText 删除区内完全覆盖的格式被丢弃', () {
+    final base = [
+      const TextFormat(start: 3, end: 6, bold: true),
+    ];
+    final oldT = '0123456789';
+    final newT = '0126789'; // 删除 [3,6) '345'
+    final r = FormatStore.adjustToText(base, oldT, newT);
+    expect(r, isEmpty);
+  });
+
+  test('adjustRange 删除末尾文本不影响之前的格式', () {
     final base = [
       const TextFormat(start: 5, end: 10, bold: true),
     ];
-    final r = FormatStore.adjust(base, 10, 7); // 删掉3字
-    expect(r[0].end, 7);
+    final r = FormatStore.adjustRange(base, 10, 3, 0); // 在末尾之后删掉3字
+    expect(r[0].end, 10); // 删除区在格式之外，格式不变
   });
 
   test('encode/decode 往返一致', () {

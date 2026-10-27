@@ -207,33 +207,66 @@ class FormatStore {
     return f;
   }
 
-  /// 文本变化后同步调整格式位置。
-  /// 插入（newLen>oldLen，发生在末尾）：末尾之后的整体顺延，触及末尾的延伸；
-  /// 删除（newLen<oldLen）：末尾之后的顺延，跨越末尾的截断。
-  static List<TextFormat> adjust(
-      List<TextFormat> source, int oldLen, int newLen) {
-    if (oldLen == newLen) return source;
-    final diff = newLen - oldLen;
-    return source.map((f) {
+  /// 文本变化后同步调整格式位置（基于新旧文本 diff，支持任意位置的插入/删除）。
+  static List<TextFormat> adjustToText(
+      List<TextFormat> source, String oldText, String newText) {
+    if (oldText == newText) return source;
+    // 公共前缀
+    int p = 0;
+    final minLen =
+        oldText.length < newText.length ? oldText.length : newText.length;
+    while (p < minLen && oldText.codeUnitAt(p) == newText.codeUnitAt(p)) {
+      p++;
+    }
+    // 公共后缀
+    int sOld = oldText.length, sNew = newText.length;
+    while (sOld > p && sNew > p &&
+        oldText.codeUnitAt(sOld - 1) == newText.codeUnitAt(sNew - 1)) {
+      sOld--;
+      sNew--;
+    }
+    // 旧文本 [p, sOld) 被删除，新文本在 p 处插入 [p, sNew)
+    return adjustRange(source, p, sOld - p, sNew - p);
+  }
+
+  /// 在位置 [pos] 处删除 [deleted] 个字符、插入 [inserted] 个字符后，
+  /// 平移/延伸/截断各格式区间。
+  static List<TextFormat> adjustRange(
+      List<TextFormat> source, int pos, int deleted, int inserted) {
+    if (deleted == 0 && inserted == 0) return source;
+    final delta = inserted - deleted;
+    final delEnd = pos + deleted;
+    final out = <TextFormat>[];
+    for (final f in source) {
       var s = f.start;
       var e = f.end;
-      if (s >= oldLen) {
-        // 整体在变更点之后 → 平移
-        s += diff;
-        e += diff;
-      } else if (diff > 0 && e >= oldLen) {
-        // 插入且格式触及末尾 → 延伸（继续在格式末尾打字）
-        e += diff;
-      } else if (e >= oldLen) {
-        // 触及变更点：插入→延伸，删除→截断
-        if (diff > 0) {
-          e += diff;
-        } else {
-          e = newLen;
+      if (deleted > 0 && s >= delEnd) {
+        // 完全在删除区之后 → 整体平移
+        s += delta;
+        e += delta;
+      } else if (deleted == 0 && s > pos) {
+        // 插入点之前之后（不含插入点）→ 平移
+        s += delta;
+        e += delta;
+      } else if (e <= pos && !(deleted == 0 && e == pos && s < pos)) {
+        // 完全在变更点之前 → 不变（纯插入恰好结束于插入点的区间除外）
+      } else if (deleted > 0 && e <= delEnd) {
+        // 被删除区完全覆盖 → 丢弃
+        continue;
+      } else {
+        // 与变更区相交 → 收缩边界
+        if (s >= pos && s < delEnd) s = pos;
+        if (e > delEnd) {
+          e += delta;
+        } else if (deleted > 0 && e > pos) {
+          e = pos;
+        } else if (deleted == 0 && e == pos && s < pos) {
+          e += delta; // 纯插入恰好落在区间末尾 → 延伸（继续打字继承格式）
         }
       }
-      return f.copyWith(start: s, end: e);
-    }).where((f) => f.end > f.start).toList();
+      if (e > s) out.add(f.copyWith(start: s, end: e));
+    }
+    return out;
   }
 
   /// 判断某位置是否有指定格式（用于工具栏高亮状态）。

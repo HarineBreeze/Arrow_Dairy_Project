@@ -180,18 +180,26 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     if (_contentFocus.hasFocus) _contentFocus.unfocus();
   }
 
+  Timer? _kbDebounce; // 键盘状态防抖：动画过程中 viewInsets 会短暂抖动
+
   @override
   void didChangeMetrics() {
     if (!mounted) return;
+    // 防抖：等键盘动画稳定后再判定，避免误判「已收起」导致反复失焦/弹键盘
+    _kbDebounce?.cancel();
+    _kbDebounce = Timer(const Duration(milliseconds: 150), _applyKbState);
+  }
+
+  void _applyKbState() {
+    if (!mounted) return;
     final kb = _isKbVisible() && !_selecting;
-    if (kb != _kbVisible) {
-      setState(() {
-        _kbVisible = kb;
-        // 弹出文字输入键盘时，默认收起排版栏（用户可再次点击正文手动展开）
-        if (kb && !_selecting) _showToolbar = false;
-      });
-      if (!kb) _onKeyboardHidden();
-    }
+    if (kb == _kbVisible) return;
+    setState(() {
+      _kbVisible = kb;
+      // 弹出文字输入键盘时，默认收起排版栏（用户可再次点击正文手动展开）
+      if (kb && !_selecting) _showToolbar = false;
+    });
+    if (!kb) _onKeyboardHidden();
   }
 
   void _onFocusChange() {
@@ -207,7 +215,10 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
         // 聚焦后强制确保键盘弹出（readOnly 随焦点联动，框架可能延迟开连接）
         if (_showToolbar) setState(() => _showToolbar = false);
         Future.delayed(const Duration(milliseconds: 60), () {
-          if (mounted && _contentFocus.hasFocus && !_selecting) {
+          if (mounted &&
+              _contentFocus.hasFocus &&
+              !_selecting &&
+              !_isKbVisible()) {
             SystemChannels.textInput.invokeMethod('TextInput.show');
           }
         });
@@ -302,13 +313,11 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
         _selecting = false;
         _showToolbar = false; // 键盘即将弹出，默认收起排版栏
       });
-      final pos = _savedEnd > 0 ? _savedEnd : _contentCtrl.text.length;
-      _contentCtrl.selection = TextSelection.collapsed(offset: pos);
       _savedStart = 0;
       _savedEnd = 0;
-      // 重新聚焦以唤起键盘
+      // 光标位置交给 TextField 自身的点击处理（定位到点击处），不再强制回旧选区末尾
       Future.delayed(const Duration(milliseconds: 30), () {
-        if (mounted) _contentFocus.requestFocus();
+        if (mounted && !_selecting) _contentFocus.requestFocus();
       });
       return;
     }
@@ -385,7 +394,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     final newText = text.substring(0, s) + symbol + text.substring(s);
     _pushUndo(text, _formats);
     // 格式区间：插入点之后的整体右移 1
-    _formats = FormatStore.adjust(_formats, text.length, newText.length);
+    _formats = FormatStore.adjustRange(_formats, s, 0, 1);
     _contentCtrl.value = TextEditingValue(
       text: newText,
       selection: TextSelection(
@@ -426,6 +435,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _kbDebounce?.cancel();
     _undoPending?.cancel();
     _titleCtrl.dispose();
     _subtitleCtrl.dispose();
@@ -983,10 +993,9 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                         ),
                         onTap: _onContentTap,
                         onChanged: (v) {
-                          final old = _lastContent.length;
                           if (_restoring) {
                             // undo/redo 程序化改写：不记录，只同步区间
-                            _formats = FormatStore.adjust(_formats, old, v.length);
+                            _formats = FormatStore.adjustToText(_formats, _lastContent, v);
                             _contentCtrl.formats = _formats;
                             _lastContent = v;
                             setState(() {});
@@ -1001,8 +1010,9 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                               if (mounted) setState(() {});
                             });
                           }
-                          if (v.length != old) {
-                            _formats = FormatStore.adjust(_formats, old, v.length);
+                          if (v != _lastContent) {
+                            // 基于新旧文本 diff 精确平移/收缩格式区间（支持任意位置编辑）
+                            _formats = FormatStore.adjustToText(_formats, _lastContent, v);
                             _contentCtrl.formats = _formats;
                             _lastContent = v;
                           }
