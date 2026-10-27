@@ -180,14 +180,32 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     if (_contentFocus.hasFocus) _contentFocus.unfocus();
   }
 
-  Timer? _kbDebounce; // 键盘状态防抖：动画过程中 viewInsets 会短暂抖动
+  Timer? _kbDebounce; // 键盘弹出冷却期复核（防 viewInsets 抖动）
+  DateTime _kbHiddenAt = DateTime.fromMillisecondsSinceEpoch(0);
 
   @override
   void didChangeMetrics() {
     if (!mounted) return;
-    // 防抖：等键盘动画稳定后再判定，避免误判「已收起」导致反复失焦/弹键盘
-    _kbDebounce?.cancel();
-    _kbDebounce = Timer(const Duration(milliseconds: 150), _applyKbState);
+    final kb = _isKbVisible() && !_selecting;
+    if (kb == _kbVisible) return;
+    if (!kb) {
+      // 收起立即响应，保证还原跟手；记录时间戳用于识别后续抖动
+      _kbDebounce?.cancel();
+      _kbHiddenAt = DateTime.now();
+      setState(() => _kbVisible = false);
+      _onKeyboardHidden();
+    } else if (DateTime.now().difference(_kbHiddenAt).inMilliseconds < 300) {
+      // 收起后 300ms 内又上报弹出 → 可能是收起动画的抖动，延迟复核
+      _kbDebounce?.cancel();
+      _kbDebounce = Timer(const Duration(milliseconds: 320), _applyKbState);
+    } else {
+      // 弹出立即响应，保证跟手
+      setState(() {
+        _kbVisible = true;
+        // 弹出文字输入键盘时，默认收起排版栏（用户可再次点击正文手动展开）
+        if (!_selecting) _showToolbar = false;
+      });
+    }
   }
 
   void _applyKbState() {
@@ -196,7 +214,6 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     if (kb == _kbVisible) return;
     setState(() {
       _kbVisible = kb;
-      // 弹出文字输入键盘时，默认收起排版栏（用户可再次点击正文手动展开）
       if (kb && !_selecting) _showToolbar = false;
     });
     if (!kb) _onKeyboardHidden();
@@ -315,10 +332,9 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
       });
       _savedStart = 0;
       _savedEnd = 0;
-      // 光标位置交给 TextField 自身的点击处理（定位到点击处），不再强制回旧选区末尾
-      Future.delayed(const Duration(milliseconds: 30), () {
-        if (mounted && !_selecting) _contentFocus.requestFocus();
-      });
+      // 光标位置交给 TextField 自身的点击处理（定位到点击处），不再强制回旧选区末尾；
+      // 立即请求焦点（无延迟）：readOnly 将随重建变为 false，didUpdateWidget 会自动接通键盘
+      if (!_contentFocus.hasFocus) _contentFocus.requestFocus();
       return;
     }
     if (_isKbVisible()) {
