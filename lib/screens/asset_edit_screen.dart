@@ -123,7 +123,6 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
               child: Row(
                 children: [
                   ..._quickIcons.take(7).map((e) => _iconCell(e)),
-                  const Spacer(),
                   _iconCell(null, isMore: true),
                 ],
               ),
