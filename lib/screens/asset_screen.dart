@@ -58,11 +58,11 @@ class AssetScreenState extends State<AssetScreen> {
 
   /// 供外部（首页 FAB）调用的快捷入口
   Future<void> openNewAsset() async {
-    final r = await Navigator.push<Asset>(
+    final r = await Navigator.push<dynamic>(
       context,
       _slideRoute(const AssetEditScreen()),
     );
-    if (r != null) {
+    if (r is Asset) {
       _assets.add(r);
       await AssetStorage.save(_assets);
       if (mounted) setState(() {});
@@ -71,8 +71,8 @@ class AssetScreenState extends State<AssetScreen> {
 
   // ---------- 密码流程 ----------
 
-  PageRouteBuilder<Asset> _slideRoute(Widget page) =>
-      PageRouteBuilder<Asset>(
+  PageRouteBuilder<dynamic> _slideRoute(Widget page) =>
+      PageRouteBuilder<dynamic>(
         transitionDuration: const Duration(milliseconds: 300),
         reverseTransitionDuration: const Duration(milliseconds: 300),
         pageBuilder: (_, __, ___) => page,
@@ -336,17 +336,19 @@ class AssetScreenState extends State<AssetScreen> {
   // ---------- 操作 ----------
 
   Future<void> _openEditor([Asset? asset]) async {
-    final r = await Navigator.push<Asset>(
+    final r = await Navigator.push<dynamic>(
       context,
       _slideRoute(AssetEditScreen(asset: asset)),
     );
-    if (r != null && (r as Object) == 'deleted') {
+    if (r == 'deleted') {
+      // 编辑页右上角删除
       _assets.removeWhere((e) => e.id == asset!.id);
       await AssetStorage.save(_assets);
       if (mounted) setState(() {});
       return;
     }
-    if (r != null) {
+    if (r is Asset) {
+      // 编辑/新增保存
       await AssetStorage.save(_assets);
       if (mounted) setState(() {});
     }
