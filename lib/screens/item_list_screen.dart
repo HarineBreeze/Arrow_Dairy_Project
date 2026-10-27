@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/item.dart';
 import '../services/item_storage.dart';
+import '../utils/menu_gesture_gate.dart';
 import 'item_edit_screen.dart';
 
 enum _ItemFilter { all, owning, lost, wishlist }
@@ -675,7 +676,12 @@ class _ItemCardState extends State<_ItemCard> {
       return _buildAnimatedCard(child);
     }
     // 愿望单：左右滑动攒钱
-    return GestureDetector(
+    return Listener(
+      behavior: HitTestBehavior.translucent,
+      onPointerDown: (_) => menuDragBlocked.value = true,
+      onPointerUp: (_) => menuDragBlocked.value = false,
+      onPointerCancel: (_) => menuDragBlocked.value = false,
+      child: GestureDetector(
       behavior: HitTestBehavior.opaque,
       onHorizontalDragUpdate: (d) =>
           setState(() => _dx = (_dx + d.delta.dx).clamp(-_maxDx, _maxDx)),
@@ -690,6 +696,7 @@ class _ItemCardState extends State<_ItemCard> {
       },
       onHorizontalDragCancel: () => setState(() => _dx = 0),
       child: _buildAnimatedCard(child),
+      ),
     );
   }
 

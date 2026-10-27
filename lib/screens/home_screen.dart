@@ -13,6 +13,7 @@ import 'settings_screen.dart';
 import 'note_view_screen.dart';
 import 'item_list_screen.dart';
 import 'asset_screen.dart';
+import '../utils/menu_gesture_gate.dart';
 
 const Color kPrimaryBlue = Color(0xFF3B6FE0);
 const Color kLightBlue = Color(0xFFDCE7FF);
@@ -432,6 +433,8 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _onPtrMove(PointerMoveEvent e) {
     if (_ptrDownX == null || _ptrDownY == null) return;
+    // 愿望单卡片正在处理横向滑动 → 不拖菜单
+    if (menuDragBlocked.value) return;
     final dx = e.position.dx - _ptrDownX!;
     final dy = e.position.dy - _ptrDownY!;
     if (!_menuTracking) {
