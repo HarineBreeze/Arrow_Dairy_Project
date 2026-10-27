@@ -27,7 +27,7 @@ class CountdownEvent {
 
   static const List<String> types = ['纪念日', '资产日'];
 
-  /// 编辑页快捷图标（与资产图景同款排版规则：一排 7 个 + 「...」更多）
+  /// 编辑页快捷图标（与资产全景同款排版规则：一排 7 个 + 「...」更多）
   static const List<String> quickIcons = [
     '🎂', '💝', '🎓', '🏠', '✈️', '💍', '🎉',
     '📅', '⭐', '🌸', '🎁', '🏥', '💼', '🐣', '🌙', '❤️',

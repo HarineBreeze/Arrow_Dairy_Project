@@ -3,8 +3,9 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import '../models/asset.dart';
 
-/// 资产图景存储：资产列表 + 访问密码（含密保）。
+/// 资产全景存储：资产列表 + 访问密码（含密保）。
 /// 密码只存明文哈希前的简单混淆值 —— 本地离线 App，防「顺手翻看」而非防专业破解。
+/// 加密访问为可选项：未设置密码时可直接查看，密码文件不存在即为「未加密」。
 class AssetStorage {
   static Future<File> _assetsFile() async {
     final dir = await getApplicationDocumentsDirectory();
@@ -131,6 +132,14 @@ class AssetStorage {
       final map = jsonDecode(await file.readAsString()) as Map<String, dynamic>;
       map['pin'] = _obfuscate(newPin);
       await file.writeAsString(jsonEncode(map));
+    } catch (_) {}
+  }
+
+  /// 取消加密访问（删除密码与密保记录）
+  static Future<void> clearPin() async {
+    try {
+      final file = await _pinFile();
+      if (await file.exists()) await file.delete();
     } catch (_) {}
   }
 }

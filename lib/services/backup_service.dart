@@ -18,7 +18,7 @@ class BackupData {
   final List<DiaryEntry> entries;
   final List<Item> items;
   final UserProfile profile;
-  final List<Asset> assets; // 资产图景（v2 备份起包含）
+  final List<Asset> assets; // 资产全景（v2 备份起包含）
   final List<CountdownEvent> countdowns; // 倒数日（v3 备份起包含）
   final String? fontFamilyId; // 笔记字体设置（v2 备份起包含）
 
@@ -124,7 +124,7 @@ class BackupService {
         profile = UserProfile.fromJson(decoded['profile']);
       } catch (_) {}
     }
-    // 资产图景 + 设置（v2 备份起包含；旧备份为空，导入时跳过）
+    // 资产全景 + 设置（v2 备份起包含；旧备份为空，导入时跳过）
     final assets = <Asset>[];
     if (decoded['assets'] is List) {
       for (final e in decoded['assets'] as List) {

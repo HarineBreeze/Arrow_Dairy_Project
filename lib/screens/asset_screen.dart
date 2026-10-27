@@ -4,11 +4,12 @@ import '../models/asset.dart';
 import '../services/asset_storage.dart';
 import 'asset_edit_screen.dart';
 
-/// 资产图景主页。进入前需通过密码（首次先设置）。
+/// 资产全景主页。默认无需密码即可查看；
+/// 开启「加密访问」后，进入本页需先输入密码解锁。
 /// 返回 true 表示确认完成（供外部回调刷新）。
 class AssetScreen extends StatefulWidget {
   final VoidCallback? onOpenMenu;
-  /// 用户在密码页点了「取消」时回调，由首页切回笔记主页
+  /// 用户在密码页点了「取消」时回调，由首页切回笔记主页（保留兼容，正常不再触发）
   final VoidCallback? onCancel;
   const AssetScreen({Key? key, this.onOpenMenu, this.onCancel})
       : super(key: key);
@@ -20,7 +21,8 @@ class AssetScreen extends StatefulWidget {
 class AssetScreenState extends State<AssetScreen> {
   List<Asset> _assets = [];
   bool _loading = true;
-  bool _unlocked = false;
+  bool _unlocked = true; // 未加密时默认已解锁
+  bool _hasPin = false; // 是否启用了加密访问
   String _typeFilter = '全部'; // 全部 | 总资产 | 负资产 | 现金流
   String _signFilter = '全部'; // 全部 | 金额为正 | 金额为负
   bool _hideNumbers = false; // 看板数字是否隐藏（默认显示）
@@ -32,20 +34,20 @@ class AssetScreenState extends State<AssetScreen> {
   }
 
   Future<void> _init() async {
+    // 不再强制要求进入前设置/输入密码：先加载数据，加密是可选开关
     final hasPin = await AssetStorage.hasPin();
-    if (hasPin) {
-      // 已设置密码：先解锁
-      await _askUnlock();
-    } else {
-      await _askSetup();
-    }
     if (!mounted) return;
-    if (!_unlocked) {
-      // 用户取消（或侧滑）→ 交回首页
-      if (widget.onCancel != null) widget.onCancel!();
-      return;
-    }
+    setState(() {
+      _hasPin = hasPin;
+      _unlocked = !hasPin;
+    });
     await _load();
+    if (hasPin && mounted) {
+      // 已启用加密访问：进入本页需解锁
+      await _askUnlock();
+      if (!mounted) return;
+      await _load();
+    }
   }
 
   Future<void> _load() async {
@@ -88,22 +90,20 @@ class AssetScreenState extends State<AssetScreen> {
         },
       );
 
-  Future<void> _askSetup() async {
-    final r = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => const _PinSetupDialog(),
-    );
-    _unlocked = r == true;
-  }
-
   Future<void> _askUnlock() async {
     final r = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => const _PinUnlockDialog(),
     );
-    _unlocked = r == true;
+    if (!mounted) return;
+    setState(() => _unlocked = r == true);
+  }
+
+  /// 锁定时点击「解锁」按钮
+  Future<void> _unlockManually() async {
+    await _askUnlock();
+    if (mounted && _unlocked) await _load();
   }
 
   // ---------- 设置 ----------
@@ -127,20 +127,100 @@ class AssetScreenState extends State<AssetScreen> {
                   style:
                       TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             ),
+            // 加密访问开关（在上方）
             ListTile(
-              leading: const Icon(Icons.lock_outline, color: Color(0xFF3B6FE0)),
-              title: const Text('修改资产密码'),
-              subtitle: const Text('可通过当前密码或密保问题验证',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF9AA8BF))),
+              leading: Icon(
+                  _hasPin ? Icons.lock : Icons.lock_open,
+                  color: const Color(0xFF3B6FE0)),
+              title: const Text('设置加密访问'),
+              subtitle: Text(
+                  _hasPin
+                      ? '已开启：进入资产全景需输入密码'
+                      : '未开启：进入资产全景无需密码',
+                  style: const TextStyle(
+                      fontSize: 12, color: Color(0xFF9AA8BF))),
+              trailing: Switch(
+                value: _hasPin,
+                activeColor: const Color(0xFF3B6FE0),
+                onChanged: (v) {
+                  Navigator.pop(ctx);
+                  if (v) {
+                    _openSetupPin();
+                  } else {
+                    _openDisablePin();
+                  }
+                },
+              ),
               onTap: () {
                 Navigator.pop(ctx);
-                _openChangePin();
+                if (_hasPin) {
+                  _openDisablePin();
+                } else {
+                  _openSetupPin();
+                }
               },
+            ),
+            // 修改密码：仅开启加密后可用
+            ListTile(
+              leading: Icon(Icons.password,
+                  color: _hasPin
+                      ? const Color(0xFF3B6FE0)
+                      : const Color(0xFFC3CCDA)),
+              enabled: _hasPin,
+              title: Text('修改资产密码',
+                  style: TextStyle(
+                      color: _hasPin
+                          ? const Color(0xFF2A3B52)
+                          : const Color(0xFFB4C0D2))),
+              subtitle: Text(
+                  _hasPin ? '可通过当前密码或密保问题验证' : '开启加密访问后可修改',
+                  style: const TextStyle(
+                      fontSize: 12, color: Color(0xFF9AA8BF))),
+              onTap: _hasPin
+                  ? () {
+                      Navigator.pop(ctx);
+                      _openChangePin();
+                    }
+                  : null,
             ),
             const SizedBox(height: 6),
           ],
         ),
       ),
+    );
+  }
+
+  /// 开启加密访问：设置密码（两次）+ 密保问题与答案
+  Future<void> _openSetupPin() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => const _PinSetupDialog(),
+    );
+    if (ok != true || !mounted) return;
+    setState(() {
+      _hasPin = true;
+      _unlocked = true; // 刚设置完密码，本次访问无需再解锁
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('已开启加密访问')),
+    );
+  }
+
+  /// 取消加密访问：需验证当前密码或密保答案
+  Future<void> _openDisablePin() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => const _DisablePinDialog(),
+    );
+    if (ok != true || !mounted) return;
+    setState(() {
+      _hasPin = false;
+      _unlocked = true;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('已取消加密访问')),
     );
   }
 
@@ -441,7 +521,7 @@ class AssetScreenState extends State<AssetScreen> {
                 onPressed: widget.onOpenMenu,
               ),
               const Expanded(
-                child: Text('资产图景',
+                child: Text('资产全景',
                     style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w600,
@@ -456,46 +536,80 @@ class AssetScreenState extends State<AssetScreen> {
               IconButton(
                 icon: const Icon(Icons.settings_outlined, color: Colors.white),
                 tooltip: '设置',
-                onPressed: _unlocked ? _openSettings : null,
+                onPressed: _openSettings, // 锁定时也可进入，用于解锁后的设置调整
               ),
             ],
           ),
         ),
         Expanded(
-          child: _loading || !_unlocked
-              ? const Center(child: CircularProgressIndicator())
-              : RefreshIndicator(
-                  color: const Color(0xFF3B6FE0),
-                  onRefresh: _load,
-                  child: _filtered.isEmpty
-                      ? ListView(
-                          children: [
-                            const SizedBox(height: 200),
-                            Center(
-                              child: Text(
-                                  _hasFilter
-                                      ? '没有符合条件的资产卡片\n试试调整筛选条件'
-                                      : '还没有资产卡片\n点右下角 + 添加第一笔',
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                      fontSize: 15,
-                                      color: Color(0xFF9AA8BF),
-                                      height: 1.8)),
+          child: !_unlocked
+              ? _buildLocked()
+              : _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : RefreshIndicator(
+                      color: const Color(0xFF3B6FE0),
+                      onRefresh: _load,
+                      child: _filtered.isEmpty
+                          ? ListView(
+                              children: [
+                                const SizedBox(height: 200),
+                                Center(
+                                  child: Text(
+                                      _hasFilter
+                                          ? '没有符合条件的资产卡片\n试试调整筛选条件'
+                                          : '还没有资产卡片\n点右下角 + 添加第一笔',
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                          fontSize: 15,
+                                          color: Color(0xFF9AA8BF),
+                                          height: 1.8)),
+                                ),
+                              ],
+                            )
+                          : ListView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.fromLTRB(16, 14, 16, 96),
+                              children: [
+                                _buildOverview(),
+                                const SizedBox(height: 14),
+                                ..._filtered.map(_buildCard),
+                              ],
                             ),
-                          ],
-                        )
-                      : ListView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.fromLTRB(16, 14, 16, 96),
-                          children: [
-                            _buildOverview(),
-                            const SizedBox(height: 14),
-                            ..._filtered.map(_buildCard),
-                          ],
-                        ),
-                ),
+                    ),
         ),
       ],
+    );
+  }
+
+  /// 已开启加密访问但尚未解锁
+  Widget _buildLocked() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.lock_outline, size: 44, color: Color(0xFFC3CCDA)),
+          const SizedBox(height: 12),
+          const Text('资产全景已加密',
+              style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF2A3B52))),
+          const SizedBox(height: 6),
+          const Text('输入密码后查看',
+              style: TextStyle(fontSize: 13, color: Color(0xFF9AA8BF))),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: _unlockManually,
+            style: ElevatedButton.styleFrom(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('解锁'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -737,13 +851,13 @@ class _PinSetupDialogState extends State<_PinSetupDialog> {
       child: AlertDialog(
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('设置资产密码'),
+        title: const Text('开启加密访问'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('进入资产图景需要输入密码，密码仅保存在本机',
+              const Text('开启后，进入资产全景需输入密码；密码仅保存在本机',
                   style: TextStyle(fontSize: 13, color: Color(0xFF9AA8BF))),
               const SizedBox(height: 14),
               TextField(
@@ -1064,6 +1178,173 @@ class _PinUnlockDialogState extends State<_PinUnlockDialog> {
             onPressed: _forgot ? _resetByAnswer : _submit,
             child: Text('确认',
                 style: const TextStyle(color: Color(0xFF3B6FE0))),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ==================== 取消加密访问（验证身份）弹窗 ====================
+
+class _DisablePinDialog extends StatefulWidget {
+  const _DisablePinDialog({Key? key}) : super(key: key);
+
+  @override
+  State<_DisablePinDialog> createState() => _DisablePinDialogState();
+}
+
+class _DisablePinDialogState extends State<_DisablePinDialog> {
+  /// 'pin' = 验证当前密码；'answer' = 验证密保答案
+  String _mode = 'pin';
+  final _vCtrl = TextEditingController();
+  bool _busy = false;
+  String? _error;
+  late final Future<String> _question = AssetStorage.getQuestion();
+
+  @override
+  void dispose() {
+    _vCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _confirm() async {
+    final v = _vCtrl.text.trim();
+    if (v.isEmpty) {
+      setState(() => _error = _mode == 'pin' ? '请输入当前密码' : '请输入密保答案');
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    final ok = _mode == 'pin'
+        ? await AssetStorage.verifyPin(v)
+        : await AssetStorage.verifyAnswer(v);
+    if (!mounted) return;
+    if (!ok) {
+      setState(() {
+        _busy = false;
+        _error = _mode == 'pin' ? '当前密码不正确' : '密保答案不正确';
+      });
+      return;
+    }
+    await AssetStorage.clearPin();
+    if (mounted) Navigator.pop(context, true);
+  }
+
+  Widget _modeChip(String value, String label) {
+    final sel = _mode == value;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() {
+          _mode = value;
+          _error = null;
+          _vCtrl.clear();
+        }),
+        child: Container(
+          height: 34,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: sel ? const Color(0xFF3B6FE0) : const Color(0xFFF3F6FB),
+            borderRadius: BorderRadius.circular(17),
+          ),
+          child: Text(label,
+              style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: sel ? FontWeight.w600 : FontWeight.w400,
+                  color: sel ? Colors.white : const Color(0xFF5A6B82))),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return WillPopScope(
+      onWillPop: () async => !_busy,
+      child: AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('取消加密访问'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('验证身份后，资产全景将不再需要密码即可进入',
+                  style: TextStyle(fontSize: 13, color: Color(0xFF9AA8BF))),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  _modeChip('pin', '当前密码'),
+                  const SizedBox(width: 8),
+                  _modeChip('answer', '密保答案'),
+                ],
+              ),
+              const SizedBox(height: 16),
+              if (_mode == 'pin')
+                TextField(
+                  controller: _vCtrl,
+                  obscureText: true,
+                  keyboardType: TextInputType.number,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    labelText: '当前资产密码',
+                    border: OutlineInputBorder(),
+                  ),
+                  onSubmitted: (_) => _confirm(),
+                  onChanged: (_) => setState(() => _error = null),
+                )
+              else ...[
+                FutureBuilder<String>(
+                  future: _question,
+                  builder: (c, snap) => Text(snap.data ?? '',
+                      style: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w500)),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _vCtrl,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    labelText: '密保答案',
+                    border: OutlineInputBorder(),
+                  ),
+                  onSubmitted: (_) => _confirm(),
+                  onChanged: (_) => setState(() => _error = null),
+                ),
+              ],
+              if (_error != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.error_outline,
+                          size: 16, color: Color(0xFFD9534F)),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(_error!,
+                            style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFFD9534F),
+                                fontWeight: FontWeight.w500)),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: _busy ? null : () => Navigator.pop(context, false),
+            child: const Text('取消',
+                style: TextStyle(color: Color(0xFF8A9AB0))),
+          ),
+          TextButton(
+            onPressed: _busy ? null : _confirm,
+            child: const Text('确认取消',
+                style: TextStyle(color: Color(0xFFD9534F))),
           ),
         ],
       ),
