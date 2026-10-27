@@ -163,11 +163,28 @@ class _EditScreenState extends State<EditScreen> {
     final kb = _contentFocus.hasFocus && !_selecting;
     if (kb != _kbVisible) setState(() => _kbVisible = kb);
     if (_contentFocus.hasFocus) {
-      // 若已处于框选模式，聚焦后仍需压住键盘
-      if (_selecting) _suppressKeyboard();
-    } else {
-      // 失焦时收起排版栏（框选模式下保留，供排版操作）
-      if (_showToolbar && !_selecting) setState(() => _showToolbar = false);
+      if (_selecting) {
+        // 框选模式下聚焦：持续压住键盘
+        _suppressKeyboard();
+      } else {
+        // 聚焦后强制确保键盘弹出（readOnly 随焦点联动，框架可能延迟开连接）
+        Future.delayed(const Duration(milliseconds: 60), () {
+          if (mounted && _contentFocus.hasFocus && !_selecting) {
+            SystemChannels.textInput.invokeMethod('TextInput.show');
+          }
+        });
+      }
+    } else if (!_selecting) {
+      // 键盘收起（编辑态）：选框回退为光标，清掉排版锁定
+      final sel = _contentCtrl.selection;
+      if (sel.isValid && !sel.isCollapsed) {
+        _contentCtrl.selection =
+            TextSelection.collapsed(offset: sel.start < 0 ? 0 : sel.start);
+      }
+      _hadSelection = false;
+      _savedStart = 0;
+      _savedEnd = 0;
+      if (_showToolbar) setState(() => _showToolbar = false);
     }
   }
 
@@ -217,9 +234,9 @@ class _EditScreenState extends State<EditScreen> {
       setState(() => _showToolbar = true);
     }
     _suppressKeyboard();
-    // 手势开始时键盘本来就收着（长按会先让输入框抢焦点弹键盘）：
-    // 直接放弃焦点，从源头杜绝键盘弹出。
-    if (!_kbAtDown) {
+    // 手势开始时键盘本来就收着：长按可能让输入框抢焦点，放弃之，
+    // 从源头杜绝键盘弹出（readOnly 已随失焦变为 true）。
+    if (!_kbAtDown && _contentFocus.hasFocus) {
       _contentFocus.unfocus();
     }
   }
@@ -913,7 +930,7 @@ class _EditScreenState extends State<EditScreen> {
                         child: TextField(
                         controller: _contentCtrl,
                         focusNode: _contentFocus,
-                        readOnly: _selecting,
+                        readOnly: _selecting || !_contentFocus.hasFocus,
                         autofocus: _isNew && !_showToolbar,
                         maxLength: 2000,
                         maxLines: null,
