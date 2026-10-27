@@ -97,7 +97,7 @@ class SideMenu extends StatelessWidget {
   Widget _buildTabSwitcher() {
     const tabHeight = 52.0;
     const gap = 8.0;
-    const tabs = ['diary', 'items', 'assets', 'countdown'];
+    const tabs = ['diary', 'items', 'countdown', 'assets'];
     final selectedIndex = tabs.indexOf(currentTab).clamp(0, 3);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -123,7 +123,7 @@ class SideMenu extends StatelessWidget {
               children: [
                 _buildTabItem(
                   icon: Icons.book_outlined,
-                  label: '日记',
+                  label: '写日记',
                   selected: currentTab == 'diary',
                   onTap: onOpenDiary,
                   height: tabHeight,
@@ -138,18 +138,18 @@ class SideMenu extends StatelessWidget {
                 ),
                 const SizedBox(height: gap),
                 _buildTabItem(
-                  icon: Icons.account_balance_outlined,
-                  label: '资产图景',
-                  selected: currentTab == 'assets',
-                  onTap: onOpenAssets,
-                  height: tabHeight,
-                ),
-                const SizedBox(height: gap),
-                _buildTabItem(
                   icon: Icons.event_available_outlined,
                   label: '倒数日',
                   selected: currentTab == 'countdown',
                   onTap: onOpenCountdown,
+                  height: tabHeight,
+                ),
+                const SizedBox(height: gap),
+                _buildTabItem(
+                  icon: Icons.account_balance_outlined,
+                  label: '资产全景',
+                  selected: currentTab == 'assets',
+                  onTap: onOpenAssets,
                   height: tabHeight,
                 ),
               ],

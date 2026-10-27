@@ -275,7 +275,7 @@ class CountdownScreenState extends State<CountdownScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('按日期类型筛选',
+                  const Text('按事件类型筛选',
                       style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -482,6 +482,7 @@ class CountdownScreenState extends State<CountdownScreen> {
                           color: grey
                               ? const Color(0xFF9AA8BF)
                               : const Color(0xFF2A3B52))),
+                  // 卡片上不展示事件类型，该位置显示事件备注；无备注则留空
                   if (e.note.isNotEmpty) ...[
                     const SizedBox(height: 2),
                     Text(e.note,
@@ -493,15 +494,6 @@ class CountdownScreenState extends State<CountdownScreen> {
                                 ? const Color(0xFFB4BCC8)
                                 : const Color(0xFF5A6B82))),
                   ],
-                  const SizedBox(height: 2),
-                  Text(e.type,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                          fontSize: 12,
-                          color: grey
-                              ? const Color(0xFFB4BCC8)
-                              : const Color(0xFF9AA8BF))),
                 ],
               ),
             ),
@@ -510,20 +502,22 @@ class CountdownScreenState extends State<CountdownScreen> {
               crossAxisAlignment: CrossAxisAlignment.end,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  e.displayText,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: grey
-                        ? const Color(0xFFB4BCC8)
-                        : (e.daysLeft == 0
-                            ? const Color(0xFFE0576A)
-                            : const Color(0xFF3B6FE0)),
+                // 已结束（主文案为空）时，副标题升为主文案，避免重复展示
+                if (e.displayText.isNotEmpty)
+                  Text(
+                    e.displayText,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: grey
+                          ? const Color(0xFFB4BCC8)
+                          : (e.daysLeft == 0
+                              ? const Color(0xFFE0576A)
+                              : const Color(0xFF3B6FE0)),
+                    ),
                   ),
-                ),
-                // 副标题：资产日「已拥有 x 日」/ 纪念日「已过去 x 天」；未到该日不显示
-                if (e.subtitle != null) ...[
+                // 副标题：资产日「已拥有 x 天」/ 纪念日「已过去 x 天」
+                if (e.subtitle != null && e.displayText.isNotEmpty) ...[
                   const SizedBox(height: 2),
                   Text(e.subtitle!,
                       style: TextStyle(
@@ -532,6 +526,15 @@ class CountdownScreenState extends State<CountdownScreen> {
                               ? const Color(0xFFB4BCC8)
                               : const Color(0xFF9AA8BF))),
                 ],
+                if (e.displayText.isEmpty && e.subtitle != null)
+                  Text(e.subtitle!,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: grey
+                            ? const Color(0xFFB4BCC8)
+                            : const Color(0xFF3B6FE0),
+                      )),
               ],
             ),
           ],
@@ -659,6 +662,126 @@ class CountdownScreenState extends State<CountdownScreen> {
 
   // ---------- 日历 ----------
 
+  /// 按年 / 按月快速跳转（点日历上方的「yyyy年M月」触发）
+  Future<void> _pickYearMonth() async {
+    HapticFeedback.selectionClick();
+    final currentYear = DateTime.now().year;
+    // 年份范围：当前年往前 30 年 ~ 往后 30 年
+    final years = [for (int y = currentYear - 30; y <= currentYear + 30; y++) y];
+    final picked = await showModalBottomSheet<DateTime>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          final selYear = _visibleMonth.year;
+          final selMonth = _visibleMonth.month;
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: const [
+                      Text('按年 / 按月跳转',
+                          style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF2A3B52))),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  // 年份：横向滚动胶囊
+                  SizedBox(
+                    height: 38,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: years.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 8),
+                      itemBuilder: (_, i) {
+                        final y = years[i];
+                        final on = y == selYear;
+                        return GestureDetector(
+                          onTap: () => setSheetState(() {
+                            setState(() => _visibleMonth = DateTime(
+                                y, _visibleMonth.month, 1));
+                          }),
+                          child: Container(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 14),
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: on
+                                  ? const Color(0xFF3B6FE0)
+                                  : const Color(0xFFF0F4FB),
+                              borderRadius: BorderRadius.circular(19),
+                            ),
+                            child: Text('$y 年',
+                                style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: on
+                                        ? FontWeight.w700
+                                        : FontWeight.w500,
+                                    color: on
+                                        ? Colors.white
+                                        : const Color(0xFF5A6B82))),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  // 月份：四列网格
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: List.generate(12, (i) {
+                      final m = i + 1;
+                      final on = m == selMonth;
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() => _visibleMonth =
+                              DateTime(_visibleMonth.year, m, 1));
+                          Navigator.pop(ctx);
+                        },
+                        child: Container(
+                          width: (MediaQuery.of(ctx).size.width - 32 - 24) / 4,
+                          height: 38,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: on
+                                ? const Color(0xFF3B6FE0)
+                                : const Color(0xFFF0F4FB),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text('$m 月',
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight:
+                                      on ? FontWeight.w700 : FontWeight.w500,
+                                  color: on
+                                      ? Colors.white
+                                      : const Color(0xFF5A6B82))),
+                        ),
+                      );
+                    }),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+    if (picked != null && mounted) {
+      setState(() => _visibleMonth = DateTime(picked.year, picked.month, 1));
+    }
+  }
+
   Widget _buildCalendar() {
     return Container(
       color: Colors.white,
@@ -667,20 +790,58 @@ class CountdownScreenState extends State<CountdownScreen> {
         children: [
           Row(
             children: [
+              // 上一年
+              IconButton(
+                icon: const Icon(Icons.keyboard_double_arrow_left,
+                    size: 18, color: Color(0xFF8A99B3)),
+                tooltip: '上一年',
+                visualDensity: VisualDensity.compact,
+                onPressed: () => setState(() => _visibleMonth = DateTime(
+                    _visibleMonth.year - 1, _visibleMonth.month, 1)),
+              ),
+              // 上一月
               IconButton(
                 icon: const Icon(Icons.chevron_left, color: Color(0xFF5A6B82)),
+                visualDensity: VisualDensity.compact,
                 onPressed: () => setState(() => _visibleMonth = DateTime(
                     _visibleMonth.year, _visibleMonth.month - 1, 1)),
               ),
-              Text('${_visibleMonth.year}年${_visibleMonth.month}月',
-                  style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF2A3B52))),
+              GestureDetector(
+                onTap: _pickYearMonth, // 点击年月：按年 / 按月快速跳转
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('${_visibleMonth.year}年${_visibleMonth.month}月',
+                          style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF2A3B52))),
+                      const SizedBox(width: 2),
+                      const Icon(Icons.arrow_drop_down,
+                          size: 18, color: Color(0xFF5A6B82)),
+                    ],
+                  ),
+                ),
+              ),
+              // 下一月
               IconButton(
                 icon: const Icon(Icons.chevron_right, color: Color(0xFF5A6B82)),
+                visualDensity: VisualDensity.compact,
                 onPressed: () => setState(() => _visibleMonth = DateTime(
                     _visibleMonth.year, _visibleMonth.month + 1, 1)),
+              ),
+              // 下一年
+              IconButton(
+                icon: const Icon(Icons.keyboard_double_arrow_right,
+                    size: 18, color: Color(0xFF8A99B3)),
+                tooltip: '下一年',
+                visualDensity: VisualDensity.compact,
+                onPressed: () => setState(() => _visibleMonth = DateTime(
+                    _visibleMonth.year + 1, _visibleMonth.month, 1)),
               ),
               const Spacer(),
               TextButton(

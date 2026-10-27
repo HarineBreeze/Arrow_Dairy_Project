@@ -70,25 +70,30 @@ class CountdownEvent {
   /// 距目的日天数：未来为正（倒数），过去为负（正数）
   int get daysLeft => dateOnly(effectiveTarget).difference(today()).inDays;
 
-  /// 卡片主文案
+  /// 卡片主文案。到期（已结束）后主文案留空，只由副标题承担计数展示：
+  /// - 纪念日 → 「已过去 x 天」
+  /// - 资产日 → 「已拥有 x 天」
   String get displayText {
     final d = daysLeft;
     if (d == 0) return '就是今天';
     if (d > 0) return '还有 $d 天';
-    return '已过去 ${-d} 日';
+    return ''; // 已过去：交给副标题显示，避免重复
   }
 
   /// 循环事件仅在当日需要红色描边
   bool get loopHighlight => loop && isDueToday;
 
-  /// 副标题：资产日 → 已拥有 x 日；纪念日 → 已过去 x 天。
-  /// 返回 null 表示不显示（目的日尚未到来）。
+  /// 副标题。
+  /// - 已结束（不循环且已过目的日）：纪念日「已过去 x 天」/ 资产日「已拥有 x 天」
+  /// - 资产日：目的日已到 → 「已拥有 x 天」
+  /// - 纪念日：目的日已过 → 「已过去 x 天」
+  /// 未来日返回 null（不显示副标题）
   String? get subtitle {
     final t = dateOnly(target);
     final now = today();
     if (t.isAfter(now)) return null;
     final diff = now.difference(t).inDays;
-    if (type == '资产日') return '已拥有 $diff 日';
+    if (type == '资产日') return '已拥有 $diff 天';
     return '已过去 $diff 天';
   }
 
