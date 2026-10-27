@@ -409,35 +409,55 @@ class _HomeScreenState extends State<HomeScreen>
     _menuController.reverse();
   }
 
-  /// 侧边栏跟手拖拽（所有主页通用）：
-  /// - 内容页右滑：菜单跟手拉出，松手时拉过屏幕宽度 1/3 → 展开，否则收回
-  /// - 菜单页左滑：菜单跟手收回，松手时收过屏幕宽度 1/3 → 关闭，否则回到原进度
-  double? _menuDragBase; // 拖拽开始时菜单的进度值
-  double _menuDragDx = 0;
+  /// 侧边栏跟手拖拽（所有主页通用）。用 Listener 直接跟踪指针，
+  /// 不参与手势竞技场，避免与列表/日历的横向手势冲突导致第一次滑动卡住。
+  /// - 内容页左半屏右滑：菜单跟手拉出，松手超过屏幕宽 1/3 → 展开，否则收回
+  /// - 菜单打开时在屏幕右 2/3 区左滑：跟手收回，收过 1/3 → 关闭，否则回到原进度
+  double? _ptrDownX;
+  double? _ptrDownY;
+  double? _menuDragBase;
+  bool _menuTracking = false;
 
-  void _onMenuDragStart(DragStartDetails d) {
-    _menuDragBase = _menuAnim.value;
-    _menuDragDx = 0;
-    _menuController.stop();
+  void _onPtrDown(PointerDownEvent e) {
+    _ptrDownX = e.position.dx;
+    _ptrDownY = e.position.dy;
+    _menuTracking = false;
   }
 
-  void _onMenuDragUpdate(DragUpdateDetails d) {
-    if (_menuDragBase == null) return;
-    _menuDragDx += d.delta.dx;
+  void _onPtrMove(PointerMoveEvent e) {
+    if (_ptrDownX == null || _ptrDownY == null) return;
+    final dx = e.position.dx - _ptrDownX!;
+    final dy = e.position.dy - _ptrDownY!;
+    if (!_menuTracking) {
+      if (dx.abs() > 12 && dx.abs() > dy.abs() * 1.2) {
+        // 判定为横向手势 → 开始跟手拖拽菜单
+        _menuTracking = true;
+        _menuDragBase = _menuAnim.value;
+        _menuController.stop();
+      } else if (dy.abs() > 12) {
+        // 纵向手势 → 交给列表滚动，本指针不再跟踪
+        _ptrDownX = null;
+        return;
+      } else {
+        return;
+      }
+    }
     final w = MediaQuery.of(context).size.width * 3 / 4;
     _menuController.value =
-        (_menuDragBase! + _menuDragDx / w).clamp(0.0, 1.0);
+        (_menuDragBase! + dx / w).clamp(0.0, 1.0);
   }
 
-  void _onMenuDragEnd(DragEndDetails d) {
-    if (_menuDragBase == null) return;
+  void _onPtrUp(PointerEvent e) {
+    final tracking = _menuTracking;
+    _ptrDownX = null;
+    _ptrDownY = null;
+    _menuTracking = false;
     _menuDragBase = null;
-    final v = d.primaryVelocity ?? 0;
+    if (!tracking) return;
     final screenW = MediaQuery.of(context).size.width;
     // 已拉出的距离（像素），菜单宽度为屏幕的 3/4
     final dragged = _menuController.value * screenW * 3 / 4;
-    final opened = dragged > screenW / 3 || v > 600;
-    if (opened) {
+    if (dragged > screenW / 3) {
       setState(() => _menuOpen = true);
       _menuController.forward();
     } else {
@@ -695,26 +715,20 @@ class _HomeScreenState extends State<HomeScreen>
                         child: Transform.translate(
                           offset:
                               Offset(-menuWidth * (1 - _menuAnim.value), 0),
-                          child: GestureDetector(
-                            behavior: HitTestBehavior.translucent,
-                            onHorizontalDragStart: _onMenuDragStart,
-                            onHorizontalDragUpdate: _onMenuDragUpdate,
-                            onHorizontalDragEnd: _onMenuDragEnd,
-                            child: Material(
-                              color: Colors.white,
-                              elevation: 8,
-                              child: SizedBox(
-                                width: menuWidth,
-                                child: SideMenu(
-                                  profile: _profile,
-                                  currentTab: _currentTab,
-                                  onClose: _closeMenu,
-                                  onOpenProfile: _openProfileEditor,
-                                  onOpenDiary: () => _switchTab('diary'),
-                                  onOpenItems: () => _switchTab('items'),
-                                  onOpenAssets: () => _switchTab('assets'),
-                                  onOpenSettings: _openSettings,
-                                ),
+                          child: Material(
+                            color: Colors.white,
+                            elevation: 8,
+                            child: SizedBox(
+                              width: menuWidth,
+                              child: SideMenu(
+                                profile: _profile,
+                                currentTab: _currentTab,
+                                onClose: _closeMenu,
+                                onOpenProfile: _openProfileEditor,
+                                onOpenDiary: () => _switchTab('diary'),
+                                onOpenItems: () => _switchTab('items'),
+                                onOpenAssets: () => _switchTab('assets'),
+                                onOpenSettings: _openSettings,
                               ),
                             ),
                           ),
@@ -726,11 +740,26 @@ class _HomeScreenState extends State<HomeScreen>
                         top: 0,
                         bottom: 0,
                         width: MediaQuery.of(context).size.width / 2,
-                        child: GestureDetector(
+                        child: Listener(
                           behavior: HitTestBehavior.translucent,
-                          onHorizontalDragStart: _onMenuDragStart,
-                          onHorizontalDragUpdate: _onMenuDragUpdate,
-                          onHorizontalDragEnd: _onMenuDragEnd,
+                          onPointerDown: _onPtrDown,
+                          onPointerMove: _onPtrMove,
+                          onPointerUp: _onPtrUp,
+                          onPointerCancel: _onPtrUp,
+                        ),
+                      ),
+                      // 右 2/3 手势层：菜单打开时左滑跟手收回
+                      Positioned(
+                        left: MediaQuery.of(context).size.width / 3,
+                        top: 0,
+                        bottom: 0,
+                        width: MediaQuery.of(context).size.width * 2 / 3,
+                        child: Listener(
+                          behavior: HitTestBehavior.translucent,
+                          onPointerDown: _onPtrDown,
+                          onPointerMove: _onPtrMove,
+                          onPointerUp: _onPtrUp,
+                          onPointerCancel: _onPtrUp,
                         ),
                       ),
                     ],
