@@ -21,6 +21,8 @@ class AssetScreenState extends State<AssetScreen> {
   List<Asset> _assets = [];
   bool _loading = true;
   bool _unlocked = false;
+  String _typeFilter = '全部'; // 全部 | 总资产 | 负资产 | 现金流
+  String _signFilter = '全部'; // 全部 | 金额为正 | 金额为负
 
   @override
   void initState() {
@@ -154,6 +156,155 @@ class AssetScreenState extends State<AssetScreen> {
     }
   }
 
+  // ---------- 筛选 ----------
+
+  bool get _hasFilter => _typeFilter != '全部' || _signFilter != '全部';
+
+  List<Asset> get _filtered {
+    return _assets.where((a) {
+      bool typeOk = true;
+      if (_typeFilter == '总资产') {
+        typeOk = a.amount > 0;
+      } else if (_typeFilter == '负资产') {
+        typeOk = a.amount < 0;
+      } else if (_typeFilter == '现金流') {
+        typeOk = Asset.cashTypes.contains(a.type);
+      }
+      bool signOk = true;
+      if (_signFilter == '金额为正') signOk = a.amount > 0;
+      if (_signFilter == '金额为负') signOk = a.amount < 0;
+      return typeOk && signOk;
+    }).toList();
+  }
+
+  /// 筛选器弹层（顶栏漏斗图标）
+  void _openFilterSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            Widget group(String title, List<String> options,
+                String current, ValueChanged<String> onPick) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: const TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF9AA8BF),
+                          fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: options.map((o) {
+                      final sel = current == o;
+                      return GestureDetector(
+                        // 再次点击已选中的选项 → 恢复默认「全部」
+                        onTap: () => setSheetState(
+                            () => onPick(current == o ? '全部' : o)),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: sel
+                                ? const Color(0xFF3B6FE0)
+                                : const Color(0xFFF5F7FB),
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          child: Text(o,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: sel
+                                    ? Colors.white
+                                    : const Color(0xFF5A6B82),
+                              )),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              );
+            }
+
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('筛选',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 16),
+                    group('按资产类型', ['全部', '总资产', '负资产', '现金流'],
+                        _typeFilter, (v) => _typeFilter = v),
+                    group('按资产性质', ['全部', '金额为正', '金额为负'],
+                        _signFilter, (v) => _signFilter = v),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: SizedBox(
+                            height: 44,
+                            child: OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                primary: const Color(0xFF5A6B82),
+                                side: const BorderSide(
+                                    color: Color(0xFFD6DCE8)),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(12)),
+                              ),
+                              onPressed: () {
+                                // 取消 → 恢复默认筛选（全部）
+                                _typeFilter = '全部';
+                                _signFilter = '全部';
+                                Navigator.pop(ctx);
+                                setState(() {});
+                              },
+                              child: const Text('取消'),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: SizedBox(
+                            height: 44,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                primary: const Color(0xFF3B6FE0),
+                                onPrimary: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(12)),
+                              ),
+                              onPressed: () {
+                                Navigator.pop(ctx);
+                                setState(() {});
+                              },
+                              child: const Text('确定'),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   // ---------- 统计 ----------
 
   double get _totalAssets {
@@ -283,6 +434,12 @@ class AssetScreenState extends State<AssetScreen> {
                         color: Colors.white)),
               ),
               IconButton(
+                icon: Icon(Icons.filter_list,
+                    color: _hasFilter ? const Color(0xFFFFD666) : Colors.white),
+                tooltip: '筛选',
+                onPressed: _unlocked ? _openFilterSheet : null,
+              ),
+              IconButton(
                 icon: const Icon(Icons.settings_outlined, color: Colors.white),
                 tooltip: '设置',
                 onPressed: _unlocked ? _openSettings : null,
@@ -296,14 +453,17 @@ class AssetScreenState extends State<AssetScreen> {
               : RefreshIndicator(
                   color: const Color(0xFF3B6FE0),
                   onRefresh: _load,
-                  child: _assets.isEmpty
+                  child: _filtered.isEmpty
                       ? ListView(
-                          children: const [
-                            SizedBox(height: 200),
+                          children: [
+                            const SizedBox(height: 200),
                             Center(
-                              child: Text('还没有资产卡片\n点右下角 + 添加第一笔',
+                              child: Text(
+                                  _hasFilter
+                                      ? '没有符合条件的资产卡片\n试试调整筛选条件'
+                                      : '还没有资产卡片\n点右下角 + 添加第一笔',
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                       fontSize: 15,
                                       color: Color(0xFF9AA8BF),
                                       height: 1.8)),
@@ -316,7 +476,7 @@ class AssetScreenState extends State<AssetScreen> {
                           children: [
                             _buildOverview(),
                             const SizedBox(height: 14),
-                            ..._assets.map(_buildCard),
+                            ..._filtered.map(_buildCard),
                           ],
                         ),
                 ),
