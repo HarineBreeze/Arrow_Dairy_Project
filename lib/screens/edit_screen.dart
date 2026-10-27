@@ -159,6 +159,9 @@ class _EditScreenState extends State<EditScreen> {
 
   void _onFocusChange() {
     if (!mounted) return;
+    // 键盘弹出（非框选模式的聚焦）→ 平滑收起头部信息区，给正文腾出空间
+    final kb = _contentFocus.hasFocus && !_selecting;
+    if (kb != _kbVisible) setState(() => _kbVisible = kb);
     if (_contentFocus.hasFocus) {
       // 若已处于框选模式，聚焦后仍需压住键盘
       if (_selecting) _suppressKeyboard();
@@ -232,6 +235,7 @@ class _EditScreenState extends State<EditScreen> {
   }
 
   bool _kbAtDown = false; // 手指按下瞬间键盘是否处于弹出（聚焦）状态
+  bool _kbVisible = false; // 键盘当前是否弹出（用于联动收起/展开头部信息区）
 
   // 记录按下时是否已有选区、键盘是否弹出
   void _onPointerDown(PointerDownEvent e) {
@@ -794,7 +798,14 @@ class _EditScreenState extends State<EditScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
+          // 键盘弹出时平滑收起心情/天气/日期/可见度，给正文腾出可视区域
+          AnimatedSize(
+            duration: const Duration(milliseconds: 260),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: _kbVisible
+                ? const SizedBox(width: double.infinity)
+                : Padding(
             padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -884,6 +895,7 @@ class _EditScreenState extends State<EditScreen> {
               ],
             ),
           ),
+                ),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
