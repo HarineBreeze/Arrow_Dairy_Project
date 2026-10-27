@@ -326,13 +326,22 @@ class ItemListScreenState extends State<ItemListScreen> {
           _buildFilterSortBar(),
           const Divider(height: 1, color: Color(0xFFE8EDF5)),
           Expanded(
-            child: _filtered.isEmpty
-                ? Center(
-                    child: Text(
-                      _searching ? '没有匹配的物品' : '还没有物品',
-                      style: const TextStyle(
-                          fontSize: 15, color: Color(0xFF9AA8BF)),
-                    ),
+            child: RefreshIndicator(
+              color: const Color(0xFF3B6FE0),
+              onRefresh: _load,
+              child: _filtered.isEmpty
+                ? ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      const SizedBox(height: 200),
+                      Center(
+                        child: Text(
+                          _searching ? '没有匹配的物品' : '还没有物品',
+                          style: const TextStyle(
+                              fontSize: 15, color: Color(0xFF9AA8BF)),
+                        ),
+                      ),
+                    ],
                   )
                 : GridView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
@@ -359,6 +368,7 @@ class ItemListScreenState extends State<ItemListScreen> {
                       );
                     },
                   ),
+            ),
           ),
         ],
       ],

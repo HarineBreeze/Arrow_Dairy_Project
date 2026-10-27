@@ -12,6 +12,7 @@ import 'profile_edit_screen.dart';
 import 'settings_screen.dart';
 import 'note_view_screen.dart';
 import 'item_list_screen.dart';
+import 'asset_screen.dart';
 
 const Color kPrimaryBlue = Color(0xFF3B6FE0);
 const Color kLightBlue = Color(0xFFDCE7FF);
@@ -46,7 +47,8 @@ class _HomeScreenState extends State<HomeScreen>
   final Set<String> _expandedKeys = {};
   String _viewMode = 'all'; // all | month | year
   String? _activeTopic; // 当前筛选的话题（null = 未筛选）
-  String _currentTab = 'diary'; // diary | items
+  String _currentTab = 'diary'; // diary | items | assets
+  final GlobalKey<AssetScreenState> _assetListKey = GlobalKey();
   final GlobalKey<ItemListScreenState> _itemListKey =
       GlobalKey<ItemListScreenState>();
 
@@ -667,6 +669,7 @@ class _HomeScreenState extends State<HomeScreen>
                                 onOpenProfile: _openProfileEditor,
                                 onOpenDiary: () => _switchTab('diary'),
                                 onOpenItems: () => _switchTab('items'),
+                                onOpenAssets: () => _switchTab('assets'),
                                 onOpenSettings: _openSettings,
                               ),
                             ),
@@ -697,7 +700,15 @@ class _HomeScreenState extends State<HomeScreen>
                             onOpenMenu: _openMenu,
                           ),
                         )
-                      : _loading
+                      : _currentTab == 'assets'
+                          ? KeyedSubtree(
+                              key: const ValueKey('assets'),
+                              child: AssetScreen(
+                                key: _assetListKey,
+                                onOpenMenu: _openMenu,
+                              ),
+                            )
+                          : _loading
                           ? KeyedSubtree(
                               key: const ValueKey('loading'),
                               child: _buildSkeleton(),
@@ -716,6 +727,8 @@ class _HomeScreenState extends State<HomeScreen>
                   onPressed: () {
                     if (_currentTab == 'items') {
                       _itemListKey.currentState?.openNewItem();
+                    } else if (_currentTab == 'assets') {
+                      _assetListKey.currentState?.openNewAsset();
                     } else {
                       _openEditor();
                     }

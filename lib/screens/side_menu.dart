@@ -8,8 +8,9 @@ class SideMenu extends StatelessWidget {
   final VoidCallback onOpenProfile;
   final VoidCallback onOpenDiary;
   final VoidCallback onOpenItems;
+  final VoidCallback onOpenAssets;
   final VoidCallback onOpenSettings;
-  final String currentTab; // 'diary' | 'items'
+  final String currentTab; // 'diary' | 'items' | 'assets'
 
   const SideMenu({
     Key? key,
@@ -18,6 +19,7 @@ class SideMenu extends StatelessWidget {
     required this.onOpenProfile,
     required this.onOpenDiary,
     required this.onOpenItems,
+    required this.onOpenAssets,
     required this.onOpenSettings,
     required this.currentTab,
   }) : super(key: key);
@@ -93,11 +95,12 @@ class SideMenu extends StatelessWidget {
   Widget _buildTabSwitcher() {
     const tabHeight = 52.0;
     const gap = 8.0;
-    final selectedIndex = currentTab == 'diary' ? 0 : 1;
+    final selectedIndex =
+        currentTab == 'diary' ? 0 : (currentTab == 'items' ? 1 : 2);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: SizedBox(
-        height: tabHeight * 2 + gap,
+        height: tabHeight * 3 + gap * 2,
         child: Stack(
           children: [
             AnimatedPositioned(
@@ -129,6 +132,14 @@ class SideMenu extends StatelessWidget {
                   label: '物资清单',
                   selected: currentTab == 'items',
                   onTap: onOpenItems,
+                  height: tabHeight,
+                ),
+                const SizedBox(height: gap),
+                _buildTabItem(
+                  icon: Icons.account_balance_outlined,
+                  label: '资产图景',
+                  selected: currentTab == 'assets',
+                  onTap: onOpenAssets,
                   height: tabHeight,
                 ),
               ],
