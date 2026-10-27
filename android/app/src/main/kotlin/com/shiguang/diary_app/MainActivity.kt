@@ -42,6 +42,11 @@ class MainActivity : FlutterActivity() {
                         CountdownAlarm.cancelAll(context)
                         result.success(true)
                     }
+                    "cancel" -> {
+                        val id = call.argument<Int>("id") ?: 0
+                        CountdownAlarm.cancelOne(context, id)
+                        result.success(true)
+                    }
                     else -> result.notImplemented()
                 }
             }
@@ -64,7 +69,8 @@ object CountdownAlarm {
             putExtra("emoji", emoji)
             putExtra("title", title)
             putExtra("id", id)
-            data = android.net.Uri.parse("countdown://$id/$at")
+            // data 固定为 eventId（不带时间戳），这样取消同一事件时能精确命中
+            data = android.net.Uri.parse("countdown://event/$id")
         }
         val pi = PendingIntent.getBroadcast(context, REQ_BASE + id, intent, flags())
 
@@ -83,6 +89,23 @@ object CountdownAlarm {
         val intent = Intent(context, CountdownReceiver::class.java)
         for (id in 0..2000) {
             am.cancel(PendingIntent.getBroadcast(context, REQ_BASE + id, intent, flags()))
+        }
+    }
+
+    /** 取消单个事件的闹钟（删除事件时用）。data 与 schedule 保持一致才能命中同一 PendingIntent。 */
+    fun cancelOne(context: Context, id: Int) {
+        try {
+            val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            val intent = Intent(context, CountdownReceiver::class.java).apply {
+                data = android.net.Uri.parse("countdown://event/$id")
+            }
+            val pi = PendingIntent.getBroadcast(context, REQ_BASE + id, intent,
+                flags() or PendingIntent.FLAG_NO_CREATE)
+            if (pi != null) {
+                am.cancel(pi)
+                pi.cancel()
+            }
+        } catch (_: Exception) {
         }
     }
 

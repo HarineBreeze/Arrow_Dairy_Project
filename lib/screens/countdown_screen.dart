@@ -57,6 +57,15 @@ class CountdownScreenState extends State<CountdownScreen> {
     });
   }
 
+  /// 下拉刷新：重新读取本地数据并同步提醒（与其它主页行为一致）
+  Future<void> _refresh() async {
+    await _load();
+    if (!mounted) return;
+    // 提醒同步不阻塞刷新动画
+    CountdownReminder.syncAll(_events);
+    HapticFeedback.selectionClick();
+  }
+
   /// 供外部（首页 FAB）调用的快捷入口
   Future<void> openNewEvent() async {
     final r = await Navigator.push<CountdownEvent>(
@@ -64,10 +73,11 @@ class CountdownScreenState extends State<CountdownScreen> {
       _slideRoute(CountdownEditScreen()),
     );
     if (r != null) {
-      _events.add(r);
-      await CountdownStorage.save(_events);
-      await CountdownReminder.syncAll(_events);
-      if (mounted) setState(() {});
+      if (!mounted) return;
+      // 先刷新界面，落盘与闹钟同步异步进行（不阻塞返回动画后的首帧）
+      setState(() => _events.add(r));
+      CountdownStorage.save(_events);
+      CountdownReminder.syncAll(_events);
     }
   }
 
@@ -137,22 +147,26 @@ class CountdownScreenState extends State<CountdownScreen> {
       _slideRoute(CountdownEditScreen(event: e)),
     );
     if (r == 'deleted') {
-      _events.removeWhere((x) => x.id == e!.id);
-      await CountdownStorage.save(_events);
-      await CountdownReminder.syncAll(_events);
-      if (mounted) setState(() {});
+      if (!mounted) return;
+      final id = e!.id;
+      final next = _events.where((x) => x.id != id).toList();
+      setState(() => _events = next);
+      CountdownReminder.cancelOne(id);
+      CountdownStorage.save(next);
       return;
     }
     if (r is CountdownEvent) {
       final i = _events.indexWhere((x) => x.id == r.id);
-      if (i >= 0) {
-        _events[i] = r;
-      } else {
-        _events.add(r);
-      }
-      await CountdownStorage.save(_events);
-      await CountdownReminder.syncAll(_events);
-      if (mounted) setState(() {});
+      if (!mounted) return;
+      setState(() {
+        if (i >= 0) {
+          _events[i] = r;
+        } else {
+          _events.add(r);
+        }
+      });
+      CountdownStorage.save(_events);
+      CountdownReminder.syncAll(_events);
     }
   }
 
@@ -215,10 +229,16 @@ class CountdownScreenState extends State<CountdownScreen> {
                   ),
                 );
                 if (ok == true) {
-                  _events.removeWhere((x) => x.id == e.id);
-                  await CountdownStorage.save(_events);
-                  await CountdownReminder.syncAll(_events);
-                  if (mounted) setState(() {});
+                  // 先算出要保存的新列表并立即刷新界面（删除反馈零延迟）；
+                  // 落盘与闹钟取消异步进行，不阻塞 UI，也不出现「先顿一下再消失」。
+                  final target = e;
+                  final next =
+                      _events.where((x) => x.id != target.id).toList();
+                  setState(() => _events = next);
+                  HapticFeedback.mediumImpact();
+                  // 只取消这一条提醒（单次通道调用，远比整表重排快）
+                  CountdownReminder.cancelOne(target.id);
+                  CountdownStorage.save(next);
                 }
               },
             ),
@@ -350,22 +370,31 @@ class CountdownScreenState extends State<CountdownScreen> {
         Expanded(
           child: _loading
               ? const Center(child: CircularProgressIndicator())
-              : (_filtered.isEmpty
-                  ? ListView(children: const [
-                      SizedBox(height: 180),
-                      Center(
-                        child: Text('还没有倒数日\n点右下角 + 添加第一个',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                                fontSize: 15,
-                                color: Color(0xFF9AA8BF),
-                                height: 1.8)),
-                      ),
-                    ])
-                  : ListView(
-                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 96),
-                      children: _buildGroups(),
-                    )),
+              : RefreshIndicator(
+                  color: const Color(0xFF3B6FE0),
+                  onRefresh: _refresh,
+                  child: _filtered.isEmpty
+                      ? ListView(
+                          // 空态也需要可滚动，否则下拉手势无法触发刷新
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: const [
+                            SizedBox(height: 180),
+                            Center(
+                              child: Text('还没有倒数日\n点右下角 + 添加第一个',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                      fontSize: 15,
+                                      color: Color(0xFF9AA8BF),
+                                      height: 1.8)),
+                            ),
+                          ],
+                        )
+                      : ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.fromLTRB(16, 14, 16, 96),
+                          children: _buildGroups(),
+                        ),
+                ),
         ),
       ],
     );

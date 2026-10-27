@@ -23,6 +23,14 @@ class CountdownReminder {
     }
   }
 
+  /// 取消单个事件的提醒（删除事件时用，避免整表重排造成的卡顿）
+  static Future<void> cancelOne(String eventId) async {
+    if (!_supported) return;
+    try {
+      await _ch.invokeMethod('cancel', {'id': _stableId(eventId)});
+    } catch (_) {}
+  }
+
   static Future<void> _scheduleOne(CountdownEvent e) async {
     final id = _stableId(e.id);
     final t = CountdownEvent.dateOnly(e.target);
