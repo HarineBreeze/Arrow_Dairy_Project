@@ -30,9 +30,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
 
   bool get _dirty => _snapshot() != _initial;
 
-  /// 主动返回（AppBar 返回键 / 系统返回键）：有改动才拦截
-  Future<bool> _handleLeave() =>
-      confirmLeaveIfDirty(context, dirty: _dirty, onSaveAndLeave: _save);
+  /// 主动返回（AppBar 返回键 / 系统返回键）：有改动时弹框，确定即放弃保存返回
+  Future<bool> _handleLeave() => confirmLeaveIfDirty(context, dirty: _dirty);
 
   @override
   void initState() {

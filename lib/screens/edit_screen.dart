@@ -182,9 +182,8 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
 
   bool get _dirty => _snapshot() != _initial;
 
-  /// 主动返回（AppBar 返回键 / 系统返回键 / 取消按钮）：有改动才拦截
-  Future<bool> _handleLeave() =>
-      confirmLeaveIfDirty(context, dirty: _dirty, onSaveAndLeave: _save);
+  /// 主动返回（AppBar 返回键 / 系统返回键 / 取消按钮）：有改动时弹框，确定即放弃保存返回
+  Future<bool> _handleLeave() => confirmLeaveIfDirty(context, dirty: _dirty);
 
   /// 键盘真实可见性（window 度量的实时值）。
   /// 不能用 hasFocus 判断：Android 按返回键收起键盘时焦点仍保留；

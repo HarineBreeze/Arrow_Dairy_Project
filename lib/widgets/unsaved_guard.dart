@@ -3,23 +3,22 @@ import 'package:flutter/material.dart';
 /// 全局「未保存修改」拦截。
 ///
 /// 用法：编辑页把 [WillPopScope.onWillPop] 与 AppBar 返回按钮都指向
-/// [confirmLeaveIfDirty]；页面自己维护一个 `_dirty()` 判断和 `_saveAndPop()`。
+/// [confirmLeaveIfDirty]；页面自己维护一个 `_dirty` 判断。
 ///
 /// 规则（用户确认）：
 /// - 没有改动 → 直接返回 true，不打扰用户；
 /// - 有改动 → 弹框「有未保存的修改哦，确认返回吗?」；
-///   - 「取消」：留在页面；
-///   - 「确认」：先保存当前编辑，保存成功才退出。
+///   - 「取消」：留在页面，由用户自己决定是否点保存；
+///   - 「确认」：放弃保存，直接返回。
 ///
 /// 返回 true 表示允许离开当前页面；false 表示留在页面。
 Future<bool> confirmLeaveIfDirty(
   BuildContext context, {
   required bool dirty,
-  required Future<bool> Function() onSaveAndLeave,
 }) async {
   if (!dirty) return true;
 
-  final ok = await showDialog<bool>(
+  final discard = await showDialog<bool>(
     context: context,
     barrierDismissible: false,
     builder: (ctx) => AlertDialog(
@@ -30,7 +29,7 @@ Future<bool> confirmLeaveIfDirty(
         style: TextStyle(fontSize: 16, color: Color(0xFF2B3A55)),
       ),
       content: const Text(
-        '确认后将先保存当前编辑内容再返回。',
+        '返回后本次修改不会保存。',
         style: TextStyle(fontSize: 13, color: Color(0xFF8A99B3), height: 1.6),
       ),
       actions: [
@@ -41,7 +40,7 @@ Future<bool> confirmLeaveIfDirty(
         ),
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(true),
-          child: const Text('确认',
+          child: const Text('确定',
               style: TextStyle(
                   color: Color(0xFF3B6FE0),
                   fontSize: 14,
@@ -51,9 +50,6 @@ Future<bool> confirmLeaveIfDirty(
     ),
   );
 
-  if (ok != true) return false;
-
-  // 先保存，保存成功（校验通过）才真正退出
-  final saved = await onSaveAndLeave();
-  return saved;
+  // 取消 → 留在页面自己决定是否保存；确定 → 放弃修改直接返回
+  return discard == true;
 }

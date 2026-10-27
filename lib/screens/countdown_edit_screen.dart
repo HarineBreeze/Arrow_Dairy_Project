@@ -36,9 +36,8 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
 
   bool get _dirty => _snapshot() != _initial;
 
-  /// 主动返回（AppBar 返回键 / 系统返回键 / 取消）：有改动才拦截
-  Future<bool> _handleLeave() =>
-      confirmLeaveIfDirty(context, dirty: _dirty, onSaveAndLeave: _save);
+  /// 主动返回（AppBar 返回键 / 系统返回键）：有改动时弹框，确定即放弃保存返回
+  Future<bool> _handleLeave() => confirmLeaveIfDirty(context, dirty: _dirty);
 
   /// 退出前自动保存（不弹保存成功提示，用户是「返回」而非「保存」）
   Future<bool> _save() async {
