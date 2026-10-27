@@ -187,8 +187,10 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
   void didChangeMetrics() {
     if (!mounted) return;
     final b = WidgetsBinding.instance.window.viewInsets.bottom;
-    if (b > 0 && !_kbVisible && !_selecting) {
-      // 键盘正在弹出：视觉立即响应（跟手）
+    if (b > 0 && !_kbVisible && !_selecting && b >= _prevInset) {
+      // 键盘正在弹出（高度上升）：视觉立即响应（跟手）。
+      // 必须带上升趋势判断：收起动画中的短暂回升不能误判为再次弹出，
+      // 否则头部区块会收起→还原→收起疯狂闪烁。
       _kbConfirmTimer?.cancel();
       setState(() {
         _kbVisible = true;
