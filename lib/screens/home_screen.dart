@@ -413,15 +413,22 @@ class _HomeScreenState extends State<HomeScreen>
   /// 不参与手势竞技场，避免与列表/日历的横向手势冲突导致第一次滑动卡住。
   /// - 内容页左半屏右滑：菜单跟手拉出，松手超过屏幕宽 1/3 → 展开，否则收回
   /// - 菜单打开时在屏幕右 2/3 区左滑：跟手收回，收过 1/3 → 关闭，否则回到原进度
+  /// - 快速甩动（速度超过阈值）→ 无需拖到 1/3，直接展开/关闭
   double? _ptrDownX;
   double? _ptrDownY;
   double? _menuDragBase;
   bool _menuTracking = false;
+  double _prevDx = 0;
+  Duration? _prevTime;
+  double _flingSpeed = 0; // px/s，正 = 向右，负 = 向左（指数平滑）
 
   void _onPtrDown(PointerDownEvent e) {
     _ptrDownX = e.position.dx;
     _ptrDownY = e.position.dy;
     _menuTracking = false;
+    _prevDx = 0;
+    _prevTime = null;
+    _flingSpeed = 0;
   }
 
   void _onPtrMove(PointerMoveEvent e) {
@@ -429,7 +436,7 @@ class _HomeScreenState extends State<HomeScreen>
     final dx = e.position.dx - _ptrDownX!;
     final dy = e.position.dy - _ptrDownY!;
     if (!_menuTracking) {
-      if (dx.abs() > 12 && dx.abs() > dy.abs() * 1.2) {
+      if (dx.abs() > 6 && dx.abs() > dy.abs() * 1.1) {
         // 判定为横向手势 → 开始跟手拖拽菜单
         _menuTracking = true;
         _menuDragBase = _menuAnim.value;
@@ -442,6 +449,16 @@ class _HomeScreenState extends State<HomeScreen>
         return;
       }
     }
+    // 记录瞬时速度（指数平滑），用于快速甩动判定
+    if (_prevTime != null) {
+      final dt = (e.timeStamp - _prevTime!).inMicroseconds / 1e6;
+      if (dt > 0) {
+        final inst = (dx - _prevDx) / dt;
+        _flingSpeed = _flingSpeed * 0.6 + inst * 0.4;
+      }
+    }
+    _prevDx = dx;
+    _prevTime = e.timeStamp;
     final w = MediaQuery.of(context).size.width * 3 / 4;
     _menuController.value =
         (_menuDragBase! + dx / w).clamp(0.0, 1.0);
@@ -449,6 +466,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _onPtrUp(PointerEvent e) {
     final tracking = _menuTracking;
+    final speed = _flingSpeed;
     _ptrDownX = null;
     _ptrDownY = null;
     _menuTracking = false;
@@ -457,7 +475,11 @@ class _HomeScreenState extends State<HomeScreen>
     final screenW = MediaQuery.of(context).size.width;
     // 已拉出的距离（像素），菜单宽度为屏幕的 3/4
     final dragged = _menuController.value * screenW * 3 / 4;
-    if (dragged > screenW / 3) {
+    // 快速甩动优先：向右快甩直接展开，向左快甩直接收回
+    if (speed < -900) {
+      setState(() => _menuOpen = false);
+      _menuController.reverse();
+    } else if (speed > 900 || dragged > screenW / 3) {
       setState(() => _menuOpen = true);
       _menuController.forward();
     } else {
