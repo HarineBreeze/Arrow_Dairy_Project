@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import '../models/countdown_event.dart';
 import '../services/countdown_storage.dart';
 import '../services/countdown_reminder.dart';
+import '../widgets/empty_state.dart';
+import '../widgets/loading_skeleton.dart';
 import 'countdown_edit_screen.dart';
 
 /// 倒数日主页：顶栏（年月 + 搜索 + 筛选）、日历视图、
@@ -369,7 +371,7 @@ class CountdownScreenState extends State<CountdownScreen> {
         ),
         Expanded(
           child: _loading
-              ? const Center(child: CircularProgressIndicator())
+              ? const ListSkeleton()
               : RefreshIndicator(
                   color: const Color(0xFF3B6FE0),
                   onRefresh: _refresh,
@@ -377,15 +379,13 @@ class CountdownScreenState extends State<CountdownScreen> {
                       ? ListView(
                           // 空态也需要可滚动，否则下拉手势无法触发刷新
                           physics: const AlwaysScrollableScrollPhysics(),
-                          children: const [
-                            SizedBox(height: 180),
-                            Center(
-                              child: Text('还没有倒数日\n点右下角 + 添加第一个',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                      fontSize: 15,
-                                      color: Color(0xFF9AA8BF),
-                                      height: 1.8)),
+                          children: [
+                            EmptyState(
+                              icon: '⏳',
+                              title: _searching ? '没有匹配的倒数日' : '还没有倒数日',
+                              subtitle: _searching
+                                  ? '换个关键词试试'
+                                  : '点右下角 + 添加第一个',
                             ),
                           ],
                         )

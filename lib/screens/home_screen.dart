@@ -19,6 +19,8 @@ import '../services/countdown_storage.dart';
 import '../services/countdown_reminder.dart';
 import '../services/countdown_banner_log.dart';
 import '../widgets/countdown_banner.dart';
+import '../widgets/loading_skeleton.dart';
+import '../widgets/empty_state.dart';
 import '../utils/menu_gesture_gate.dart';
 
 const Color kPrimaryBlue = Color(0xFF3B6FE0);
@@ -722,7 +724,6 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void dispose() {
     _stillTimer?.cancel();
-    _shimmerCtrl?.dispose();
     _menuController.dispose();
     _searchCtrl.dispose();
     super.dispose();
@@ -908,80 +909,8 @@ class _HomeScreenState extends State<HomeScreen>
     _countdownKey.currentState?.openEventById(id);
   }
 
-  AnimationController? _shimmerCtrl;
-
-  /// 首屏骨架占位：模拟 3 张笔记卡片的布局，带呼吸动画
-  Widget _buildSkeleton() {
-    _shimmerCtrl ??= AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 1100))
-      ..repeat(reverse: true);
-    return AnimatedBuilder(
-      animation: _shimmerCtrl!,
-      builder: (context, _) {
-        final op = 0.4 + 0.25 * _shimmerCtrl!.value; // 0.4 ~ 0.65
-        Color block() => const Color(0xFFE4E9F2).withOpacity(op);
-        return ListView(
-          physics: const NeverScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
-          children: List.generate(3, (i) {
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 28,
-                        height: 28,
-                        decoration:
-                            BoxDecoration(color: block(), shape: BoxShape.circle),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Container(
-                          height: 12,
-                          decoration: BoxDecoration(
-                            color: block(),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: block(),
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  FractionallySizedBox(
-                    widthFactor: 0.6,
-                    alignment: Alignment.centerLeft,
-                    child: Container(
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: block(),
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
-        );
-      },
-    );
-  }
+  /// 首屏骨架占位：统一走全局 [ListSkeleton]（与其它主页一致）
+  Widget _buildSkeleton() => const ListSkeleton();
 
   Widget _buildBody() {
     final groups = _buildGroups();
@@ -1853,22 +1782,13 @@ class _EmptyState extends StatelessWidget {
       message = '这一天还没有日记';
       sub = '点击右下角 + 记录这一天';
     }
+    // 统一走全局空状态组件，视觉与其它主页保持一致
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text('📖', style: TextStyle(fontSize: 56)),
-          const SizedBox(height: 16),
-          Text(
-            message,
-            style: const TextStyle(fontSize: 16, color: kTextMid),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            sub,
-            style: const TextStyle(fontSize: 13, color: kTextLight),
-          ),
-        ],
+      child: EmptyState(
+        topGap: 0,
+        icon: '📖',
+        title: message,
+        subtitle: sub,
       ),
     );
   }

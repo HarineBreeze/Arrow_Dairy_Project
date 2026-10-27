@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/item.dart';
 import '../services/item_storage.dart';
+import '../widgets/unsaved_guard.dart';
 
 const List<String> kCategories = ['数码设备', '衣物', '配饰', '家具'];
 const Map<String, List<String>> kCategoryIcons = {
@@ -59,7 +60,33 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
     _wishlist = it?.wishlist ?? false;
     _savePerTime = it?.savePerTime ?? 0;
     _savedAmount = it?.savedAmount ?? 0;
+    _initial = _snapshot();
   }
+
+  /// 进入页面时的内容快照，用于判断是否有未保存的修改
+  String _initial = '';
+
+  /// 当前编辑内容（用于 dirty 比较）
+  String _snapshot() => [
+        _nameCtrl.text,
+        _priceCtrl.text,
+        _extraCtrl.text,
+        _usageCtrl.text,
+        _category,
+        _icon,
+        _acquiredDate?.toIso8601String() ?? '',
+        _lostDate?.toIso8601String() ?? '',
+        _calcMethod.toString(),
+        _wishlist ? '1' : '0',
+        _savePerTime.toString(),
+        _savedAmount.toString(),
+      ].join('\u0001');
+
+  bool get _dirty => _snapshot() != _initial;
+
+  /// 主动返回（AppBar 返回键 / 系统返回键）：有改动才拦截
+  Future<bool> _handleLeave() =>
+      confirmLeaveIfDirty(context, dirty: _dirty, onSaveAndLeave: _save);
 
   @override
   void dispose() {
@@ -70,18 +97,18 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
     super.dispose();
   }
 
-  Future<void> _save() async {
+  Future<bool> _save() async {
     final name = _nameCtrl.text.trim();
     final price = double.tryParse(_priceCtrl.text.trim()) ?? 0;
     if (name.isEmpty) {
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('请填写物品名')));
-      return;
+      return false;
     }
     if (price <= 0) {
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('请填写物品价格')));
-      return;
+      return false;
     }
 
     // 已拥有物品必须选择拥有日
@@ -98,7 +125,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
       if (_acquiredDate == null) {
         ScaffoldMessenger.of(context)
             .showSnackBar(const SnackBar(content: Text('请选择拥有日')));
-        return;
+        return false;
       }
       acquired = _acquiredDate!;
     }
@@ -143,8 +170,9 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
     }
     await ItemStorage.save(list);
 
-    if (!mounted) return;
+    if (!mounted) return false;
     Navigator.pop(context, true);
+    return true;
   }
 
   Future<void> _delete() async {
@@ -260,7 +288,9 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return WillPopScope(
+      onWillPop: _handleLeave,
+      child: Scaffold(
       appBar: AppBar(
         backgroundColor: _wishlist
             ? const Color(0xFFE58BA0)
@@ -268,6 +298,11 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         title: Text(_isNew ? '添加物品' : '编辑物品'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: '返回',
+          onPressed: () => Navigator.maybePop(context),
+        ),
         actions: [
           if (!_isNew)
             IconButton(
@@ -362,6 +397,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 

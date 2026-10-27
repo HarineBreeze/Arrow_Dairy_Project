@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/countdown_event.dart';
+import '../widgets/unsaved_guard.dart';
 
 /// 新增 / 编辑倒数日。
 class CountdownEditScreen extends StatefulWidget {
@@ -20,6 +21,64 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
   late bool _loop;
   bool _saving = false;
 
+  /// 进入页面时的内容快照，用于判断是否有未保存的修改
+  String _initial = '';
+
+  /// 当前编辑内容（用于 dirty 比较）
+  String _snapshot() => [
+        _nameCtrl.text,
+        _noteCtrl.text,
+        _iconCtrl.text,
+        _type,
+        _loop ? '1' : '0',
+        _target?.toIso8601String() ?? '',
+      ].join('\u0001');
+
+  bool get _dirty => _snapshot() != _initial;
+
+  /// 主动返回（AppBar 返回键 / 系统返回键 / 取消）：有改动才拦截
+  Future<bool> _handleLeave() =>
+      confirmLeaveIfDirty(context, dirty: _dirty, onSaveAndLeave: _save);
+
+  /// 退出前自动保存（不弹保存成功提示，用户是「返回」而非「保存」）
+  Future<bool> _save() async {
+    final name = _nameCtrl.text.trim();
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('请填写事件名称')),
+      );
+      return false;
+    }
+    if (_target == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('请选择目的日')),
+      );
+      return false;
+    }
+    if (!mounted) return false;
+    setState(() => _saving = true);
+    HapticFeedback.selectionClick();
+    final e = widget.event ??
+        CountdownEvent(
+          id: DateTime.now().microsecondsSinceEpoch.toString(),
+          icon: _iconCtrl.text.trim(),
+          name: name,
+          target: _target!,
+          type: _type,
+        );
+    e
+      ..icon = _iconCtrl.text.trim().isEmpty
+          ? CountdownEvent.defaultIconFor(_type)
+          : _iconCtrl.text.trim()
+      ..name = name
+      ..note = _noteCtrl.text.trim()
+      ..target = _target!
+      ..type = _type
+      ..loop = _loop;
+    Navigator.pop(context, e);
+    return true;
+  }
+
   static const List<String> _quickIcons = CountdownEvent.quickIcons;
 
   @override
@@ -33,6 +92,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
     _loop = e?.loop ?? false;
     _iconCtrl = TextEditingController(
         text: e?.icon ?? CountdownEvent.defaultIconFor(_type));
+    _initial = _snapshot();
   }
 
   @override
@@ -63,42 +123,6 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
     if (ok == true && mounted) Navigator.pop(context, 'deleted');
   }
 
-  Future<void> _save() async {
-    final name = _nameCtrl.text.trim();
-    if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请填写事件名称')),
-      );
-      return;
-    }
-    if (_target == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请选择目的日')),
-      );
-      return;
-    }
-    setState(() => _saving = true);
-    HapticFeedback.selectionClick();
-    final e = widget.event ??
-        CountdownEvent(
-          id: DateTime.now().microsecondsSinceEpoch.toString(),
-          icon: _iconCtrl.text.trim(),
-          name: name,
-          target: _target!,
-          type: _type,
-        );
-    e
-      ..icon = _iconCtrl.text.trim().isEmpty
-          ? CountdownEvent.defaultIconFor(_type)
-          : _iconCtrl.text.trim()
-      ..name = name
-      ..note = _noteCtrl.text.trim()
-      ..target = _target!
-      ..type = _type
-      ..loop = _loop;
-    Navigator.pop(context, e);
-  }
-
   /// 日历选日：支持左右滑动翻页
   Future<void> _pickDate() async {
     HapticFeedback.selectionClick();
@@ -125,7 +149,9 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return WillPopScope(
+      onWillPop: _handleLeave,
+      child: Scaffold(
       backgroundColor: const Color(0xFFF3F6FB),
       appBar: AppBar(
         backgroundColor: const Color(0xFF3B6FE0),
@@ -133,6 +159,11 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
         elevation: 0,
         centerTitle: true,
         title: Text(widget.event == null ? '新增倒数日' : '编辑倒数日'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: '返回',
+          onPressed: () => Navigator.maybePop(context),
+        ),
         actions: [
           if (widget.event != null)
             IconButton(
@@ -369,6 +400,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 

@@ -8,6 +8,7 @@ import '../widgets/highlight_controller.dart';
 import '../widgets/format_toolbar.dart';
 import '../utils/text_format.dart';
 import '../utils/writing_prompts.dart';
+import '../widgets/unsaved_guard.dart';
 
 class EditScreen extends StatefulWidget {
   final DiaryEntry? entry;
@@ -155,8 +156,35 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     _password = widget.entry?.password ?? '';
     _passwordHint = widget.entry?.passwordHint ?? '';
     _passwordAnswer = widget.entry?.passwordAnswer ?? '';
+    _initial = _snapshot();
     _loadItems();
   }
+
+  /// 进入页面时的内容快照，用于判断是否有未保存的修改
+  String _initial = '';
+
+  /// 当前编辑内容（用于 dirty 比较）。格式信息也纳入，避免只改样式不算改动。
+  String _snapshot() => [
+        _titleCtrl.text,
+        _subtitleCtrl.text,
+        _contentCtrl.text,
+        FormatStore.encode(_formats),
+        _mood,
+        _weather,
+        _location,
+        _pinned ? '1' : '0',
+        _publishDate.toIso8601String(),
+        _encrypted ? '1' : '0',
+        _password,
+        _passwordHint,
+        _passwordAnswer,
+      ].join('\u0001');
+
+  bool get _dirty => _snapshot() != _initial;
+
+  /// 主动返回（AppBar 返回键 / 系统返回键 / 取消按钮）：有改动才拦截
+  Future<bool> _handleLeave() =>
+      confirmLeaveIfDirty(context, dirty: _dirty, onSaveAndLeave: _save);
 
   /// 键盘真实可见性（window 度量的实时值）。
   /// 不能用 hasFocus 判断：Android 按返回键收起键盘时焦点仍保留；
@@ -461,7 +489,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     super.dispose();
   }
 
-  Future<void> _save() async {
+  Future<bool> _save() async {
     final title = _titleCtrl.text.trim();
     final content = _contentCtrl.text.trim();
     final subtitle = _encrypted ? _subtitleCtrl.text.trim() : '';
@@ -469,13 +497,13 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('写点什么再保存吧～')),
       );
-      return;
+      return false;
     }
     if (_encrypted && subtitle.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('请填写副标题～')),
       );
-      return;
+      return false;
     }
 
     setState(() => _saving = true);
@@ -523,12 +551,14 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     }
     await DiaryStorage.save(list);
 
-    if (!mounted) return;
+    if (!mounted) return false;
     Navigator.pop(context, true);
+    return true;
   }
 
+  /// 底部「取消」：走统一的未保存拦截
   void _cancel() {
-    Navigator.pop(context);
+    Navigator.maybePop(context);
   }
 
   Future<void> _delete() async {
@@ -848,11 +878,18 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return WillPopScope(
+      onWillPop: _handleLeave,
+      child: Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xCC3B6FE0),
         foregroundColor: Colors.white,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: '返回',
+          onPressed: () => Navigator.maybePop(context),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.undo),
@@ -956,7 +993,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                       Expanded(
                         child: TextField(
                           controller: _subtitleCtrl,
-                          maxLength: 20,
+                          maxLength: 15,
                           style: const TextStyle(
                               fontSize: 15, color: Color(0xFF2A3B52)),
                           decoration: const InputDecoration(
@@ -970,7 +1007,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                         ),
                       ),
                       Text(
-                        '${_subtitleCtrl.text.length}/20',
+                        '${_subtitleCtrl.text.length}/15',
                         style: const TextStyle(
                             fontSize: 12, color: Color(0xFF9AA8BF)),
                       ),
@@ -1129,6 +1166,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
           ),
         ],
       ),
+    ),
     );
   }
 

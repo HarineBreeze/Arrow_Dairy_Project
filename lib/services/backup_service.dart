@@ -181,5 +181,96 @@ class BackupService {
     }
   }
 
+  /// 把备份数据「增添合并」进本地存储（保留本地已有内容）：
+  /// - id 相同：日记有 updatedAt，取更新的一方；物品 / 资产 / 倒数日没有
+  ///   时间戳，一律保留本地（本地才是用户正在维护的数据）；
+  /// - id 不同：直接追加；
+  /// - 个人信息、字体设置：保留本地，合并不改变当前使用中的外观。
+  ///
+  /// 返回合并统计（各项合计的新增 / 更新条数）。
+  static Future<MergeResult> mergeBackup(BackupData incoming) async {
+    int added = 0;
+    int updated = 0;
+
+    // 日记：按 id 对齐，updatedAt 较新的为准
+    final localEntries = await DiaryStorage.load();
+    final entryIndex = {for (var i = 0; i < localEntries.length; i++) localEntries[i].id: i};
+    for (final e in incoming.entries) {
+      final idx = entryIndex[e.id];
+      if (idx == null) {
+        localEntries.add(e);
+        entryIndex[e.id] = localEntries.length - 1;
+        added++;
+      } else if (e.updatedAt.isAfter(localEntries[idx].updatedAt)) {
+        localEntries[idx] = e;
+        updated++;
+      }
+    }
+    await DiaryStorage.save(localEntries);
+
+    // 物品：无时间戳，同 id 保留本地
+    final localItems = await ItemStorage.load();
+    final itemIds = localItems.map((e) => e.id).toSet();
+    for (final e in incoming.items) {
+      if (itemIds.add(e.id)) {
+        localItems.add(e);
+        added++;
+      }
+    }
+    await ItemStorage.save(localItems);
+
+    // 资产：无时间戳，同 id 保留本地
+    final localAssets = await AssetStorage.load();
+    final assetIds = localAssets.map((e) => e.id).toSet();
+    for (final e in incoming.assets) {
+      if (assetIds.add(e.id)) {
+        localAssets.add(e);
+        added++;
+      }
+    }
+    await AssetStorage.save(localAssets);
+
+    // 倒数日：无时间戳，同 id 保留本地
+    final localCountdowns = await CountdownStorage.load();
+    final countdownIds = localCountdowns.map((e) => e.id).toSet();
+    for (final e in incoming.countdowns) {
+      if (countdownIds.add(e.id)) {
+        localCountdowns.add(e);
+        added++;
+      }
+    }
+    await CountdownStorage.save(localCountdowns);
+    // 合并后重排原生提醒（只对新增的事件真正新增，旧的会被覆盖重排）
+    await CountdownReminder.syncAll(localCountdowns);
+
+    return MergeResult(added: added, updated: updated);
+  }
+
   static String _two(int n) => n.toString().padLeft(2, '0');
+}
+
+/// 导入方式
+enum ImportMode {
+  /// 完全覆盖：清空本地，全部替换为备份内容
+  overwrite,
+
+  /// 增添合并：保留本地，只补充备份里多出来的条目
+  merge,
+}
+
+/// 合并结果统计
+class MergeResult {
+  /// 新增条数（本地原本没有的）
+  final int added;
+
+  /// 更新条数（同 id 且备份更新的，目前仅日记可能出现）
+  final int updated;
+
+  const MergeResult({required this.added, required this.updated});
+
+  bool get isEmpty => added == 0 && updated == 0;
+
+  @override
+  String toString() =>
+      isEmpty ? '没有可合并的新内容' : '新增 $added 条，更新 $updated 条';
 }

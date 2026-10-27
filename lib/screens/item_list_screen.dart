@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../models/item.dart';
 import '../services/item_storage.dart';
 import '../utils/menu_gesture_gate.dart';
+import '../widgets/empty_state.dart';
+import '../widgets/loading_skeleton.dart';
 import 'item_edit_screen.dart';
 
 enum _ItemFilter { all, owning, lost, wishlist }
@@ -378,9 +380,7 @@ class ItemListScreenState extends State<ItemListScreen> {
       children: [
         _buildTopBar(),
         if (_loading)
-          const Expanded(
-            child: Center(child: CircularProgressIndicator()),
-          )
+          const Expanded(child: ListSkeleton(count: 4, withAvatar: false))
         else ...[
           _buildDataView(),
           _buildFilterSortBar(),
@@ -393,13 +393,12 @@ class ItemListScreenState extends State<ItemListScreen> {
                 ? ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     children: [
-                      const SizedBox(height: 200),
-                      Center(
-                        child: Text(
-                          _searching ? '没有匹配的物品' : '还没有物品',
-                          style: const TextStyle(
-                              fontSize: 15, color: Color(0xFF9AA8BF)),
-                        ),
+                      EmptyState(
+                        icon: '🎒',
+                        title: _searching ? '没有匹配的物品' : '还没有物品',
+                        subtitle: _searching
+                            ? '换个关键词试试'
+                            : '点右下角 + 添加第一件',
                       ),
                     ],
                   )

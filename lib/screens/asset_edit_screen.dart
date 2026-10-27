@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/asset.dart';
+import '../widgets/unsaved_guard.dart';
 
 /// 新增 / 编辑资产卡片。
 class AssetEditScreen extends StatefulWidget {
@@ -17,6 +18,23 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
   late final TextEditingController _iconCtrl;
   late String _type;
   bool _saving = false;
+
+  /// 进入页面时的内容快照，用于判断是否有未保存的修改
+  String _initial = '';
+
+  /// 当前编辑内容（用于 dirty 比较）
+  String _snapshot() => [
+        _noteCtrl.text,
+        _amountCtrl.text,
+        _iconCtrl.text,
+        _type,
+      ].join('\u0001');
+
+  bool get _dirty => _snapshot() != _initial;
+
+  /// 主动返回（AppBar 返回键 / 系统返回键）：有改动才拦截
+  Future<bool> _handleLeave() =>
+      confirmLeaveIfDirty(context, dirty: _dirty, onSaveAndLeave: _save);
 
   static const List<String> _quickIcons = [
     '🏦', '💸', '📈', '🪙', '📊', '💳', '💰',
@@ -36,6 +54,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
     );
     _iconCtrl = TextEditingController(text: a?.icon ?? Asset.defaultIconFor(a?.type ?? '银行储蓄'));
     _type = a?.type ?? '银行储蓄';
+    _initial = _snapshot();
   }
 
   @override
@@ -67,14 +86,15 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
     if (confirmed == true && mounted) Navigator.pop(context, 'deleted');
   }
 
-  Future<void> _save() async {
+  Future<bool> _save() async {
     final amount = double.tryParse(_amountCtrl.text.trim());
     if (amount == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('请输入正确的金额')),
       );
-      return;
+      return false;
     }
+    if (!mounted) return false;
     setState(() => _saving = true);
     HapticFeedback.selectionClick();
     final a = widget.asset ?? Asset(id: DateTime.now().microsecondsSinceEpoch.toString());
@@ -86,14 +106,14 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
     // 负债类型强制为负数展示语义：存正数，由类型决定正负
     a.amount = amount.abs() * (_isLiability ? -1 : 1);
     Navigator.pop(context, a);
+    return true;
   }
 
   @override
   Widget build(BuildContext context) {
-    final iconPreview = _iconCtrl.text.trim().isEmpty
-        ? Asset.defaultIconFor(_type)
-        : _iconCtrl.text.trim().characters.first;
-    return Scaffold(
+    return WillPopScope(
+      onWillPop: _handleLeave,
+      child: Scaffold(
       backgroundColor: const Color(0xFFF3F6FB),
       appBar: AppBar(
         backgroundColor: const Color(0xCC3B6FE0),
@@ -101,6 +121,11 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
         elevation: 0,
         centerTitle: true,
         title: Text(widget.asset == null ? '新增资产' : '编辑资产'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: '返回',
+          onPressed: () => Navigator.maybePop(context),
+        ),
         // 右上角：删除当前资产卡片（仅编辑已有卡片时）
         actions: [
           if (widget.asset != null)
@@ -249,6 +274,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 

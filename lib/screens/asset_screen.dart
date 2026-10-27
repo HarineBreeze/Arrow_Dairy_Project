@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/asset.dart';
 import '../services/asset_storage.dart';
+import '../widgets/empty_state.dart';
+import '../widgets/loading_skeleton.dart';
 import 'asset_edit_screen.dart';
 
 /// 资产全景主页。默认无需密码即可查看；
@@ -545,24 +547,23 @@ class AssetScreenState extends State<AssetScreen> {
           child: !_unlocked
               ? _buildLocked()
               : _loading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? const ListSkeleton()
                   : RefreshIndicator(
                       color: const Color(0xFF3B6FE0),
                       onRefresh: _load,
                       child: _filtered.isEmpty
                           ? ListView(
+                              // 空态也要可滚动，否则无法下拉刷新
+                              physics: const AlwaysScrollableScrollPhysics(),
                               children: [
-                                const SizedBox(height: 200),
-                                Center(
-                                  child: Text(
-                                      _hasFilter
-                                          ? '没有符合条件的资产卡片\n试试调整筛选条件'
-                                          : '还没有资产卡片\n点右下角 + 添加第一笔',
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                          fontSize: 15,
-                                          color: Color(0xFF9AA8BF),
-                                          height: 1.8)),
+                                EmptyState(
+                                  icon: '💰',
+                                  title: _hasFilter
+                                      ? '没有符合条件的资产卡片'
+                                      : '还没有资产卡片',
+                                  subtitle: _hasFilter
+                                      ? '试试调整筛选条件'
+                                      : '点右下角 + 添加第一笔',
                                 ),
                               ],
                             )

@@ -5,6 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import '../models/user_profile.dart';
 import '../services/user_storage.dart';
 import '../widgets/avatar.dart';
+import '../widgets/unsaved_guard.dart';
 
 class ProfileEditScreen extends StatefulWidget {
   final UserProfile profile;
@@ -21,12 +22,25 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   late String _avatarPath;
   bool _saving = false;
 
+  /// 进入页面时的内容快照，用于判断是否有未保存的修改
+  String _initial = '';
+
+  /// 当前编辑内容（用于 dirty 比较）
+  String _snapshot() => [_nicknameCtrl.text, _gender, _avatarPath].join('\u0001');
+
+  bool get _dirty => _snapshot() != _initial;
+
+  /// 主动返回（AppBar 返回键 / 系统返回键）：有改动才拦截
+  Future<bool> _handleLeave() =>
+      confirmLeaveIfDirty(context, dirty: _dirty, onSaveAndLeave: _save);
+
   @override
   void initState() {
     super.initState();
     _nicknameCtrl = TextEditingController(text: widget.profile.nickname);
     _gender = widget.profile.gender;
     _avatarPath = widget.profile.avatarPath;
+    _initial = _snapshot();
   }
 
   @override
@@ -59,7 +73,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     }
   }
 
-  Future<void> _save() async {
+  Future<bool> _save() async {
     setState(() => _saving = true);
     final profile = UserProfile(
       nickname: _nicknameCtrl.text.trim(),
@@ -67,14 +81,24 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       avatarPath: _avatarPath,
     );
     await UserStorage.save(profile);
-    if (!mounted) return;
+    if (!mounted) return false;
     Navigator.pop(context, true);
+    return true;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('个人信息')),
+    return WillPopScope(
+      onWillPop: _handleLeave,
+      child: Scaffold(
+      appBar: AppBar(
+        title: const Text('个人信息'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: '返回',
+          onPressed: () => Navigator.maybePop(context),
+        ),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
         child: Column(
@@ -138,6 +162,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 
