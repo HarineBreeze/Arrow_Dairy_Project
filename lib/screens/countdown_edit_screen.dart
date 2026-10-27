@@ -111,19 +111,6 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
     if (picked != null && mounted) setState(() => _target = picked);
   }
 
-  /// 手动输入日期：进选日页并直接展开输入面板
-  Future<void> _manualInputDate() async {
-    HapticFeedback.selectionClick();
-    final picked = await Navigator.push<DateTime>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => _DatePickerPage(
-            initial: _target ?? DateTime.now(), openManual: true),
-      ),
-    );
-    if (picked != null && mounted) setState(() => _target = picked);
-  }
-
   String get _dateTimeLabel {
     if (_target == null) return '';
     final t = _target!;
@@ -211,97 +198,70 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
             ),
             const SizedBox(height: 16),
 
-            // 目的日（含时分；最右侧两字宽显示 正数 / 倒数）
+            // 目的日：左侧日期输入框 + 右侧「正数/倒数」标记框（同一行、各自独立）
             _sectionLabel('目的日'),
-            Container(
-              decoration: _box(),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: _pickDate,
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(14, 14, 8, 14),
-                        child: Row(
-                          children: [
-                            Icon(Icons.event_outlined,
-                                size: 18,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: _pickDate,
+                    child: Container(
+                      padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
+                      decoration: _box(),
+                      child: Row(
+                        children: [
+                          Icon(Icons.event_outlined,
+                              size: 18,
+                              color: _target == null
+                                  ? const Color(0xFF9AA8BF)
+                                  : const Color(0xFF3B6FE0)),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _target == null
+                                  ? '选择未来日倒数，过去日正数'
+                                  : _dateTimeLabel,
+                              style: TextStyle(
+                                fontSize: _target == null ? 13 : 15,
                                 color: _target == null
                                     ? const Color(0xFF9AA8BF)
-                                    : const Color(0xFF3B6FE0)),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                _target == null
-                                    ? '选择未来日倒数，过去日正数'
-                                    : _dateTimeLabel,
-                                style: TextStyle(
-                                  fontSize: _target == null ? 13 : 15,
-                                  color: _target == null
-                                      ? const Color(0xFF9AA8BF)
-                                      : const Color(0xFF2A3B52),
-                                ),
+                                    : const Color(0xFF2A3B52),
                               ),
                             ),
-                            // 手动输入入口：直接进选日页并展开输入面板
-                            GestureDetector(
-                              onTap: _manualInputDate,
-                              behavior: HitTestBehavior.opaque,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF0F4FB),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: const <Widget>[
-                                    Icon(Icons.keyboard_alt_outlined,
-                                        size: 14, color: Color(0xFF5A6B82)),
-                                    SizedBox(width: 3),
-                                    Text('输入',
-                                        style: TextStyle(
-                                            fontSize: 11,
-                                            color: Color(0xFF5A6B82))),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                  // 最右侧：正数 / 倒数 标记（两字宽）
-                  Container(
-                    width: 44,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
+                ),
+                const SizedBox(width: 10),
+                // 独立的「正数 / 倒数」标记框（两字宽）
+                Container(
+                  width: 52,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: _target == null
+                        ? const Color(0xFFF5F7FB)
+                        : (_isCountdown
+                            ? const Color(0xFFDCE7FF)
+                            : const Color(0xFFFDEEF3)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    _target == null ? '--' : (_isCountdown ? '倒数' : '正数'),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
                       color: _target == null
-                          ? const Color(0xFFF5F7FB)
+                          ? const Color(0xFFB4C0D2)
                           : (_isCountdown
-                              ? const Color(0xFFDCE7FF)
-                              : const Color(0xFFFDEEF3)),
-                      borderRadius: const BorderRadius.horizontal(
-                          right: Radius.circular(12)),
-                    ),
-                    child: Text(
-                      _target == null ? '--' : (_isCountdown ? '倒数' : '正数'),
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: _target == null
-                            ? const Color(0xFFB4C0D2)
-                            : (_isCountdown
-                                ? const Color(0xFF3B6FE0)
-                                : const Color(0xFFD9738F)),
-                      ),
+                              ? const Color(0xFF3B6FE0)
+                              : const Color(0xFFD9738F)),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
 
@@ -602,9 +562,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
 
 class _DatePickerPage extends StatefulWidget {
   final DateTime initial;
-  /// 进入后是否直接展开手动输入面板
-  final bool openManual;
-  const _DatePickerPage({required this.initial, this.openManual = false});
+  const _DatePickerPage({required this.initial});
 
   @override
   State<_DatePickerPage> createState() => _DatePickerPageState();
@@ -615,11 +573,6 @@ class _DatePickerPageState extends State<_DatePickerPage> {
   late DateTime _selected; // 仅日期
   late TimeOfDay _time;
 
-  // 手动输入
-  bool _manual = false; // 是否展开手动输入面板
-  final TextEditingController _manualCtrl = TextEditingController();
-  String? _manualError;
-
   @override
   void initState() {
     super.initState();
@@ -627,122 +580,11 @@ class _DatePickerPageState extends State<_DatePickerPage> {
     _month = DateTime(_selected.year, _selected.month, 1);
     _time = TimeOfDay(
         hour: widget.initial.hour, minute: widget.initial.minute);
-    if (widget.openManual) {
-      _manual = true;
-      final t = _time;
-      _manualCtrl.text =
-          '${_selected.year}-${_selected.month.toString().padLeft(2, '0')}-${_selected.day.toString().padLeft(2, '0')} '
-          '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
-    }
-  }
-
-  @override
-  void dispose() {
-    _manualCtrl.dispose();
-    super.dispose();
   }
 
   /// 合并日期与时分
   DateTime get _result => DateTime(_selected.year, _selected.month,
       _selected.day, _time.hour, _time.minute);
-
-  /// 解析手动输入的日期时间，支持：
-  /// 2026-10-01 / 2026/10/1 / 2026.10.1 / 2026年10月1日
-  /// 可选跟时间：18:30 / 18：30 / 18点30分 / 空格或 T 分隔均可
-  /// 只填日期时沿用当前已选的时间；只填时间时沿用当前已选日期
-  DateTime? _parseManual(String raw) {
-    var s = raw.trim();
-    if (s.isEmpty) return null;
-    // 全角转半角
-    s = s
-        .replaceAll('：', ':')
-        .replaceAll('－', '-')
-        .replaceAll('　', ' ');
-    s = s.replaceAll('年', '-').replaceAll('月', '-').replaceAll('日', ' ');
-    s = s.replaceAll('点', ':').replaceAll('时', ':').replaceAll('分', '');
-    s = s.replaceAll('/', '-').replaceAll('.', '-').replaceAll('T', ' ');
-
-    final parts = s.split(RegExp(r'\s+')).where((e) => e.isNotEmpty).toList();
-    if (parts.isEmpty) return null;
-
-    int? year;
-    int? month;
-    int? day;
-    int? hour;
-    int? minute;
-
-    final dateMatch =
-        RegExp(r'^(\d{1,4})-(\d{1,2})-(\d{1,2})$').firstMatch(parts[0]);
-    final cnMatch = RegExp(r'^(\d{4})(\d{2})(\d{2})$').firstMatch(parts[0]);
-    final timeOnly = RegExp(r'^(\d{1,2}):(\d{1,2})$').firstMatch(parts[0]);
-
-    if (dateMatch != null) {
-      year = int.parse(dateMatch.group(1)!);
-      month = int.parse(dateMatch.group(2)!);
-      day = int.parse(dateMatch.group(3)!);
-    } else if (cnMatch != null) {
-      year = int.parse(cnMatch.group(1)!);
-      month = int.parse(cnMatch.group(2)!);
-      day = int.parse(cnMatch.group(3)!);
-    } else if (timeOnly != null && parts.length == 1) {
-      // 只填了时间
-      hour = int.parse(timeOnly.group(1)!);
-      minute = int.parse(timeOnly.group(2)!);
-      year = _selected.year;
-      month = _selected.month;
-      day = _selected.day;
-    } else {
-      return null;
-    }
-
-    // 时间部分（允许带秒，秒直接忽略）
-    if (parts.length > 1) {
-      final tm = RegExp(r'^(\d{1,2}):(\d{1,2})(?::\d{1,2})?$')
-          .firstMatch(parts[1]);
-      if (tm == null) return null;
-      hour = int.parse(tm.group(1)!);
-      minute = int.parse(tm.group(2)!);
-    }
-
-    if (month < 1 || month > 12) return null;
-    if (day < 1 || day > DateTime(year, month + 1, 0).day) return null;
-    if (hour != null && (hour < 0 || hour > 23)) return null;
-    if (minute != null && (minute < 0 || minute > 59)) return null;
-
-    return DateTime(year, month, day, hour ?? _time.hour,
-        minute ?? _time.minute);
-  }
-
-  void _applyManual() {
-    final parsed = _parseManual(_manualCtrl.text);
-    if (parsed == null) {
-      setState(() => _manualError = '格式不对，示例：2026-10-01 18:30');
-      return;
-    }
-    HapticFeedback.selectionClick();
-    setState(() {
-      _manualError = null;
-      _selected = CountdownEvent.dateOnly(parsed);
-      _time = TimeOfDay(hour: parsed.hour, minute: parsed.minute);
-      _month = DateTime(parsed.year, parsed.month, 1);
-      _manual = false;
-      _manualCtrl.clear();
-    });
-  }
-
-  void _toggleManual() {
-    HapticFeedback.selectionClick();
-    setState(() {
-      _manual = !_manual;
-      _manualError = null;
-      if (_manual) {
-        final t = _time;
-        _manualCtrl.text =
-            '${_selected.year}-${_selected.month.toString().padLeft(2, '0')}-${_selected.day.toString().padLeft(2, '0')} '
-            '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
-      }
-    });
-  }
 
   Future<void> _pickTime() async {
     HapticFeedback.selectionClick();
@@ -759,69 +601,6 @@ class _DatePickerPageState extends State<_DatePickerPage> {
 
   void _shift(int delta) {
     setState(() => _month = DateTime(_month.year, _month.month + delta, 1));
-  }
-
-  /// 手动输入面板
-  Widget _buildManualPanel() {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(20, 0, 20, 10),
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF5F8FE),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFDCE7FF)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TextField(
-            controller: _manualCtrl,
-            autofocus: true,
-            keyboardType: TextInputType.datetime,
-            style: const TextStyle(fontSize: 15),
-            onSubmitted: (_) => _applyManual(),
-            decoration: InputDecoration(
-              isDense: true,
-              hintText: '例：2026-10-01 18:30',
-              hintStyle:
-                  const TextStyle(fontSize: 13, color: Color(0xFF9AA8BF)),
-              errorText: _manualError,
-              border: InputBorder.none,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              const Expanded(
-                child: Text('支持 2026-10-01 / 2026/10/1 / 2026年10月1日 18:30',
-                    style:
-                        TextStyle(fontSize: 11, color: Color(0xFF9AA8BF))),
-              ),
-              TextButton(
-                onPressed: () => setState(() {
-                  _manual = false;
-                  _manualError = null;
-                }),
-                child: const Text('取消',
-                    style: TextStyle(fontSize: 13, color: Color(0xFF8A99B3))),
-              ),
-              ElevatedButton(
-                onPressed: _applyManual,
-                style: ElevatedButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                ),
-                child: const Text('应用', style: TextStyle(fontSize: 13)),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -880,23 +659,9 @@ class _DatePickerPageState extends State<_DatePickerPage> {
         elevation: 0,
         centerTitle: true,
         title: const Text('选择目的日'),
-        actions: [
-          // 日历 / 手动输入 切换
-          TextButton.icon(
-            onPressed: _toggleManual,
-            icon: Icon(
-                _manual ? Icons.calendar_month : Icons.keyboard_alt_outlined,
-                size: 18,
-                color: Colors.white),
-            label: Text(_manual ? '日历' : '手动输入',
-                style: const TextStyle(fontSize: 13, color: Colors.white)),
-          ),
-        ],
       ),
       body: Column(
         children: [
-          // 手动输入面板
-          if (_manual) _buildManualPanel(),
           // 月份切换
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
