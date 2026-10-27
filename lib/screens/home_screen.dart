@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show SystemUiOverlayStyle;
+import 'package:flutter/services.dart'
+    show SystemUiOverlayStyle, HapticFeedback;
 import '../models/diary_entry.dart';
 import '../models/user_profile.dart';
 import '../services/diary_storage.dart';
@@ -408,6 +409,21 @@ class _HomeScreenState extends State<HomeScreen>
     _menuController.reverse();
   }
 
+  /// 主页左滑 → 打开侧边栏（等同点击左上角菜单按钮）
+  void _onHomeDragEnd(DragEndDetails d) {
+    if (_menuOpen) {
+      // 已打开时右滑收起
+      final v = d.primaryVelocity ?? 0;
+      if (v > 250) _closeMenu();
+      return;
+    }
+    final v = d.primaryVelocity ?? 0;
+    if (v < -250) {
+      HapticFeedback.selectionClick();
+      _openMenu();
+    }
+  }
+
   void _openSearch() {
     setState(() => _searching = true);
   }
@@ -625,7 +641,10 @@ class _HomeScreenState extends State<HomeScreen>
           body: Container(
             color: const Color(0xB33B6FE0),
             child: SafeArea(
-              child: AnimatedBuilder(
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onHorizontalDragEnd: _onHomeDragEnd,
+                child: AnimatedBuilder(
                 animation: _menuAnim,
                 builder: (context, child) {
                   final menuWidth =
@@ -706,6 +725,7 @@ class _HomeScreenState extends State<HomeScreen>
                               child: AssetScreen(
                                 key: _assetListKey,
                                 onOpenMenu: _openMenu,
+                                onCancel: () => _switchTab('diary'),
                               ),
                             )
                           : _loading
@@ -718,6 +738,7 @@ class _HomeScreenState extends State<HomeScreen>
                               child: _buildBody(),
                             ),
                 ),
+              ),
               ),
             ),
           ),

@@ -8,7 +8,10 @@ import 'asset_edit_screen.dart';
 /// 返回 true 表示确认完成（供外部回调刷新）。
 class AssetScreen extends StatefulWidget {
   final VoidCallback? onOpenMenu;
-  const AssetScreen({Key? key, this.onOpenMenu}) : super(key: key);
+  /// 用户在密码页点了「取消」时回调，由首页切回笔记主页
+  final VoidCallback? onCancel;
+  const AssetScreen({Key? key, this.onOpenMenu, this.onCancel})
+      : super(key: key);
 
   @override
   State<AssetScreen> createState() => AssetScreenState();
@@ -18,6 +21,7 @@ class AssetScreenState extends State<AssetScreen> {
   List<Asset> _assets = [];
   bool _loading = true;
   bool _unlocked = false;
+  String? _question; // 密保问题，供设置页展示
 
   @override
   void initState() {
@@ -34,8 +38,14 @@ class AssetScreenState extends State<AssetScreen> {
       await _askSetup();
     }
     if (!mounted) return;
-    if (!_unlocked) return;
+    if (!_unlocked) {
+      // 用户取消（或侧滑）→ 交回首页
+      if (widget.onCancel != null) widget.onCancel!();
+      return;
+    }
     await _load();
+    final q = await AssetStorage.getQuestion();
+    if (mounted) setState(() => _question = q);
   }
 
   Future<void> _load() async {
@@ -51,7 +61,7 @@ class AssetScreenState extends State<AssetScreen> {
   Future<void> openNewAsset() async {
     final r = await Navigator.push<Asset>(
       context,
-      _slideRoute(AssetEditScreen()),
+      _slideRoute(const AssetEditScreen()),
     );
     if (r != null) {
       _assets.add(r);
@@ -79,21 +89,94 @@ class AssetScreenState extends State<AssetScreen> {
       );
 
   Future<void> _askSetup() async {
-    await showDialog(
+    final r = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => const _PinSetupDialog(),
     );
-    _unlocked = true;
+    _unlocked = r == true;
   }
 
   Future<void> _askUnlock() async {
-    await showDialog(
+    final r = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => const _PinUnlockDialog(),
     );
-    _unlocked = true;
+    _unlocked = r == true;
+    if (r == true && mounted) {
+      final q = await AssetStorage.getQuestion();
+      if (mounted) setState(() => _question = q);
+    }
+  }
+
+  // ---------- 设置 ----------
+
+  /// 齿轮 → 设置选项卡（底部弹层）
+  void _openSettings() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 18, 20, 10),
+              child: Text('资产图景设置',
+                  style:
+                      TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            ),
+            ListTile(
+              leading: const Icon(Icons.lock_outline, color: Color(0xFF3B6FE0)),
+              title: const Text('修改资产密码'),
+              subtitle: const Text('可通过当前密码或密保问题验证',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF9AA8BF))),
+              onTap: () {
+                Navigator.pop(ctx);
+                _openChangePin();
+              },
+            ),
+            const Divider(height: 1, color: Color(0xFFE8EDF5)),
+            ListTile(
+              leading: const Icon(Icons.help_outline, color: Color(0xFF5A6B82)),
+              title: const Text('查看密保问题'),
+              subtitle: Text(
+                (_question == null || _question!.isEmpty) ? '未设置' : _question!,
+                style: const TextStyle(fontSize: 12, color: Color(0xFF9AA8BF)),
+              ),
+              onTap: () {
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                      content: Text((_question == null || _question!.isEmpty)
+                          ? '尚未设置密保问题'
+                          : '密保问题：$_question')),
+                );
+              },
+            ),
+            const SizedBox(height: 6),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openChangePin() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => const _ChangePinDialog(),
+    );
+    if (ok == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('资产密码已更新')),
+      );
+    }
   }
 
   // ---------- 统计 ----------
@@ -131,7 +214,7 @@ class AssetScreenState extends State<AssetScreen> {
       context,
       _slideRoute(AssetEditScreen(asset: asset)),
     );
-    if (r == 'deleted') {
+    if (r != null && (r as Object) == 'deleted') {
       _assets.removeWhere((e) => e.id == asset!.id);
       await AssetStorage.save(_assets);
       if (mounted) setState(() {});
@@ -224,7 +307,11 @@ class AssetScreenState extends State<AssetScreen> {
                         fontWeight: FontWeight.w600,
                         color: Colors.white)),
               ),
-              const SizedBox(width: 48),
+              IconButton(
+                icon: const Icon(Icons.settings_outlined, color: Colors.white),
+                tooltip: '设置',
+                onPressed: _unlocked ? _openSettings : null,
+              ),
             ],
           ),
         ),
@@ -405,6 +492,7 @@ class _PinSetupDialogState extends State<_PinSetupDialog> {
   final _qCtrl = TextEditingController(text: '你的生日是几号？');
   final _aCtrl = TextEditingController();
   bool _saving = false;
+  String? _tip; // 确认时未填全的提示
 
   bool get _valid =>
       _p1.text.trim().length >= 4 &&
@@ -412,21 +500,45 @@ class _PinSetupDialogState extends State<_PinSetupDialog> {
       _qCtrl.text.trim().isNotEmpty &&
       _aCtrl.text.trim().isNotEmpty;
 
+  /// 逐项检查，返回第一条不满足的提示；全部满足返回 null
+  String? get _missing {
+    final p1 = _p1.text.trim();
+    final p2 = _p2.text.trim();
+    if (p1.isEmpty) return '请先设置密码（至少 4 位）';
+    if (p1.length < 4) return '密码至少 4 位';
+    if (p2.isEmpty) return '请再输入一遍密码';
+    if (p1 != p2) return '两次输入的密码不一致';
+    if (_qCtrl.text.trim().isEmpty) return '请填写密保问题';
+    if (_aCtrl.text.trim().isEmpty) return '请填写密保答案';
+    return null;
+  }
+
   Future<void> _submit() async {
-    if (!_valid) return;
-    setState(() => _saving = true);
+    final miss = _missing;
+    if (miss != null) {
+      setState(() => _tip = miss);
+      return;
+    }
+    setState(() {
+      _saving = true;
+      _tip = null;
+    });
     await AssetStorage.savePin(
       pin: _p1.text.trim(),
       question: _qCtrl.text.trim(),
       answer: _aCtrl.text,
     );
-    if (mounted) Navigator.pop(context);
+    if (mounted) Navigator.pop(context, true);
   }
 
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: () async => false,
+      // 侧滑 / 返回键一次即取消
+      onWillPop: () async {
+        Navigator.pop(context, false);
+        return false;
+      },
       child: AlertDialog(
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -449,7 +561,7 @@ class _PinSetupDialogState extends State<_PinSetupDialog> {
                   counterText: '',
                   border: OutlineInputBorder(),
                 ),
-                onChanged: (_) => setState(() {}),
+                onChanged: (_) => setState(() => _tip = null),
               ),
               const SizedBox(height: 12),
               TextField(
@@ -466,7 +578,7 @@ class _PinSetupDialogState extends State<_PinSetupDialog> {
                       ? '两次输入不一致'
                       : null,
                 ),
-                onChanged: (_) => setState(() {}),
+                onChanged: (_) => setState(() => _tip = null),
               ),
               const SizedBox(height: 14),
               const Text('密保（忘记密码时用于重置）',
@@ -480,7 +592,7 @@ class _PinSetupDialogState extends State<_PinSetupDialog> {
                   counterText: '',
                   border: OutlineInputBorder(),
                 ),
-                onChanged: (_) => setState(() {}),
+                onChanged: (_) => setState(() => _tip = null),
               ),
               const SizedBox(height: 12),
               TextField(
@@ -491,17 +603,39 @@ class _PinSetupDialogState extends State<_PinSetupDialog> {
                   counterText: '',
                   border: OutlineInputBorder(),
                 ),
-                onChanged: (_) => setState(() {}),
+                onChanged: (_) => setState(() => _tip = null),
               ),
+              if (_tip != null) ...[
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    const Icon(Icons.error_outline,
+                        size: 16, color: Color(0xFFD9534F)),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(_tip!,
+                          style: const TextStyle(
+                              fontSize: 13, color: Color(0xFFD9534F))),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),
         actions: [
           TextButton(
+            onPressed: _saving ? null : () => Navigator.pop(context, false),
+            child: const Text('取消',
+                style: TextStyle(color: Color(0xFF8A9AB0))),
+          ),
+          TextButton(
             onPressed: _saving ? null : _submit,
-            child: Text('完成',
+            child: Text('确认',
                 style: TextStyle(
-                    color: _valid ? const Color(0xFF3B6FE0) : Colors.grey)),
+                    color: _valid
+                        ? const Color(0xFF3B6FE0)
+                        : const Color(0xFF9AA8BF))),
           ),
         ],
       ),
@@ -531,9 +665,14 @@ class _PinUnlockDialogState extends State<_PinUnlockDialog> {
   }
 
   Future<void> _submit() async {
-    final ok = await AssetStorage.verifyPin(_ctrl.text.trim());
+    final pin = _ctrl.text.trim();
+    if (pin.isEmpty) {
+      setState(() => _error = '请输入密码');
+      return;
+    }
+    final ok = await AssetStorage.verifyPin(pin);
     if (ok) {
-      if (mounted) Navigator.pop(context);
+      if (mounted) Navigator.pop(context, true);
     } else {
       setState(() => _error = '密码不正确');
     }
@@ -596,14 +735,22 @@ class _PinUnlockDialogState extends State<_PinUnlockDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('密码已重置，请使用新密码进入')),
       );
-      Navigator.pop(context); // 关闭解锁框，让用户用新密码进入
+      setState(() {
+        _forgot = false;
+        _error = null;
+        _ctrl.clear();
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: () async => false,
+      // 侧滑 / 返回键一次即取消，回笔记主页
+      onWillPop: () async {
+        Navigator.pop(context, false);
+        return false;
+      },
       child: AlertDialog(
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -620,6 +767,7 @@ class _PinUnlockDialogState extends State<_PinUnlockDialog> {
                 decoration: InputDecoration(
                   labelText: '密码',
                   errorText: _error,
+                  errorStyle: const TextStyle(color: Color(0xFFD9534F)),
                   border: const OutlineInputBorder(),
                 ),
                 onSubmitted: (_) => _submit(),
@@ -627,7 +775,23 @@ class _PinUnlockDialogState extends State<_PinUnlockDialog> {
                   if (_error != null) setState(() => _error = null);
                 },
               ),
-              const SizedBox(height: 6),
+              if (_error != null) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.error_outline,
+                        size: 16, color: Color(0xFFD9534F)),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(_error!,
+                          style: const TextStyle(
+                              fontSize: 13, color: Color(0xFFD9534F),
+                              fontWeight: FontWeight.w500)),
+                    ),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 2),
               Align(
                 alignment: Alignment.centerLeft,
                 child: TextButton(
@@ -655,6 +819,7 @@ class _PinUnlockDialogState extends State<_PinUnlockDialog> {
                 decoration: InputDecoration(
                   labelText: '密保答案',
                   errorText: _error,
+                  errorStyle: const TextStyle(color: Color(0xFFD9534F)),
                   border: const OutlineInputBorder(),
                 ),
                 onSubmitted: (_) => _resetByAnswer(),
@@ -662,7 +827,23 @@ class _PinUnlockDialogState extends State<_PinUnlockDialog> {
                   if (_error != null) setState(() => _error = null);
                 },
               ),
-              const SizedBox(height: 6),
+              if (_error != null) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.error_outline,
+                        size: 16, color: Color(0xFFD9534F)),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(_error!,
+                          style: const TextStyle(
+                              fontSize: 13, color: Color(0xFFD9534F),
+                              fontWeight: FontWeight.w500)),
+                    ),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 2),
               Align(
                 alignment: Alignment.centerLeft,
                 child: TextButton(
@@ -680,8 +861,275 @@ class _PinUnlockDialogState extends State<_PinUnlockDialog> {
         ),
         actions: [
           TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('取消',
+                style: TextStyle(color: Color(0xFF8A9AB0))),
+          ),
+          TextButton(
             onPressed: _forgot ? _resetByAnswer : _submit,
-            child: Text(_forgot ? '重置密码' : '进入',
+            child: Text('确认',
+                style: const TextStyle(color: Color(0xFF3B6FE0))),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ==================== 修改资产密码弹窗 ====================
+
+class _ChangePinDialog extends StatefulWidget {
+  const _ChangePinDialog({Key? key}) : super(key: key);
+
+  @override
+  State<_ChangePinDialog> createState() => _ChangePinDialogState();
+}
+
+class _ChangePinDialogState extends State<_ChangePinDialog> {
+  /// 'pin' = 验证当前密码；'answer' = 验证密保答案
+  String _mode = 'pin';
+
+  final _vCtrl = TextEditingController(); // 当前密码 / 密保答案
+  final _p1 = TextEditingController();
+  final _p2 = TextEditingController();
+  final _qCtrl = TextEditingController();
+  final _aCtrl = TextEditingController();
+
+  bool _verified = false; // 验证通过后显示新密码表单
+  bool _saving = false;
+  String? _error;
+  late Future<String> _question;
+
+  @override
+  void initState() {
+    super.initState();
+    _question = AssetStorage.getQuestion();
+  }
+
+  @override
+  void dispose() {
+    _vCtrl.dispose();
+    _p1.dispose();
+    _p2.dispose();
+    _qCtrl.dispose();
+    _aCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _verify() async {
+    final v = _vCtrl.text.trim();
+    if (v.isEmpty) {
+      setState(() => _error = _mode == 'pin' ? '请输入当前密码' : '请输入密保答案');
+      return;
+    }
+    final ok = _mode == 'pin'
+        ? await AssetStorage.verifyPin(v)
+        : await AssetStorage.verifyAnswer(v);
+    if (!mounted) return;
+    if (!ok) {
+      setState(() =>
+          _error = _mode == 'pin' ? '当前密码不正确' : '密保答案不正确');
+      return;
+    }
+    setState(() {
+      _verified = true;
+      _error = null;
+    });
+  }
+
+  Future<void> _save() async {
+    final p1 = _p1.text.trim();
+    final p2 = _p2.text.trim();
+    if (p1.length < 4) {
+      setState(() => _error = '新密码至少 4 位');
+      return;
+    }
+    if (p1 != p2) {
+      setState(() => _error = '两次输入的新密码不一致');
+      return;
+    }
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    await AssetStorage.updatePin(
+      newPin: p1,
+      question: _qCtrl.text,
+      answer: _aCtrl.text,
+    );
+    if (mounted) Navigator.pop(context, true);
+  }
+
+  Widget _errorBox() {
+    if (_error == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Row(
+        children: [
+          const Icon(Icons.error_outline, size: 16, color: Color(0xFFD9534F)),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(_error!,
+                style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFFD9534F),
+                    fontWeight: FontWeight.w500)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _modeChip(String value, String label) {
+    final sel = _mode == value;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() {
+          _mode = value;
+          _error = null;
+          _vCtrl.clear();
+        }),
+        child: Container(
+          height: 34,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: sel ? const Color(0xFF3B6FE0) : const Color(0xFFF3F6FB),
+            borderRadius: BorderRadius.circular(17),
+          ),
+          child: Text(label,
+              style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: sel ? FontWeight.w600 : FontWeight.w400,
+                  color: sel ? Colors.white : const Color(0xFF5A6B82))),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return WillPopScope(
+      onWillPop: () async => !_saving,
+      child: AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(_verified ? '设置新密码' : '验证身份'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: _verified
+                ? [
+                    TextField(
+                      controller: _p1,
+                      obscureText: true,
+                      keyboardType: TextInputType.number,
+                      maxLength: 12,
+                      decoration: const InputDecoration(
+                        labelText: '新密码（至少 4 位）',
+                        counterText: '',
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (_) => setState(() => _error = null),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _p2,
+                      obscureText: true,
+                      keyboardType: TextInputType.number,
+                      maxLength: 12,
+                      decoration: const InputDecoration(
+                        labelText: '再输入一遍新密码',
+                        counterText: '',
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (_) => setState(() => _error = null),
+                    ),
+                    const SizedBox(height: 14),
+                    const Text('如需同时修改密保，可填写下面两项（选填）',
+                        style:
+                            TextStyle(fontSize: 12, color: Color(0xFF9AA8BF))),
+                    const SizedBox(height: 8),
+                    FutureBuilder<String>(
+                      future: _question,
+                      builder: (c, snap) => TextField(
+                        controller: _qCtrl,
+                        maxLength: 30,
+                        decoration: InputDecoration(
+                          labelText: '密保问题',
+                          hintText: snap.data ?? '',
+                          counterText: '',
+                          border: const OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _aCtrl,
+                      maxLength: 30,
+                      decoration: const InputDecoration(
+                        labelText: '密保答案',
+                        counterText: '',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    _errorBox(),
+                  ]
+                : [
+                    Row(
+                      children: [
+                        _modeChip('pin', '当前密码'),
+                        const SizedBox(width: 8),
+                        _modeChip('answer', '密保答案'),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    if (_mode == 'pin')
+                      TextField(
+                        controller: _vCtrl,
+                        obscureText: true,
+                        keyboardType: TextInputType.number,
+                        autofocus: true,
+                        decoration: const InputDecoration(
+                          labelText: '当前资产密码',
+                          border: OutlineInputBorder(),
+                        ),
+                        onSubmitted: (_) => _verify(),
+                        onChanged: (_) => setState(() => _error = null),
+                      )
+                    else ...[
+                      FutureBuilder<String>(
+                        future: _question,
+                        builder: (c, snap) => Text(
+                          snap.data ?? '',
+                          style: const TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: _vCtrl,
+                        autofocus: true,
+                        decoration: const InputDecoration(
+                          labelText: '密保答案',
+                          border: OutlineInputBorder(),
+                        ),
+                        onSubmitted: (_) => _verify(),
+                        onChanged: (_) => setState(() => _error = null),
+                      ),
+                    ],
+                    _errorBox(),
+                  ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: _saving ? null : () => Navigator.pop(context, false),
+            child: const Text('取消',
+                style: TextStyle(color: Color(0xFF8A9AB0))),
+          ),
+          TextButton(
+            onPressed: _saving ? null : (_verified ? _save : _verify),
+            child: Text(_verified ? '保存' : '下一步',
                 style: const TextStyle(color: Color(0xFF3B6FE0))),
           ),
         ],

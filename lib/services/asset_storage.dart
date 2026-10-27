@@ -98,6 +98,29 @@ class AssetStorage {
     }
   }
 
+  /// 修改密码（设置页调用）。可选同时更新密保问题与答案。
+  static Future<bool> updatePin({
+    required String newPin,
+    String? question,
+    String? answer,
+  }) async {
+    try {
+      final file = await _pinFile();
+      final map = jsonDecode(await file.readAsString()) as Map<String, dynamic>;
+      map['pin'] = _obfuscate(newPin);
+      if (question != null && question.trim().isNotEmpty) {
+        map['q'] = question.trim();
+      }
+      if (answer != null && answer.trim().isNotEmpty) {
+        map['a'] = answer.trim();
+      }
+      await file.writeAsString(jsonEncode(map));
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// 忘记密码时通过密保重置
   static Future<void> resetPin(String newPin) async {
     try {
