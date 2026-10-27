@@ -163,8 +163,8 @@ class _EditScreenState extends State<EditScreen> {
       // 若已处于框选模式，聚焦后仍需压住键盘
       if (_selecting) _suppressKeyboard();
     } else {
-      // 失焦时收起排版栏
-      if (_showToolbar) setState(() => _showToolbar = false);
+      // 失焦时收起排版栏（框选模式下保留，供排版操作）
+      if (_showToolbar && !_selecting) setState(() => _showToolbar = false);
     }
   }
 
@@ -214,6 +214,11 @@ class _EditScreenState extends State<EditScreen> {
       setState(() => _showToolbar = true);
     }
     _suppressKeyboard();
+    // 手势开始时键盘本来就收着（长按会先让输入框抢焦点弹键盘）：
+    // 直接放弃焦点，从源头杜绝键盘弹出。
+    if (!_kbAtDown) {
+      _contentFocus.unfocus();
+    }
   }
 
   /// 连续多次收起键盘，覆盖系统「切只读瞬间又弹一次」的行为。

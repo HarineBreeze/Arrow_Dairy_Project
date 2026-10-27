@@ -529,7 +529,7 @@ class AssetScreenState extends State<AssetScreen> {
               _statItem('总资产', _totalAssets, Colors.white),
               _statItem('负资产', _totalDebt, const Color(0xFFFFD9DC)),
               _statItem('现金流', _cashFlow, const Color(0xFFD6FFDF)),
-              _statItem('理财资产', _investTotal, const Color(0xFFBBD4FF)),
+              _statItem('理财资产', _investTotal, Colors.white),
             ],
           ),
         ],
