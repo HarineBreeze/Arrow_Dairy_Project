@@ -24,7 +24,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
   ];
 
   bool get _isLiability =>
-      _type == '信用卡' || _type == '欠款';
+      _type == '信用卡' || _type == '欠款' || _type == '账单';
 
   @override
   void initState() {
@@ -115,129 +115,57 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 资产图标
+            // 资产图标：一排 7 个快捷图标 + 「...」更多
             _sectionLabel('资产图标'),
             Container(
               padding: const EdgeInsets.all(14),
               decoration: _box(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 54,
-                        height: 54,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF0F4FB),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFE8EDF5)),
-                        ),
-                        child: Text(iconPreview,
-                            style: const TextStyle(fontSize: 30)),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: TextField(
-                          controller: _iconCtrl,
-                          maxLength: 4,
-                          style: const TextStyle(fontSize: 15),
-                          decoration: const InputDecoration(
-                            hintText: '自定义 emoji，如 🐷',
-                            hintStyle:
-                                TextStyle(fontSize: 13, color: Color(0xFF9AA8BF)),
-                            counterText: '',
-                            isDense: true,
-                            border: OutlineInputBorder(),
-                          ),
-                          onChanged: (_) => setState(() {}),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _quickIcons.map((e) {
-                      final sel = iconPreview == e;
-                      return GestureDetector(
-                        onTap: () {
-                          HapticFeedback.selectionClick();
-                          _iconCtrl.text = e;
-                          setState(() {});
-                        },
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: sel
-                                ? const Color(0xFFDCE7FF)
-                                : const Color(0xFFF5F7FB),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: sel
-                                  ? const Color(0xFF3B6FE0)
-                                  : Colors.transparent,
-                              width: 1.5,
-                            ),
-                          ),
-                          child: Text(e, style: const TextStyle(fontSize: 22)),
-                        ),
-                      );
-                    }).toList(),
-                  ),
+                  ..._quickIcons.take(7).map((e) => _iconCell(e)),
+                  const Spacer(),
+                  _iconCell(null, isMore: true),
                 ],
               ),
             ),
             const SizedBox(height: 16),
 
-            // 资产类型
+            // 资产类型：下拉选择
             _sectionLabel('资产类型'),
             Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
               decoration: _box(),
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: Asset.types.map((t) {
-                  final sel = _type == t;
-                  return GestureDetector(
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                      setState(() {
-                        _type = t;
-                        // 未手动改过图标时跟随类型换默认图标
-                        if (Asset.defaultIconFor(t) != _iconCtrl.text.trim() &&
-                            Asset.types
-                                .any((x) => Asset.defaultIconFor(x) == _iconCtrl.text.trim())) {
-                          _iconCtrl.text = Asset.defaultIconFor(t);
-                        }
-                      });
-                    },
-                    child: Container(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: sel ? const Color(0xFF3B6FE0) : Colors.white,
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: sel ? const Color(0xFF3B6FE0) : const Color(0xFFD6DCE8),
-                        ),
-                      ),
-                      child: Text(
-                        t,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: sel ? Colors.white : const Color(0xFF5A6B82),
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _type,
+                  isExpanded: true,
+                  icon: const Icon(Icons.keyboard_arrow_down,
+                      color: Color(0xFF5A6B82)),
+                  style: const TextStyle(
+                      fontSize: 15, color: Color(0xFF2A3B52)),
+                  dropdownColor: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  items: Asset.types
+                      .map((t) => DropdownMenuItem<String>(
+                            value: t,
+                            child: Text(t),
+                          ))
+                      .toList(),
+                  onChanged: (v) {
+                    if (v == null) return;
+                    HapticFeedback.selectionClick();
+                    setState(() {
+                      _type = v;
+                      // 未手动改过图标时跟随类型换默认图标
+                      if (Asset.defaultIconFor(v) != _iconCtrl.text.trim() &&
+                          Asset.types.any((x) =>
+                              Asset.defaultIconFor(x) ==
+                              _iconCtrl.text.trim())) {
+                        _iconCtrl.text = Asset.defaultIconFor(v);
+                      }
+                    });
+                  },
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -333,6 +261,151 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
               fontSize: 13,
               color: Color(0xFF9AA8BF),
               fontWeight: FontWeight.w600)),
+    );
+  }
+
+  /// 快捷图标格（含「...」更多入口）。选中时高亮底纹 + 蓝色描边。
+  Widget _iconCell(String? icon, {bool isMore = false}) {
+    final iconPreview = _iconCtrl.text.trim().isEmpty
+        ? Asset.defaultIconFor(_type)
+        : _iconCtrl.text.trim().characters.first;
+    final sel = !isMore && iconPreview == icon;
+    return Padding(
+      padding: const EdgeInsets.only(right: 6),
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          if (isMore) {
+            _showMoreIcons();
+          } else {
+            _iconCtrl.text = icon!;
+            setState(() {});
+          }
+        },
+        child: Container(
+          width: 40,
+          height: 40,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: sel
+                ? const Color(0xFFDCE7FF)
+                : (isMore ? const Color(0xFFF0F4FB) : const Color(0xFFF5F7FB)),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: sel ? const Color(0xFF3B6FE0) : Colors.transparent,
+              width: 1.5,
+            ),
+          ),
+          child: isMore
+              ? const Icon(Icons.more_horiz,
+                  size: 22, color: Color(0xFF5A6B82))
+              : Text(icon!, style: const TextStyle(fontSize: 22)),
+        ),
+      ),
+    );
+  }
+
+  /// 「...」→ 全部图标 + 自定义 emoji
+  Future<void> _showMoreIcons() async {
+    final tmpCtrl = TextEditingController(text: _iconCtrl.text.trim());
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('选择图标',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 14),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: _quickIcons.map((e) {
+                        final sel = tmpCtrl.text.trim() == e;
+                        return GestureDetector(
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            setSheetState(() => tmpCtrl.text = e);
+                          },
+                          child: Container(
+                            width: 44,
+                            height: 44,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: sel
+                                  ? const Color(0xFFDCE7FF)
+                                  : const Color(0xFFF5F7FB),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: sel
+                                    ? const Color(0xFF3B6FE0)
+                                    : Colors.transparent,
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Text(e,
+                                style: const TextStyle(fontSize: 24)),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: tmpCtrl,
+                      maxLength: 4,
+                      style: const TextStyle(fontSize: 15),
+                      decoration: const InputDecoration(
+                        labelText: '自定义 emoji',
+                        hintText: '如 🐷、🚀',
+                        hintStyle:
+                            TextStyle(fontSize: 13, color: Color(0xFF9AA8BF)),
+                        counterText: '',
+                        isDense: true,
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (_) => setSheetState(() {}),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 44,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          primary: const Color(0xFF3B6FE0),
+                          onPrimary: Colors.white,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: () {
+                          final v = tmpCtrl.text.trim();
+                          Navigator.pop(ctx);
+                          setState(() {
+                            _iconCtrl.text = v.characters.isEmpty
+                                ? Asset.defaultIconFor(_type)
+                                : v.characters.first;
+                          });
+                        },
+                        child: const Text('确定', style: TextStyle(fontSize: 15)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

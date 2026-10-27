@@ -391,6 +391,7 @@ class AssetScreenState extends State<AssetScreen> {
   Widget _buildCard(Asset a) {
     final negative = a.amount < 0;
     return GestureDetector(
+      onTap: () => _openEditor(a),
       onLongPress: () => _showCardMenu(a),
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),

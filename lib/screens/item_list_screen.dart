@@ -62,6 +62,65 @@ class ItemListScreenState extends State<ItemListScreen> {
     if (result == true) _load();
   }
 
+  /// 长按物品卡片：编辑 / 删除
+  Future<void> _showItemMenu(Item item) async {
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 10),
+            ListTile(
+              leading: const Icon(Icons.edit_outlined, color: Color(0xFF3B6FE0)),
+              title: const Text('编辑'),
+              onTap: () => Navigator.pop(ctx, 'edit'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_outline, color: Colors.red),
+              title: const Text('删除', style: TextStyle(color: Colors.red)),
+              onTap: () => Navigator.pop(ctx, 'delete'),
+            ),
+            const SizedBox(height: 6),
+          ],
+        ),
+      ),
+    );
+    if (!mounted || action == null) return;
+    if (action == 'edit') {
+      _openEditor(item);
+      return;
+    }
+    if (action == 'delete') {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (c) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text('删除「${item.name}」?'),
+          content: const Text('删除后无法恢复'),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(c, false),
+                child: const Text('取消')),
+            TextButton(
+                onPressed: () => Navigator.pop(c, true),
+                child: const Text('删除', style: TextStyle(color: Colors.red))),
+          ],
+        ),
+      );
+      if (ok == true && mounted) {
+        final list = await ItemStorage.load();
+        list.removeWhere((e) => e.id == item.id);
+        await ItemStorage.save(list);
+        _load();
+      }
+    }
+  }
+
   Route<T> _slideRoute<T>(Widget page) {
     return PageRouteBuilder<T>(
       transitionDuration: const Duration(milliseconds: 300),
@@ -359,6 +418,7 @@ class ItemListScreenState extends State<ItemListScreen> {
                         key: ValueKey(it.id),
                         item: it,
                         onTap: () => _openEditor(it),
+                        onLongPress: () => _showItemMenu(it),
                         onUse: !it.wishlist && it.calcMethod == 1
                             ? () => _incrementUsage(it)
                             : null,
@@ -581,6 +641,7 @@ class ItemListScreenState extends State<ItemListScreen> {
 class _ItemCard extends StatefulWidget {
   final Item item;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress; // 长按：编辑 / 删除
   final VoidCallback? onUse;
   final ValueChanged<int>? onAdjustSaved; // 愿望单 +1/-1 攒钱
 
@@ -588,6 +649,7 @@ class _ItemCard extends StatefulWidget {
       {Key? key,
       required this.item,
       required this.onTap,
+      this.onLongPress,
       this.onUse,
       this.onAdjustSaved})
       : super(key: key);
@@ -648,6 +710,7 @@ class _ItemCardState extends State<_ItemCard> {
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
         onTap: widget.onTap,
+        onLongPress: widget.onLongPress,
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 500),
           switchInCurve: Curves.easeOutCubic,

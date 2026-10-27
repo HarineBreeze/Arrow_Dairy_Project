@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'
-    show SystemUiOverlayStyle, HapticFeedback;
+import 'package:flutter/services.dart' show SystemUiOverlayStyle;
 import '../models/diary_entry.dart';
 import '../models/user_profile.dart';
 import '../services/diary_storage.dart';

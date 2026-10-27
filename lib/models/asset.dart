@@ -39,6 +39,7 @@ class Asset {
     '股票',
     '信用卡',
     '欠款',
+    '账单',
   ];
 
   /// 现金流统计包含的类型
@@ -61,6 +62,8 @@ class Asset {
         return '💳';
       case '欠款':
         return '🧾';
+      case '账单':
+        return '📋';
     }
     return '💰';
   }
