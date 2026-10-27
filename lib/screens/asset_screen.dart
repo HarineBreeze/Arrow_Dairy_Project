@@ -23,6 +23,7 @@ class AssetScreenState extends State<AssetScreen> {
   bool _unlocked = false;
   String _typeFilter = '全部'; // 全部 | 总资产 | 负资产 | 现金流
   String _signFilter = '全部'; // 全部 | 金额为正 | 金额为负
+  bool _hideNumbers = false; // 看板数字是否隐藏（默认显示）
 
   @override
   void initState() {
@@ -515,11 +516,34 @@ class AssetScreenState extends State<AssetScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('净资产',
-              style: TextStyle(fontSize: 13, color: Colors.white70)),
+          Row(
+            children: [
+              const Text('净资产',
+                  style: TextStyle(fontSize: 13, color: Colors.white70)),
+              const SizedBox(width: 4),
+              // 隐藏/显示看板数字（默认显示）
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  setState(() => _hideNumbers = !_hideNumbers);
+                },
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.all(2),
+                  child: Icon(
+                    _hideNumbers
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                    size: 16,
+                    color: Colors.white70,
+                  ),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 4),
           Text(
-            '¥${net.toStringAsFixed(net.truncateToDouble() == net ? 0 : 2)}',
+            _hideNumbers ? '****' : _money(net),
             style: const TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.w700,
@@ -539,6 +563,16 @@ class AssetScreenState extends State<AssetScreen> {
     );
   }
 
+  /// 金额格式化（负数前导 -）
+  String _money(double v) {
+    if (_hideNumbers) return '****';
+    if (v < 0) {
+      final a = -v;
+      return '-¥${a.toStringAsFixed(a.truncateToDouble() == a ? 0 : 2)}';
+    }
+    return '¥${v.toStringAsFixed(v.truncateToDouble() == v ? 0 : 2)}';
+  }
+
   Widget _statItem(String label, double value, Color color) {
     return Expanded(
       child: Column(
@@ -550,9 +584,7 @@ class AssetScreenState extends State<AssetScreen> {
               overflow: TextOverflow.ellipsis),
           const SizedBox(height: 2),
           Text(
-            value < 0
-                ? '-¥${(-value).toStringAsFixed((-value).truncateToDouble() == -value ? 0 : 2)}'
-                : '¥${value.toStringAsFixed(value.truncateToDouble() == value ? 0 : 2)}',
+            _money(value),
             style: TextStyle(
                 fontSize: 13.5, fontWeight: FontWeight.w600, color: color),
             maxLines: 1,

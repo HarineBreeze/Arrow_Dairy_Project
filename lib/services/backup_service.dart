@@ -2,11 +2,14 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import '../models/asset.dart';
+import '../models/countdown_event.dart';
 import '../models/diary_entry.dart';
 import '../models/item.dart';
 import '../models/user_profile.dart';
 import 'app_settings.dart';
 import 'asset_storage.dart';
+import 'countdown_storage.dart';
+import 'countdown_reminder.dart';
 import 'diary_storage.dart';
 import 'item_storage.dart';
 import 'user_storage.dart';
@@ -16,6 +19,7 @@ class BackupData {
   final List<Item> items;
   final UserProfile profile;
   final List<Asset> assets; // 资产图景（v2 备份起包含）
+  final List<CountdownEvent> countdowns; // 倒数日（v3 备份起包含）
   final String? fontFamilyId; // 笔记字体设置（v2 备份起包含）
 
   BackupData({
@@ -23,6 +27,7 @@ class BackupData {
     required this.items,
     required this.profile,
     this.assets = const [],
+    this.countdowns = const [],
     this.fontFamilyId,
   });
 }
@@ -34,11 +39,13 @@ class BackupService {
     final items = await ItemStorage.load();
     final profile = await UserStorage.load();
     final assets = await AssetStorage.load();
+    final countdowns = await CountdownStorage.load();
     return BackupData(
       entries: entries,
       items: items,
       profile: profile,
       assets: assets,
+      countdowns: countdowns,
     );
   }
 
@@ -57,15 +64,17 @@ class BackupService {
     }
 
     final assets = await AssetStorage.load();
+    final countdowns = await CountdownStorage.load();
     final map = {
       'app': 'vector-diary',
-      'version': 2,
+      'version': 3,
       'exportedAt': DateTime.now().toIso8601String(),
       'diaries': entries.map((e) => e.toJson()).toList(),
       'items': items.map((e) => e.toJson()).toList(),
       'profile': profile.toJson(),
       'avatarData': avatarB64,
       'assets': assets.map((e) => e.toJson()).toList(),
+      'countdowns': countdowns.map((e) => e.toJson()).toList(),
       'settings': {'fontFamily': AppSettings.fontFamilyId},
     };
 
@@ -124,6 +133,16 @@ class BackupService {
         } catch (_) {}
       }
     }
+    // 倒数日（v3 备份起包含；旧备份为空）
+    final countdowns = <CountdownEvent>[];
+    if (decoded['countdowns'] is List) {
+      for (final e in decoded['countdowns'] as List) {
+        try {
+          countdowns.add(
+              CountdownEvent.fromJson(Map<String, dynamic>.from(e as Map)));
+        } catch (_) {}
+      }
+    }
     String? fontFamilyId;
     if (decoded['settings'] is Map<String, dynamic>) {
       fontFamilyId = decoded['settings']['fontFamily'] as String?;
@@ -144,6 +163,7 @@ class BackupService {
       items: items,
       profile: profile,
       assets: assets,
+      countdowns: countdowns,
       fontFamilyId: fontFamilyId,
     );
   }
@@ -154,6 +174,8 @@ class BackupService {
     await ItemStorage.save(data.items);
     await UserStorage.save(data.profile);
     await AssetStorage.save(data.assets);
+    await CountdownStorage.save(data.countdowns);
+    await CountdownReminder.syncAll(data.countdowns);
     if (data.fontFamilyId != null) {
       await AppSettings.setFontFamily(data.fontFamilyId!);
     }

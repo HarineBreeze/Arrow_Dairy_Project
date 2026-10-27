@@ -9,8 +9,9 @@ class SideMenu extends StatelessWidget {
   final VoidCallback onOpenDiary;
   final VoidCallback onOpenItems;
   final VoidCallback onOpenAssets;
+  final VoidCallback onOpenCountdown;
   final VoidCallback onOpenSettings;
-  final String currentTab; // 'diary' | 'items' | 'assets'
+  final String currentTab; // 'diary' | 'items' | 'assets' | 'countdown'
 
   const SideMenu({
     Key? key,
@@ -20,6 +21,7 @@ class SideMenu extends StatelessWidget {
     required this.onOpenDiary,
     required this.onOpenItems,
     required this.onOpenAssets,
+    required this.onOpenCountdown,
     required this.onOpenSettings,
     required this.currentTab,
   }) : super(key: key);
@@ -95,12 +97,12 @@ class SideMenu extends StatelessWidget {
   Widget _buildTabSwitcher() {
     const tabHeight = 52.0;
     const gap = 8.0;
-    final selectedIndex =
-        currentTab == 'diary' ? 0 : (currentTab == 'items' ? 1 : 2);
+    const tabs = ['diary', 'items', 'assets', 'countdown'];
+    final selectedIndex = tabs.indexOf(currentTab).clamp(0, 3);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: SizedBox(
-        height: tabHeight * 3 + gap * 2,
+        height: tabHeight * 4 + gap * 3,
         child: Stack(
           children: [
             AnimatedPositioned(
@@ -140,6 +142,14 @@ class SideMenu extends StatelessWidget {
                   label: '资产图景',
                   selected: currentTab == 'assets',
                   onTap: onOpenAssets,
+                  height: tabHeight,
+                ),
+                const SizedBox(height: gap),
+                _buildTabItem(
+                  icon: Icons.event_available_outlined,
+                  label: '倒数日',
+                  selected: currentTab == 'countdown',
+                  onTap: onOpenCountdown,
                   height: tabHeight,
                 ),
               ],

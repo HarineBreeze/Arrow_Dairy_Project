@@ -13,6 +13,11 @@ import 'settings_screen.dart';
 import 'note_view_screen.dart';
 import 'item_list_screen.dart';
 import 'asset_screen.dart';
+import 'countdown_screen.dart';
+import '../models/countdown_event.dart';
+import '../services/countdown_storage.dart';
+import '../services/countdown_reminder.dart';
+import '../widgets/countdown_banner.dart';
 import '../utils/menu_gesture_gate.dart';
 
 const Color kPrimaryBlue = Color(0xFF3B6FE0);
@@ -48,10 +53,14 @@ class _HomeScreenState extends State<HomeScreen>
   final Set<String> _expandedKeys = {};
   String _viewMode = 'all'; // all | month | year
   String? _activeTopic; // 当前筛选的话题（null = 未筛选）
-  String _currentTab = 'diary'; // diary | items | assets
+  String _currentTab = 'diary'; // diary | items | assets | countdown
   final GlobalKey<AssetScreenState> _assetListKey = GlobalKey();
   final GlobalKey<ItemListScreenState> _itemListKey =
       GlobalKey<ItemListScreenState>();
+  final GlobalKey<CountdownScreenState> _countdownKey =
+      GlobalKey<CountdownScreenState>();
+  final GlobalKey<CountdownBannerHostState> _bannerKey =
+      GlobalKey<CountdownBannerHostState>();
 
   @override
   void initState() {
@@ -66,6 +75,21 @@ class _HomeScreenState extends State<HomeScreen>
     _expandedKeys.add('__pinned');
     _load();
     _loadProfile();
+    _initCountdown();
+  }
+
+  /// 倒数日：同步系统提醒 + 当天到期则弹出一次 App 内横幅
+  Future<void> _initCountdown() async {
+    final list = await CountdownStorage.load();
+    if (!mounted) return;
+    await CountdownReminder.syncAll(list);
+    if (!mounted) return;
+    final due = list.where((e) => e.isDueToday).toList();
+    if (due.isEmpty) return;
+    // 等首帧布局完成、页面动画稳定后再滑出横幅（避免被首屏渲染盖住）
+    Future.delayed(const Duration(milliseconds: 700), () {
+      if (mounted) _bannerKey.currentState?.showFor(due.first);
+    });
   }
 
   Future<void> _load() async {
@@ -700,7 +724,10 @@ class _HomeScreenState extends State<HomeScreen>
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
       ),
-      child: WillPopScope(
+      child: CountdownBannerHost(
+        key: _bannerKey,
+        onOpenEvent: _openCountdownById,
+        child: WillPopScope(
         onWillPop: _handleBack,
         child: Scaffold(
           backgroundColor: const Color(0xFFF3F6FB),
@@ -752,6 +779,7 @@ class _HomeScreenState extends State<HomeScreen>
                                 onOpenDiary: () => _switchTab('diary'),
                                 onOpenItems: () => _switchTab('items'),
                                 onOpenAssets: () => _switchTab('assets'),
+                                onOpenCountdown: () => _switchTab('countdown'),
                                 onOpenSettings: _openSettings,
                               ),
                             ),
@@ -819,7 +847,15 @@ class _HomeScreenState extends State<HomeScreen>
                                 onCancel: () => _switchTab('diary'),
                               ),
                             )
-                          : _loading
+                          : _currentTab == 'countdown'
+                              ? KeyedSubtree(
+                                  key: const ValueKey('countdown'),
+                                  child: CountdownScreen(
+                                    key: _countdownKey,
+                                    onOpenMenu: _openMenu,
+                                  ),
+                                )
+                              : _loading
                           ? KeyedSubtree(
                               key: const ValueKey('loading'),
                               child: _buildSkeleton(),
@@ -840,6 +876,8 @@ class _HomeScreenState extends State<HomeScreen>
                       _itemListKey.currentState?.openNewItem();
                     } else if (_currentTab == 'assets') {
                       _assetListKey.currentState?.openNewAsset();
+                    } else if (_currentTab == 'countdown') {
+                      _countdownKey.currentState?.openNewEvent();
                     } else {
                       _openEditor();
                     }
@@ -848,7 +886,15 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
         ),
       ),
+      ),
     );
+  }
+
+  /// 横幅点击 → 切到倒数日主页并打开对应事件编辑页
+  Future<void> _openCountdownById(String id) async {
+    if (_currentTab != 'countdown') _switchTab('countdown');
+    await Future.delayed(const Duration(milliseconds: 320));
+    _countdownKey.currentState?.openEventById(id);
   }
 
   AnimationController? _shimmerCtrl;

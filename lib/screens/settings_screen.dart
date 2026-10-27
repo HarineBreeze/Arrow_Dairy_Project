@@ -16,6 +16,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   int _diaryCount = 0;
   int _itemCount = 0;
   int _assetCount = 0;
+  int _countdownCount = 0;
   bool _exporting = false;
   bool _importing = false;
 
@@ -32,6 +33,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _diaryCount = data.entries.length;
       _itemCount = data.items.length;
       _assetCount = data.assets.length;
+      _countdownCount = data.countdowns.length;
     });
   }
 
@@ -82,7 +84,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         builder: (ctx) => AlertDialog(
           title: const Text('导入备份'),
           content: Text(
-              '该备份包含 ${data.entries.length} 条笔记、${data.items.length} 件物资、${data.assets.length} 笔资产。\n\n导入后将覆盖当前手机上的全部数据，确定继续吗？'),
+              '该备份包含 ${data.entries.length} 条笔记、${data.items.length} 件物资、${data.assets.length} 笔资产、${data.countdowns.length} 个倒数日。\n\n导入后将覆盖当前手机上的全部数据，确定继续吗？'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
@@ -106,7 +108,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text(
-                '导入成功：${data.entries.length} 条笔记、${data.items.length} 件物资、${data.assets.length} 笔资产')),
+                '导入成功：${data.entries.length} 条笔记、${data.items.length} 件物资、${data.assets.length} 笔资产、${data.countdowns.length} 个倒数日')),
       );
       Navigator.pop(context, true);
     } catch (_) {
@@ -148,7 +150,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const Icon(Icons.inventory_outlined,
                           size: 16, color: Color(0xFF9AA8BF)),
                       const SizedBox(width: 6),
-                      Text('当前数据：$_diaryCount 条笔记 · $_itemCount 件物资 · $_assetCount 笔资产',
+                      Text('当前数据：$_diaryCount 条笔记 · $_itemCount 件物资 · $_assetCount 笔资产 · $_countdownCount 个倒数日',
                           style: const TextStyle(
                               fontSize: 12, color: Color(0xFF9AA8BF))),
                     ],
