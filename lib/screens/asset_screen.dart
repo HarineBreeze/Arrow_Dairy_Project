@@ -414,19 +414,21 @@ class AssetScreenState extends State<AssetScreen> {
               child: Text(a.icon, style: const TextStyle(fontSize: 24)),
             ),
             const SizedBox(width: 12),
-            // 名（类型）+ 备注
+            // 备注（主信息）+ 类型（副信息）
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(a.type,
+                  Text(a.note.isEmpty ? a.type : a.note,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF2A3B52))),
                   if (a.note.isNotEmpty) ...[
                     const SizedBox(height: 2),
-                    Text(a.note,
+                    Text(a.type,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(

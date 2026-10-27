@@ -19,8 +19,8 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
   bool _saving = false;
 
   static const List<String> _quickIcons = [
-    '🏦', '💸', '📈', '🪙', '📊', '💳', '🧾', '💰',
-    '🇨🇳', '🏠', '🚗', '📱', '💼', '🎁', '🐷', '🌙',
+    '🏦', '💸', '📈', '🪙', '📊', '💳', '💰',
+    '🇨🇳', '🏠', '🚗', '📱', '💼', '🎁', '🐷', '🌙', '🧾',
   ];
 
   bool get _isLiability =>
@@ -270,8 +270,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
         ? Asset.defaultIconFor(_type)
         : _iconCtrl.text.trim().characters.first;
     final sel = !isMore && iconPreview == icon;
-    return Padding(
-      padding: const EdgeInsets.only(right: 6),
+    return Expanded(
       child: GestureDetector(
         onTap: () {
           HapticFeedback.selectionClick();
@@ -283,8 +282,8 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
           }
         },
         child: Container(
-          width: 40,
           height: 40,
+          margin: const EdgeInsets.only(right: 6),
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: sel
