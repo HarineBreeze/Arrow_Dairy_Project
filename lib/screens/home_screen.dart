@@ -409,18 +409,36 @@ class _HomeScreenState extends State<HomeScreen>
     _menuController.reverse();
   }
 
-  /// 主页左滑 → 打开侧边栏（等同点击左上角菜单按钮）
-  void _onHomeDragEnd(DragEndDetails d) {
-    if (_menuOpen) {
-      // 已打开时右滑收起
-      final v = d.primaryVelocity ?? 0;
-      if (v > 250) _closeMenu();
-      return;
-    }
+  /// 主页右滑 → 跟手拉开侧边栏（触发区域为屏幕左半部）；
+  /// 菜单打开时继续拖动可跟手收回
+  double? _menuDragBase; // 拖拽开始时菜单的进度值
+  double _menuDragDx = 0;
+
+  void _onMenuDragStart(DragStartDetails d) {
+    _menuDragBase = _menuAnim.value;
+    _menuDragDx = 0;
+    _menuController.stop();
+  }
+
+  void _onMenuDragUpdate(DragUpdateDetails d) {
+    if (_menuDragBase == null) return;
+    _menuDragDx += d.delta.dx;
+    final w = MediaQuery.of(context).size.width * 3 / 4;
+    _menuController.value =
+        (_menuDragBase! + _menuDragDx / w).clamp(0.0, 1.0);
+  }
+
+  void _onMenuDragEnd(DragEndDetails d) {
+    if (_menuDragBase == null) return;
+    _menuDragBase = null;
     final v = d.primaryVelocity ?? 0;
-    if (v < -250) {
-      HapticFeedback.selectionClick();
-      _openMenu();
+    final cur = _menuController.value;
+    if (cur > 0.5 || v > 500) {
+      setState(() => _menuOpen = true);
+      _menuController.forward();
+    } else {
+      setState(() => _menuOpen = false);
+      _menuController.reverse();
     }
   }
 
@@ -641,10 +659,7 @@ class _HomeScreenState extends State<HomeScreen>
           body: Container(
             color: const Color(0xB33B6FE0),
             child: SafeArea(
-              child: GestureDetector(
-                behavior: HitTestBehavior.translucent,
-                onHorizontalDragEnd: _onHomeDragEnd,
-                child: AnimatedBuilder(
+              child: AnimatedBuilder(
                 animation: _menuAnim,
                 builder: (context, child) {
                   final menuWidth =
@@ -695,6 +710,19 @@ class _HomeScreenState extends State<HomeScreen>
                           ),
                         ),
                       ),
+                      // 左半屏手势层：右滑跟手拉开侧边栏
+                      Positioned(
+                        left: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: MediaQuery.of(context).size.width / 2,
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.translucent,
+                          onHorizontalDragStart: _onMenuDragStart,
+                          onHorizontalDragUpdate: _onMenuDragUpdate,
+                          onHorizontalDragEnd: _onMenuDragEnd,
+                        ),
+                      ),
                     ],
                   );
                 },
@@ -738,7 +766,6 @@ class _HomeScreenState extends State<HomeScreen>
                               child: _buildBody(),
                             ),
                 ),
-              ),
               ),
             ),
           ),

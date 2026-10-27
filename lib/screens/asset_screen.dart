@@ -21,7 +21,6 @@ class AssetScreenState extends State<AssetScreen> {
   List<Asset> _assets = [];
   bool _loading = true;
   bool _unlocked = false;
-  String? _question; // 密保问题，供设置页展示
 
   @override
   void initState() {
@@ -44,8 +43,6 @@ class AssetScreenState extends State<AssetScreen> {
       return;
     }
     await _load();
-    final q = await AssetStorage.getQuestion();
-    if (mounted) setState(() => _question = q);
   }
 
   Future<void> _load() async {
@@ -104,10 +101,6 @@ class AssetScreenState extends State<AssetScreen> {
       builder: (ctx) => const _PinUnlockDialog(),
     );
     _unlocked = r == true;
-    if (r == true && mounted) {
-      final q = await AssetStorage.getQuestion();
-      if (mounted) setState(() => _question = q);
-    }
   }
 
   // ---------- 设置 ----------
@@ -127,7 +120,7 @@ class AssetScreenState extends State<AssetScreen> {
           children: [
             const Padding(
               padding: EdgeInsets.fromLTRB(20, 18, 20, 10),
-              child: Text('资产图景设置',
+              child: Text('设置',
                   style:
                       TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             ),
@@ -139,24 +132,6 @@ class AssetScreenState extends State<AssetScreen> {
               onTap: () {
                 Navigator.pop(ctx);
                 _openChangePin();
-              },
-            ),
-            const Divider(height: 1, color: Color(0xFFE8EDF5)),
-            ListTile(
-              leading: const Icon(Icons.help_outline, color: Color(0xFF5A6B82)),
-              title: const Text('查看密保问题'),
-              subtitle: Text(
-                (_question == null || _question!.isEmpty) ? '未设置' : _question!,
-                style: const TextStyle(fontSize: 12, color: Color(0xFF9AA8BF)),
-              ),
-              onTap: () {
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                      content: Text((_question == null || _question!.isEmpty)
-                          ? '尚未设置密保问题'
-                          : '密保问题：$_question')),
-                );
               },
             ),
             const SizedBox(height: 6),
