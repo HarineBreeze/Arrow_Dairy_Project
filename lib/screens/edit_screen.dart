@@ -18,7 +18,7 @@ class EditScreen extends StatefulWidget {
   State<EditScreen> createState() => _EditScreenState();
 }
 
-class _EditScreenState extends State<EditScreen> {
+class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
   late final TextEditingController _titleCtrl;
   late final TextEditingController _subtitleCtrl;
   late final HighlightEditingController _contentCtrl;
@@ -144,6 +144,7 @@ class _EditScreenState extends State<EditScreen> {
     _contentFocus = FocusNode();
     _contentFocus.addListener(_onFocusChange);
     _contentCtrl.addListener(_onSelectionChanged);
+    WidgetsBinding.instance.addObserver(this); // 监听键盘真实弹出/收起（viewInsets）
     _mood = widget.entry?.mood ?? _moods.first;
     _weather = widget.entry?.weather ?? _weathers.first;
     _location = widget.entry?.location ?? '';
@@ -155,6 +156,37 @@ class _EditScreenState extends State<EditScreen> {
     _passwordHint = widget.entry?.passwordHint ?? '';
     _passwordAnswer = widget.entry?.passwordAnswer ?? '';
     _loadItems();
+  }
+
+  /// 键盘真实可见性（viewInsets 高度 > 0）。
+  /// 不能用 hasFocus 判断：Android 按返回键收起键盘时焦点仍保留。
+  bool _isKbVisible() =>
+      MediaQuery.of(context).viewInsets.bottom > 0;
+
+  /// 键盘真正收起（含返回键收起、焦点仍保留的情况）：选框回退为光标。
+  void _onKeyboardHidden() {
+    if (!mounted || _selecting) return;
+    final sel = _contentCtrl.selection;
+    if (sel.isValid && !sel.isCollapsed) {
+      _contentCtrl.selection =
+          TextSelection.collapsed(offset: sel.start < 0 ? 0 : sel.start);
+    }
+    _hadSelection = false;
+    _savedStart = 0;
+    _savedEnd = 0;
+    if (_showToolbar) setState(() => _showToolbar = false);
+    // 放弃残余焦点，断开输入连接，确保下次长按走框选分支
+    if (_contentFocus.hasFocus) _contentFocus.unfocus();
+  }
+
+  @override
+  void didChangeMetrics() {
+    if (!mounted) return;
+    final kb = _isKbVisible() && !_selecting;
+    if (kb != _kbVisible) {
+      setState(() => _kbVisible = kb);
+      if (!kb) _onKeyboardHidden();
+    }
   }
 
   void _onFocusChange() {
@@ -176,15 +208,7 @@ class _EditScreenState extends State<EditScreen> {
       }
     } else if (!_selecting) {
       // 键盘收起（编辑态）：选框回退为光标，清掉排版锁定
-      final sel = _contentCtrl.selection;
-      if (sel.isValid && !sel.isCollapsed) {
-        _contentCtrl.selection =
-            TextSelection.collapsed(offset: sel.start < 0 ? 0 : sel.start);
-      }
-      _hadSelection = false;
-      _savedStart = 0;
-      _savedEnd = 0;
-      if (_showToolbar) setState(() => _showToolbar = false);
+      _onKeyboardHidden();
     }
   }
 
@@ -251,14 +275,15 @@ class _EditScreenState extends State<EditScreen> {
     });
   }
 
-  bool _kbAtDown = false; // 手指按下瞬间键盘是否处于弹出（聚焦）状态
+  bool _kbAtDown = false; // 手指按下瞬间键盘是否真实弹出（viewInsets 判断）
   bool _kbVisible = false; // 键盘当前是否弹出（用于联动收起/展开头部信息区）
 
   // 记录按下时是否已有选区、键盘是否弹出
   void _onPointerDown(PointerDownEvent e) {
     final sel = _contentCtrl.selection;
     _tapStartedWithSelection = sel.isValid && !sel.isCollapsed;
-    _kbAtDown = _contentFocus.hasFocus;
+    // 用真实键盘高度判断，而非焦点（返回键收起键盘后焦点仍在）
+    _kbAtDown = _isKbVisible();
   }
 
   /// 单点正文 = 想编辑文字 → 弹键盘；长按拖选 = 想排版 → 不弹键盘。
@@ -388,6 +413,7 @@ class _EditScreenState extends State<EditScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _undoPending?.cancel();
     _titleCtrl.dispose();
     _subtitleCtrl.dispose();
