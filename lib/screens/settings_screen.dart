@@ -15,6 +15,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   int _diaryCount = 0;
   int _itemCount = 0;
+  int _assetCount = 0;
   bool _exporting = false;
   bool _importing = false;
 
@@ -30,6 +31,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {
       _diaryCount = data.entries.length;
       _itemCount = data.items.length;
+      _assetCount = data.assets.length;
     });
   }
 
@@ -146,7 +148,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const Icon(Icons.inventory_outlined,
                           size: 16, color: Color(0xFF9AA8BF)),
                       const SizedBox(width: 6),
-                      Text('当前数据：$_diaryCount 条笔记 · $_itemCount 件物资',
+                      Text('当前数据：$_diaryCount 条笔记 · $_itemCount 件物资 · $_assetCount 笔资产',
                           style: const TextStyle(
                               fontSize: 12, color: Color(0xFF9AA8BF))),
                     ],

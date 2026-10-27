@@ -3,7 +3,7 @@ class Asset {
   String id;
   String icon; // 自定义 emoji
   String note; // 备注（如：工资卡）
-  String type; // 银行储蓄 / 货币基金 / 理财 / 黄金 / 股票 / 信用卡 / 欠款
+  String type; // 银行储蓄 / 货币基金 / 基金 / 黄金 / 股票 / 信用卡 / 欠款 / 账单
   double amount;
 
   Asset({
@@ -34,7 +34,7 @@ class Asset {
   static const List<String> types = [
     '银行储蓄',
     '货币基金',
-    '理财',
+    '基金',
     '黄金',
     '股票',
     '信用卡',
@@ -52,7 +52,8 @@ class Asset {
         return '🏦';
       case '货币基金':
         return '💸';
-      case '理财':
+      case '基金':
+      case '理财': // 旧数据兼容
         return '📈';
       case '黄金':
         return '🪙';

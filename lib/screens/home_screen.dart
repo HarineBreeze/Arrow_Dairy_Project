@@ -1247,12 +1247,10 @@ class _HomeScreenState extends State<HomeScreen>
               ),
               const Spacer(),
               IconButton(
-                icon: Icon(
-                  _activeTopic == null
-                      ? Icons.filter_alt_outlined
-                      : Icons.filter_alt,
-                  color: Colors.white,
-                ),
+                icon: Icon(Icons.filter_list,
+                    color: _activeTopic == null
+                        ? Colors.white
+                        : const Color(0xFFFFD666)),
                 onPressed: _showFilterSheet,
               ),
               IconButton(

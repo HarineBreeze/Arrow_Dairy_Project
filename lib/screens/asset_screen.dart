@@ -550,8 +550,12 @@ class AssetScreenState extends State<AssetScreen> {
 
   // ---------- 资产卡片 ----------
 
+  /// 理财类资产：理财 / 黄金 / 股票
+  static const List<String> _investTypes = ['基金', '黄金', '股票'];
+
   Widget _buildCard(Asset a) {
     final negative = a.amount < 0;
+    final invest = _investTypes.contains(a.type);
     return GestureDetector(
       onTap: () => _openEditor(a),
       onLongPress: () => _showCardMenu(a),
@@ -607,7 +611,11 @@ class AssetScreenState extends State<AssetScreen> {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
-                color: negative ? const Color(0xFFE06A6A) : const Color(0xFF2A9D5C),
+                color: invest
+                    ? const Color(0xFF3B6FE0)
+                    : (negative
+                        ? const Color(0xFFE06A6A)
+                        : const Color(0xFF2A9D5C)),
               ),
             ),
           ],

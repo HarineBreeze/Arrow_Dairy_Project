@@ -23,9 +23,12 @@ class AssetStorage {
       final file = await _assetsFile();
       if (!await file.exists()) return [];
       final list = jsonDecode(await file.readAsString()) as List<dynamic>;
-      return list
-          .map((e) => Asset.fromJson(Map<String, dynamic>.from(e)))
-          .toList();
+      return list.map((e) {
+        final a = Asset.fromJson(Map<String, dynamic>.from(e));
+        // 旧版本「理财」类型统一迁移为「基金」
+        if (a.type == '理财') a.type = '基金';
+        return a;
+      }).toList();
     } catch (_) {
       return [];
     }
