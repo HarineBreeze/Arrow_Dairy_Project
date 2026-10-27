@@ -158,10 +158,11 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     _loadItems();
   }
 
-  /// 键盘真实可见性（viewInsets 高度 > 0）。
-  /// 不能用 hasFocus 判断：Android 按返回键收起键盘时焦点仍保留。
+  /// 键盘真实可见性（window 度量的实时值）。
+  /// 不能用 hasFocus 判断：Android 按返回键收起键盘时焦点仍保留；
+  /// 也不能用 MediaQuery.of(context)：didChangeMetrics 时它还是上一帧的旧值。
   bool _isKbVisible() =>
-      MediaQuery.of(context).viewInsets.bottom > 0;
+      WidgetsBinding.instance.window.viewInsets.bottom > 0;
 
   /// 键盘真正收起（含返回键收起、焦点仍保留的情况）：选框回退为光标。
   void _onKeyboardHidden() {
@@ -184,7 +185,11 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     if (!mounted) return;
     final kb = _isKbVisible() && !_selecting;
     if (kb != _kbVisible) {
-      setState(() => _kbVisible = kb);
+      setState(() {
+        _kbVisible = kb;
+        // 弹出文字输入键盘时，默认收起排版栏（用户可再次点击正文手动展开）
+        if (kb && !_selecting) _showToolbar = false;
+      });
       if (!kb) _onKeyboardHidden();
     }
   }
@@ -200,6 +205,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
         _suppressKeyboard();
       } else {
         // 聚焦后强制确保键盘弹出（readOnly 随焦点联动，框架可能延迟开连接）
+        if (_showToolbar) setState(() => _showToolbar = false);
         Future.delayed(const Duration(milliseconds: 60), () {
           if (mounted && _contentFocus.hasFocus && !_selecting) {
             SystemChannels.textInput.invokeMethod('TextInput.show');
@@ -294,7 +300,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
       _tapStartedWithSelection = false;
       setState(() {
         _selecting = false;
-        _showToolbar = true;
+        _showToolbar = false; // 键盘即将弹出，默认收起排版栏
       });
       final pos = _savedEnd > 0 ? _savedEnd : _contentCtrl.text.length;
       _contentCtrl.selection = TextSelection.collapsed(offset: pos);
@@ -306,7 +312,13 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
       });
       return;
     }
-    if (!_showToolbar) setState(() => _showToolbar = true);
+    if (_isKbVisible()) {
+      // 键盘已弹出：再点正文 = 手动展开排版栏
+      if (!_showToolbar) setState(() => _showToolbar = true);
+    } else if (_showToolbar) {
+      // 键盘即将弹出：默认收起排版栏
+      setState(() => _showToolbar = false);
+    }
   }
 
   void _closeToolbar() {
