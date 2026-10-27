@@ -61,7 +61,7 @@ void main() {
       bold: st.bold, italic: st.italic, underline: st.underline,
       strike: st.strike, highlight: null, size: st.size,
     );
-    final r = FormatStore.apply(base, 2, 6, patch);
+    final r = FormatStore.apply(base, 2, 6, patch, clearHighlight: true);
     expect(r.length, 3);
     expect(r[0].highlight, '#FFE58A');
     expect(r[1].highlight, null);
@@ -192,23 +192,48 @@ void regressionTests() {
     expect(r[0].size, null);
   });
 
-  test('选中加粗不复制已有高亮到整个选区外', () {
+  test('加粗与已有高亮共存（不覆盖、不扩散到选区外）', () {
     final base = [
       const TextFormat(start: 0, end: 5, highlight: '#FFE58A'),
     ];
-    // 选中 12-18 加粗
+    // 选中 12-18 加粗：0-5 高亮不受影响；但选中 2-8 加粗时高亮应保留
     final r = FormatStore.apply(
-        base, 12, 18, const TextFormat(start: 12, end: 18, bold: true),
-        clearHighlight: true);
-    // 原有 0-5 高亮保留，12-18 只有加粗无高亮
-    expect(r.length, 2);
+        base, 2, 8, const TextFormat(start: 2, end: 8, bold: true));
+    // 0-2 高亮原样；2-5 高亮+加粗共存；5-8 仅加粗（原本无高亮）
+    expect(r.length, 3);
     expect(r[0].start, 0);
-    expect(r[0].end, 5);
+    expect(r[0].end, 2);
     expect(r[0].highlight, '#FFE58A');
-    expect(r[1].start, 12);
-    expect(r[1].end, 18);
+    expect(r[0].bold, null);
+    expect(r[1].start, 2);
+    expect(r[1].end, 5);
+    expect(r[1].highlight, '#FFE58A'); // 关键：高亮保留，与加粗共存
     expect(r[1].bold, true);
-    expect(r[1].highlight, null); // 关键：不带高亮
+    expect(r[2].start, 5);
+    expect(r[2].end, 8);
+    expect(r[2].highlight, null); // 区间外本就没有高亮，不扩散
+    expect(r[2].bold, true);
+  });
+
+  test('字号与高亮共存', () {
+    final base = [
+      const TextFormat(start: 0, end: 10, highlight: '#FFE58A'),
+    ];
+    final r = FormatStore.apply(
+        base, 3, 7, const TextFormat(start: 3, end: 7, size: 28));
+    expect(r.length, 3);
+    expect(r[0].start, 0);
+    expect(r[0].end, 3);
+    expect(r[0].highlight, '#FFE58A');
+    expect(r[0].size, null);
+    expect(r[1].start, 3);
+    expect(r[1].end, 7);
+    expect(r[1].highlight, '#FFE58A'); // 高亮保留
+    expect(r[1].size, 28); // 字号叠加
+    expect(r[2].start, 7);
+    expect(r[2].end, 10);
+    expect(r[2].highlight, '#FFE58A');
+    expect(r[2].size, null);
   });
 
   test('清除高亮只影响选区', () {

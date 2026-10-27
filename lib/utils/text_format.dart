@@ -100,6 +100,7 @@ class FormatStore {
   }
 
   /// 在 [start, end) 区间应用样式。
+  /// - 区间内已有样式**保留并与新样式叠加**（如高亮+加粗可共存）；
   /// - patch 中为 null 的字段：表示「不修改该属性」
   /// - clearHighlight / clearSize：为 true 时强制清除该项（用于点「清除」）
   static List<TextFormat> apply(
@@ -112,30 +113,40 @@ class FormatStore {
   }) {
     if (end <= start) return source;
     final result = <TextFormat>[];
+
+    // 1. 完全在区间外的片段原样保留；与区间相交的片段裁掉区间内部分
+    final bounds = <int>{start, end};
     for (final f in source) {
       if (f.end <= start || f.start >= end) {
         result.add(f);
         continue;
       }
-      // 相交：切掉交集部分，两侧保留
-      if (f.start < start) {
-        result.add(f.copyWith(end: start));
-      }
-      if (f.end > end) {
-        result.add(f.copyWith(start: end));
-      }
+      if (f.start < start) result.add(f.copyWith(end: start));
+      if (f.end > end) result.add(f.copyWith(start: end));
+      // 区间内的边界点：用于把区间按既有格式切分成同质子段
+      if (f.start > start && f.start < end) bounds.add(f.start);
+      if (f.end > start && f.end < end) bounds.add(f.end);
     }
 
-    result.add(TextFormat(
-      start: start,
-      end: end,
-      bold: patch.bold,
-      italic: patch.italic,
-      underline: patch.underline,
-      strike: patch.strike,
-      highlight: clearHighlight ? null : patch.highlight,
-      size: clearSize ? null : patch.size,
-    ));
+    // 2. 每个同质子段：继承既有样式 + 叠加 patch
+    final points = bounds.toList()..sort();
+    for (int i = 0; i < points.length - 1; i++) {
+      final s = points[i];
+      final e = points[i + 1];
+      if (e <= s) continue;
+      final seg = stateAt(source, s, e);
+      result.add(TextFormat(
+        start: s,
+        end: e,
+        bold: patch.bold ?? seg.bold,
+        italic: patch.italic ?? seg.italic,
+        underline: patch.underline ?? seg.underline,
+        strike: patch.strike ?? seg.strike,
+        highlight:
+            clearHighlight ? null : (patch.highlight ?? seg.highlight),
+        size: clearSize ? null : (patch.size ?? seg.size),
+      ));
+    }
 
     result.removeWhere((f) => f.end <= f.start);
     result.sort((a, b) => a.start.compareTo(b.start));
