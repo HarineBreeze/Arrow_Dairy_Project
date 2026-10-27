@@ -1,9 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import '../models/asset.dart';
 import '../models/diary_entry.dart';
 import '../models/item.dart';
 import '../models/user_profile.dart';
+import 'app_settings.dart';
+import 'asset_storage.dart';
 import 'diary_storage.dart';
 import 'item_storage.dart';
 import 'user_storage.dart';
@@ -12,11 +15,15 @@ class BackupData {
   final List<DiaryEntry> entries;
   final List<Item> items;
   final UserProfile profile;
+  final List<Asset> assets; // 资产图景（v2 备份起包含）
+  final String? fontFamilyId; // 笔记字体设置（v2 备份起包含）
 
   BackupData({
     required this.entries,
     required this.items,
     required this.profile,
+    this.assets = const [],
+    this.fontFamilyId,
   });
 }
 
@@ -43,14 +50,17 @@ class BackupService {
       }
     }
 
+    final assets = await AssetStorage.load();
     final map = {
       'app': 'vector-diary',
-      'version': 1,
+      'version': 2,
       'exportedAt': DateTime.now().toIso8601String(),
       'diaries': entries.map((e) => e.toJson()).toList(),
       'items': items.map((e) => e.toJson()).toList(),
       'profile': profile.toJson(),
       'avatarData': avatarB64,
+      'assets': assets.map((e) => e.toJson()).toList(),
+      'settings': {'fontFamily': AppSettings.fontFamilyId},
     };
 
     final dir = await getTemporaryDirectory();
@@ -99,6 +109,19 @@ class BackupService {
         profile = UserProfile.fromJson(decoded['profile']);
       } catch (_) {}
     }
+    // 资产图景 + 设置（v2 备份起包含；旧备份为空，导入时跳过）
+    final assets = <Asset>[];
+    if (decoded['assets'] is List) {
+      for (final e in decoded['assets'] as List) {
+        try {
+          assets.add(Asset.fromJson(Map<String, dynamic>.from(e)));
+        } catch (_) {}
+      }
+    }
+    String? fontFamilyId;
+    if (decoded['settings'] is Map<String, dynamic>) {
+      fontFamilyId = decoded['settings']['fontFamily'] as String?;
+    }
     // 恢复头像
     final avatarB64 = decoded['avatarData'];
     if (avatarB64 is String && avatarB64.isNotEmpty) {
@@ -110,7 +133,13 @@ class BackupService {
         profile.avatarPath = newPath;
       } catch (_) {}
     }
-    return BackupData(entries: entries, items: items, profile: profile);
+    return BackupData(
+      entries: entries,
+      items: items,
+      profile: profile,
+      assets: assets,
+      fontFamilyId: fontFamilyId,
+    );
   }
 
   /// 用解析出的数据覆盖本地存储
@@ -118,6 +147,10 @@ class BackupService {
     await DiaryStorage.save(data.entries);
     await ItemStorage.save(data.items);
     await UserStorage.save(data.profile);
+    await AssetStorage.save(data.assets);
+    if (data.fontFamilyId != null) {
+      await AppSettings.setFontFamily(data.fontFamilyId!);
+    }
   }
 
   static String _two(int n) => n.toString().padLeft(2, '0');

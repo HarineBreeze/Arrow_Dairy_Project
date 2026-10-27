@@ -80,7 +80,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         builder: (ctx) => AlertDialog(
           title: const Text('导入备份'),
           content: Text(
-              '该备份包含 ${data.entries.length} 条笔记、${data.items.length} 件物资。\n\n导入后将覆盖当前手机上的全部数据，确定继续吗？'),
+              '该备份包含 ${data.entries.length} 条笔记、${data.items.length} 件物资、${data.assets.length} 笔资产。\n\n导入后将覆盖当前手机上的全部数据，确定继续吗？'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
@@ -104,7 +104,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text(
-                '导入成功：${data.entries.length} 条笔记、${data.items.length} 件物资')),
+                '导入成功：${data.entries.length} 条笔记、${data.items.length} 件物资、${data.assets.length} 笔资产')),
       );
       Navigator.pop(context, true);
     } catch (_) {
