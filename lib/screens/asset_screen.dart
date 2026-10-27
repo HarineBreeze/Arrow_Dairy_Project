@@ -169,6 +169,8 @@ class AssetScreenState extends State<AssetScreen> {
         typeOk = a.amount < 0;
       } else if (_typeFilter == '现金流') {
         typeOk = Asset.cashTypes.contains(a.type);
+      } else if (_typeFilter == '理财金') {
+        typeOk = _investTypes.contains(a.type);
       }
       bool signOk = true;
       if (_signFilter == '金额为正') signOk = a.amount > 0;
@@ -244,7 +246,7 @@ class AssetScreenState extends State<AssetScreen> {
                         style: TextStyle(
                             fontSize: 16, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 16),
-                    group('按资产类型', ['全部', '总资产', '负资产', '现金流'],
+                    group('按资产类型', ['全部', '总资产', '负资产', '现金流', '理财金'],
                         _typeFilter, (v) => _typeFilter = v),
                     group('按资产性质', ['全部', '金额为正', '金额为负'],
                         _signFilter, (v) => _signFilter = v),
