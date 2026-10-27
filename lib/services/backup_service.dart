@@ -33,7 +33,13 @@ class BackupService {
     final entries = await DiaryStorage.load();
     final items = await ItemStorage.load();
     final profile = await UserStorage.load();
-    return BackupData(entries: entries, items: items, profile: profile);
+    final assets = await AssetStorage.load();
+    return BackupData(
+      entries: entries,
+      items: items,
+      profile: profile,
+      assets: assets,
+    );
   }
 
   /// 生成备份 JSON 文件（临时目录），返回文件路径

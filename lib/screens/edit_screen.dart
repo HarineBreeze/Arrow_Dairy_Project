@@ -174,6 +174,11 @@ class _EditScreenState extends State<EditScreen> {
     final sel = _contentCtrl.selection;
     final hasSelection = sel.isValid && !sel.isCollapsed;
     if (hasSelection && !_hadSelection) {
+      // 键盘弹出状态下的长按 = 系统编辑手势（复制/粘贴/全选），不进框选模式
+      if (!_selecting && _kbAtDown) {
+        _hadSelection = true;
+        return;
+      }
       _hadSelection = true;
       // 关键：切只读会把 selection 重置为 offset 0，必须在切换前存下区间
       _savedStart = sel.start;
@@ -221,10 +226,13 @@ class _EditScreenState extends State<EditScreen> {
     });
   }
 
-  // 记录按下时是否已有选区，用于区分「在选区上单击」与「普通单击」
+  bool _kbAtDown = false; // 手指按下瞬间键盘是否处于弹出（聚焦）状态
+
+  // 记录按下时是否已有选区、键盘是否弹出
   void _onPointerDown(PointerDownEvent e) {
     final sel = _contentCtrl.selection;
     _tapStartedWithSelection = sel.isValid && !sel.isCollapsed;
+    _kbAtDown = _contentFocus.hasFocus;
   }
 
   /// 单点正文 = 想编辑文字 → 弹键盘；长按拖选 = 想排版 → 不弹键盘。

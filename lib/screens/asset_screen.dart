@@ -333,6 +333,15 @@ class AssetScreenState extends State<AssetScreen> {
     return sum;
   }
 
+  /// 理财资产 = 基金 + 黄金 + 股票金额之和
+  double get _investTotal {
+    double sum = 0;
+    for (final a in _assets) {
+      if (_investTypes.contains(a.type)) sum += a.amount;
+    }
+    return sum;
+  }
+
   // ---------- 操作 ----------
 
   Future<void> _openEditor([Asset? asset]) async {
@@ -520,6 +529,7 @@ class AssetScreenState extends State<AssetScreen> {
               _statItem('总资产', _totalAssets, Colors.white),
               _statItem('负资产', _totalDebt, const Color(0xFFFFD9DC)),
               _statItem('现金流', _cashFlow, const Color(0xFFD6FFDF)),
+              _statItem('理财资产', _investTotal, const Color(0xFFBBD4FF)),
             ],
           ),
         ],
@@ -532,14 +542,17 @@ class AssetScreenState extends State<AssetScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontSize: 12, color: Colors.white70)),
+          Text(label,
+              style: const TextStyle(fontSize: 11, color: Colors.white70),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis),
           const SizedBox(height: 2),
           Text(
             value < 0
                 ? '-¥${(-value).toStringAsFixed((-value).truncateToDouble() == -value ? 0 : 2)}'
                 : '¥${value.toStringAsFixed(value.truncateToDouble() == value ? 0 : 2)}',
             style: TextStyle(
-                fontSize: 15, fontWeight: FontWeight.w600, color: color),
+                fontSize: 13.5, fontWeight: FontWeight.w600, color: color),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
