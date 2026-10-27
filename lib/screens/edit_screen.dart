@@ -181,31 +181,26 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
   }
 
   Timer? _kbConfirmTimer; // 确认「真正收起」的延迟检查
-  double _prevInset = 0; // 上一次上报的键盘高度，用于判断收起趋势
+  double _kbFactor = 1.0; // 头部区块高度系数：实时跟随键盘收起/弹出比例
+  double _maxInset = 0; // 观测到的键盘最大高度，用于归一化
 
   @override
   void didChangeMetrics() {
     if (!mounted) return;
     final b = WidgetsBinding.instance.window.viewInsets.bottom;
-    if (b > 0 && !_kbVisible && !_selecting && b >= _prevInset) {
-      // 键盘正在弹出（高度上升）：视觉立即响应（跟手）。
-      // 必须带上升趋势判断：收起动画中的短暂回升不能误判为再次弹出，
-      // 否则头部区块会收起→还原→收起疯狂闪烁。
-      _kbConfirmTimer?.cancel();
+    if (b > _maxInset) _maxInset = b;
+    // 头部高度系数与键盘高度严格反向：键盘收到一半，区块就展开一半，
+    // 两者动画完全同步，收起/弹出全程无跳变、无闪烁。
+    final factor = b <= 0 ? 1.0 : (1.0 - (b / _maxInset).clamp(0.0, 1.0));
+    final kb = b > 0 && !_selecting;
+    if ((factor - _kbFactor).abs() > 0.001 || kb != _kbVisible) {
       setState(() {
-        _kbVisible = true;
-        // 弹出文字输入键盘时，默认收起排版栏（用户可再次点击正文手动展开）
-        _showToolbar = false;
+        _kbFactor = factor;
+        _kbVisible = kb;
+        if (kb && !_selecting) _showToolbar = false;
       });
-    } else if (_kbVisible && b < _prevInset) {
-      // 键盘高度开始下降 = 收起动画开始：视觉立即还原（不再等动画结束）
-      setState(() => _kbVisible = false);
-      _scheduleConfirmedHide();
-    } else if (b == 0 && !_kbVisible) {
-      // 已还原但尚未确认：继续走确认流程
-      _scheduleConfirmedHide();
     }
-    _prevInset = b;
+    if (b == 0) _scheduleConfirmedHide();
   }
 
   /// 延迟确认「键盘真的收起了」再执行破坏性操作（清选框/放弃焦点）。
@@ -883,14 +878,20 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 键盘弹出时平滑收起心情/天气/日期/可见度，给正文腾出可视区域
+          // 键盘弹出时收起心情/天气/日期/可见度，给正文腾出可视区域。
+          // 高度系数实时跟随键盘比例（见 didChangeMetrics），全程同步无跳变；
+          // AnimatedSize 兜底：设备不逐帧上报 insets 时也能平滑过渡。
           AnimatedSize(
             duration: const Duration(milliseconds: 260),
             curve: Curves.easeOutCubic,
             alignment: Alignment.topCenter,
-            child: _kbVisible
-                ? const SizedBox(width: double.infinity)
-                : Padding(
+            child: ClipRect(
+              child: Align(
+                heightFactor: _kbFactor,
+                alignment: Alignment.topCenter,
+                child: _kbFactor <= 0.001
+                    ? const SizedBox(width: double.infinity)
+                    : Padding(
             padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -980,7 +981,9 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
               ],
             ),
           ),
-                ),
+              ),
+            ),
+          ),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
