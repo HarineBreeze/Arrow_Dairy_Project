@@ -180,43 +180,45 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     if (_contentFocus.hasFocus) _contentFocus.unfocus();
   }
 
-  Timer? _kbDebounce; // 键盘弹出冷却期复核（防 viewInsets 抖动）
-  DateTime _kbHiddenAt = DateTime.fromMillisecondsSinceEpoch(0);
+  Timer? _kbConfirmTimer; // 确认「真正收起」的延迟检查
+  double _prevInset = 0; // 上一次上报的键盘高度，用于判断收起趋势
 
   @override
   void didChangeMetrics() {
     if (!mounted) return;
-    final kb = _isKbVisible() && !_selecting;
-    if (kb == _kbVisible) return;
-    if (!kb) {
-      // 收起立即响应，保证还原跟手；记录时间戳用于识别后续抖动
-      _kbDebounce?.cancel();
-      _kbHiddenAt = DateTime.now();
-      setState(() => _kbVisible = false);
-      _onKeyboardHidden();
-    } else if (DateTime.now().difference(_kbHiddenAt).inMilliseconds < 300) {
-      // 收起后 300ms 内又上报弹出 → 可能是收起动画的抖动，延迟复核
-      _kbDebounce?.cancel();
-      _kbDebounce = Timer(const Duration(milliseconds: 320), _applyKbState);
-    } else {
-      // 弹出立即响应，保证跟手
+    final b = WidgetsBinding.instance.window.viewInsets.bottom;
+    if (b > 0 && !_kbVisible && !_selecting) {
+      // 键盘正在弹出：视觉立即响应（跟手）
+      _kbConfirmTimer?.cancel();
       setState(() {
         _kbVisible = true;
         // 弹出文字输入键盘时，默认收起排版栏（用户可再次点击正文手动展开）
-        if (!_selecting) _showToolbar = false;
+        _showToolbar = false;
       });
+    } else if (_kbVisible && b < _prevInset) {
+      // 键盘高度开始下降 = 收起动画开始：视觉立即还原（不再等动画结束）
+      setState(() => _kbVisible = false);
+      _scheduleConfirmedHide();
+    } else if (b == 0 && !_kbVisible) {
+      // 已还原但尚未确认：继续走确认流程
+      _scheduleConfirmedHide();
     }
+    _prevInset = b;
   }
 
-  void _applyKbState() {
-    if (!mounted) return;
-    final kb = _isKbVisible() && !_selecting;
-    if (kb == _kbVisible) return;
-    setState(() {
-      _kbVisible = kb;
-      if (kb && !_selecting) _showToolbar = false;
+  /// 延迟确认「键盘真的收起了」再执行破坏性操作（清选框/放弃焦点）。
+  /// 误判（动画抖动瞬间报 0）只影响视觉，不会把键盘摁回去。
+  void _scheduleConfirmedHide() {
+    final hadFocus = _contentFocus.hasFocus; // 收起开始时是否持有焦点
+    _kbConfirmTimer?.cancel();
+    _kbConfirmTimer = Timer(const Duration(milliseconds: 250), () {
+      if (!mounted) return;
+      if (WidgetsBinding.instance.window.viewInsets.bottom == 0 &&
+          !_selecting &&
+          hadFocus == _contentFocus.hasFocus) {
+        _onKeyboardHidden();
+      }
     });
-    if (!kb) _onKeyboardHidden();
   }
 
   void _onFocusChange() {
@@ -451,7 +453,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _kbDebounce?.cancel();
+    _kbConfirmTimer?.cancel();
     _undoPending?.cancel();
     _titleCtrl.dispose();
     _subtitleCtrl.dispose();
