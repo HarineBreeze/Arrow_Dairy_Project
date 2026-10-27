@@ -200,68 +200,70 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
 
             // 目的日：左侧日期输入框 + 右侧「正数/倒数」标记框（同一行、各自独立）
             _sectionLabel('目的日'),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: _pickDate,
-                    child: Container(
-                      padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
-                      decoration: _box(),
-                      child: Row(
-                        children: [
-                          Icon(Icons.event_outlined,
-                              size: 18,
-                              color: _target == null
-                                  ? const Color(0xFF9AA8BF)
-                                  : const Color(0xFF3B6FE0)),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _target == null
-                                  ? '选择未来日倒数，过去日正数'
-                                  : _dateTimeLabel,
-                              style: TextStyle(
-                                fontSize: _target == null ? 13 : 15,
+            // IntrinsicHeight：让两框等高，又不受滚动视图无界高度影响
+            IntrinsicHeight(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: _pickDate,
+                      child: Container(
+                        padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
+                        decoration: _box(),
+                        child: Row(
+                          children: [
+                            Icon(Icons.event_outlined,
+                                size: 18,
                                 color: _target == null
                                     ? const Color(0xFF9AA8BF)
-                                    : const Color(0xFF2A3B52),
+                                    : const Color(0xFF3B6FE0)),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _target == null
+                                    ? '选择未来日倒数，过去日正数'
+                                    : _dateTimeLabel,
+                                style: TextStyle(
+                                  fontSize: _target == null ? 13 : 15,
+                                  color: _target == null
+                                      ? const Color(0xFF9AA8BF)
+                                      : const Color(0xFF2A3B52),
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                // 独立的「正数 / 倒数」标记框（两字宽）
-                Container(
-                  width: 52,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: _target == null
-                        ? const Color(0xFFF5F7FB)
-                        : (_isCountdown
-                            ? const Color(0xFFDCE7FF)
-                            : const Color(0xFFFDEEF3)),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    _target == null ? '--' : (_isCountdown ? '倒数' : '正数'),
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
+                  const SizedBox(width: 10),
+                  // 独立的「正数 / 倒数」标记框（两字宽）
+                  Container(
+                    width: 52,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
                       color: _target == null
-                          ? const Color(0xFFB4C0D2)
+                          ? const Color(0xFFF5F7FB)
                           : (_isCountdown
-                              ? const Color(0xFF3B6FE0)
-                              : const Color(0xFFD9738F)),
+                              ? const Color(0xFFDCE7FF)
+                              : const Color(0xFFFDEEF3)),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      _target == null ? '--' : (_isCountdown ? '倒数' : '正数'),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: _target == null
+                            ? const Color(0xFFB4C0D2)
+                            : (_isCountdown
+                                ? const Color(0xFF3B6FE0)
+                                : const Color(0xFFD9738F)),
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             const SizedBox(height: 16),
 

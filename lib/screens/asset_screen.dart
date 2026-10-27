@@ -764,11 +764,13 @@ class AssetScreenState extends State<AssetScreen> {
                 ],
               ),
             ),
-            // 金额
+            // 金额（隐藏状态：保留 ¥/-¥ 标识，数字显示 ****）
             Text(
-              negative
-                  ? '-¥${(-a.amount).toStringAsFixed((-a.amount).truncateToDouble() == -a.amount ? 0 : 2)}'
-                  : '¥${a.amount.toStringAsFixed(a.amount.truncateToDouble() == a.amount ? 0 : 2)}',
+              _hideNumbers
+                  ? (negative ? '-¥****' : '¥****')
+                  : (negative
+                      ? '-¥${(-a.amount).toStringAsFixed((-a.amount).truncateToDouble() == -a.amount ? 0 : 2)}'
+                      : '¥${a.amount.toStringAsFixed(a.amount.truncateToDouble() == a.amount ? 0 : 2)}'),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
