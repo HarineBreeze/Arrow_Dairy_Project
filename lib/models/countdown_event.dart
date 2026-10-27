@@ -2,13 +2,14 @@ import 'dart:convert';
 
 /// 倒数日事件。
 /// - 日期类型：纪念日 / 资产日
-/// - 目的日可为过去或未来：未来 → 倒数，过去 → 正数
-/// - 循环：到期后进入下一年的该月该日倒计时，卡片加红色描边
+/// - 目的日含时分；未来 → 倒数，过去 → 正数
+/// - 循环：到期后进入下一年的该月该日倒计时，仅当日加红色描边
 class CountdownEvent {
   final String id;
   String icon;
   String name;
-  DateTime target; // 目的日（仅日期部分有效）
+  String note; // 事件备注（15 字以内）
+  DateTime target; // 目的日（含时分）
   String type; // 纪念日 | 资产日
   bool loop; // 是否循环
   bool pinned; // 是否置顶
@@ -17,6 +18,7 @@ class CountdownEvent {
     required this.id,
     required this.icon,
     required this.name,
+    this.note = '',
     required this.target,
     required this.type,
     this.loop = false,
@@ -34,62 +36,67 @@ class CountdownEvent {
   static String defaultIconFor(String type) =>
       type == '资产日' ? '💰' : '🎂';
 
-  /// 仅日期部分
   static DateTime dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
-
-  /// 今天（仅日期）
   static DateTime today() => dateOnly(DateTime.now());
 
-  /// 是否已到期（不循环且目的日已过 → 停止计数、卡片置灰）
-  bool get expired => !loop && dateOnly(target).isBefore(today());
+  /// 是否尚未到达（未来）
+  bool get isFuture => target.isAfter(DateTime.now());
 
-  /// 是否正在「当天」（今天 = 目的日；循环模式下为今年的该月该日）
+  /// 不循环且目的日已过 → 停止计数、卡片置灰
+  bool get expired => !loop && target.isBefore(DateTime.now());
+
+  /// 今天是否为目的日当天
   bool get isDueToday => daysLeft == 0;
 
-  /// 循环模式下，取今年或明年的目标日
+  /// 循环模式：取今年或明年的目标日（保持时分）。
+  /// 注意只比较「日期」：目的日就是今天时不能因时刻差几毫秒而跳到明年。
   DateTime _loopTarget(DateTime from) {
     final t = dateOnly(target);
-    var candidate = DateTime(from.year, t.month, t.day);
-    if (candidate.isBefore(dateOnly(from))) {
-      candidate = DateTime(from.year + 1, t.month, t.day);
+    final f = dateOnly(from);
+    var candidate =
+        DateTime(f.year, t.month, t.day, target.hour, target.minute);
+    if (dateOnly(candidate).isBefore(f)) {
+      candidate = DateTime(
+          f.year + 1, t.month, t.day, target.hour, target.minute);
     }
     return candidate;
   }
 
-  /// 目标日（循环模式自动推进到下一年的该月该日）
   DateTime get effectiveTarget {
-    if (!loop) return dateOnly(target);
+    if (!loop) return target;
     return _loopTarget(DateTime.now());
   }
 
-  /// 距目的日天数：未来为正（倒数），过去为负（正数计数）
-  int get daysLeft {
-    final t = effectiveTarget;
-    return t.difference(today()).inDays;
-  }
+  /// 距目的日天数：未来为正（倒数），过去为负（正数）
+  int get daysLeft => dateOnly(effectiveTarget).difference(today()).inDays;
 
-  /// 卡片展示文案
+  /// 卡片主文案
   String get displayText {
-    if (expired) return '已结束';
     final d = daysLeft;
     if (d == 0) return '就是今天';
     if (d > 0) return '还有 $d 天';
-    return '已过去 ${-d} 天';
+    return '已过去 ${-d} 日';
   }
 
-  /// 循环模式到期后是否应显示红色描边（已过目的日、进入下一年倒计时）
-  bool get loopHighlight {
-    if (!loop) return false;
+  /// 循环事件仅在当日需要红色描边
+  bool get loopHighlight => loop && isDueToday;
+
+  /// 副标题：资产日 → 已拥有 x 日；纪念日 → 已过去 x 天。
+  /// 返回 null 表示不显示（目的日尚未到来）。
+  String? get subtitle {
     final t = dateOnly(target);
-    // 今年该月该日已过 → 说明已进入下一年的倒计时
-    final thisYearTarget = DateTime(DateTime.now().year, t.month, t.day);
-    return dateOnly(DateTime.now()).isAfter(thisYearTarget);
+    final now = today();
+    if (t.isAfter(now)) return null;
+    final diff = now.difference(t).inDays;
+    if (type == '资产日') return '已拥有 $diff 日';
+    return '已过去 $diff 天';
   }
 
   Map<String, dynamic> toJson() => {
         'id': id,
         'icon': icon,
         'name': name,
+        'note': note,
         'target': target.toIso8601String(),
         'type': type,
         'loop': loop,
@@ -100,6 +107,7 @@ class CountdownEvent {
         id: j['id'] as String? ?? '',
         icon: j['icon'] as String? ?? '🎂',
         name: j['name'] as String? ?? '',
+        note: j['note'] as String? ?? '',
         target: DateTime.tryParse(j['target'] as String? ?? '') ??
             DateTime.now(),
         type: j['type'] as String? ?? '纪念日',

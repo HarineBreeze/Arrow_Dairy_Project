@@ -28,25 +28,23 @@ class CountdownReminder {
     final t = CountdownEvent.dateOnly(e.target);
     final now = DateTime.now();
 
-    // 本次目标日（未过则为原日期，已过且循环则推算到今年/明年）
-    DateTime due;
-    if (e.loop) {
-      due = e.effectiveTarget;
-    } else {
-      due = t;
-    }
-    final at = DateTime(due.year, due.month, due.day, 9, 0);
+    // 本次目标日（未过则为原日期，已过且循环则推算到今年/明年），提醒时刻取用户设定时分
+    final due = e.loop ? e.effectiveTarget : t;
+    final hh = e.target.hour;
+    final mm = e.target.minute;
+    final at = DateTime(due.year, due.month, due.day, hh, mm);
     if (at.isBefore(now)) {
       if (!e.loop) return; // 不循环且已过 → 不再提醒
       // 循环：注册明年的该月该日
-      final next = DateTime(due.year + 1, due.month, due.day, 9, 0);
-      await _register(id, e, next);
+      await _register(
+          id, e, DateTime(due.year + 1, due.month, due.day, hh, mm));
       return;
     }
     await _register(id, e, at);
     // 循环事件：顺带注册下一年（长期提醒）；不循环只注册一次
     if (e.loop) {
-      await _register(id, e, DateTime(at.year + 1, at.month, at.day, 9, 0));
+      await _register(
+          id, e, DateTime(at.year + 1, at.month, at.day, hh, mm));
     }
   }
 

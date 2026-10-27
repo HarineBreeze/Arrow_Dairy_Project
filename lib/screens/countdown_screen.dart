@@ -286,25 +286,15 @@ class CountdownScreenState extends State<CountdownScreen> {
                     ...CountdownEvent.types.map((t) => option(t, t)),
                   ]),
                   const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      TextButton(
-                        onPressed: () {
-                          setSheet(() => _typeFilter = null);
-                          Navigator.pop(ctx);
-                          setState(() {});
-                        },
-                        child: const Text('取消'),
-                      ),
-                      const Spacer(),
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(ctx);
-                          setState(() {});
-                        },
-                        child: const Text('确定'),
-                      ),
-                    ],
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        setState(() {});
+                      },
+                      child: const Text('确定'),
+                    ),
                   ),
                 ],
               ),
@@ -492,6 +482,17 @@ class CountdownScreenState extends State<CountdownScreen> {
                           color: grey
                               ? const Color(0xFF9AA8BF)
                               : const Color(0xFF2A3B52))),
+                  if (e.note.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(e.note,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                            fontSize: 12,
+                            color: grey
+                                ? const Color(0xFFB4BCC8)
+                                : const Color(0xFF5A6B82))),
+                  ],
                   const SizedBox(height: 2),
                   Text(e.type,
                       maxLines: 1,
@@ -505,17 +506,33 @@ class CountdownScreenState extends State<CountdownScreen> {
               ),
             ),
             const SizedBox(width: 8),
-            Text(
-              e.displayText,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: grey
-                    ? const Color(0xFFB4BCC8)
-                    : (e.daysLeft == 0
-                        ? const Color(0xFFE0576A)
-                        : const Color(0xFF3B6FE0)),
-              ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  e.displayText,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: grey
+                        ? const Color(0xFFB4BCC8)
+                        : (e.daysLeft == 0
+                            ? const Color(0xFFE0576A)
+                            : const Color(0xFF3B6FE0)),
+                  ),
+                ),
+                // 副标题：资产日「已拥有 x 日」/ 纪念日「已过去 x 天」；未到该日不显示
+                if (e.subtitle != null) ...[
+                  const SizedBox(height: 2),
+                  Text(e.subtitle!,
+                      style: TextStyle(
+                          fontSize: 11,
+                          color: grey
+                              ? const Color(0xFFB4BCC8)
+                              : const Color(0xFF9AA8BF))),
+                ],
+              ],
             ),
           ],
         ),
@@ -711,15 +728,18 @@ class CountdownScreenState extends State<CountdownScreen> {
       cells.add(const SizedBox());
     }
     final today = DateTime.now();
-    // 标记含倒数日的日期
-    final marked = <String>{};
+    // 日期 → 该日第一个事件的图标（用于日历内展示）
+    final dayIcon = <String, String>{};
     for (final e in _events) {
       final t = CountdownEvent.dateOnly(e.target);
-      marked.add('${t.year}-${t.month}-${t.day}');
+      final key = '${t.year}-${t.month}-${t.day}';
+      dayIcon.putIfAbsent(key, () => e.icon);
     }
     for (int day = 1; day <= daysInMonth; day++) {
       final date = DateTime(year, month, day);
-      final hasEvent = marked.contains('${date.year}-${date.month}-${date.day}');
+      final key = '${date.year}-${date.month}-${date.day}';
+      final icon = dayIcon[key];
+      final hasEvent = icon != null;
       final isToday = date.year == today.year &&
           date.month == today.month &&
           date.day == today.day;
@@ -727,34 +747,34 @@ class CountdownScreenState extends State<CountdownScreen> {
         onTap: () => _onDayTap(date),
         child: Center(
           child: Container(
-            width: 32,
-            height: 32,
+            width: 34,
+            height: 38,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: isToday ? const Color(0xFFDCE7FF) : Colors.transparent,
-              shape: BoxShape.circle,
+              // 有记录的日期：浅蓝底纹；今天：浅蓝圆底
+              color: hasEvent
+                  ? const Color(0xFFEAF0FB)
+                  : (isToday ? const Color(0xFFDCE7FF) : Colors.transparent),
+              borderRadius: BorderRadius.circular(8),
             ),
-            child: Stack(
-              alignment: Alignment.center,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text('$day',
                     style: TextStyle(
-                        fontSize: 13,
-                        fontWeight:
-                            isToday ? FontWeight.w700 : FontWeight.normal,
+                        fontSize: 12,
+                        height: 1.1,
+                        fontWeight: (isToday || hasEvent)
+                            ? FontWeight.w700
+                            : FontWeight.normal,
                         color: isToday
                             ? const Color(0xFF3B6FE0)
                             : const Color(0xFF2A3B52))),
-                if (hasEvent)
-                  Positioned(
-                    bottom: 1,
-                    child: Container(
-                      width: 4,
-                      height: 4,
-                      decoration: const BoxDecoration(
-                          color: Color(0xFF3B6FE0), shape: BoxShape.circle),
-                    ),
-                  ),
+                const SizedBox(height: 1),
+                Text(
+                  hasEvent ? icon : '',
+                  style: const TextStyle(fontSize: 9, height: 1.0),
+                ),
               ],
             ),
           ),

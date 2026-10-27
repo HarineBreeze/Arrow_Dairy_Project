@@ -13,6 +13,7 @@ class CountdownEditScreen extends StatefulWidget {
 
 class _CountdownEditScreenState extends State<CountdownEditScreen> {
   late final TextEditingController _nameCtrl;
+  late final TextEditingController _noteCtrl;
   late final TextEditingController _iconCtrl;
   DateTime? _target;
   late String _type;
@@ -26,6 +27,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
     super.initState();
     final e = widget.event;
     _nameCtrl = TextEditingController(text: e?.name ?? '');
+    _noteCtrl = TextEditingController(text: e?.note ?? '');
     _target = e?.target == null ? null : CountdownEvent.dateOnly(e!.target);
     _type = e?.type ?? '纪念日';
     _loop = e?.loop ?? false;
@@ -36,6 +38,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
   @override
   void dispose() {
     _nameCtrl.dispose();
+    _noteCtrl.dispose();
     _iconCtrl.dispose();
     super.dispose();
   }
@@ -89,6 +92,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
           ? CountdownEvent.defaultIconFor(_type)
           : _iconCtrl.text.trim()
       ..name = name
+      ..note = _noteCtrl.text.trim()
       ..target = _target!
       ..type = _type
       ..loop = _loop;
@@ -107,11 +111,17 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
     if (picked != null && mounted) setState(() => _target = picked);
   }
 
-  String get _dateLabel {
+  String get _dateTimeLabel {
     if (_target == null) return '';
     final t = _target!;
-    return '${t.year}年${t.month}月${t.day}日';
+    final hh = t.hour.toString().padLeft(2, '0');
+    final mm = t.minute.toString().padLeft(2, '0');
+    return '${t.year}年${t.month}月${t.day}日  $hh:$mm';
   }
+
+  /// 目的日在未来 → 倒数；在过去 → 正数
+  bool get _isCountdown =>
+      _target != null && _target!.isAfter(DateTime.now());
 
   @override
   Widget build(BuildContext context) {
@@ -168,37 +178,91 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
             ),
             const SizedBox(height: 16),
 
-            // 目的日
+            // 事件备注
+            _sectionLabel('事件备注'),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              decoration: _box(),
+              child: TextField(
+                controller: _noteCtrl,
+                maxLength: 15,
+                style: const TextStyle(fontSize: 15),
+                decoration: const InputDecoration(
+                  hintText: '写点什么…（选填）',
+                  hintStyle: TextStyle(fontSize: 13, color: Color(0xFF9AA8BF)),
+                  counterText: '',
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(vertical: 14),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // 目的日（含时分；最右侧两字宽显示 正数 / 倒数）
             _sectionLabel('目的日'),
-            GestureDetector(
-              onTap: _pickDate,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                decoration: _box(),
-                child: Row(
-                  children: [
-                    Icon(Icons.event_outlined,
-                        size: 18,
-                        color: _target == null
-                            ? const Color(0xFF9AA8BF)
-                            : const Color(0xFF3B6FE0)),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        _target == null ? '选择未来日倒数，过去日正数' : _dateLabel,
-                        style: TextStyle(
-                          fontSize: _target == null ? 13 : 15,
-                          color: _target == null
-                              ? const Color(0xFF9AA8BF)
-                              : const Color(0xFF2A3B52),
+            Container(
+              decoration: _box(),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: _pickDate,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(14, 14, 8, 14),
+                        child: Row(
+                          children: [
+                            Icon(Icons.event_outlined,
+                                size: 18,
+                                color: _target == null
+                                    ? const Color(0xFF9AA8BF)
+                                    : const Color(0xFF3B6FE0)),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _target == null
+                                    ? '选择未来日倒数，过去日正数'
+                                    : _dateTimeLabel,
+                                style: TextStyle(
+                                  fontSize: _target == null ? 13 : 15,
+                                  color: _target == null
+                                      ? const Color(0xFF9AA8BF)
+                                      : const Color(0xFF2A3B52),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                    const Icon(Icons.chevron_right,
-                        size: 20, color: Color(0xFFC4CEDD)),
-                  ],
-                ),
+                  ),
+                  // 最右侧：正数 / 倒数 标记（两字宽）
+                  Container(
+                    width: 44,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: _target == null
+                          ? const Color(0xFFF5F7FB)
+                          : (_isCountdown
+                              ? const Color(0xFFDCE7FF)
+                              : const Color(0xFFFDEEF3)),
+                      borderRadius: const BorderRadius.horizontal(
+                          right: Radius.circular(12)),
+                    ),
+                    child: Text(
+                      _target == null ? '--' : (_isCountdown ? '倒数' : '正数'),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: _target == null
+                            ? const Color(0xFFB4C0D2)
+                            : (_isCountdown
+                                ? const Color(0xFF3B6FE0)
+                                : const Color(0xFFD9738F)),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 16),
@@ -263,7 +327,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
               padding: const EdgeInsets.only(left: 4),
               child: Text(
                 _loop
-                    ? '到期后卡片加红色描边，并从次日起自动进入下一年的同日倒计时'
+                    ? '到期后提醒，并从次日起自动进入下一年的同日倒计时'
                     : '到期后停止计数，卡片整体变灰',
                 style: const TextStyle(fontSize: 12, color: Color(0xFF9AA8BF)),
               ),
@@ -508,13 +572,33 @@ class _DatePickerPage extends StatefulWidget {
 
 class _DatePickerPageState extends State<_DatePickerPage> {
   late DateTime _month; // 每月 1 日
-  late DateTime _selected;
+  late DateTime _selected; // 仅日期
+  late TimeOfDay _time;
 
   @override
   void initState() {
     super.initState();
     _selected = CountdownEvent.dateOnly(widget.initial);
     _month = DateTime(_selected.year, _selected.month, 1);
+    _time = TimeOfDay(
+        hour: widget.initial.hour, minute: widget.initial.minute);
+  }
+
+  /// 合并日期与时分
+  DateTime get _result => DateTime(_selected.year, _selected.month,
+      _selected.day, _time.hour, _time.minute);
+
+  Future<void> _pickTime() async {
+    HapticFeedback.selectionClick();
+    final t = await showTimePicker(
+      context: context,
+      initialTime: _time,
+      builder: (ctx, child) => MediaQuery(
+        data: MediaQuery.of(ctx).copyWith(alwaysUse24HourFormat: true),
+        child: child!,
+      ),
+    );
+    if (t != null && mounted) setState(() => _time = t);
   }
 
   void _shift(int delta) {
@@ -606,6 +690,38 @@ class _DatePickerPageState extends State<_DatePickerPage> {
               ],
             ),
           ),
+          // 时间选择（小时:分钟）
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: Row(
+              children: [
+                const Icon(Icons.access_time,
+                    size: 18, color: Color(0xFF9AA8BF)),
+                const SizedBox(width: 8),
+                const Text('时间',
+                    style: TextStyle(fontSize: 14, color: Color(0xFF5A6B82))),
+                const Spacer(),
+                GestureDetector(
+                  onTap: _pickTime,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0F4FB),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '${_time.hour.toString().padLeft(2, '0')}:${_time.minute.toString().padLeft(2, '0')}',
+                      style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF3B6FE0)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
           Row(
             children: const ['一', '二', '三', '四', '五', '六', '日']
                 .map((w) => Expanded(
@@ -640,14 +756,15 @@ class _DatePickerPageState extends State<_DatePickerPage> {
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => Navigator.pop(context, _selected),
+                onPressed: () => Navigator.pop(context, _result),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
                 ),
                 child: Text(
-                    '确定 ${_selected.year}-${_selected.month.toString().padLeft(2, '0')}-${_selected.day.toString().padLeft(2, '0')}',
+                    '确定 ${_selected.year}-${_selected.month.toString().padLeft(2, '0')}-${_selected.day.toString().padLeft(2, '0')} '
+                    '${_time.hour.toString().padLeft(2, '0')}:${_time.minute.toString().padLeft(2, '0')}',
                     style: const TextStyle(fontSize: 16)),
               ),
             ),
