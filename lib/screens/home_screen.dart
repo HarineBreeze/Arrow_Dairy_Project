@@ -409,8 +409,9 @@ class _HomeScreenState extends State<HomeScreen>
     _menuController.reverse();
   }
 
-  /// 主页右滑 → 跟手拉开侧边栏（触发区域为屏幕左半部）；
-  /// 菜单打开时继续拖动可跟手收回
+  /// 侧边栏跟手拖拽（所有主页通用）：
+  /// - 内容页右滑：菜单跟手拉出，松手时拉过屏幕宽度 1/3 → 展开，否则收回
+  /// - 菜单页左滑：菜单跟手收回，松手时收过屏幕宽度 1/3 → 关闭，否则回到原进度
   double? _menuDragBase; // 拖拽开始时菜单的进度值
   double _menuDragDx = 0;
 
@@ -432,8 +433,11 @@ class _HomeScreenState extends State<HomeScreen>
     if (_menuDragBase == null) return;
     _menuDragBase = null;
     final v = d.primaryVelocity ?? 0;
-    final cur = _menuController.value;
-    if (cur > 0.5 || v > 500) {
+    final screenW = MediaQuery.of(context).size.width;
+    // 已拉出的距离（像素），菜单宽度为屏幕的 3/4
+    final dragged = _menuController.value * screenW * 3 / 4;
+    final opened = dragged > screenW / 3 || v > 600;
+    if (opened) {
       setState(() => _menuOpen = true);
       _menuController.forward();
     } else {
@@ -691,20 +695,26 @@ class _HomeScreenState extends State<HomeScreen>
                         child: Transform.translate(
                           offset:
                               Offset(-menuWidth * (1 - _menuAnim.value), 0),
-                          child: Material(
-                            color: Colors.white,
-                            elevation: 8,
-                            child: SizedBox(
-                              width: menuWidth,
-                              child: SideMenu(
-                                profile: _profile,
-                                currentTab: _currentTab,
-                                onClose: _closeMenu,
-                                onOpenProfile: _openProfileEditor,
-                                onOpenDiary: () => _switchTab('diary'),
-                                onOpenItems: () => _switchTab('items'),
-                                onOpenAssets: () => _switchTab('assets'),
-                                onOpenSettings: _openSettings,
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.translucent,
+                            onHorizontalDragStart: _onMenuDragStart,
+                            onHorizontalDragUpdate: _onMenuDragUpdate,
+                            onHorizontalDragEnd: _onMenuDragEnd,
+                            child: Material(
+                              color: Colors.white,
+                              elevation: 8,
+                              child: SizedBox(
+                                width: menuWidth,
+                                child: SideMenu(
+                                  profile: _profile,
+                                  currentTab: _currentTab,
+                                  onClose: _closeMenu,
+                                  onOpenProfile: _openProfileEditor,
+                                  onOpenDiary: () => _switchTab('diary'),
+                                  onOpenItems: () => _switchTab('items'),
+                                  onOpenAssets: () => _switchTab('assets'),
+                                  onOpenSettings: _openSettings,
+                                ),
                               ),
                             ),
                           ),
