@@ -732,10 +732,17 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
+    // 状态栏图标亮度随菜单开合切换：主页蓝底用浅色图标，
+    // 菜单打开后顶部大部分为白色菜单区，改用深色图标。
+    return AnimatedBuilder(
+      animation: _menuAnim,
+      builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness:
+              _menuAnim.value > 0.5 ? Brightness.dark : Brightness.light,
+        ),
+        child: child!,
       ),
       child: CountdownBannerHost(
         key: _bannerKey,
@@ -744,24 +751,28 @@ class _HomeScreenState extends State<HomeScreen>
         onWillPop: _handleBack,
         child: Scaffold(
           backgroundColor: const Color(0xFFF3F6FB),
+          // Stack 覆盖整个 body（含状态栏区域）：这样菜单能从屏幕最顶端
+          // 贯通到低端（顶部白色与状态栏区连成一体），遮罩也能盖住状态栏
+          // 区域跟随变暗。主页内容自行用 SafeArea 避开状态栏。
           body: Container(
             color: const Color(0xB33B6FE0),
-            child: SafeArea(
-              child: AnimatedBuilder(
-                animation: _menuAnim,
-                builder: (context, child) {
-                  final menuWidth =
-                      MediaQuery.of(context).size.width * 3 / 4;
-                  final offset = menuWidth * _menuAnim.value;
-                  return Stack(
-                    children: [
-                      Transform.translate(
-                        offset: Offset(offset, 0),
+            child: AnimatedBuilder(
+              animation: _menuAnim,
+              builder: (context, child) {
+                final menuWidth =
+                    MediaQuery.of(context).size.width * 3 / 4;
+                final offset = menuWidth * _menuAnim.value;
+                return Stack(
+                  children: [
+                    Transform.translate(
+                      offset: Offset(offset, 0),
+                      child: SafeArea(
                         child: Container(
                           color: const Color(0xFFF3F6FB),
                           child: child!,
                         ),
                       ),
+                    ),
                       // 遮罩层：始终保留在树中。若按 `_menuAnim.value > 0`
                       // 条件增删，首次拖拽跨越 0 时会改变 Stack 子节点结构，
                       // 导致手势层识别器被打断（首次滑动卡住、无 end/cancel）。
@@ -789,16 +800,21 @@ class _HomeScreenState extends State<HomeScreen>
                             elevation: 8,
                             child: SizedBox(
                               width: menuWidth,
-                              child: SideMenu(
-                                profile: _profile,
-                                currentTab: _currentTab,
-                                onClose: _closeMenu,
-                                onOpenProfile: _openProfileEditor,
-                                onOpenDiary: () => _switchTab('diary'),
-                                onOpenItems: () => _switchTab('items'),
-                                onOpenAssets: () => _switchTab('assets'),
-                                onOpenCountdown: () => _switchTab('countdown'),
-                                onOpenSettings: _openSettings,
+                              // 菜单从屏幕最顶端贯通（背景白覆盖状态栏区域），
+                              // 内容用 SafeArea 避开状态栏。
+                              child: SafeArea(
+                                bottom: false,
+                                child: SideMenu(
+                                  profile: _profile,
+                                  currentTab: _currentTab,
+                                  onClose: _closeMenu,
+                                  onOpenProfile: _openProfileEditor,
+                                  onOpenDiary: () => _switchTab('diary'),
+                                  onOpenItems: () => _switchTab('items'),
+                                  onOpenAssets: () => _switchTab('assets'),
+                                  onOpenCountdown: () => _switchTab('countdown'),
+                                  onOpenSettings: _openSettings,
+                                ),
                               ),
                             ),
                           ),
@@ -890,7 +906,6 @@ class _HomeScreenState extends State<HomeScreen>
                             ),
                 ),
               ),
-            ),
           ),
           floatingActionButton: _menuOpen
               ? null
