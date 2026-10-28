@@ -18,6 +18,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
   late final TextEditingController _iconCtrl;
   late String _type;
   bool _saving = false;
+  bool _typeOpen = false; // 资产类型下拉是否展开
 
   /// 进入页面时的内容快照，用于判断是否有未保存的修改
   String _initial = '';
@@ -153,43 +154,98 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
             ),
             const SizedBox(height: 16),
 
-            // 资产类型：下拉选择
+            // 资产类型：自定义下拉（固定从选框下方展开，选中项带底纹强调）
             _sectionLabel('资产类型'),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: _box(),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: _type,
-                  isExpanded: true,
-                  icon: const Icon(Icons.keyboard_arrow_down,
-                      color: Color(0xFF5A6B82)),
-                  style: const TextStyle(
-                      fontSize: 15, color: Color(0xFF2A3B52)),
-                  dropdownColor: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  items: Asset.types
-                      .map((t) => DropdownMenuItem<String>(
-                            value: t,
-                            child: Text(t),
-                          ))
-                      .toList(),
-                  onChanged: (v) {
-                    if (v == null) return;
-                    HapticFeedback.selectionClick();
-                    setState(() {
-                      _type = v;
-                      // 未手动改过图标时跟随类型换默认图标
-                      if (Asset.defaultIconFor(v) != _iconCtrl.text.trim() &&
-                          Asset.types.any((x) =>
-                              Asset.defaultIconFor(x) ==
-                              _iconCtrl.text.trim())) {
-                        _iconCtrl.text = Asset.defaultIconFor(v);
-                      }
-                    });
-                  },
+            GestureDetector(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                setState(() => _typeOpen = !_typeOpen);
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                decoration: _box(),
+                height: 48,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(_type,
+                          style: const TextStyle(
+                              fontSize: 15, color: Color(0xFF2A3B52))),
+                    ),
+                    AnimatedRotation(
+                      turns: _typeOpen ? 0.5 : 0,
+                      duration: const Duration(milliseconds: 200),
+                      child: const Icon(Icons.keyboard_arrow_down,
+                          color: Color(0xFF5A6B82)),
+                    ),
+                  ],
                 ),
               ),
+            ),
+            // 选项列表：始终固定在选框正下方展开，与选中项位置无关
+            AnimatedSize(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOutCubic,
+              alignment: Alignment.topCenter,
+              child: _typeOpen
+                  ? Container(
+                      margin: const EdgeInsets.only(top: 6),
+                      decoration: _box(),
+                      child: Column(
+                        children: [
+                          for (final t in Asset.types)
+                            InkWell(
+                              onTap: () {
+                                HapticFeedback.selectionClick();
+                                setState(() {
+                                  _type = t;
+                                  _typeOpen = false;
+                                  // 未手动改过图标时跟随类型换默认图标
+                                  if (Asset.defaultIconFor(t) !=
+                                          _iconCtrl.text.trim() &&
+                                      Asset.types.any((x) =>
+                                          Asset.defaultIconFor(x) ==
+                                          _iconCtrl.text.trim())) {
+                                    _iconCtrl.text = Asset.defaultIconFor(t);
+                                  }
+                                });
+                              },
+                              child: Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 14, vertical: 13),
+                                decoration: BoxDecoration(
+                                  // 选中项底纹强调
+                                  color: t == _type
+                                      ? const Color(0xFFDCE7FF)
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(t,
+                                          style: TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: t == _type
+                                                  ? FontWeight.w600
+                                                  : FontWeight.normal,
+                                              color: t == _type
+                                                  ? const Color(0xFF3B6FE0)
+                                                  : const Color(0xFF2A3B52))),
+                                    ),
+                                    if (t == _type)
+                                      const Icon(Icons.check,
+                                          size: 16,
+                                          color: Color(0xFF3B6FE0)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    )
+                  : const SizedBox(width: double.infinity),
             ),
             const SizedBox(height: 16),
 
