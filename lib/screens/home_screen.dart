@@ -1623,17 +1623,6 @@ class _DiaryCard extends StatelessWidget {
     this.isPinned = false,
   }) : super(key: key);
 
-  String _dateLabel(DateTime d) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final that = DateTime(d.year, d.month, d.day);
-    final diff = today.difference(that).inDays;
-    if (diff == 0) return '今天';
-    if (diff == 1) return '昨天';
-    if (diff == 2) return '前天';
-    return '${d.year}年${d.month}月${d.day}日';
-  }
-
   String _timeLabel(DateTime d) {
     final h = d.hour.toString().padLeft(2, '0');
     final m = d.minute.toString().padLeft(2, '0');
@@ -1658,7 +1647,7 @@ class _DiaryCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
+          padding: const EdgeInsets.fromLTRB(13, 12, 14, 12),
           child: isEncrypted
               ? SizedBox(
                   height: 56,
@@ -1696,70 +1685,111 @@ class _DiaryCard extends StatelessWidget {
                     ],
                   ),
                 )
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              : Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Row(
-                      children: [
-                        Text(entry.mood,
-                            style: const TextStyle(fontSize: 20)),
-                        const SizedBox(width: 6),
-                        Text(entry.weather,
-                            style: const TextStyle(fontSize: 16)),
-                        const Spacer(),
-                        Text(
-                          '${_dateLabel(entry.publishDate)} ${_timeLabel(entry.createdAt)}',
-                          style: const TextStyle(
-                              fontSize: 11, color: kTextLight),
-                        ),
-                      ],
-                    ),
-                    if (entry.title.isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        entry.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: kTextDark,
+                    // 左侧日期徽章：大号「日」+ 年月小字，像撕页日历
+                    Container(
+                      width: 46,
+                      padding: const EdgeInsets.only(right: 12),
+                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      decoration: const BoxDecoration(
+                        border: Border(
+                          right: BorderSide(color: Color(0xFFE8EDF5)),
                         ),
                       ),
-                    ],
-                    if (entry.content.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        entry.content,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontSize: 13, color: kTextMid),
-                      ),
-                    ],
-                    const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        if (entry.location.isNotEmpty) ...[
-                          const Icon(Icons.location_on,
-                              size: 14, color: kTextLight),
-                          const SizedBox(width: 2),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text('${entry.publishDate.day}',
+                              style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF3B6FE0),
+                                  height: 1.1)),
+                          const SizedBox(height: 2),
                           Text(
-                            entry.location,
-                            style: const TextStyle(
-                                fontSize: 12, color: kTextLight),
+                              '${entry.publishDate.year}.${entry.publishDate.month.toString().padLeft(2, '0')}',
+                              style: const TextStyle(
+                                  fontSize: 10.5, color: kTextLight)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // 右侧：标题 / 摘要 / 心情天气地点脚注
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  entry.title.isNotEmpty
+                                      ? entry.title
+                                      : '（无标题）',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 15.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: kTextDark,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (entry.content.isNotEmpty) ...[
+                            const SizedBox(height: 3),
+                            Text(
+                              entry.content,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                  fontSize: 12.5, color: kTextMid),
+                            ),
+                          ],
+                          const SizedBox(height: 5),
+                          Row(
+                            children: [
+                              Text(entry.mood,
+                                  style: const TextStyle(fontSize: 14)),
+                              const SizedBox(width: 4),
+                              Text(entry.weather,
+                                  style: const TextStyle(fontSize: 12)),
+                              const SizedBox(width: 6),
+                              Text(_timeLabel(entry.createdAt),
+                                  style: const TextStyle(
+                                      fontSize: 11, color: kTextLight)),
+                              if (entry.location.isNotEmpty) ...[
+                                const SizedBox(width: 6),
+                                const Icon(Icons.location_on,
+                                    size: 13, color: kTextLight),
+                                const SizedBox(width: 1),
+                                Flexible(
+                                  child: Text(
+                                    entry.location,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                        fontSize: 11, color: kTextLight),
+                                  ),
+                                ),
+                              ],
+                              const Spacer(),
+                              GestureDetector(
+                                onTap: onDelete,
+                                child: const Icon(
+                                  Icons.delete_outline,
+                                  size: 18,
+                                  color: kTextLight,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
-                        const Spacer(),
-                        GestureDetector(
-                          onTap: onDelete,
-                          child: const Icon(
-                            Icons.delete_outline,
-                            size: 18,
-                            color: kTextLight,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
