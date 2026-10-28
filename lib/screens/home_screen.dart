@@ -1428,6 +1428,16 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _buildMonthHeader() {
     return Row(
       children: [
+        // ◀◀ 按年翻页
+        IconButton(
+          icon: const Icon(Icons.keyboard_double_arrow_left,
+              size: 20, color: kTextMid),
+          tooltip: '上一年',
+          visualDensity: VisualDensity.compact,
+          constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+          onPressed: () => setState(() => _visibleMonth = DateTime(
+              _visibleMonth.year - 1, _visibleMonth.month, 1)),
+        ),
         IconButton(
           icon: const Icon(Icons.chevron_left, color: kTextMid),
           onPressed: () => setState(() => _visibleMonth =
@@ -1445,6 +1455,16 @@ class _HomeScreenState extends State<HomeScreen>
           icon: const Icon(Icons.chevron_right, color: kTextMid),
           onPressed: () => setState(() => _visibleMonth =
               DateTime(_visibleMonth.year, _visibleMonth.month + 1, 1)),
+        ),
+        // ▶▶ 按年翻页
+        IconButton(
+          icon: const Icon(Icons.keyboard_double_arrow_right,
+              size: 20, color: kTextMid),
+          tooltip: '下一年',
+          visualDensity: VisualDensity.compact,
+          constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+          onPressed: () => setState(() => _visibleMonth = DateTime(
+              _visibleMonth.year + 1, _visibleMonth.month, 1)),
         ),
         const Spacer(),
         TextButton(

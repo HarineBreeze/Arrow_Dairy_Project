@@ -670,7 +670,7 @@ class AssetScreenState extends State<AssetScreen> {
             children: [
               _statItem('总资产', _totalAssets, Colors.white),
               _statItem('负资产', _totalDebt, const Color(0xFFFFD9DC)),
-              _statItem('现金流', _cashFlow, const Color(0xFFD6FFDF)),
+              _statItem('现金流', _cashFlow, Colors.white),
               _statItem('理财资产', _investTotal, Colors.white),
             ],
           ),
@@ -719,15 +719,24 @@ class AssetScreenState extends State<AssetScreen> {
   Widget _buildCard(Asset a) {
     final negative = a.amount < 0;
     final invest = _investTypes.contains(a.type);
+    // 左侧色条代表资产性质：负资产红 / 理财蓝 / 其它绿
+    final barColor = negative
+        ? const Color(0xFFE0576A)
+        : (invest ? const Color(0xFF3B6FE0) : const Color(0xFF2A9D5C));
     return GestureDetector(
       onTap: () => _openEditor(a),
       onLongPress: () => _showCardMenu(a),
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
+          // 左侧色条（B 方案）：圆角左侧稍小，形成「色条 + 卡体」的层次
+          borderRadius: const BorderRadius.horizontal(
+            left: Radius.circular(6),
+            right: Radius.circular(14),
+          ),
+          border: Border(left: BorderSide(color: barColor, width: 4)),
         ),
         child: Row(
           children: [
@@ -766,7 +775,7 @@ class AssetScreenState extends State<AssetScreen> {
                 ],
               ),
             ),
-            // 金额（隐藏状态：统一为 ¥****，负数不加负号）
+            // 金额（隐藏状态：统一为 ¥****；负资产红，其余黑色）
             Text(
               _hideNumbers
                   ? '¥****'
@@ -776,11 +785,9 @@ class AssetScreenState extends State<AssetScreen> {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
-                color: invest
-                    ? const Color(0xFF3B6FE0)
-                    : (negative
-                        ? const Color(0xFFE06A6A)
-                        : const Color(0xFF2A9D5C)),
+                color: negative
+                    ? const Color(0xFFE06A6A)
+                    : const Color(0xFF2A3B52),
               ),
             ),
           ],
