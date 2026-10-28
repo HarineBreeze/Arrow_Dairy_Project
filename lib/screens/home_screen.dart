@@ -449,16 +449,6 @@ class _HomeScreenState extends State<HomeScreen>
   /// 右 2/3 手势层是否接管指针：只在菜单打开时接管
   bool get _menuCloseSwipeEnabled => _menuAnim.value > 0;
 
-  /// 左缘「右滑开菜单」热区宽度（px）
-  static const double _edgeHot = 24;
-
-  /// 左缘探测层：只有指针落在左侧 [_edgeHot] 内才登记手势（并始终放行给下层），
-  /// 其余区域完全不参与，避免挡住横滑卡带 / 日历等页面手势。
-  bool _onEdgeDown(PointerDownEvent e) {
-    if (e.position.dx <= _edgeHot) _onPtrDown(e);
-    return false;
-  }
-
   /// 侧边栏跟手拖拽（所有主页通用）。用 Listener 直接跟踪指针，
   /// 不参与手势竞技场，避免与列表/日历的横向手势冲突导致第一次滑动卡住。
   /// - 内容页左半屏右滑：菜单跟手拉出，松手超过屏幕宽 1/3 → 展开，否则收回
@@ -489,14 +479,6 @@ class _HomeScreenState extends State<HomeScreen>
     if (_ptrDownX == null || _ptrDownY == null) return;
     // 页面内横向功能正在处理本次滑动 → 不拖菜单
     if (menuDragBlocked.value || _gestureOwnedByPage) return;
-    final mdx = (e.position.dx - _ptrDownX!).abs();
-    final mdy = (e.position.dy - _ptrDownY!).abs();
-    // 横向位移已明显超过纵向 → 认定页面横向功能接管（即使孩子闸门稍后标记，
-    // 也不允许菜单在中途"抢走"这次拖拽）
-    if (mdx > 10 && mdx > mdy * 1.6) {
-      _gestureOwnedByPage = true;
-      return;
-    }
     final dx = e.position.dx - _ptrDownX!;
     final dy = e.position.dy - _ptrDownY!;
     if (!_menuTracking) {
@@ -836,27 +818,26 @@ class _HomeScreenState extends State<HomeScreen>
                           ),
                         ),
                       ),
-                      // 手势层：默认不响应，只有左缘 24px（右滑开菜单）或
-                      // 菜单已打开（左滑收回）时才接管指针。
-                      // 关键：命中测试会沿 Stack 顶层→底层进行，始终存在的
-                      // 全屏 Listener 会把 PointerDown 变成"命中"，导致下方的
-                      // 横滑卡带/日历永远收不到手势，所以必须按需失效。
+                      // 手势层（半屏，铺满全屏高度）：右滑拉出菜单。
+                      // 优先级由业务侧决定——页面内横向功能（日历翻月、攒钱
+                      // 滑动、置顶卡带）执行时会把 menuDragBlocked 置 true，
+                      // 菜单在判定阶段让位；本层本身不拦截指针，始终放行，
+                      // 避免挡住下方组件的 PointerDown。
                       Positioned(
                         left: 0,
                         top: 0,
                         bottom: 0,
                         width: MediaQuery.of(context).size.width / 2,
                         child: Listener(
-                          // 热区层自己不拦截：右滑开菜单要在页面边缘也能触发，
-                          // 但拦截会影响卡带，所以只在左侧热区登记手势、始终放行。
                           behavior: HitTestBehavior.translucent,
-                          onPointerDown: _onEdgeDown,
+                          onPointerDown: _onPtrDown,
                           onPointerMove: _onPtrMove,
                           onPointerUp: _onPtrUp,
                           onPointerCancel: _onPtrUp,
                         ),
                       ),
-                      // 右 2/3 手势层：菜单打开时左滑跟手收回
+                      // 右 2/3 手势层：菜单打开时左滑跟手收回。
+                      // 仅菜单打开时接管指针（关闭时无需收回手势）。
                       Positioned(
                         left: MediaQuery.of(context).size.width / 3,
                         top: 0,
@@ -1136,6 +1117,16 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
+  /// 按无障碍状态决定是否给卡带加手势闸门：
+  /// TalkBack 触摸浏览会自己吞掉手势（部分机型还会缓存 semantics），
+  /// 一旦闸门卡住会让整块区域再也拉不出菜单，所以这种场景直接不加。
+  Widget _gatePinnedRail(Widget child) {
+    if (WidgetsBinding.instance.platformDispatcher.semanticsEnabled) {
+      return child;
+    }
+    return PageGestureGate(swipeAxis: Axis.horizontal, child: child);
+  }
+
   /// 置顶横滑卡带（P3）：一行小标题 + 可左右滑动的迷你卡
   Widget _buildPinnedRail(List<DiaryEntry> pinned) {
     return Column(
@@ -1149,10 +1140,10 @@ class _HomeScreenState extends State<HomeScreen>
             style: const TextStyle(fontSize: 11.5, color: Color(0xFFC4697C)),
           ),
         ),
-        // 页面横向手势优先：横滑卡带期间不让主页把菜单拖出来
-        PageGestureGate(
-          swipeAxis: Axis.horizontal,
-          child: SizedBox(
+        // 页面横向手势优先：横滑卡带期间不让主页把菜单拖出来；
+        // 无障碍（TalkBack 触摸浏览）时不区分，避免菜单被永久让位
+        _gatePinnedRail(
+          SizedBox(
             height: 62,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
@@ -1681,13 +1672,14 @@ class _PinnedMiniCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(11),
             border: Border.all(color: const Color(0xFFE0576A), width: 1.3),
           ),
-          // 加密笔记：卡面铺栅格纹理（隐约透出「被遮蔽」的语义）
+          // 加密笔记：卡面铺斜纹纹理（与未置顶封条卡同一语言）
+          // 注意：底色必须透明，否则会盖住下面的 painter
           child: ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: CustomPaint(
               painter: encrypted ? const _GridTexturePainter() : null,
               child: Container(
-                color: Colors.white,
+                color: encrypted ? Colors.transparent : Colors.white,
                 padding: const EdgeInsets.fromLTRB(9, 8, 9, 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1753,9 +1745,9 @@ class _GridTexturePainter extends CustomPainter {
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          Color(0xF2FFFFFF),
-          Color(0xE6FFFFFF),
-          Color(0xD9FFFFFF),
+          Color(0xCCFFFFFF),
+          Color(0xB3FFFFFF),
+          Color(0x99FFFFFF),
         ],
       ).createShader(Offset.zero & size);
     canvas.drawRect(Offset.zero & size, fade);
@@ -1995,11 +1987,18 @@ class _DiaryCard extends StatelessWidget {
   Widget _buildEncryptedCard() {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
+      // 置顶的加密笔记：与未置顶封条卡保持同款，但底纹换成斜纹 + 红虚线边
+      // （虚线颜色 = 置顶红，未置顶为灰），让置顶状态一望即知。
       child: ClipRRect(
         borderRadius: BorderRadius.circular(14),
-        child: CustomPaint(
-          foregroundPainter: const _DashedRRectPainter(
-              color: Color(0xFFC9CFD9), radius: 14),
+        child: ColoredBox(
+          color: isPinned ? const Color(0xFFFDF1F3) : Colors.transparent,
+          child: CustomPaint(
+          foregroundPainter: _DashedRRectPainter(
+              color: isPinned ? const Color(0xFFE0576A) : const Color(0xFFC9CFD9),
+              radius: 14),
+          child: CustomPaint(
+          painter: isPinned ? const _PinnedStripePainter() : null,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -2027,7 +2026,7 @@ class _DiaryCard extends StatelessWidget {
                 ),
               ),
               Material(
-                color: Colors.white,
+                color: isPinned ? const Color(0xE6FFFFFF) : Colors.white,
                 child: InkWell(
                   onTap: onTap,
                   child: Padding(
@@ -2062,12 +2061,48 @@ class _DiaryCard extends StatelessWidget {
             ],
           ),
         ),
+        ),
+        ),
       ),
     );
   }
+
+  /// 置顶加密卡底纹：与封条卡同款 45° 斜纹，叠一层极淡的置顶粉
+  /// （卡片真实渲染代码，不能只停留在设计稿）
 }
 
 /// 虚线圆角边框（加密卡片的「档案袋」外框）
+/// 置顶加密卡底纹：45° 斜纹（16px 周期、4px 线宽）+ 淡粉底，
+/// 与未置顶封条卡的斜纹同一语言，仅色调改为置顶红系。
+class _PinnedStripePainter extends CustomPainter {
+  const _PinnedStripePainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawRect(
+        Offset.zero & size, Paint()..color = const Color(0xFFFDF1F3));
+    final paint = Paint()
+      ..color = const Color(0xFFF6DFE4)
+      ..strokeWidth = 4
+      ..style = PaintingStyle.stroke;
+    for (double x = -size.height; x < size.width + size.height; x += 16) {
+      canvas.drawLine(
+          Offset(x, size.height), Offset(x + size.height, 0), paint);
+    }
+    // 中间提亮：封条与正文所在区域不被斜纹压花
+    final fade = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xCCFFFFFF), Color(0xB3FFFFFF)],
+      ).createShader(Offset.zero & size);
+    canvas.drawRect(Offset.zero & size, fade);
+  }
+
+  @override
+  bool shouldRepaint(covariant _PinnedStripePainter oldDelegate) => false;
+}
+
 class _DashedRRectPainter extends CustomPainter {
   final Color color;
   final double radius;

@@ -674,50 +674,42 @@ class AssetScreenState extends State<AssetScreen> {
               _statItem('理财资产', _investTotal, Colors.white),
             ],
           ),
-          const SizedBox(height: 12),
           // 正/负资产结构条（绿=正资产，红=负资产），无文字标注
+          // 留白只加在真正出现结构条时，避免无资产时空出 12px
+          const SizedBox(height: 12),
           _buildStructureBar(),
         ],
       ),
     );
   }
 
-  /// 数据看板下方的资产性质结构条：按正、负资产金额占比分配宽度
+  /// 数据看板下方的资产性质结构条：绿=正资产、红=负资产，按金额占比分配宽度。
+  /// 无论是否有数据都会绘制（无数据时显示一条半透明中性底），保证入口位置稳定。
   Widget _buildStructureBar() {
     final pos = _totalAssets.abs();
     final neg = _totalDebt.abs();
     final total = pos + neg;
-    // 全部为 0 时按 1:1 展示中性灰条，避免出现空条
-    if (total <= 0) {
-      return Container(
-        height: 7,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.white24,
-          borderRadius: BorderRadius.circular(4),
-        ),
-      );
-    }
-    final posFlex = (pos / total * 1000).round().clamp(0, 1000);
-    final negFlex = 1000 - posFlex;
     return ClipRRect(
       borderRadius: BorderRadius.circular(4),
       child: SizedBox(
         height: 7,
-        child: Row(
-          children: [
-            if (posFlex > 0)
-              Expanded(
-                flex: posFlex,
-                child: const ColoredBox(color: Color(0xFF2A9D5C)),
+        width: double.infinity,
+        child: total <= 0
+            ? const ColoredBox(color: Color(0x40FFFFFF))
+            : Row(
+                children: [
+                  if (pos > 0)
+                    Expanded(
+                      flex: (pos / total * 1000).round().clamp(1, 999),
+                      child: const ColoredBox(color: Color(0xFF2A9D5C)),
+                    ),
+                  if (neg > 0)
+                    Expanded(
+                      flex: (neg / total * 1000).round().clamp(1, 999),
+                      child: const ColoredBox(color: Color(0xFFE0576A)),
+                    ),
+                ],
               ),
-            if (negFlex > 0)
-              Expanded(
-                flex: negFlex,
-                child: const ColoredBox(color: Color(0xFFE0576A)),
-              ),
-          ],
-        ),
       ),
     );
   }

@@ -320,19 +320,22 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                           selected: _type == t,
                           onTap: () {
                             HapticFeedback.selectionClick();
+                            // 顺序很关键：必须在改 _type 之前判断，
+                            // 否则比较的是「新类型的默认图标」，导致永远命中
+                            // 或永远不命中。
+                            final prevType = _type;
+                            final cur = _iconCtrl.text.trim();
+                            final oldDefault =
+                                CountdownEvent.defaultIconFor(prevType);
+                            final newDefault = CountdownEvent.defaultIconFor(t);
+                            final followType = !_iconTouched ||
+                                cur.isEmpty ||
+                                cur == oldDefault ||
+                                // 旧数据可能已经是另一类型的默认值
+                                cur == newDefault;
                             setState(() {
                               _type = t;
-                              // 只有用户主动点过图标才保留自定义图标；
-                              // 否则（包括从未设置、或残留另一类型的默认图标）
-                              // 一律跟随新类型的默认图标，来回切换都能自愈。
-                              final cur = _iconCtrl.text.trim();
-                              if (!_iconTouched ||
-                                  cur.isEmpty ||
-                                  cur == CountdownEvent.defaultIconFor(
-                                      _type)) {
-                                _iconCtrl.text =
-                                    CountdownEvent.defaultIconFor(t);
-                              }
+                              if (followType) _iconCtrl.text = newDefault;
                             });
                           },
                         ))
