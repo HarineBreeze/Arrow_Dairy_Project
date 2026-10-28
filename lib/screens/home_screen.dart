@@ -1632,6 +1632,8 @@ class _DiaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isEncrypted = entry.encrypted;
+    // 加密笔记：封条风卡片（斜纹密封带 + 虚线边框），只外显副标题与日期时间
+    if (isEncrypted) return _buildEncryptedCard();
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       elevation: 0,
@@ -1642,50 +1644,13 @@ class _DiaryCard extends StatelessWidget {
             ? const BorderSide(color: Color(0xFFE0576A), width: 1.5)
             : BorderSide.none,
       ),
-      color: isEncrypted ? const Color(0xFFE4E7EC) : Colors.white,
+      color: Colors.white,
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(13, 12, 14, 12),
-          child: isEncrypted
-              ? SizedBox(
-                  height: 56,
-                  child: Stack(
-                    children: [
-                      Positioned(
-                        left: 0,
-                        right: 26,
-                        top: 0,
-                        bottom: 0,
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            entry.subtitle.isNotEmpty
-                                ? entry.subtitle
-                                : '加密笔记',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                              color: entry.subtitle.isNotEmpty
-                                  ? const Color(0xFF5A6B82)
-                                  : const Color(0xFF9AA8BF),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const Positioned(
-                        right: 0,
-                        bottom: 0,
-                        child: Icon(Icons.lock,
-                            size: 18, color: Color(0xFF9AA8BF)),
-                      ),
-                    ],
-                  ),
-                )
-              : Row(
+          child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     // 左侧日期徽章：大号「日」+ 年月小字，像撕页日历
@@ -1803,6 +1768,147 @@ class _DiaryCard extends StatelessWidget {
       ),
     );
   }
+
+  /// 加密笔记卡片（封条风）：
+  /// 顶部斜纹密封带（🔒 已加密 · 月日）+ 下方副标题与时间，虚线边框。
+  /// 只外显副标题、日期、时间，不涉及任何笔记内容。
+  Widget _buildEncryptedCard() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: CustomPaint(
+          foregroundPainter: const _DashedRRectPainter(
+              color: Color(0xFFC9CFD9), radius: 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // 斜纹保密封带
+              CustomPaint(
+                painter: const _StripeBandPainter(),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.lock, size: 11, color: kTextLight),
+                      const SizedBox(width: 4),
+                      const Text('已加密',
+                          style:
+                              TextStyle(fontSize: 10.5, color: kTextLight)),
+                      const Spacer(),
+                      Text(
+                        '${entry.publishDate.month}月${entry.publishDate.day}日',
+                        style: const TextStyle(
+                            fontSize: 10.5, color: kTextLight),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Material(
+                color: Colors.white,
+                child: InkWell(
+                  onTap: onTap,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            entry.subtitle.isNotEmpty
+                                ? entry.subtitle
+                                : '加密笔记',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: entry.subtitle.isNotEmpty
+                                  ? const Color(0xFF5A6B82)
+                                  : const Color(0xFF9AA8BF),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(_timeLabel(entry.createdAt),
+                            style: const TextStyle(
+                                fontSize: 11, color: kTextLight)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 虚线圆角边框（加密卡片的「档案袋」外框）
+class _DashedRRectPainter extends CustomPainter {
+  final Color color;
+  final double radius;
+  final double dashWidth;
+  final double dashGap;
+  final double strokeWidth;
+
+  const _DashedRRectPainter({
+    required this.color,
+    required this.radius,
+    this.dashWidth = 5,
+    this.dashGap = 4,
+    this.strokeWidth = 1,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rrect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Radius.circular(radius),
+    );
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth;
+    final path = Path()..addRRect(rrect);
+    for (final metric in path.computeMetrics()) {
+      double dist = 0;
+      while (dist < metric.length) {
+        final next = (dist + dashWidth).clamp(0.0, metric.length);
+        canvas.drawPath(metric.extractPath(dist, next.toDouble()), paint);
+        dist = next + dashGap;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(
+          CustomPainter oldDelegate) =>
+      false;
+}
+
+/// 斜纹保密封带：浅灰底 + 45° 斜线纹理
+class _StripeBandPainter extends CustomPainter {
+  const _StripeBandPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawRect(Offset.zero & size, Paint()..color = const Color(0xFFEFF2F7));
+    final paint = Paint()
+      ..color = const Color(0xFFE7EBF1)
+      ..strokeWidth = 4
+      ..style = PaintingStyle.stroke;
+    // 以 16px 为周期画 45° 斜线，覆盖整个矩形
+    for (double x = -size.height; x < size.width + size.height; x += 16) {
+      canvas.drawLine(Offset(x, size.height), Offset(x + size.height, 0), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
 
 class _EmptyState extends StatelessWidget {
