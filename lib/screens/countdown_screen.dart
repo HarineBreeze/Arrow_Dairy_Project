@@ -616,7 +616,7 @@ class CountdownScreenState extends State<CountdownScreen> {
           Expanded(
             child: TextField(
               controller: _searchCtrl,
-              autofocus: true,
+              autofocus: false, // 不默认吊起键盘，由用户点输入框后再弹
               style: const TextStyle(fontSize: 15, color: Color(0xFF2A3B52)),
               textAlignVertical: TextAlignVertical.center,
               decoration: InputDecoration(

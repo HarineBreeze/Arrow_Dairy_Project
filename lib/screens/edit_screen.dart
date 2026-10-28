@@ -1051,7 +1051,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                         controller: _contentCtrl,
                         focusNode: _contentFocus,
                         readOnly: _selecting || !_contentFocus.hasFocus,
-                        autofocus: _isNew && !_showToolbar,
+                        autofocus: false, // 新增笔记不默认吊起键盘，由用户点正文后再弹
                         maxLength: 2000,
                         maxLines: null,
                         minLines: null,
