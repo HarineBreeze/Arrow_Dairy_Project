@@ -280,29 +280,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         fontWeight: FontWeight.w600)),
                 const SizedBox(width: 6),
                 // 教程入口：标题旁的蓝色圈叹号，点击弹出换机/导入说明
-                GestureDetector(
-                  onTap: () => _showBackupTutorial(context),
-                  behavior: HitTestBehavior.opaque,
-                  child: Container(
-                    width: 16,
-                    height: 16,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                          color: const Color(0xFF3B6FE0), width: 1.2),
-                    ),
-                    alignment: Alignment.center,
-                    child: const Text(
-                      '!',
-                      style: TextStyle(
-                        fontSize: 10,
-                        height: 1,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF3B6FE0),
-                      ),
-                    ),
-                  ),
-                ),
+                _buildInfoDot(onTap: () => _showBackupTutorial(context)),
               ],
             ),
           ),
@@ -348,13 +326,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          const Padding(
-            padding: EdgeInsets.only(left: 4, bottom: 8),
-            child: Text('显示',
-                style: TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF9AA8BF),
-                    fontWeight: FontWeight.w600)),
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 8),
+            child: Row(
+              children: [
+                const Text('笔记字体',
+                    style: TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF9AA8BF),
+                        fontWeight: FontWeight.w600)),
+                const SizedBox(width: 6),
+                _buildInfoDot(
+                  onTap: () => _showFontScopeTip(context),
+                ),
+              ],
+            ),
           ),
           Container(
             decoration: BoxDecoration(
@@ -395,6 +381,53 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
+  /// 分组标题旁的蓝色圈叹号（提示入口）
+  Widget _buildInfoDot({required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        width: 16,
+        height: 16,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: const Color(0xFF3B6FE0), width: 1.2),
+        ),
+        alignment: Alignment.center,
+        child: const Text(
+          '!',
+          style: TextStyle(
+            fontSize: 10,
+            height: 1,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF3B6FE0),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 笔记字体作用范围提示
+  void _showFontScopeTip(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('笔记字体', style: TextStyle(fontSize: 17)),
+        content: const Text(
+          '该字体设置仅作用于笔记浏览页面。',
+          style: TextStyle(fontSize: 13, height: 1.6),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('知道了'),
+          ),
         ],
       ),
     );
