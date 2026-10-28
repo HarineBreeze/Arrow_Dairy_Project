@@ -446,91 +446,68 @@ class _HomeScreenState extends State<HomeScreen>
     _menuController.reverse();
   }
 
-  /// 右 2/3 手势层是否接管指针：只在菜单打开时接管
-  bool get _menuCloseSwipeEnabled => _menuAnim.value > 0;
-
-  /// 侧边栏跟手拖拽（所有主页通用）。用 Listener 直接跟踪指针，
-  /// 不参与手势竞技场，避免与列表/日历的横向手势冲突导致第一次滑动卡住。
-  /// - 内容页左半屏右滑：菜单跟手拉出，松手超过屏幕宽 1/3 → 展开，否则收回
-  /// - 菜单打开时在屏幕右 2/3 区左滑：跟手收回，收过 1/3 → 关闭，否则回到原进度
-  /// - 快速甩动（速度超过阈值）→ 无需拖到 1/3，直接展开/关闭
-  double? _ptrDownX;
-  double? _ptrDownY;
+  /// 侧边栏跟手拖拽（所有主页通用）。手势层用 pan 识别器（kPanSlop = 36px）
+  /// 进入 Flutter 手势竞技场：页面内的横向/纵向拖拽识别器（日历翻页、攒钱
+  /// 滑动、置顶卡带、列表滚动，均为 18px 声明阈值）都比 pan **更早声明获胜**
+  /// 而优先执行，此时菜单完全不参与本次手势——二者绝不同时触发；
+  /// 只有在没有页面手势争抢的区域，pan 才获胜并拉出/收回侧边栏。
+  /// pan 胜出后按累计位移的主轴方向决定是否跟手：横向占优才拖动菜单，
+  /// 纵向为主的滑动忽略（空白区上下轻扫不应拉出菜单）。
   double? _menuDragBase;
-  bool _menuTracking = false;
-  double _prevDx = 0;
-  Duration? _prevTime;
-  double _flingSpeed = 0; // px/s，正 = 向右，负 = 向左（指数平滑）
+  double _menuDragDx = 0;
+  double _menuDragDy = 0;
+  bool _menuDragActive = false;
 
-  /// 本次手势是否已被页面内横向功能（横滑卡带/日历/攒钱）接管
-  bool _gestureOwnedByPage = false;
-
-  void _onPtrDown(PointerDownEvent e) {
-    _ptrDownX = e.position.dx;
-    _ptrDownY = e.position.dy;
-    _menuTracking = false;
-    _gestureOwnedByPage = false;
-    _prevDx = 0;
-    _prevTime = null;
-    _flingSpeed = 0;
+  void _onMenuDragStart(DragStartDetails d) {
+    _menuController.stop();
+    _menuDragBase = _menuAnim.value;
+    _menuDragDx = 0;
+    _menuDragDy = 0;
+    _menuDragActive = false;
   }
 
-  void _onPtrMove(PointerMoveEvent e) {
-    if (_ptrDownX == null || _ptrDownY == null) return;
-    // 页面内横向功能正在处理本次滑动 → 不拖菜单
-    if (menuDragBlocked.value || _gestureOwnedByPage) return;
-    final dx = e.position.dx - _ptrDownX!;
-    final dy = e.position.dy - _ptrDownY!;
-    if (!_menuTracking) {
-      if (dx.abs() > 6 && dx.abs() > dy.abs() * 1.1) {
-        // 判定为横向手势 → 开始跟手拖拽菜单
-        _menuTracking = true;
-        _menuDragBase = _menuAnim.value;
-        _menuController.stop();
-      } else if (dy.abs() > 12) {
-        // 纵向手势 → 交给列表滚动，本指针不再跟踪
-        _ptrDownX = null;
-        return;
+  void _onMenuDragUpdate(DragUpdateDetails d) {
+    final base = _menuDragBase;
+    if (base == null) return;
+    _menuDragDx += d.delta.dx;
+    _menuDragDy += d.delta.dy;
+    if (!_menuDragActive) {
+      if (_menuDragDx.abs() > _menuDragDy.abs()) {
+        _menuDragActive = true; // 横向占优 → 开始跟手
       } else {
-        return;
+        return; // 纵向为主 → 忽略
       }
     }
-    // 记录瞬时速度（指数平滑），用于快速甩动判定
-    if (_prevTime != null) {
-      final dt = (e.timeStamp - _prevTime!).inMicroseconds / 1e6;
-      if (dt > 0) {
-        final inst = (dx - _prevDx) / dt;
-        _flingSpeed = _flingSpeed * 0.6 + inst * 0.4;
-      }
-    }
-    _prevDx = dx;
-    _prevTime = e.timeStamp;
     final w = MediaQuery.of(context).size.width * 3 / 4;
-    _menuController.value =
-        (_menuDragBase! + dx / w).clamp(0.0, 1.0);
+    _menuController.value = (base + _menuDragDx / w).clamp(0.0, 1.0);
   }
 
-  void _onPtrUp(PointerEvent e) {
-    final tracking = _menuTracking;
-    final speed = _flingSpeed;
-    _ptrDownX = null;
-    _ptrDownY = null;
-    _menuTracking = false;
+  void _onMenuDragEnd(DragEndDetails d) {
+    final base = _menuDragBase;
     _menuDragBase = null;
-    if (!tracking) return;
+    if (base == null || !_menuDragActive) return;
     final screenW = MediaQuery.of(context).size.width;
     // 已拉出的距离（像素），菜单宽度为屏幕的 3/4
     final dragged = _menuController.value * screenW * 3 / 4;
-    // 快速甩动优先：向右快甩直接展开，向左快甩直接收回
-    if (speed < -900) {
-      setState(() => _menuOpen = false);
-      _menuController.reverse();
-    } else if (speed > 900 || dragged > screenW / 3) {
-      setState(() => _menuOpen = true);
-      _menuController.forward();
+    final vx = d.velocity.pixelsPerSecond.dx;
+    // 快速甩动优先：向左快甩直接收回，向右快甩直接展开
+    if (vx < -900) {
+      _closeMenu();
+    } else if (vx > 900 || dragged > screenW / 3) {
+      _openMenu();
     } else {
-      setState(() => _menuOpen = false);
-      _menuController.reverse();
+      _closeMenu();
+    }
+  }
+
+  void _onMenuDragCancel() {
+    final active = _menuDragActive;
+    _menuDragBase = null;
+    if (!active) return;
+    if (_menuController.value > 0.5) {
+      _openMenu();
+    } else {
+      _closeMenu();
     }
   }
 
@@ -818,40 +795,36 @@ class _HomeScreenState extends State<HomeScreen>
                           ),
                         ),
                       ),
-                      // 手势层（半屏，铺满全屏高度）：右滑拉出菜单。
-                      // 优先级由业务侧决定——页面内横向功能（日历翻月、攒钱
-                      // 滑动、置顶卡带）执行时会把 menuDragBlocked 置 true，
-                      // 菜单在判定阶段让位；本层本身不拦截指针，始终放行，
-                      // 避免挡住下方组件的 PointerDown。
+                      // 手势层（左半屏）：右滑拉出菜单。pan 识别器（36px 声明
+                      // 阈值）进手势竞技场——页面内横向/纵向手势（18px 声明）
+                      // 均优先获胜且菜单不参与，二者绝不同时触发；仅在无页面
+                      // 手势争抢的区域菜单才响应。
                       Positioned(
                         left: 0,
                         top: 0,
                         bottom: 0,
                         width: MediaQuery.of(context).size.width / 2,
-                        child: Listener(
+                        child: GestureDetector(
                           behavior: HitTestBehavior.translucent,
-                          onPointerDown: _onPtrDown,
-                          onPointerMove: _onPtrMove,
-                          onPointerUp: _onPtrUp,
-                          onPointerCancel: _onPtrUp,
+                          onPanStart: _onMenuDragStart,
+                          onPanUpdate: _onMenuDragUpdate,
+                          onPanEnd: _onMenuDragEnd,
+                          onPanCancel: _onMenuDragCancel,
                         ),
                       ),
-                      // 右 2/3 手势层：菜单打开时左滑跟手收回。
-                      // 仅菜单打开时接管指针（关闭时无需收回手势）。
+                      // 右 2/3 手势层：菜单打开时左滑跟手收回。与左半屏共用
+                      // 同一套回调；菜单关闭时拖动值被钳制在 0，无副作用。
                       Positioned(
                         left: MediaQuery.of(context).size.width / 3,
                         top: 0,
                         bottom: 0,
                         width: MediaQuery.of(context).size.width * 2 / 3,
-                        child: Listener(
-                          behavior: _menuCloseSwipeEnabled
-                              ? HitTestBehavior.translucent
-                              : HitTestBehavior.deferToChild,
-                          onPointerDown: _onPtrDown,
-                          onPointerMove: _onPtrMove,
-                          onPointerUp: _onPtrUp,
-                          onPointerCancel: _onPtrUp,
-                          child: const SizedBox.expand(),
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.translucent,
+                          onPanStart: _onMenuDragStart,
+                          onPanUpdate: _onMenuDragUpdate,
+                          onPanEnd: _onMenuDragEnd,
+                          onPanCancel: _onMenuDragCancel,
                         ),
                       ),
                     ],

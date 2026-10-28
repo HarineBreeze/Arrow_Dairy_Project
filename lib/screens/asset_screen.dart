@@ -692,6 +692,7 @@ class AssetScreenState extends State<AssetScreen> {
     return ClipRRect(
       borderRadius: BorderRadius.circular(4),
       child: SizedBox(
+        key: const ValueKey('asset-structure-bar'),
         height: 7,
         width: double.infinity,
         child: total <= 0
