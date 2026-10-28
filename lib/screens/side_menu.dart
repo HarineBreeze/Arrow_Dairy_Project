@@ -34,16 +34,23 @@ class SideMenu extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 28),          Center(
-            child: GestureDetector(
-              onTap: onOpenProfile,
+          const SizedBox(height: 28),
+          // 头像 / 昵称 / UID 统一左对齐，与下方导航项左边缘对齐
+          GestureDetector(
+            onTap: onOpenProfile,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 28),
               child: buildAppAvatar(profile, radius: 42),
             ),
           ),
           const SizedBox(height: 12),
-          Center(
+          Padding(
+            padding: const EdgeInsets.only(left: 28, right: 20),
             child: Text(
               nickname,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.left,
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -53,9 +60,11 @@ class SideMenu extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           // 用户 ID：暂用固定值，后续接入服务器后再按规则生成
-          const Center(
+          const Padding(
+            padding: EdgeInsets.only(left: 28, right: 20),
             child: Text(
               'ID：10001',
+              textAlign: TextAlign.left,
               style: TextStyle(
                 fontSize: 12,
                 color: Color(0xFF9AA8BF),
@@ -142,7 +151,7 @@ class SideMenu extends StatelessWidget {
                 const SizedBox(height: gap),
                 _buildTabItem(
                   icon: Icons.inventory_2_outlined,
-                  label: '物资清单',
+                  label: '物品清单',
                   selected: currentTab == 'items',
                   onTap: onOpenItems,
                   height: tabHeight,
@@ -150,7 +159,7 @@ class SideMenu extends StatelessWidget {
                 const SizedBox(height: gap),
                 _buildTabItem(
                   icon: Icons.event_available_outlined,
-                  label: '倒数日',
+                  label: '重要事件',
                   selected: currentTab == 'countdown',
                   onTap: onOpenCountdown,
                   height: tabHeight,

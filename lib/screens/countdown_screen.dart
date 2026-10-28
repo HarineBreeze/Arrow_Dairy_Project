@@ -509,15 +509,14 @@ class CountdownScreenState extends State<CountdownScreen> {
               width: 46,
               height: 46,
               alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: grey ? const Color(0xFFE4E6EA) : const Color(0xFFF0F4FB),
-                borderRadius: BorderRadius.circular(12),
-              ),
+              // 不再给图标加底纹色块，图标直接落在卡片底色上
               child: Text(
                   e.icon.trim().isEmpty
                       ? CountdownEvent.defaultIconFor(e.type)
                       : e.icon,
-                  style: const TextStyle(fontSize: 24)),
+                  style: TextStyle(
+                      fontSize: 24,
+                      color: grey ? const Color(0xFF9AA8BF) : null)),
             ),
             const SizedBox(width: 12),
             Expanded(

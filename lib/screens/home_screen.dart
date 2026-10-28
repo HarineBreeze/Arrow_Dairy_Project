@@ -1991,7 +1991,7 @@ class _DiaryCard extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(14),
         child: ColoredBox(
-          color: isPinned ? const Color(0xFFFDF1F3) : Colors.transparent,
+          color: isPinned ? const Color(0xFFFBE3E8) : Colors.transparent,
           child: CustomPaint(
           foregroundPainter: _DashedRRectPainter(
               color: isPinned ? const Color(0xFFE0576A) : const Color(0xFFC9CFD9),
@@ -2079,9 +2079,9 @@ class _PinnedStripePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     canvas.drawRect(
-        Offset.zero & size, Paint()..color = const Color(0xFFFDF1F3));
+        Offset.zero & size, Paint()..color = const Color(0xFFFBE3E8));
     final paint = Paint()
-      ..color = const Color(0xFFF6DFE4)
+      ..color = const Color(0xFFF0CBD4)
       ..strokeWidth = 4
       ..style = PaintingStyle.stroke;
     for (double x = -size.height; x < size.width + size.height; x += 16) {

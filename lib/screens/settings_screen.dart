@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import '../services/app_settings.dart';
 import '../services/backup_service.dart';
-import '../ui_kit/gallery_screen.dart';
 import 'font_picker_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -270,13 +269,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         children: [
-          const Padding(
-            padding: EdgeInsets.only(left: 4, bottom: 8),
-            child: Text('数据备份',
-                style: TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF9AA8BF),
-                    fontWeight: FontWeight.w600)),
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 8),
+            child: Row(
+              children: [
+                const Text('数据备份',
+                    style: TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF9AA8BF),
+                        fontWeight: FontWeight.w600)),
+                const SizedBox(width: 6),
+                // 教程入口：标题旁的蓝色圈叹号，点击弹出换机/导入说明
+                GestureDetector(
+                  onTap: () => _showBackupTutorial(context),
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    width: 16,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                          color: const Color(0xFF3B6FE0), width: 1.2),
+                    ),
+                    alignment: Alignment.center,
+                    child: const Text(
+                      '!',
+                      style: TextStyle(
+                        fontSize: 10,
+                        height: 1,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF3B6FE0),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           Container(
             decoration: BoxDecoration(
@@ -367,54 +395,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          const Padding(
-            padding: EdgeInsets.only(left: 4, bottom: 8),
-            child: Text('界面方案',
-                style: TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF9AA8BF),
-                    fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
+  }
+
+  /// 数据备份教程弹窗（原先直接铺在设置页底部，改为标题旁圈叹号触发）
+  void _showBackupTutorial(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('数据备份说明', style: TextStyle(fontSize: 17)),
+        content: const SingleChildScrollView(
+          child: Text(
+            '换机流程：旧手机「导出数据」→ 把文件传到新手机 → 新手机「导入数据」。\n\n'
+            '从微信导入：先在微信中点开文件 → 右上角「…」→「保存到手机」，'
+            '再在导入的文件选择器里进入「内部存储 / Download / WeiXin」目录选择'
+            '（选择器里可点左上角菜单浏览全部文件夹）。',
+            style: TextStyle(fontSize: 13, height: 1.6),
           ),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFE8EDF5)),
-            ),
-            child: _buildItem(
-              icon: Icons.dashboard_customize_outlined,
-              iconColor: const Color(0xFF3B6FE0),
-              title: 'UI 方案预览',
-              subtitle: '四套成套设计（菜单侧边栏 + 四个主页），可并排对比与交互预览',
-              busy: false,
-              onTap: () => Navigator.push(
-                context,
-                PageRouteBuilder(
-                  transitionDuration: const Duration(milliseconds: 300),
-                  reverseTransitionDuration: const Duration(milliseconds: 300),
-                  pageBuilder: (_, __, ___) => const UiGalleryScreen(),
-                  transitionsBuilder: (_, animation, __, child) {
-                    final curved = CurvedAnimation(
-                        parent: animation, curve: Curves.easeOutCubic);
-                    return SlideTransition(
-                      position: Tween<Offset>(
-                        begin: const Offset(1, 0),
-                        end: Offset.zero,
-                      ).animate(curved),
-                      child: child,
-                    );
-                  },
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 4),
-            child: Text(
-              '换机流程：旧手机「导出数据」→ 把文件传到新手机 → 新手机「导入数据」。\n\n从微信导入：先在微信中点开文件 → 右上角「…」→「保存到手机」，再在导入的文件选择器里进入「内部存储 / Download / WeiXin」目录选择（选择器里可点左上角菜单浏览全部文件夹）。',
-              style: TextStyle(fontSize: 12, color: Color(0xFF9AA8BF)),
-            ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('知道了'),
           ),
         ],
       ),

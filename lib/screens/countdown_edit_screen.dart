@@ -50,7 +50,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
     }
     if (_target == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请选择目的日')),
+        const SnackBar(content: Text('请选择事件日')),
       );
       return false;
     }
@@ -153,7 +153,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
     return '${t.year}年${t.month}月${t.day}日  $hh:$mm';
   }
 
-  /// 目的日在未来 → 倒数；在过去 → 正数
+  /// 事件日在未来 → 倒数；在过去 → 正数
   bool get _isCountdown =>
       _target != null && _target!.isAfter(DateTime.now());
 
@@ -239,8 +239,8 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
             ),
             const SizedBox(height: 16),
 
-            // 目的日：左侧日期输入框 + 右侧「正数/倒数」标记框（同一行、各自独立）
-            _sectionLabel('目的日'),
+            // 事件日：左侧日期输入框 + 右侧「正数/倒数」标记框（同一行、各自独立）
+            _sectionLabel('事件日'),
             // IntrinsicHeight：让两框等高，又不受滚动视图无界高度影响
             IntrinsicHeight(
               child: Row(
@@ -720,7 +720,7 @@ class _DatePickerPageState extends State<_DatePickerPage> {
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        title: const Text('选择目的日'),
+        title: const Text('选择事件日'),
       ),
       body: Column(
         children: [
