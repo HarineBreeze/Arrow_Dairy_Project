@@ -765,10 +765,10 @@ class AssetScreenState extends State<AssetScreen> {
                 ],
               ),
             ),
-            // 金额（隐藏状态：保留 ¥/-¥ 标识，数字显示 ****）
+            // 金额（隐藏状态：统一为 ¥****，负数不加负号）
             Text(
               _hideNumbers
-                  ? (negative ? '-¥****' : '¥****')
+                  ? '¥****'
                   : (negative
                       ? '-¥${(-a.amount).toStringAsFixed((-a.amount).truncateToDouble() == -a.amount ? 0 : 2)}'
                       : '¥${a.amount.toStringAsFixed(a.amount.truncateToDouble() == a.amount ? 0 : 2)}'),

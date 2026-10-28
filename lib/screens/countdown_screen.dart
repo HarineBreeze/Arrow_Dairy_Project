@@ -469,7 +469,6 @@ class CountdownScreenState extends State<CountdownScreen> {
     final grey = e.expired;
     final loopRed = e.loopHighlight;
     Color bg = Colors.white;
-    // 置顶卡片不再使用特殊底纹，与普通卡片一致
     if (grey) bg = const Color(0xFFF0F1F3);
 
     return GestureDetector(
@@ -481,7 +480,8 @@ class CountdownScreenState extends State<CountdownScreen> {
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.circular(14),
-          border: loopRed
+          // 置顶 / 到期循环标记：红色描边（与其它主页置顶描边统一）
+          border: (loopRed || e.pinned)
               ? Border.all(color: const Color(0xFFE0576A), width: 1.5)
               : null,
         ),

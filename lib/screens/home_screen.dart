@@ -1646,10 +1646,14 @@ class _DiaryCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      color: isPinned
-          ? const Color(0xFFFBE9EC) // 置顶笔记：低饱和度淡粉色
-          : (isEncrypted ? const Color(0xFFE4E7EC) : Colors.white),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        // 置顶笔记：红色描边（收纳栏不变）
+        side: isPinned
+            ? const BorderSide(color: Color(0xFFE0576A), width: 1.5)
+            : BorderSide.none,
+      ),
+      color: isEncrypted ? const Color(0xFFE4E7EC) : Colors.white,
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
         onTap: onTap,

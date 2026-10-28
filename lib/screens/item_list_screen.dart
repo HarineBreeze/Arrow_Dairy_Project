@@ -712,6 +712,10 @@ class _ItemCardState extends State<_ItemCard> {
             ? const Color(0xFFFBE9EC) // 低饱和度淡粉色
             : (item.lostDate != null ? const Color(0xFFE4E7EC) : Colors.white),
         borderRadius: BorderRadius.circular(14),
+        // 愿望单物品：红色描边
+        border: item.wishlist
+            ? Border.all(color: const Color(0xFFE0576A), width: 1.5)
+            : null,
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
