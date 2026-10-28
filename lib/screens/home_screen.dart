@@ -920,6 +920,8 @@ class _HomeScreenState extends State<HomeScreen>
 
   Widget _buildBody() {
     final groups = _buildGroups();
+    // 置顶笔记：顶部横滑卡带（不参与时间分组）
+    final pinned = _filtered.where((e) => e.pinned).toList();
     // 标签筛选 + 全部视图：不按时间分组，所有匹配笔记平铺展示
     final flatTopicList = _activeTopic != null && _viewMode == 'all';
     return Column(
@@ -973,39 +975,42 @@ class _HomeScreenState extends State<HomeScreen>
                       },
                     )
                   : ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-                  itemCount: groups.length,
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+                  itemCount: groups.length + (pinned.isEmpty ? 0 : 1),
                   itemBuilder: (context, i) {
+                    // 首项：置顶横滑卡带（P3）
+                    if (pinned.isNotEmpty) {
+                      if (i == 0) return _buildPinnedRail(pinned);
+                      i -= 1;
+                    }
                     final group = groups[i];
                     final expanded = _isGroupExpanded(group.key);
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildGroupHeader(group, expanded),
-                          if (expanded)
-                            ...group.entries.map((e) => Padding(
-                                  padding: const EdgeInsets.only(top: 8),
-                                  child: Listener(
-                                    // 按住卡片 500ms 不动，弹出操作菜单
-                                    onPointerDown: (ev) =>
-                                        _onCardPointerDown(e, ev.position),
-                                    onPointerMove: (ev) =>
-                                        _onCardPointerMove(ev.position),
-                                    onPointerUp: (_) => _cancelPressTracking(),
-                                    onPointerCancel: (_) =>
-                                        _cancelPressTracking(),
-                                    child: _DiaryCard(
-                                      entry: e,
-                                      isPinned: e.pinned,
-                                      onTap: () => _openNote(e),
-                                      onDelete: () => _delete(e),
-                                    ),
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildGroupHeader(group, expanded),
+                        if (expanded)
+                          ...group.entries.map((e) => Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: Listener(
+                                  // 按住卡片 500ms 不动，弹出操作菜单
+                                  onPointerDown: (ev) =>
+                                      _onCardPointerDown(e, ev.position),
+                                  onPointerMove: (ev) =>
+                                      _onCardPointerMove(ev.position),
+                                  onPointerUp: (_) => _cancelPressTracking(),
+                                  onPointerCancel: (_) =>
+                                      _cancelPressTracking(),
+                                  child: _DiaryCard(
+                                    entry: e,
+                                    isPinned: e.pinned,
+                                    onTap: () => _openNote(e),
+                                    onDelete: () => _delete(e),
                                   ),
-                                )),
-                        ],
-                      ),
+                                ),
+                              )),
+                        if (i == groups.length - 1) const SizedBox(height: 12),
+                      ],
                     );
                   },
                 ),
@@ -1017,15 +1022,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   List<_NoteGroup> _buildGroups() {
     final groups = <_NoteGroup>[];
-    // 置顶笔记单独成栏（置顶在最前），底纹淡粉色
-    final pinned = _filtered.where((e) => e.pinned).toList();
-    if (pinned.isNotEmpty) {
-      groups.add(_NoteGroup(
-          key: '__pinned',
-          label: '置顶笔记',
-          date: pinned.first.publishDate,
-          entries: pinned));
-    }
+    // 置顶笔记改为顶部横滑卡带，不再进入时间分组
     _NoteGroup? current;
     for (final e in _filtered) {
       if (e.pinned) continue; // 置顶的移出普通日期分栏
@@ -1098,55 +1095,98 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
+  /// 置顶横滑卡带（P3）：一行小标题 + 可左右滑动的迷你卡
+  Widget _buildPinnedRail(List<DiaryEntry> pinned) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 12, left: 2, bottom: 7),
+          child: Text(
+            '📌 置顶 ${pinned.length} 篇 · 左右滑动',
+            style: const TextStyle(fontSize: 11.5, color: Color(0xFFC4697C)),
+          ),
+        ),
+        SizedBox(
+          height: 62,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.only(right: 4),
+            itemCount: pinned.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (context, i) {
+              final e = pinned[i];
+              return Listener(
+                onPointerDown: (ev) => _onCardPointerDown(e, ev.position),
+                onPointerMove: (ev) => _onCardPointerMove(ev.position),
+                onPointerUp: (_) => _cancelPressTracking(),
+                onPointerCancel: (_) => _cancelPressTracking(),
+                child: SizedBox(
+                  width: 132,
+                  child: _PinnedMiniCard(
+                    entry: e,
+                    onTap: () => _openNote(e),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 4),
+      ],
+    );
+  }
+
+  /// 时间分组头（T1）：无底块的浅灰小字行；今天用蓝色高亮日期
   Widget _buildGroupHeader(_NoteGroup group, bool expanded) {
-    final isToday = _viewMode == 'all' && _sameDay(group.date, DateTime.now());
-    final isPinnedGroup = group.key == '__pinned';
+    final isToday = _sameDay(group.date, DateTime.now());
+    final isWeekView = _viewMode == 'all';
+    final accent = isToday && isWeekView;
+    // 日视图：「10月27日」＋ 星期；月/年视图：整段作为日期
+    final dateText = isWeekView
+        ? '${group.date.month}月${group.date.day}日'
+        : group.label;
     return InkWell(
       onTap: () => _toggleGroup(group.key),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: isPinnedGroup
-              ? const Color(0xFFFBE9EC) // 置顶分栏：低饱和度淡粉色
-              : const Color(0xFFDCE7FF),
-          borderRadius: BorderRadius.circular(10),
-        ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(2, 12, 2, 7),
         child: Row(
           children: [
-            Icon(
-              expanded ? Icons.expand_less : Icons.expand_more,
-              size: 18,
-              color: isPinnedGroup
-                  ? const Color(0xFFE58BA0)
-                  : const Color(0xFF3B6FE0),
+            AnimatedRotation(
+              turns: expanded ? 0 : -0.25,
+              duration: const Duration(milliseconds: 180),
+              child: const Icon(Icons.expand_more,
+                  size: 13, color: Color(0xFFB4BFD0)),
             ),
-            const SizedBox(width: 8),
-            if (isPinnedGroup) ...[
-              const Text('📌', style: TextStyle(fontSize: 13)),
-              const SizedBox(width: 4),
-            ],
+            const SizedBox(width: 3),
             Text(
-              group.label,
-              style: const TextStyle(
-                fontSize: 14,
+              dateText,
+              style: TextStyle(
+                fontSize: 11.5,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF2A3B52),
+                color: accent ? kPrimaryBlue : kTextDark,
               ),
             ),
-            if (isToday && !isPinnedGroup) ...[
-              const SizedBox(width: 6),
+            if (isWeekView && isToday) ...[
+              const SizedBox(width: 5),
               const Text(
                 '今天',
-                style: TextStyle(fontSize: 12, color: Color(0xFF3B6FE0)),
+                style: TextStyle(fontSize: 10.5, color: Color(0xFF9AA8BF)),
+              ),
+            ] else if (isWeekView) ...[
+              const SizedBox(width: 5),
+              Text(
+                _weekdayLabel(group.date),
+                style: const TextStyle(fontSize: 10.5, color: kTextLight),
               ),
             ],
             const Spacer(),
-            if (!isPinnedGroup)
-              Text(
-                '发布数 ${group.entries.length}',
-                style:
-                    const TextStyle(fontSize: 12, color: Color(0xFF5A6B82)),
-              ),
+            Text(
+              '${group.entries.length} 篇',
+              style: const TextStyle(fontSize: 10.5, color: kTextLight),
+            ),
           ],
         ),
       ),
@@ -1572,6 +1612,72 @@ class _NoteGroup {
     required this.date,
     required this.entries,
   });
+}
+
+/// 置顶横滑卡带里的迷你卡（P3）：红描边 + 标题 + 日期/心情，加密笔记只露副标题
+class _PinnedMiniCard extends StatelessWidget {
+  final DiaryEntry entry;
+  final VoidCallback onTap;
+
+  const _PinnedMiniCard({Key? key, required this.entry, required this.onTap})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final d = entry.publishDate;
+    final dateLabel = '${d.month}.${d.day}';
+    final encrypted = entry.encrypted;
+    final title = encrypted
+        ? (entry.subtitle.isNotEmpty ? entry.subtitle : '加密笔记')
+        : (entry.title.isNotEmpty ? entry.title : '（无标题）');
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(11),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(11),
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(11),
+            border: Border.all(color: const Color(0xFFE0576A), width: 1.3),
+          ),
+          padding: const EdgeInsets.fromLTRB(9, 8, 9, 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Row(
+                children: [
+                  if (encrypted) ...[
+                    const Text('🔒', style: TextStyle(fontSize: 10)),
+                    const SizedBox(width: 3),
+                  ],
+                  Expanded(
+                    child: Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: kTextDark,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 5),
+              Text(
+                encrypted ? dateLabel : '$dateLabel · ${entry.mood}',
+                maxLines: 1,
+                style: const TextStyle(fontSize: 9.5, color: kTextLight),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _DayCell extends StatelessWidget {
