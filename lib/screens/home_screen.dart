@@ -1646,22 +1646,16 @@ class _PinnedMiniCard extends StatelessWidget {
   const _PinnedMiniCard({Key? key, required this.entry, required this.onTap})
       : super(key: key);
 
-  /// 时间标签（hh:mm），置顶卡与小卡共用
-  static String _fmtTime(DateTime d) {
-    final h = d.hour.toString().padLeft(2, '0');
-    final m = d.minute.toString().padLeft(2, '0');
-    return '$h:$m';
-  }
-
   @override
   Widget build(BuildContext context) {
     final d = entry.publishDate;
     final encrypted = entry.encrypted;
+    // 置顶卡两种形态，均为两行：
+    // ① 加密笔记：第 1 行副标题，第 2 行「月.日 + 锁」
+    // ② 公开笔记：第 1 行标题，   第 2 行「月.日 + 心情」
     final title = encrypted
         ? (entry.subtitle.isNotEmpty ? entry.subtitle : '加密笔记')
         : (entry.title.isNotEmpty ? entry.title : '（无标题）');
-    // 与主页普通笔记卡同款左侧日期列：大号「日」+ 下方「年.月」
-    final time = _fmtTime(entry.createdAt);
     return Material(
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(11),
@@ -1682,77 +1676,40 @@ class _PinnedMiniCard extends StatelessWidget {
               child: Container(
                 color: encrypted ? Colors.transparent : Colors.white,
                 padding: const EdgeInsets.fromLTRB(9, 8, 9, 8),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // 左侧日期列：与普通笔记卡同构（大号「日」+ 下方「月.日」）
-                    Container(
-                      padding: const EdgeInsets.only(right: 7),
-                      margin: const EdgeInsets.symmetric(vertical: 2),
-                      decoration: const BoxDecoration(
-                        border: Border(
-                          right: BorderSide(color: Color(0xFFE8EDF5)),
-                        ),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text('${d.day}',
-                              style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF3B6FE0),
-                                  height: 1.1)),
-                          const SizedBox(height: 1),
-                          Text(time,
-                              maxLines: 1,
-                              softWrap: false,
-                              style: const TextStyle(
-                                  fontSize: 8.5, color: kTextLight)),
-                        ],
+                    // 第 1 行：标题 / 副标题
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: kTextDark,
                       ),
                     ),
-                    const SizedBox(width: 7),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
+                    const SizedBox(height: 5),
+                    // 第 2 行：月.日 + （加密：锁 / 公开：心情）
+                    Row(
+                      children: [
+                        Text(
+                          '${d.month}.${d.day}',
+                          style:
+                              const TextStyle(fontSize: 9.5, color: kTextLight),
+                        ),
+                        const SizedBox(width: 3),
+                        if (encrypted)
+                          const Icon(Icons.lock, size: 10, color: kTextLight)
+                        else
                           Text(
-                            title,
+                            entry.mood,
                             maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w600,
-                              color: kTextDark,
-                            ),
+                            style: const TextStyle(fontSize: 9.5),
                           ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              // 加密卡：日期位置换成「已加密」，锁图标紧跟其后
-                              if (encrypted) ...[
-                                const Text('已加密',
-                                    style: TextStyle(
-                                        fontSize: 9.5, color: kTextLight)),
-                                const SizedBox(width: 3),
-                                const Icon(Icons.lock,
-                                    size: 10, color: kTextLight),
-                              ] else
-                                Expanded(
-                                  child: Text(
-                                    '${d.month}.${d.day} · ${entry.mood}',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                        fontSize: 9.5, color: kTextLight),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ],
-                      ),
+                      ],
                     ),
                   ],
                 ),
@@ -2041,90 +1998,35 @@ class _DiaryCard extends StatelessWidget {
             child: CustomPaint(
               painter: isPinned ? const _PinnedStripePainter() : null,
               child: Material(
-                // 置顶加密卡：与置顶公开笔记同款撕页式布局 ——
-                // 左列「日 / 年.月」，右侧标题+底部信息行。
+                // 置顶加密卡：沿用封条式排版（顶部密封带 + 副标题时间行），
+                // 仅把锁图标从标题前移到时间右侧。
                 color: isPinned ? const Color(0xE6FFFFFF) : Colors.white,
                 child: InkWell(
                   onTap: onTap,
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(13, 12, 14, 12),
+                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
                     child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        // 左侧日期列：与普通笔记卡的撕页日历同构 ——
-                        // 上方大号「日」、下方「年.月」，正文左对齐日期列右侧。
-                        Container(
-                          width: 52,
-                          padding: const EdgeInsets.only(right: 10),
-                          margin: const EdgeInsets.symmetric(vertical: 4),
-                          decoration: const BoxDecoration(
-                            border: Border(
-                              right: BorderSide(color: Color(0xFFE8EDF5)),
+                        Expanded(
+                          child: Text(
+                            entry.subtitle.isNotEmpty ? entry.subtitle : '加密笔记',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: entry.subtitle.isNotEmpty
+                                  ? const Color(0xFF5A6B82)
+                                  : const Color(0xFF9AA8BF),
                             ),
                           ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text('${entry.publishDate.day}',
-                                  style: const TextStyle(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.w700,
-                                      color: Color(0xFF3B6FE0),
-                                      height: 1.1)),
-                              const SizedBox(height: 2),
-                              FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Text(
-                                    '${entry.publishDate.year}.${entry.publishDate.month.toString().padLeft(2, '0')}',
-                                    maxLines: 1,
-                                    softWrap: false,
-                                    style: const TextStyle(
-                                        fontSize: 10, color: kTextLight)),
-                              ),
-                            ],
-                          ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // 首行：副标题（加密笔记不外显标题）
-                              Text(
-                                entry.subtitle.isNotEmpty
-                                    ? entry.subtitle
-                                    : '加密笔记',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w500,
-                                  color: entry.subtitle.isNotEmpty
-                                      ? const Color(0xFF5A6B82)
-                                      : const Color(0xFF9AA8BF),
-                                ),
-                              ),
-                              const SizedBox(height: 5),
-                              // 次行：时间 + 锁图标（锁紧贴时间右侧，对应公开笔记
-                              // 置顶卡里心情/天气图标的位置）
-                              Row(
-                                children: [
-                                  Text(_timeLabel(entry.createdAt),
-                                      style: const TextStyle(
-                                          fontSize: 11, color: kTextLight)),
-                                  const SizedBox(width: 6),
-                                  const Icon(Icons.lock,
-                                      size: 12, color: kTextLight),
-                                  const Spacer(),
-                                  const Text('已加密',
-                                      style: TextStyle(
-                                          fontSize: 10.5, color: kTextLight)),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
+                        const SizedBox(width: 8),
+                        Text(_timeLabel(entry.createdAt),
+                            style: const TextStyle(
+                                fontSize: 11, color: kTextLight)),
+                        const SizedBox(width: 4),
+                        const Icon(Icons.lock, size: 12, color: kTextLight),
                       ],
                     ),
                   ),
