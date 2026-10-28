@@ -1690,8 +1690,8 @@ class _DiaryCard extends StatelessWidget {
                   children: [
                     // 左侧日期徽章：大号「日」+ 年月小字，像撕页日历
                     Container(
-                      width: 46,
-                      padding: const EdgeInsets.only(right: 12),
+                      width: 52,
+                      padding: const EdgeInsets.only(right: 10),
                       margin: const EdgeInsets.symmetric(vertical: 4),
                       decoration: const BoxDecoration(
                         border: Border(
@@ -1709,10 +1709,16 @@ class _DiaryCard extends StatelessWidget {
                                   color: Color(0xFF3B6FE0),
                                   height: 1.1)),
                           const SizedBox(height: 2),
-                          Text(
-                              '${entry.publishDate.year}.${entry.publishDate.month.toString().padLeft(2, '0')}',
-                              style: const TextStyle(
-                                  fontSize: 10.5, color: kTextLight)),
+                          // 年月：不换行，超宽时整体缩小适配两位月份
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                                '${entry.publishDate.year}.${entry.publishDate.month.toString().padLeft(2, '0')}',
+                                maxLines: 1,
+                                softWrap: false,
+                                style: const TextStyle(
+                                    fontSize: 10, color: kTextLight)),
+                          ),
                         ],
                       ),
                     ),
