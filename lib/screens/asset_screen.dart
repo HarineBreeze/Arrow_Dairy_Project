@@ -726,20 +726,23 @@ class AssetScreenState extends State<AssetScreen> {
     return GestureDetector(
       onTap: () => _openEditor(a),
       onLongPress: () => _showCardMenu(a),
+      // 左侧色条（B 方案）：底层铺性质色、上层白色卡体，整体按圆角裁切，
+      // 色条两端随卡片圆角自然收弧（Border 左边线是硬直角，观感太方正）
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          // 左侧色条（B 方案）：圆角左侧稍小，形成「色条 + 卡体」的层次
+        child: ClipRRect(
           borderRadius: const BorderRadius.horizontal(
             left: Radius.circular(6),
             right: Radius.circular(14),
           ),
-          border: Border(left: BorderSide(color: barColor, width: 4)),
-        ),
-        child: Row(
-          children: [
+          child: Container(
+            color: barColor,
+            padding: const EdgeInsets.only(left: 4),
+            child: Container(
+              color: Colors.white,
+              padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+              child: Row(
+                children: [
             // 图标
             Container(
               width: 46,
@@ -776,23 +779,26 @@ class AssetScreenState extends State<AssetScreen> {
               ),
             ),
             // 金额（隐藏状态：统一为 ¥****；负资产红，其余黑色）
-            Text(
-              _hideNumbers
-                  ? '¥****'
-                  : (negative
-                      ? '-¥${(-a.amount).toStringAsFixed((-a.amount).truncateToDouble() == -a.amount ? 0 : 2)}'
-                      : '¥${a.amount.toStringAsFixed(a.amount.truncateToDouble() == a.amount ? 0 : 2)}'),
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: negative
-                    ? const Color(0xFFE06A6A)
-                    : const Color(0xFF2A3B52),
-              ),
+                Text(
+                  _hideNumbers
+                      ? '¥****'
+                      : (negative
+                          ? '-¥${(-a.amount).toStringAsFixed((-a.amount).truncateToDouble() == -a.amount ? 0 : 2)}'
+                          : '¥${a.amount.toStringAsFixed(a.amount.truncateToDouble() == a.amount ? 0 : 2)}'),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: negative
+                        ? const Color(0xFFE06A6A)
+                        : const Color(0xFF2A3B52),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
+    ),
     );
   }
 }
