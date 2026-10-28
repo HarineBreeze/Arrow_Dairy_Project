@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart' show DragStartBehavior;
 import 'package:flutter/services.dart' show SystemUiOverlayStyle, HapticFeedback;
 import '../models/diary_entry.dart';
 import '../models/user_profile.dart';
@@ -453,6 +454,9 @@ class _HomeScreenState extends State<HomeScreen>
   /// 只有在没有页面手势争抢的区域，pan 才获胜并拉出/收回侧边栏。
   /// pan 胜出后按累计位移的主轴方向决定是否跟手：横向占优才拖动菜单，
   /// 纵向为主的滑动忽略（空白区上下轻扫不应拉出菜单）。
+  /// 手势层设置 dragStartBehavior: DragStartBehavior.down，使 pan 胜出后
+  /// 首次 onPanUpdate 携带「36px 声明阈值前的累计位移」，跟手不再丢失这段
+  /// 距离——避免空白区第一次滑动只把侧边卡带出一点点、需第二次才正常。
   double? _menuDragBase;
   double _menuDragDx = 0;
   double _menuDragDy = 0;
@@ -806,6 +810,7 @@ class _HomeScreenState extends State<HomeScreen>
                         width: MediaQuery.of(context).size.width / 2,
                         child: GestureDetector(
                           behavior: HitTestBehavior.translucent,
+                          dragStartBehavior: DragStartBehavior.down,
                           onPanStart: _onMenuDragStart,
                           onPanUpdate: _onMenuDragUpdate,
                           onPanEnd: _onMenuDragEnd,
@@ -821,6 +826,7 @@ class _HomeScreenState extends State<HomeScreen>
                         width: MediaQuery.of(context).size.width * 2 / 3,
                         child: GestureDetector(
                           behavior: HitTestBehavior.translucent,
+                          dragStartBehavior: DragStartBehavior.down,
                           onPanStart: _onMenuDragStart,
                           onPanUpdate: _onMenuDragUpdate,
                           onPanEnd: _onMenuDragEnd,

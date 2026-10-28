@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart' show DragStartBehavior;
 import 'package:flutter_test/flutter_test.dart';
 
 /// 手势竞技场优先级自检：复刻主页结构——
@@ -19,6 +20,7 @@ class _MenuHarness extends StatefulWidget {
 class _MenuHarnessState extends State<_MenuHarness> {
   int pageDrags = 0;
   int menuDrags = 0;
+  double menuDx = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -41,11 +43,13 @@ class _MenuHarnessState extends State<_MenuHarness> {
                     )
                   : const ColoredBox(color: Colors.white),
         ),
-        // 顶层：菜单手势层（与主页实现一致：translucent + pan）
+        // 顶层：菜单手势层（与主页实现一致：translucent + pan + down）
         Positioned.fill(
           child: GestureDetector(
             behavior: HitTestBehavior.translucent,
+            dragStartBehavior: DragStartBehavior.down,
             onPanStart: (_) => setState(() => menuDrags++),
+            onPanUpdate: (d) => setState(() => menuDx += d.delta.dx),
           ),
         ),
       ],
@@ -100,5 +104,20 @@ void main() {
     final s = tester.state<_MenuHarnessState>(find.byType(_MenuHarness));
     expect(s.menuDrags, 1, reason: '其余场景菜单应正常触发');
     expect(s.pageDrags, 0);
+  });
+
+  testWidgets('空白区第一次滑动：跟手距离不丢失 36px 声明阈值', (tester) async {
+    await pump(
+        tester, const _MenuHarness(pageDragArea: false, pageVerticalOnly: false));
+
+    // 第一次滑动即应跟手全程：pan 的 36px 声明阈值不得被丢弃，
+    // 否则卡片只出来一点点、需要二次滑动才能正常拉出。
+    await tester.dragFrom(const Offset(100, 300), const Offset(120, 0));
+    await tester.pumpAndSettle();
+
+    final s = tester.state<_MenuHarnessState>(find.byType(_MenuHarness));
+    expect(s.menuDrags, 1);
+    expect(s.menuDx, greaterThan(110),
+        reason: '首次滑动应累计接近 120px 全程位移，而非丢失 36px 阈值后只剩 ~84px');
   });
 }
