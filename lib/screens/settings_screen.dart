@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import '../services/app_settings.dart';
 import '../services/backup_service.dart';
+import '../ui_kit/gallery_screen.dart';
 import 'font_picker_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -363,6 +364,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 );
                 if (mounted) setState(() {});
               },
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Padding(
+            padding: EdgeInsets.only(left: 4, bottom: 8),
+            child: Text('界面方案',
+                style: TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF9AA8BF),
+                    fontWeight: FontWeight.w600)),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFE8EDF5)),
+            ),
+            child: _buildItem(
+              icon: Icons.dashboard_customize_outlined,
+              iconColor: const Color(0xFF3B6FE0),
+              title: 'UI 方案预览',
+              subtitle: '四套成套设计（菜单侧边栏 + 四个主页），可并排对比与交互预览',
+              busy: false,
+              onTap: () => Navigator.push(
+                context,
+                PageRouteBuilder(
+                  transitionDuration: const Duration(milliseconds: 300),
+                  reverseTransitionDuration: const Duration(milliseconds: 300),
+                  pageBuilder: (_, __, ___) => const UiGalleryScreen(),
+                  transitionsBuilder: (_, animation, __, child) {
+                    final curved = CurvedAnimation(
+                        parent: animation, curve: Curves.easeOutCubic);
+                    return SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(1, 0),
+                        end: Offset.zero,
+                      ).animate(curved),
+                      child: child,
+                    );
+                  },
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 16),
