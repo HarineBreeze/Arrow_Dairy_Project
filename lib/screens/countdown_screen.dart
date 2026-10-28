@@ -356,25 +356,23 @@ class CountdownScreenState extends State<CountdownScreen> {
 
   // ---------- 构建 ----------
 
-  /// 侧滑返回（系统返回手势/返回键）：
-  /// 日历展开 → 先收起日历；搜索激活 → 先退出搜索；都不在才真正返回。
-  Future<bool> _handleBack() async {
+  /// 返回键/侧滑：日历展开 → 收起日历；搜索激活 → 退出搜索。
+  /// 返回 true 表示本次返回已被本页消费（由主页的 WillPopScope 委托调用）。
+  bool handleBack() {
     if (_calendarExpanded) {
       setState(() => _calendarExpanded = false);
-      return false;
+      return true;
     }
     if (_searching) {
       _closeSearch();
-      return false;
+      return true;
     }
-    return true;
+    return false;
   }
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: _handleBack,
-      child: Column(
+    return Column(
       children: [
         _buildTopBar(),
         ClipRect(
@@ -415,7 +413,6 @@ class CountdownScreenState extends State<CountdownScreen> {
                 ),
         ),
       ],
-    ),
     );
   }
 

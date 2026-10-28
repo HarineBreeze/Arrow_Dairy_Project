@@ -619,6 +619,11 @@ class _HomeScreenState extends State<HomeScreen>
         return false;
       }
     }
+    if (_currentTab == 'countdown') {
+      // 倒数日子页：日历展开/搜索激活时，返回先收起日历/退出搜索
+      final cd = _countdownKey.currentState;
+      if (cd != null && cd.handleBack()) return false;
+    }
     if (_calendarExpanded) {
       setState(() => _calendarExpanded = false);
       return false;
