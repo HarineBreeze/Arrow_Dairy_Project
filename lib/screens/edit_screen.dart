@@ -218,8 +218,14 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     if (b > _maxInset) _maxInset = b;
     // 头部高度系数与键盘高度严格反向：键盘收到一半，区块就展开一半，
     // 两者动画完全同步，收起/弹出全程无跳变、无闪烁。
-    final factor = b <= 0 ? 1.0 : (1.0 - (b / _maxInset).clamp(0.0, 1.0));
-    final kb = b > 0 && !_selecting;
+    //
+    // 注意：只有「正文」持有焦点时才收起头部。标题/副标题的输入框就在
+    // 头部区块里，若跟随任意键盘收起头部，会把自己折叠掉——焦点丢失、
+    // 键盘瞬间收起（弹了又收）。标题/副标题独立于这套键盘联动逻辑。
+    final contentEditing = _contentFocus.hasFocus && !_selecting;
+    final factor =
+        (b <= 0 || !contentEditing) ? 1.0 : (1.0 - (b / _maxInset).clamp(0.0, 1.0));
+    final kb = b > 0 && contentEditing;
     if ((factor - _kbFactor).abs() > 0.001 || kb != _kbVisible) {
       setState(() {
         _kbFactor = factor;
@@ -249,7 +255,14 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     if (!mounted) return;
     // 键盘弹出（非框选模式的聚焦）→ 平滑收起头部信息区，给正文腾出空间
     final kb = _contentFocus.hasFocus && !_selecting;
-    if (kb != _kbVisible) setState(() => _kbVisible = kb);
+    // 正文失焦（如点了标题/副标题）：头部立即展开——键盘高度不变时
+    // didChangeMetrics 不会再触发，必须在这里把高度系数拉回 1。
+    if (kb != _kbVisible || (!kb && _kbFactor != 1.0)) {
+      setState(() {
+        _kbVisible = kb;
+        if (!kb) _kbFactor = 1.0;
+      });
+    }
     if (_contentFocus.hasFocus) {
       if (_selecting) {
         // 框选模式下聚焦：持续压住键盘
