@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart' show DragStartBehavior;
-import 'package:flutter/services.dart' show SystemUiOverlayStyle, HapticFeedback;
+import 'package:flutter/services.dart'
+    show SystemUiOverlayStyle, HapticFeedback;
 import '../models/diary_entry.dart';
 import '../models/user_profile.dart';
 import '../services/diary_storage.dart';
@@ -37,8 +38,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen>
-    with TickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   List<DiaryEntry> _entries = [];
   bool _loading = true;
   bool _searching = false;
@@ -73,8 +73,8 @@ class _HomeScreenState extends State<HomeScreen>
     _visibleMonth = DateTime(now.year, now.month, 1);
     _menuController = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 280));
-    _menuAnim = CurvedAnimation(
-        parent: _menuController, curve: Curves.easeOutCubic);
+    _menuAnim =
+        CurvedAnimation(parent: _menuController, curve: Curves.easeOutCubic);
     _expandedKeys.addAll(_defaultExpandedKeys());
     _load();
     _loadProfile();
@@ -126,10 +126,9 @@ class _HomeScreenState extends State<HomeScreen>
       transitionDuration: const Duration(milliseconds: 300),
       reverseTransitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (context, animation, secondaryAnimation) => page,
-      transitionsBuilder:
-          (context, animation, secondaryAnimation, child) {
-        final curved = CurvedAnimation(
-            parent: animation, curve: Curves.easeOutCubic);
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        final curved =
+            CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
         return SlideTransition(
           position: Tween<Offset>(
             begin: const Offset(1, 0),
@@ -243,8 +242,7 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _openEditor([DiaryEntry? entry]) async {
     final result = await Navigator.push<bool>(
       context,
-      _slideRoute(
-          EditScreen(entry: entry, defaultDate: _selectedDate)),
+      _slideRoute(EditScreen(entry: entry, defaultDate: _selectedDate)),
     );
     if (result == true) _load();
   }
@@ -351,15 +349,13 @@ class _HomeScreenState extends State<HomeScreen>
                     controller: ctrl,
                     autofocus: true,
                     enabled: revealedPwd == null,
-                    decoration:
-                        const InputDecoration(hintText: '请输入答案'),
+                    decoration: const InputDecoration(hintText: '请输入答案'),
                   ),
                   if (error.isNotEmpty) ...[
                     const SizedBox(height: 8),
                     Text(
                       error,
-                      style:
-                          const TextStyle(color: Colors.red, fontSize: 12),
+                      style: const TextStyle(color: Colors.red, fontSize: 12),
                     ),
                   ],
                   if (revealedPwd != null) ...[
@@ -681,8 +677,7 @@ class _HomeScreenState extends State<HomeScreen>
     DiaryEntry? first;
     for (final e in _entries) {
       if (!_sameDay(e.publishDate, d)) continue;
-      if (first == null ||
-          e.createdAt.isBefore(first.createdAt)) {
+      if (first == null || e.createdAt.isBefore(first.createdAt)) {
         first = e;
       }
     }
@@ -748,31 +743,30 @@ class _HomeScreenState extends State<HomeScreen>
         key: _bannerKey,
         onOpenEvent: _openCountdownById,
         child: WillPopScope(
-        onWillPop: _handleBack,
-        child: Scaffold(
-          backgroundColor: const Color(0xFFF3F6FB),
-          // Stack 覆盖整个 body（含状态栏区域）：这样菜单能从屏幕最顶端
-          // 贯通到低端（顶部白色与状态栏区连成一体），遮罩也能盖住状态栏
-          // 区域跟随变暗。主页内容自行用 SafeArea 避开状态栏。
-          body: Container(
-            color: const Color(0xB33B6FE0),
-            child: AnimatedBuilder(
-              animation: _menuAnim,
-              builder: (context, child) {
-                final menuWidth =
-                    MediaQuery.of(context).size.width * 3 / 4;
-                final offset = menuWidth * _menuAnim.value;
-                return Stack(
-                  children: [
-                    Transform.translate(
-                      offset: Offset(offset, 0),
-                      child: SafeArea(
-                        child: Container(
-                          color: const Color(0xFFF3F6FB),
-                          child: child!,
+          onWillPop: _handleBack,
+          child: Scaffold(
+            backgroundColor: const Color(0xFFF3F6FB),
+            // Stack 覆盖整个 body（含状态栏区域）：这样菜单能从屏幕最顶端
+            // 贯通到低端（顶部白色与状态栏区连成一体），遮罩也能盖住状态栏
+            // 区域跟随变暗。主页内容自行用 SafeArea 避开状态栏。
+            body: Container(
+              color: const Color(0xB33B6FE0),
+              child: AnimatedBuilder(
+                animation: _menuAnim,
+                builder: (context, child) {
+                  final menuWidth = MediaQuery.of(context).size.width * 3 / 4;
+                  final offset = menuWidth * _menuAnim.value;
+                  return Stack(
+                    children: [
+                      Transform.translate(
+                        offset: Offset(offset, 0),
+                        child: SafeArea(
+                          child: Container(
+                            color: const Color(0xFFF3F6FB),
+                            child: child!,
+                          ),
                         ),
                       ),
-                    ),
                       // 遮罩层：始终保留在树中。若按 `_menuAnim.value > 0`
                       // 条件增删，首次拖拽跨越 0 时会改变 Stack 子节点结构，
                       // 导致手势层识别器被打断（首次滑动卡住、无 end/cancel）。
@@ -793,8 +787,7 @@ class _HomeScreenState extends State<HomeScreen>
                         top: 0,
                         bottom: 0,
                         child: Transform.translate(
-                          offset:
-                              Offset(-menuWidth * (1 - _menuAnim.value), 0),
+                          offset: Offset(-menuWidth * (1 - _menuAnim.value), 0),
                           child: Material(
                             color: Colors.white,
                             elevation: 8,
@@ -812,7 +805,8 @@ class _HomeScreenState extends State<HomeScreen>
                                   onOpenDiary: () => _switchTab('diary'),
                                   onOpenItems: () => _switchTab('items'),
                                   onOpenAssets: () => _switchTab('assets'),
-                                  onOpenCountdown: () => _switchTab('countdown'),
+                                  onOpenCountdown: () =>
+                                      _switchTab('countdown'),
                                   onOpenSettings: _openSettings,
                                 ),
                               ),
@@ -896,35 +890,35 @@ class _HomeScreenState extends State<HomeScreen>
                                   ),
                                 )
                               : _loading
-                          ? KeyedSubtree(
-                              key: const ValueKey('loading'),
-                              child: _buildSkeleton(),
-                            )
-                          : KeyedSubtree(
-                              key: const ValueKey('diary'),
-                              child: _buildBody(),
-                            ),
+                                  ? KeyedSubtree(
+                                      key: const ValueKey('loading'),
+                                      child: _buildSkeleton(),
+                                    )
+                                  : KeyedSubtree(
+                                      key: const ValueKey('diary'),
+                                      child: _buildBody(),
+                                    ),
                 ),
               ),
+            ),
+            floatingActionButton: _menuOpen
+                ? null
+                : FloatingActionButton(
+                    onPressed: () {
+                      if (_currentTab == 'items') {
+                        _itemListKey.currentState?.openNewItem();
+                      } else if (_currentTab == 'assets') {
+                        _assetListKey.currentState?.openNewAsset();
+                      } else if (_currentTab == 'countdown') {
+                        _countdownKey.currentState?.openNewEvent();
+                      } else {
+                        _openEditor();
+                      }
+                    },
+                    child: const Icon(Icons.add),
+                  ),
           ),
-          floatingActionButton: _menuOpen
-              ? null
-              : FloatingActionButton(
-                  onPressed: () {
-                    if (_currentTab == 'items') {
-                      _itemListKey.currentState?.openNewItem();
-                    } else if (_currentTab == 'assets') {
-                      _assetListKey.currentState?.openNewAsset();
-                    } else if (_currentTab == 'countdown') {
-                      _countdownKey.currentState?.openNewEvent();
-                    } else {
-                      _openEditor();
-                    }
-                  },
-                  child: const Icon(Icons.add),
-                ),
         ),
-      ),
       ),
     );
   }
@@ -972,69 +966,72 @@ class _HomeScreenState extends State<HomeScreen>
                   color: const Color(0xFF3B6FE0),
                   child: flatTopicList
                       ? ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-                      itemCount: _filtered.length,
-                      itemBuilder: (context, i) {
-                        final e = _filtered[i];
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Listener(
-                            onPointerDown: (ev) =>
-                                _onCardPointerDown(e, ev.position),
-                            onPointerMove: (ev) =>
-                                _onCardPointerMove(ev.position),
-                            onPointerUp: (_) => _cancelPressTracking(),
-                            onPointerCancel: (_) => _cancelPressTracking(),
-                            child: _DiaryCard(
-                              entry: e,
-                              isPinned: e.pinned,
-                              onTap: () => _openNote(e),
-                              onDelete: () => _delete(e),
-                            ),
-                          ),
-                        );
-                      },
-                    )
-                  : ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
-                  itemCount: groups.length + (pinned.isEmpty ? 0 : 1),
-                  itemBuilder: (context, i) {
-                    // 首项：置顶横滑卡带（P3）
-                    if (pinned.isNotEmpty) {
-                      if (i == 0) return _buildPinnedRail(pinned);
-                      i -= 1;
-                    }
-                    final group = groups[i];
-                    final expanded = _isGroupExpanded(group.key);
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildGroupHeader(group, expanded),
-                        if (expanded)
-                          ...group.entries.map((e) => Padding(
-                                padding: const EdgeInsets.only(top: 8),
-                                child: Listener(
-                                  // 按住卡片 500ms 不动，弹出操作菜单
-                                  onPointerDown: (ev) =>
-                                      _onCardPointerDown(e, ev.position),
-                                  onPointerMove: (ev) =>
-                                      _onCardPointerMove(ev.position),
-                                  onPointerUp: (_) => _cancelPressTracking(),
-                                  onPointerCancel: (_) =>
-                                      _cancelPressTracking(),
-                                  child: _DiaryCard(
-                                    entry: e,
-                                    isPinned: e.pinned,
-                                    onTap: () => _openNote(e),
-                                    onDelete: () => _delete(e),
-                                  ),
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+                          itemCount: _filtered.length,
+                          itemBuilder: (context, i) {
+                            final e = _filtered[i];
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: Listener(
+                                onPointerDown: (ev) =>
+                                    _onCardPointerDown(e, ev.position),
+                                onPointerMove: (ev) =>
+                                    _onCardPointerMove(ev.position),
+                                onPointerUp: (_) => _cancelPressTracking(),
+                                onPointerCancel: (_) => _cancelPressTracking(),
+                                child: _DiaryCard(
+                                  entry: e,
+                                  isPinned: e.pinned,
+                                  onTap: () => _openNote(e),
+                                  onDelete: () => _delete(e),
                                 ),
-                              )),
-                        if (i == groups.length - 1) const SizedBox(height: 12),
-                      ],
-                    );
-                  },
-                ),
+                              ),
+                            );
+                          },
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+                          itemCount: groups.length + (pinned.isEmpty ? 0 : 1),
+                          itemBuilder: (context, i) {
+                            // 首项：置顶横滑卡带（P3）
+                            if (pinned.isNotEmpty) {
+                              if (i == 0) return _buildPinnedRail(pinned);
+                              i -= 1;
+                            }
+                            final group = groups[i];
+                            final expanded = _isGroupExpanded(group.key);
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildGroupHeader(group, expanded),
+                                if (expanded)
+                                  ...group.entries.map((e) => Padding(
+                                        padding: const EdgeInsets.only(top: 8),
+                                        child: Listener(
+                                          // 按住卡片 500ms 不动，弹出操作菜单
+                                          onPointerDown: (ev) =>
+                                              _onCardPointerDown(
+                                                  e, ev.position),
+                                          onPointerMove: (ev) =>
+                                              _onCardPointerMove(ev.position),
+                                          onPointerUp: (_) =>
+                                              _cancelPressTracking(),
+                                          onPointerCancel: (_) =>
+                                              _cancelPressTracking(),
+                                          child: _DiaryCard(
+                                            entry: e,
+                                            isPinned: e.pinned,
+                                            onTap: () => _openNote(e),
+                                            onDelete: () => _delete(e),
+                                          ),
+                                        ),
+                                      )),
+                                if (i == groups.length - 1)
+                                  const SizedBox(height: 12),
+                              ],
+                            );
+                          },
+                        ),
                 ),
         ),
       ],
@@ -1180,9 +1177,8 @@ class _HomeScreenState extends State<HomeScreen>
     final isWeekView = _viewMode == 'all';
     final accent = isToday && isWeekView;
     // 日视图：「10月27日」＋ 星期；月/年视图：整段作为日期
-    final dateText = isWeekView
-        ? '${group.date.month}月${group.date.day}日'
-        : group.label;
+    final dateText =
+        isWeekView ? '${group.date.month}月${group.date.day}日' : group.label;
     return InkWell(
       onTap: () => _toggleGroup(group.key),
       child: Padding(
@@ -1339,9 +1335,7 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                   const SizedBox(width: 4),
                   Icon(
-                    _calendarExpanded
-                        ? Icons.expand_less
-                        : Icons.expand_more,
+                    _calendarExpanded ? Icons.expand_less : Icons.expand_more,
                     size: 18,
                     color: Colors.white70,
                   ),
@@ -1401,8 +1395,8 @@ class _HomeScreenState extends State<HomeScreen>
                       child: Text(
                         '还没有话题\n在日记正文输入 #话题词 即可创建',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                            fontSize: 13, color: Color(0xFF9AA8BF)),
+                        style:
+                            TextStyle(fontSize: 13, color: Color(0xFF9AA8BF)),
                       ),
                     ),
                   )
@@ -1430,9 +1424,8 @@ class _HomeScreenState extends State<HomeScreen>
                           padding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
-                            color: active
-                                ? const Color(0xFF3B6FE0)
-                                : Colors.white,
+                            color:
+                                active ? const Color(0xFF3B6FE0) : Colors.white,
                             borderRadius: BorderRadius.circular(18),
                             border: Border.all(
                               color: active
@@ -1510,8 +1503,8 @@ class _HomeScreenState extends State<HomeScreen>
           tooltip: '上一年',
           visualDensity: VisualDensity.compact,
           constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-          onPressed: () => setState(() => _visibleMonth = DateTime(
-              _visibleMonth.year - 1, _visibleMonth.month, 1)),
+          onPressed: () => setState(() => _visibleMonth =
+              DateTime(_visibleMonth.year - 1, _visibleMonth.month, 1)),
         ),
         IconButton(
           icon: const Icon(Icons.chevron_left, color: kTextMid),
@@ -1538,8 +1531,8 @@ class _HomeScreenState extends State<HomeScreen>
           tooltip: '下一年',
           visualDensity: VisualDensity.compact,
           constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-          onPressed: () => setState(() => _visibleMonth = DateTime(
-              _visibleMonth.year + 1, _visibleMonth.month, 1)),
+          onPressed: () => setState(() => _visibleMonth =
+              DateTime(_visibleMonth.year + 1, _visibleMonth.month, 1)),
         ),
         const Spacer(),
         TextButton(
@@ -1587,7 +1580,8 @@ class _HomeScreenState extends State<HomeScreen>
     for (int day = 1; day <= daysInMonth; day++) {
       final date = DateTime(year, month, day);
       final hasEntry = _markedDates.contains(_dateKey(date));
-      final isSelected = _selectedDate != null && _sameDay(_selectedDate!, date);
+      final isSelected =
+          _selectedDate != null && _sameDay(_selectedDate!, date);
       final isToday = _sameDay(today, date);
       cells.add(_DayCell(
         day: day,
@@ -1652,14 +1646,22 @@ class _PinnedMiniCard extends StatelessWidget {
   const _PinnedMiniCard({Key? key, required this.entry, required this.onTap})
       : super(key: key);
 
+  /// 时间标签（hh:mm），置顶卡与小卡共用
+  static String _fmtTime(DateTime d) {
+    final h = d.hour.toString().padLeft(2, '0');
+    final m = d.minute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
+
   @override
   Widget build(BuildContext context) {
     final d = entry.publishDate;
-    final dateLabel = '${d.month}.${d.day}';
     final encrypted = entry.encrypted;
     final title = encrypted
         ? (entry.subtitle.isNotEmpty ? entry.subtitle : '加密笔记')
         : (entry.title.isNotEmpty ? entry.title : '（无标题）');
+    // 与主页普通笔记卡同款左侧日期列：大号「日」+ 下方「年.月」
+    final time = _fmtTime(entry.createdAt);
     return Material(
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(11),
@@ -1680,18 +1682,43 @@ class _PinnedMiniCard extends StatelessWidget {
               child: Container(
                 color: encrypted ? Colors.transparent : Colors.white,
                 padding: const EdgeInsets.fromLTRB(9, 8, 9, 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Row(
-                      children: [
-                        if (encrypted) ...[
-                          const Text('🔒', style: TextStyle(fontSize: 10)),
-                          const SizedBox(width: 3),
+                    // 左侧日期列：与普通笔记卡同构（大号「日」+ 下方「月.日」）
+                    Container(
+                      padding: const EdgeInsets.only(right: 7),
+                      margin: const EdgeInsets.symmetric(vertical: 2),
+                      decoration: const BoxDecoration(
+                        border: Border(
+                          right: BorderSide(color: Color(0xFFE8EDF5)),
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('${d.day}',
+                              style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF3B6FE0),
+                                  height: 1.1)),
+                          const SizedBox(height: 1),
+                          Text(time,
+                              maxLines: 1,
+                              softWrap: false,
+                              style: const TextStyle(
+                                  fontSize: 8.5, color: kTextLight)),
                         ],
-                        Expanded(
-                          child: Text(
+                      ),
+                    ),
+                    const SizedBox(width: 7),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
                             title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -1701,14 +1728,31 @@ class _PinnedMiniCard extends StatelessWidget {
                               color: kTextDark,
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      encrypted ? dateLabel : '$dateLabel · ${entry.mood}',
-                      maxLines: 1,
-                      style: const TextStyle(fontSize: 9.5, color: kTextLight),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              // 加密卡：日期位置换成「已加密」，锁图标紧跟其后
+                              if (encrypted) ...[
+                                const Text('已加密',
+                                    style: TextStyle(
+                                        fontSize: 9.5, color: kTextLight)),
+                                const SizedBox(width: 3),
+                                const Icon(Icons.lock,
+                                    size: 10, color: kTextLight),
+                              ] else
+                                Expanded(
+                                  child: Text(
+                                    '${d.month}.${d.day} · ${entry.mood}',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                        fontSize: 9.5, color: kTextLight),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -1862,119 +1906,115 @@ class _DiaryCard extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(13, 12, 14, 12),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // 左侧日期徽章：大号「日」+ 年月小字，像撕页日历
+              Container(
+                width: 52,
+                padding: const EdgeInsets.only(right: 10),
+                margin: const EdgeInsets.symmetric(vertical: 4),
+                decoration: const BoxDecoration(
+                  border: Border(
+                    right: BorderSide(color: Color(0xFFE8EDF5)),
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // 左侧日期徽章：大号「日」+ 年月小字，像撕页日历
-                    Container(
-                      width: 52,
-                      padding: const EdgeInsets.only(right: 10),
-                      margin: const EdgeInsets.symmetric(vertical: 4),
-                      decoration: const BoxDecoration(
-                        border: Border(
-                          right: BorderSide(color: Color(0xFFE8EDF5)),
-                        ),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text('${entry.publishDate.day}',
-                              style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF3B6FE0),
-                                  height: 1.1)),
-                          const SizedBox(height: 2),
-                          // 年月：不换行，超宽时整体缩小适配两位月份
-                          FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                                '${entry.publishDate.year}.${entry.publishDate.month.toString().padLeft(2, '0')}',
-                                maxLines: 1,
-                                softWrap: false,
-                                style: const TextStyle(
-                                    fontSize: 10, color: kTextLight)),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    // 右侧：标题 / 摘要 / 心情天气地点脚注
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  entry.title.isNotEmpty
-                                      ? entry.title
-                                      : '（无标题）',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontSize: 15.5,
-                                    fontWeight: FontWeight.w600,
-                                    color: kTextDark,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (entry.content.isNotEmpty) ...[
-                            const SizedBox(height: 3),
-                            Text(
-                              entry.content,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                  fontSize: 12.5, color: kTextMid),
-                            ),
-                          ],
-                          const SizedBox(height: 5),
-                          Row(
-                            children: [
-                              Text(entry.mood,
-                                  style: const TextStyle(fontSize: 14)),
-                              const SizedBox(width: 4),
-                              Text(entry.weather,
-                                  style: const TextStyle(fontSize: 12)),
-                              const SizedBox(width: 6),
-                              Text(_timeLabel(entry.createdAt),
-                                  style: const TextStyle(
-                                      fontSize: 11, color: kTextLight)),
-                              if (entry.location.isNotEmpty) ...[
-                                const SizedBox(width: 6),
-                                const Icon(Icons.location_on,
-                                    size: 13, color: kTextLight),
-                                const SizedBox(width: 1),
-                                Flexible(
-                                  child: Text(
-                                    entry.location,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                        fontSize: 11, color: kTextLight),
-                                  ),
-                                ),
-                              ],
-                              const Spacer(),
-                              GestureDetector(
-                                onTap: onDelete,
-                                child: const Icon(
-                                  Icons.delete_outline,
-                                  size: 18,
-                                  color: kTextLight,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+                    Text('${entry.publishDate.day}',
+                        style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF3B6FE0),
+                            height: 1.1)),
+                    const SizedBox(height: 2),
+                    // 年月：不换行，超宽时整体缩小适配两位月份
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                          '${entry.publishDate.year}.${entry.publishDate.month.toString().padLeft(2, '0')}',
+                          maxLines: 1,
+                          softWrap: false,
+                          style:
+                              const TextStyle(fontSize: 10, color: kTextLight)),
                     ),
                   ],
                 ),
+              ),
+              const SizedBox(width: 12),
+              // 右侧：标题 / 摘要 / 心情天气地点脚注
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            entry.title.isNotEmpty ? entry.title : '（无标题）',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 15.5,
+                              fontWeight: FontWeight.w600,
+                              color: kTextDark,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (entry.content.isNotEmpty) ...[
+                      const SizedBox(height: 3),
+                      Text(
+                        entry.content,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 12.5, color: kTextMid),
+                      ),
+                    ],
+                    const SizedBox(height: 5),
+                    Row(
+                      children: [
+                        Text(entry.mood, style: const TextStyle(fontSize: 14)),
+                        const SizedBox(width: 4),
+                        Text(entry.weather,
+                            style: const TextStyle(fontSize: 12)),
+                        const SizedBox(width: 6),
+                        Text(_timeLabel(entry.createdAt),
+                            style: const TextStyle(
+                                fontSize: 11, color: kTextLight)),
+                        if (entry.location.isNotEmpty) ...[
+                          const SizedBox(width: 6),
+                          const Icon(Icons.location_on,
+                              size: 13, color: kTextLight),
+                          const SizedBox(width: 1),
+                          Flexible(
+                            child: Text(
+                              entry.location,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                  fontSize: 11, color: kTextLight),
+                            ),
+                          ),
+                        ],
+                        const Spacer(),
+                        GestureDetector(
+                          onTap: onDelete,
+                          child: const Icon(
+                            Icons.delete_outline,
+                            size: 18,
+                            color: kTextLight,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1993,74 +2033,105 @@ class _DiaryCard extends StatelessWidget {
         child: ColoredBox(
           color: isPinned ? const Color(0xFFFBE3E8) : Colors.transparent,
           child: CustomPaint(
-          foregroundPainter: _DashedRRectPainter(
-              color: isPinned ? const Color(0xFFE0576A) : const Color(0xFFC9CFD9),
-              radius: 14),
-          child: CustomPaint(
-          painter: isPinned ? const _PinnedStripePainter() : null,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // 斜纹保密封带
-              CustomPaint(
-                painter: const _StripeBandPainter(),
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.lock, size: 11, color: kTextLight),
-                      const SizedBox(width: 4),
-                      const Text('已加密',
-                          style:
-                              TextStyle(fontSize: 10.5, color: kTextLight)),
-                      const Spacer(),
-                      Text(
-                        '${entry.publishDate.month}月${entry.publishDate.day}日',
-                        style: const TextStyle(
-                            fontSize: 10.5, color: kTextLight),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Material(
+            foregroundPainter: _DashedRRectPainter(
+                color: isPinned
+                    ? const Color(0xFFE0576A)
+                    : const Color(0xFFC9CFD9),
+                radius: 14),
+            child: CustomPaint(
+              painter: isPinned ? const _PinnedStripePainter() : null,
+              child: Material(
+                // 置顶加密卡：与置顶公开笔记同款撕页式布局 ——
+                // 左列「日 / 年.月」，右侧标题+底部信息行。
                 color: isPinned ? const Color(0xE6FFFFFF) : Colors.white,
                 child: InkWell(
                   onTap: onTap,
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                    padding: const EdgeInsets.fromLTRB(13, 12, 14, 12),
                     child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Expanded(
-                          child: Text(
-                            entry.subtitle.isNotEmpty
-                                ? entry.subtitle
-                                : '加密笔记',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                              color: entry.subtitle.isNotEmpty
-                                  ? const Color(0xFF5A6B82)
-                                  : const Color(0xFF9AA8BF),
+                        // 左侧日期列：与普通笔记卡的撕页日历同构 ——
+                        // 上方大号「日」、下方「年.月」，正文左对齐日期列右侧。
+                        Container(
+                          width: 52,
+                          padding: const EdgeInsets.only(right: 10),
+                          margin: const EdgeInsets.symmetric(vertical: 4),
+                          decoration: const BoxDecoration(
+                            border: Border(
+                              right: BorderSide(color: Color(0xFFE8EDF5)),
                             ),
                           ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text('${entry.publishDate.day}',
+                                  style: const TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF3B6FE0),
+                                      height: 1.1)),
+                              const SizedBox(height: 2),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                    '${entry.publishDate.year}.${entry.publishDate.month.toString().padLeft(2, '0')}',
+                                    maxLines: 1,
+                                    softWrap: false,
+                                    style: const TextStyle(
+                                        fontSize: 10, color: kTextLight)),
+                              ),
+                            ],
+                          ),
                         ),
-                        const SizedBox(width: 8),
-                        Text(_timeLabel(entry.createdAt),
-                            style: const TextStyle(
-                                fontSize: 11, color: kTextLight)),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // 首行：副标题（加密笔记不外显标题）
+                              Text(
+                                entry.subtitle.isNotEmpty
+                                    ? entry.subtitle
+                                    : '加密笔记',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                  color: entry.subtitle.isNotEmpty
+                                      ? const Color(0xFF5A6B82)
+                                      : const Color(0xFF9AA8BF),
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                              // 次行：时间 + 锁图标（锁紧贴时间右侧，对应公开笔记
+                              // 置顶卡里心情/天气图标的位置）
+                              Row(
+                                children: [
+                                  Text(_timeLabel(entry.createdAt),
+                                      style: const TextStyle(
+                                          fontSize: 11, color: kTextLight)),
+                                  const SizedBox(width: 6),
+                                  const Icon(Icons.lock,
+                                      size: 12, color: kTextLight),
+                                  const Spacer(),
+                                  const Text('已加密',
+                                      style: TextStyle(
+                                          fontSize: 10.5, color: kTextLight)),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 ),
               ),
-            ],
+            ),
           ),
-        ),
-        ),
         ),
       ),
     );
@@ -2139,9 +2210,7 @@ class _DashedRRectPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(
-          CustomPainter oldDelegate) =>
-      false;
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
 
 /// 斜纹保密封带：浅灰底 + 45° 斜线纹理
@@ -2150,14 +2219,16 @@ class _StripeBandPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.drawRect(Offset.zero & size, Paint()..color = const Color(0xFFEFF2F7));
+    canvas.drawRect(
+        Offset.zero & size, Paint()..color = const Color(0xFFEFF2F7));
     final paint = Paint()
       ..color = const Color(0xFFE7EBF1)
       ..strokeWidth = 4
       ..style = PaintingStyle.stroke;
     // 以 16px 为周期画 45° 斜线，覆盖整个矩形
     for (double x = -size.height; x < size.width + size.height; x += 16) {
-      canvas.drawLine(Offset(x, size.height), Offset(x + size.height, 0), paint);
+      canvas.drawLine(
+          Offset(x, size.height), Offset(x + size.height, 0), paint);
     }
   }
 

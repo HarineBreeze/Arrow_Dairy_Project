@@ -94,7 +94,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: const Text('确认完全覆盖?'),
             content: const Text(
               '导入后将覆盖当前手机上的全部数据，原有内容无法恢复。',
-              style: TextStyle(fontSize: 14, color: Color(0xFF5A6B82), height: 1.6),
+              style: TextStyle(
+                  fontSize: 14, color: Color(0xFF5A6B82), height: 1.6),
             ),
             actions: [
               TextButton(
@@ -103,8 +104,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child:
-                    const Text('覆盖导入', style: TextStyle(color: Colors.red)),
+                child: const Text('覆盖导入', style: TextStyle(color: Colors.red)),
               ),
             ],
           ),
@@ -155,7 +155,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
           title: const Text('导入备份'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -173,8 +174,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 desc: '保留现有数据，只补充备份中新增的条目',
                 value: ImportMode.merge,
                 group: selected,
-                onTap: () =>
-                    setDialogState(() => selected = ImportMode.merge),
+                onTap: () => setDialogState(() => selected = ImportMode.merge),
               ),
               const SizedBox(height: 8),
               _modeTile(
@@ -191,8 +191,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('取消',
-                  style: TextStyle(color: Color(0xFF8A99B3))),
+              child:
+                  const Text('取消', style: TextStyle(color: Color(0xFF8A99B3))),
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, selected),
@@ -230,9 +230,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(
-              sel
-                  ? Icons.radio_button_checked
-                  : Icons.radio_button_unchecked,
+              sel ? Icons.radio_button_checked : Icons.radio_button_unchecked,
               size: 18,
               color: sel ? const Color(0xFF3B6FE0) : const Color(0xFFC4CEDD),
             ),
@@ -251,9 +249,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(height: 2),
                   Text(desc,
                       style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF8A99B3),
-                          height: 1.5)),
+                          fontSize: 12, color: Color(0xFF8A99B3), height: 1.5)),
                 ],
               ),
             ),
@@ -267,124 +263,134 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('设置')),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      // 版本号固定在整个页面最底部（不随列表滚动），列表内容在其上方滚动
+      body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 4, bottom: 8),
-            child: Row(
-              children: [
-                const Text('数据备份',
-                    style: TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF9AA8BF),
-                        fontWeight: FontWeight.w600)),
-                const SizedBox(width: 6),
-                // 教程入口：标题旁的蓝色圈叹号，点击弹出换机/导入说明
-                _buildInfoDot(onTap: () => _showBackupTutorial(context)),
-              ],
-            ),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFE8EDF5)),
-            ),
-            child: Column(
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                  padding: const EdgeInsets.only(left: 4, bottom: 8),
                   child: Row(
                     children: [
-                      const Icon(Icons.inventory_outlined,
-                          size: 16, color: Color(0xFF9AA8BF)),
+                      const Text('数据备份',
+                          style: TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF9AA8BF),
+                              fontWeight: FontWeight.w600)),
                       const SizedBox(width: 6),
-                      Text('当前数据：$_diaryCount 条笔记 · $_itemCount 件物资 · $_assetCount 笔资产 · $_countdownCount 个事件',
-                          style: const TextStyle(
-                              fontSize: 12, color: Color(0xFF9AA8BF))),
+                      // 教程入口：标题旁的蓝色圈叹号，点击弹出换机/导入说明
+                      _buildInfoDot(onTap: () => _showBackupTutorial(context)),
                     ],
                   ),
                 ),
-                _buildItem(
-                  icon: Icons.ios_share,
-                  iconColor: const Color(0xFF3B6FE0),
-                  title: '导出数据',
-                  subtitle: '生成 .json 备份文件，可分享到微信、网盘、电脑或本地文件夹',
-                  busy: _exporting,
-                  onTap: _export,
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE8EDF5)),
+                  ),
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.inventory_outlined,
+                                size: 16, color: Color(0xFF9AA8BF)),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                  '当前数据：$_diaryCount 条笔记 · $_itemCount 件物资 · $_assetCount 笔资产 · $_countdownCount 个事件',
+                                  style: const TextStyle(
+                                      fontSize: 12, color: Color(0xFF9AA8BF))),
+                            ),
+                          ],
+                        ),
+                      ),
+                      _buildItem(
+                        icon: Icons.ios_share,
+                        iconColor: const Color(0xFF3B6FE0),
+                        title: '导出数据',
+                        subtitle: '生成 .json 备份文件，可分享到微信、网盘、电脑或本地文件夹',
+                        busy: _exporting,
+                        onTap: _export,
+                      ),
+                      const Divider(height: 1, indent: 52),
+                      _buildItem(
+                        icon: Icons.download,
+                        iconColor: const Color(0xFF34A853),
+                        title: '导入数据',
+                        subtitle: '可选「增添合并」或「完全覆盖」，会自动校验文件',
+                        busy: _importing,
+                        onTap: _import,
+                      ),
+                    ],
+                  ),
                 ),
-                const Divider(height: 1, indent: 52),
-                _buildItem(
-                  icon: Icons.download,
-                  iconColor: const Color(0xFF34A853),
-                  title: '导入数据',
-                  subtitle: '可选「增添合并」或「完全覆盖」，会自动校验文件',
-                  busy: _importing,
-                  onTap: _import,
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.only(left: 4, bottom: 8),
+                  child: Row(
+                    children: [
+                      const Text('笔记字体',
+                          style: TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF9AA8BF),
+                              fontWeight: FontWeight.w600)),
+                      const SizedBox(width: 6),
+                      _buildInfoDot(
+                        onTap: () => _showFontScopeTip(context),
+                      ),
+                    ],
+                  ),
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.only(left: 4, bottom: 8),
-            child: Row(
-              children: [
-                const Text('笔记字体',
-                    style: TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF9AA8BF),
-                        fontWeight: FontWeight.w600)),
-                const SizedBox(width: 6),
-                _buildInfoDot(
-                  onTap: () => _showFontScopeTip(context),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFE8EDF5)),
-            ),
-            child: _buildItem(
-              icon: Icons.font_download_outlined,
-              iconColor: const Color(0xFF3B6FE0),
-              title: '笔记字体',
-              subtitle:
-                  '当前：${FontCatalog.nameOf(AppSettings.fontFamilyId.isEmpty ? null : AppSettings.fontFamilyId) ?? '默认字体'}',
-              busy: false,
-              onTap: () async {
-                await Navigator.push(
-                  context,
-                  PageRouteBuilder(
-                    transitionDuration: const Duration(milliseconds: 300),
-                    reverseTransitionDuration:
-                        const Duration(milliseconds: 300),
-                    pageBuilder: (_, __, ___) => const FontPickerScreen(),
-                    transitionsBuilder: (_, animation, __, child) {
-                      final curved = CurvedAnimation(
-                          parent: animation, curve: Curves.easeOutCubic);
-                      return SlideTransition(
-                        position: Tween<Offset>(
-                          begin: const Offset(1, 0),
-                          end: Offset.zero,
-                        ).animate(curved),
-                        child: child,
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE8EDF5)),
+                  ),
+                  child: _buildItem(
+                    icon: Icons.font_download_outlined,
+                    iconColor: const Color(0xFF3B6FE0),
+                    title: '笔记字体',
+                    subtitle:
+                        '当前：${FontCatalog.nameOf(AppSettings.fontFamilyId.isEmpty ? null : AppSettings.fontFamilyId) ?? '默认字体'}',
+                    busy: false,
+                    onTap: () async {
+                      await Navigator.push(
+                        context,
+                        PageRouteBuilder(
+                          transitionDuration: const Duration(milliseconds: 300),
+                          reverseTransitionDuration:
+                              const Duration(milliseconds: 300),
+                          pageBuilder: (_, __, ___) => const FontPickerScreen(),
+                          transitionsBuilder: (_, animation, __, child) {
+                            final curved = CurvedAnimation(
+                                parent: animation, curve: Curves.easeOutCubic);
+                            return SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(1, 0),
+                                end: Offset.zero,
+                              ).animate(curved),
+                              child: child,
+                            );
+                          },
+                        ),
                       );
+                      if (mounted) setState(() {});
                     },
                   ),
-                );
-                if (mounted) setState(() {});
-              },
+                ),
+                const SizedBox(height: 16),
+              ],
             ),
           ),
-          const SizedBox(height: 16),
           // 底部居中版本号（灰字，随发版同步更新 AppVersion.displayVersion）
           const Padding(
-            padding: EdgeInsets.only(top: 8, bottom: 4),
+            padding: EdgeInsets.only(top: 6, bottom: 10),
             child: Center(
               child: Text(
                 AppVersion.displayVersion,
