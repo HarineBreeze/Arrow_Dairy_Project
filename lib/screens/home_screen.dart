@@ -762,8 +762,12 @@ class _HomeScreenState extends State<HomeScreen>
                           child: child!,
                         ),
                       ),
-                      if (_menuAnim.value > 0)
-                        Positioned.fill(
+                      // 遮罩层：始终保留在树中。若按 `_menuAnim.value > 0`
+                      // 条件增删，首次拖拽跨越 0 时会改变 Stack 子节点结构，
+                      // 导致手势层识别器被打断（首次滑动卡住、无 end/cancel）。
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          ignoring: _menuAnim.value <= 0,
                           child: GestureDetector(
                             onTap: _closeMenu,
                             child: Opacity(
@@ -772,6 +776,7 @@ class _HomeScreenState extends State<HomeScreen>
                             ),
                           ),
                         ),
+                      ),
                       Positioned(
                         left: 0,
                         top: 0,
