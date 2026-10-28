@@ -5,6 +5,7 @@ import '../services/countdown_storage.dart';
 import '../services/countdown_reminder.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/loading_skeleton.dart';
+import '../utils/menu_gesture_gate.dart';
 import 'countdown_edit_screen.dart';
 
 /// 倒数日主页：顶栏（年月 + 搜索 + 筛选）、日历视图、
@@ -174,6 +175,7 @@ class CountdownScreenState extends State<CountdownScreen> {
 
   /// 长按 500ms → 选框：置顶 / 编辑 / 删除
   void _showCardMenu(CountdownEvent e) {
+    HapticFeedback.mediumImpact(); // 长按菜单震动反馈
     HapticFeedback.mediumImpact();
     showModalBottomSheet(
       context: context,
@@ -854,23 +856,26 @@ class CountdownScreenState extends State<CountdownScreen> {
         ),
       ));
     }
-    return GestureDetector(
-      onHorizontalDragEnd: (d) {
-        final v = d.primaryVelocity ?? 0;
-        if (v < -200) {
-          setState(() => _visibleMonth =
-              DateTime(_visibleMonth.year, _visibleMonth.month + 1, 1));
-        } else if (v > 200) {
-          setState(() => _visibleMonth =
-              DateTime(_visibleMonth.year, _visibleMonth.month - 1, 1));
-        }
-      },
-      child: GridView.count(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisCount: 7,
-        childAspectRatio: 1.15,
-        children: cells,
+    // 页面手势闸门：日历滑动翻月优先，期间不触发菜单侧边栏拖拽
+    return PageGestureGate(
+      child: GestureDetector(
+        onHorizontalDragEnd: (d) {
+          final v = d.primaryVelocity ?? 0;
+          if (v < -200) {
+            setState(() => _visibleMonth =
+                DateTime(_visibleMonth.year, _visibleMonth.month + 1, 1));
+          } else if (v > 200) {
+            setState(() => _visibleMonth =
+                DateTime(_visibleMonth.year, _visibleMonth.month - 1, 1));
+          }
+        },
+        child: GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 7,
+          childAspectRatio: 1.15,
+          children: cells,
+        ),
       ),
     );
   }

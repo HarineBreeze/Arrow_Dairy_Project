@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show SystemUiOverlayStyle;
+import 'package:flutter/services.dart' show SystemUiOverlayStyle, HapticFeedback;
 import '../models/diary_entry.dart';
 import '../models/user_profile.dart';
 import '../services/diary_storage.dart';
@@ -158,6 +158,7 @@ class _HomeScreenState extends State<HomeScreen>
       if (_pressEntry == e && _pressMoved < 6) {
         final entry = e;
         _cancelPressTracking();
+        HapticFeedback.mediumImpact(); // 长按菜单震动反馈（与资产全景小眼睛一致的手感类型）
         _showNoteActions(entry);
       }
     });
@@ -1510,23 +1511,26 @@ class _HomeScreenState extends State<HomeScreen>
         },
       ));
     }
-    return GestureDetector(
-      onHorizontalDragEnd: (details) {
-        final v = details.primaryVelocity ?? 0;
-        if (v < -200) {
-          setState(() => _visibleMonth =
-              DateTime(_visibleMonth.year, _visibleMonth.month + 1, 1));
-        } else if (v > 200) {
-          setState(() => _visibleMonth =
-              DateTime(_visibleMonth.year, _visibleMonth.month - 1, 1));
-        }
-      },
-      child: GridView.count(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisCount: 7,
-        childAspectRatio: 1.15,
-        children: cells,
+    // 页面手势闸门：日历滑动翻月优先，期间不触发菜单侧边栏拖拽
+    return PageGestureGate(
+      child: GestureDetector(
+        onHorizontalDragEnd: (details) {
+          final v = details.primaryVelocity ?? 0;
+          if (v < -200) {
+            setState(() => _visibleMonth =
+                DateTime(_visibleMonth.year, _visibleMonth.month + 1, 1));
+          } else if (v > 200) {
+            setState(() => _visibleMonth =
+                DateTime(_visibleMonth.year, _visibleMonth.month - 1, 1));
+          }
+        },
+        child: GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 7,
+          childAspectRatio: 1.15,
+          children: cells,
+        ),
       ),
     );
   }

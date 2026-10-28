@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../models/item.dart';
 import '../services/item_storage.dart';
 import '../utils/menu_gesture_gate.dart';
@@ -67,6 +68,7 @@ class ItemListScreenState extends State<ItemListScreen> {
 
   /// 长按物品卡片：编辑 / 删除
   Future<void> _showItemMenu(Item item) async {
+    HapticFeedback.mediumImpact(); // 长按菜单震动反馈
     final action = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: Colors.white,
@@ -674,12 +676,8 @@ class _ItemCardState extends State<_ItemCard> {
     if (!wishlist) {
       return _buildAnimatedCard(child);
     }
-    // 愿望单：左右滑动攒钱
-    return Listener(
-      behavior: HitTestBehavior.translucent,
-      onPointerDown: (_) => menuDragBlocked.value = true,
-      onPointerUp: (_) => menuDragBlocked.value = false,
-      onPointerCancel: (_) => menuDragBlocked.value = false,
+    // 愿望单：左右滑动攒钱（页面手势闸门：滑动期间菜单让位）
+    return PageGestureGate(
       child: GestureDetector(
       behavior: HitTestBehavior.opaque,
       onHorizontalDragUpdate: (d) =>

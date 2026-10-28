@@ -450,6 +450,7 @@ class AssetScreenState extends State<AssetScreen> {
 
   /// 长按（500ms 系统默认）弹出编辑/删除选框
   void _showCardMenu(Asset a) {
+    HapticFeedback.mediumImpact(); // 长按菜单震动反馈
     HapticFeedback.mediumImpact();
     showModalBottomSheet(
       context: context,
