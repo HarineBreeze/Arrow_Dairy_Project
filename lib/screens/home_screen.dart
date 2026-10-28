@@ -446,6 +446,19 @@ class _HomeScreenState extends State<HomeScreen>
     _menuController.reverse();
   }
 
+  /// 右 2/3 手势层是否接管指针：只在菜单打开时接管
+  bool get _menuCloseSwipeEnabled => _menuAnim.value > 0;
+
+  /// 左缘「右滑开菜单」热区宽度（px）
+  static const double _edgeHot = 24;
+
+  /// 左缘探测层：只有指针落在左侧 [_edgeHot] 内才登记手势（并始终放行给下层），
+  /// 其余区域完全不参与，避免挡住横滑卡带 / 日历等页面手势。
+  bool _onEdgeDown(PointerDownEvent e) {
+    if (e.position.dx <= _edgeHot) _onPtrDown(e);
+    return false;
+  }
+
   /// 侧边栏跟手拖拽（所有主页通用）。用 Listener 直接跟踪指针，
   /// 不参与手势竞技场，避免与列表/日历的横向手势冲突导致第一次滑动卡住。
   /// - 内容页左半屏右滑：菜单跟手拉出，松手超过屏幕宽 1/3 → 展开，否则收回
@@ -459,10 +472,14 @@ class _HomeScreenState extends State<HomeScreen>
   Duration? _prevTime;
   double _flingSpeed = 0; // px/s，正 = 向右，负 = 向左（指数平滑）
 
+  /// 本次手势是否已被页面内横向功能（横滑卡带/日历/攒钱）接管
+  bool _gestureOwnedByPage = false;
+
   void _onPtrDown(PointerDownEvent e) {
     _ptrDownX = e.position.dx;
     _ptrDownY = e.position.dy;
     _menuTracking = false;
+    _gestureOwnedByPage = false;
     _prevDx = 0;
     _prevTime = null;
     _flingSpeed = 0;
@@ -470,8 +487,16 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _onPtrMove(PointerMoveEvent e) {
     if (_ptrDownX == null || _ptrDownY == null) return;
-    // 愿望单卡片正在处理横向滑动 → 不拖菜单
-    if (menuDragBlocked.value) return;
+    // 页面内横向功能正在处理本次滑动 → 不拖菜单
+    if (menuDragBlocked.value || _gestureOwnedByPage) return;
+    final mdx = (e.position.dx - _ptrDownX!).abs();
+    final mdy = (e.position.dy - _ptrDownY!).abs();
+    // 横向位移已明显超过纵向 → 认定页面横向功能接管（即使孩子闸门稍后标记，
+    // 也不允许菜单在中途"抢走"这次拖拽）
+    if (mdx > 10 && mdx > mdy * 1.6) {
+      _gestureOwnedByPage = true;
+      return;
+    }
     final dx = e.position.dx - _ptrDownX!;
     final dy = e.position.dy - _ptrDownY!;
     if (!_menuTracking) {
@@ -811,15 +836,21 @@ class _HomeScreenState extends State<HomeScreen>
                           ),
                         ),
                       ),
-                      // 左半屏手势层：右滑跟手拉开侧边栏
+                      // 手势层：默认不响应，只有左缘 24px（右滑开菜单）或
+                      // 菜单已打开（左滑收回）时才接管指针。
+                      // 关键：命中测试会沿 Stack 顶层→底层进行，始终存在的
+                      // 全屏 Listener 会把 PointerDown 变成"命中"，导致下方的
+                      // 横滑卡带/日历永远收不到手势，所以必须按需失效。
                       Positioned(
                         left: 0,
                         top: 0,
                         bottom: 0,
                         width: MediaQuery.of(context).size.width / 2,
                         child: Listener(
+                          // 热区层自己不拦截：右滑开菜单要在页面边缘也能触发，
+                          // 但拦截会影响卡带，所以只在左侧热区登记手势、始终放行。
                           behavior: HitTestBehavior.translucent,
-                          onPointerDown: _onPtrDown,
+                          onPointerDown: _onEdgeDown,
                           onPointerMove: _onPtrMove,
                           onPointerUp: _onPtrUp,
                           onPointerCancel: _onPtrUp,
@@ -832,11 +863,14 @@ class _HomeScreenState extends State<HomeScreen>
                         bottom: 0,
                         width: MediaQuery.of(context).size.width * 2 / 3,
                         child: Listener(
-                          behavior: HitTestBehavior.translucent,
+                          behavior: _menuCloseSwipeEnabled
+                              ? HitTestBehavior.translucent
+                              : HitTestBehavior.deferToChild,
                           onPointerDown: _onPtrDown,
                           onPointerMove: _onPtrMove,
                           onPointerUp: _onPtrUp,
                           onPointerCancel: _onPtrUp,
+                          child: const SizedBox.expand(),
                         ),
                       ),
                     ],
@@ -1653,7 +1687,7 @@ class _PinnedMiniCard extends StatelessWidget {
             child: CustomPaint(
               painter: encrypted ? const _GridTexturePainter() : null,
               child: Container(
-                color: encrypted ? const Color(0x0A3B6FE0) : Colors.white,
+                color: Colors.white,
                 padding: const EdgeInsets.fromLTRB(9, 8, 9, 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1696,30 +1730,33 @@ class _PinnedMiniCard extends StatelessWidget {
   }
 }
 
-/// 加密卡栅格纹理：1px 细格线，向右下淡出的渐变遮罩
+/// 加密卡斜向栅格纹理：与未置顶封条卡同一套 45° 斜纹（16px 周期、4px 线宽），
+/// 铺满整张卡并以白色渐变压暗，保证副标题可读。
 class _GridTexturePainter extends CustomPainter {
   const _GridTexturePainter();
 
-  static const double _step = 7;
-
   @override
   void paint(Canvas canvas, Size size) {
+    canvas.drawRect(
+        Offset.zero & size, Paint()..color = const Color(0xFFEFF2F7));
     final paint = Paint()
-      ..color = const Color(0x143B6FE0)
-      ..strokeWidth = 1;
-    for (double x = _step; x < size.width; x += _step) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+      ..color = const Color(0xFFE7EBF1)
+      ..strokeWidth = 4
+      ..style = PaintingStyle.stroke;
+    for (double x = -size.height; x < size.width + size.height; x += 16) {
+      canvas.drawLine(
+          Offset(x, size.height), Offset(x + size.height, 0), paint);
     }
-    for (double y = _step; y < size.height; y += _step) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
-    // 右下角渐隐，避免格线把文字压得太满
+    // 中央留白：让 🔒 + 副标题落在干净底色上
     final fade = Paint()
-      ..shader = LinearGradient(
+      ..shader = const LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [Colors.transparent, Colors.white.withOpacity(0.55)],
-        stops: const [0.45, 1.0],
+        colors: [
+          Color(0xF2FFFFFF),
+          Color(0xE6FFFFFF),
+          Color(0xD9FFFFFF),
+        ],
       ).createShader(Offset.zero & size);
     canvas.drawRect(Offset.zero & size, fade);
   }

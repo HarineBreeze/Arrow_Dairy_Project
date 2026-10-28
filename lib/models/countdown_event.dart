@@ -36,6 +36,9 @@ class CountdownEvent {
   static String defaultIconFor(String type) =>
       type == '资产日' ? '💰' : '🎂';
 
+  /// 深拷贝（编辑页隔离用：放弃修改不影响列表里的实例）
+  CountdownEvent clone() => CountdownEvent.fromJson(toJson());
+
   static DateTime dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
   static DateTime today() => dateOnly(DateTime.now());
 

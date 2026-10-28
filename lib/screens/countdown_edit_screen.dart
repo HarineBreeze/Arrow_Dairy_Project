@@ -80,6 +80,12 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
 
   static const List<String> _quickIcons = CountdownEvent.quickIcons;
 
+  /// 进入页面时保存的图标原文（可能为空 → 表示用类型默认）
+  String _initIcon = '';
+
+  /// 用户本次是否手动点过图标
+  bool _iconTouched = false;
+
   @override
   void initState() {
     super.initState();
@@ -89,8 +95,13 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
     _target = e?.target == null ? null : CountdownEvent.dateOnly(e!.target);
     _type = e?.type ?? '纪念日';
     _loop = e?.loop ?? false;
+    // 记住进入时的图标（可能为空），用于判断用户是否手动改过图标
+    _initIcon = (e?.icon ?? '').trim();
     _iconCtrl = TextEditingController(
-        text: e?.icon ?? CountdownEvent.defaultIconFor(_type));
+        text: _initIcon.isEmpty
+            ? CountdownEvent.defaultIconFor(_type)
+            : _initIcon);
+    _iconTouched = false;
     _initial = _snapshot();
   }
 
@@ -309,17 +320,18 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                           selected: _type == t,
                           onTap: () {
                             HapticFeedback.selectionClick();
-                            final oldDefault =
-                                CountdownEvent.defaultIconFor(_type);
-                            final newDefault =
-                                CountdownEvent.defaultIconFor(t);
                             setState(() {
                               _type = t;
-                              // 未手动改过图标时跟随类型换默认图标
-                              // （含图标为空、或残留另一类型的默认图标，保证来回切换也能自愈）
+                              // 只有用户主动点过图标才保留自定义图标；
+                              // 否则（包括从未设置、或残留另一类型的默认图标）
+                              // 一律跟随新类型的默认图标，来回切换都能自愈。
                               final cur = _iconCtrl.text.trim();
-                              if (cur.isEmpty || cur == oldDefault) {
-                                _iconCtrl.text = newDefault;
+                              if (!_iconTouched ||
+                                  cur.isEmpty ||
+                                  cur == CountdownEvent.defaultIconFor(
+                                      _type)) {
+                                _iconCtrl.text =
+                                    CountdownEvent.defaultIconFor(t);
                               }
                             });
                           },
@@ -480,6 +492,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
             _showMoreIcons();
           } else {
             _iconCtrl.text = icon!;
+            _iconTouched = true;
             setState(() {});
           }
         },
@@ -578,7 +591,10 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                     const SizedBox(width: 8),
                     ElevatedButton(
                       onPressed: () {
-                        setState(() => _iconCtrl.text = tmpCtrl.text.trim());
+                        setState(() {
+                          _iconCtrl.text = tmpCtrl.text.trim();
+                          _iconTouched = true;
+                        });
                         Navigator.pop(ctx);
                       },
                       child: const Text('确定'),

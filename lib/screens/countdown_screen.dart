@@ -145,9 +145,11 @@ class CountdownScreenState extends State<CountdownScreen> {
   // ---------- 操作 ----------
 
   Future<void> _openEditor([CountdownEvent? e]) async {
+    // 传入深拷贝：编辑页会直接改传入对象（保存时 `e..icon=...`），
+    // 若传原对象，用户放弃修改也会污染列表里的实例。
     final r = await Navigator.push<dynamic>(
       context,
-      _slideRoute(CountdownEditScreen(event: e)),
+      _slideRoute(CountdownEditScreen(event: e == null ? null : e.clone())),
     );
     if (r == 'deleted') {
       if (!mounted) return;
