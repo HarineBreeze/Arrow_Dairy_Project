@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/user_profile.dart';
+import '../utils/app_version.dart';
 import '../widgets/avatar.dart';
 
 class SideMenu extends StatelessWidget {
@@ -46,16 +47,43 @@ class SideMenu extends StatelessWidget {
           const SizedBox(height: 12),
           Padding(
             padding: const EdgeInsets.only(left: 28, right: 20),
-            child: Text(
-              nickname,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.left,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF2A3B52),
-              ),
+            child: Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    nickname,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.left,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF2A3B52),
+                    ),
+                  ),
+                ),
+                if (AppVersion.isBeta) ...[
+                  const SizedBox(width: 6),
+                  // 内测版铭牌：橙色底纹 + 白字，紧跟昵称之后
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF08C3A),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text(
+                      '内测版',
+                      style: TextStyle(
+                        fontSize: 10,
+                        height: 1.2,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
           const SizedBox(height: 4),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import '../services/app_settings.dart';
 import '../services/backup_service.dart';
+import '../utils/app_version.dart';
 import 'font_picker_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -381,6 +382,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           const SizedBox(height: 16),
+          // 底部居中版本号（灰字，随发版同步更新 AppVersion.displayVersion）
+          const Padding(
+            padding: EdgeInsets.only(top: 8, bottom: 4),
+            child: Center(
+              child: Text(
+                AppVersion.displayVersion,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  color: Color(0xFFB4BECD),
+                  letterSpacing: 0.4,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
