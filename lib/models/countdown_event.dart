@@ -110,7 +110,9 @@ class CountdownEvent {
 
   factory CountdownEvent.fromJson(Map<String, dynamic> j) => CountdownEvent(
         id: j['id'] as String? ?? '',
-        icon: j['icon'] as String? ?? '🎂',
+        icon: (j['icon'] as String? ?? '').trim().isEmpty
+            ? defaultIconFor(j['type'] as String? ?? '纪念日')
+            : j['icon'] as String,
         name: j['name'] as String? ?? '',
         note: j['note'] as String? ?? '',
         target: DateTime.tryParse(j['target'] as String? ?? '') ??

@@ -511,7 +511,11 @@ class CountdownScreenState extends State<CountdownScreen> {
                 color: grey ? const Color(0xFFE4E6EA) : const Color(0xFFF0F4FB),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Text(e.icon, style: const TextStyle(fontSize: 24)),
+              child: Text(
+                  e.icon.trim().isEmpty
+                      ? CountdownEvent.defaultIconFor(e.type)
+                      : e.icon,
+                  style: const TextStyle(fontSize: 24)),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -822,7 +826,11 @@ class CountdownScreenState extends State<CountdownScreen> {
     for (final e in _events) {
       final t = CountdownEvent.dateOnly(e.target);
       final key = '${t.year}-${t.month}-${t.day}';
-      dayIcon.putIfAbsent(key, () => e.icon);
+      dayIcon.putIfAbsent(
+          key,
+          () => e.icon.trim().isEmpty
+              ? CountdownEvent.defaultIconFor(e.type)
+              : e.icon);
     }
     for (int day = 1; day <= daysInMonth; day++) {
       final date = DateTime(year, month, day);

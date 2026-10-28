@@ -674,7 +674,50 @@ class AssetScreenState extends State<AssetScreen> {
               _statItem('理财资产', _investTotal, Colors.white),
             ],
           ),
+          const SizedBox(height: 12),
+          // 正/负资产结构条（绿=正资产，红=负资产），无文字标注
+          _buildStructureBar(),
         ],
+      ),
+    );
+  }
+
+  /// 数据看板下方的资产性质结构条：按正、负资产金额占比分配宽度
+  Widget _buildStructureBar() {
+    final pos = _totalAssets.abs();
+    final neg = _totalDebt.abs();
+    final total = pos + neg;
+    // 全部为 0 时按 1:1 展示中性灰条，避免出现空条
+    if (total <= 0) {
+      return Container(
+        height: 7,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.white24,
+          borderRadius: BorderRadius.circular(4),
+        ),
+      );
+    }
+    final posFlex = (pos / total * 1000).round().clamp(0, 1000);
+    final negFlex = 1000 - posFlex;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(4),
+      child: SizedBox(
+        height: 7,
+        child: Row(
+          children: [
+            if (posFlex > 0)
+              Expanded(
+                flex: posFlex,
+                child: const ColoredBox(color: Color(0xFF2A9D5C)),
+              ),
+            if (negFlex > 0)
+              Expanded(
+                flex: negFlex,
+                child: const ColoredBox(color: Color(0xFFE0576A)),
+              ),
+          ],
+        ),
       ),
     );
   }

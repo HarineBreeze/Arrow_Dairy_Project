@@ -74,8 +74,7 @@ class _HomeScreenState extends State<HomeScreen>
         vsync: this, duration: const Duration(milliseconds: 280));
     _menuAnim = CurvedAnimation(
         parent: _menuController, curve: Curves.easeOutCubic);
-    _expandedKeys.add(_dateKey(now));
-    _expandedKeys.add('__pinned');
+    _expandedKeys.addAll(_defaultExpandedKeys());
     _load();
     _loadProfile();
     _initCountdown();
@@ -544,7 +543,7 @@ class _HomeScreenState extends State<HomeScreen>
     setState(() {
       _selectedDate = null;
       _activeTopic = null;
-      _expandedKeys.add(_defaultGroupKey());
+      _expandedKeys.addAll(_defaultExpandedKeys());
     });
   }
 
@@ -564,8 +563,16 @@ class _HomeScreenState extends State<HomeScreen>
     setState(() {
       _viewMode = mode;
       _expandedKeys.clear();
-      _expandedKeys.add(_defaultGroupKey());
+      _expandedKeys.addAll(_defaultExpandedKeys());
     });
+  }
+
+  /// 默认展开的分组：日视图下为「今天 + 昨天」，其余视图为当前月/年
+  List<String> _defaultExpandedKeys() {
+    if (_viewMode != 'all') return [_defaultGroupKey()];
+    final now = DateTime.now();
+    final yesterday = now.subtract(const Duration(days: 1));
+    return [_dateKey(now), _dateKey(yesterday)];
   }
 
   String _defaultGroupKey() {
@@ -1104,34 +1111,38 @@ class _HomeScreenState extends State<HomeScreen>
         Padding(
           padding: const EdgeInsets.only(top: 12, left: 2, bottom: 7),
           child: Text(
-            '📌 置顶 ${pinned.length} 篇 · 左右滑动',
+            '📌 置顶 ${pinned.length} 篇',
             style: const TextStyle(fontSize: 11.5, color: Color(0xFFC4697C)),
           ),
         ),
-        SizedBox(
-          height: 62,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.only(right: 4),
-            itemCount: pinned.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 8),
-            itemBuilder: (context, i) {
-              final e = pinned[i];
-              return Listener(
-                onPointerDown: (ev) => _onCardPointerDown(e, ev.position),
-                onPointerMove: (ev) => _onCardPointerMove(ev.position),
-                onPointerUp: (_) => _cancelPressTracking(),
-                onPointerCancel: (_) => _cancelPressTracking(),
-                child: SizedBox(
-                  width: 132,
-                  child: _PinnedMiniCard(
-                    entry: e,
-                    onTap: () => _openNote(e),
+        // 页面横向手势优先：横滑卡带期间不让主页把菜单拖出来
+        PageGestureGate(
+          swipeAxis: Axis.horizontal,
+          child: SizedBox(
+            height: 62,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.only(right: 4),
+              itemCount: pinned.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, i) {
+                final e = pinned[i];
+                return Listener(
+                  onPointerDown: (ev) => _onCardPointerDown(e, ev.position),
+                  onPointerMove: (ev) => _onCardPointerMove(ev.position),
+                  onPointerUp: (_) => _cancelPressTracking(),
+                  onPointerCancel: (_) => _cancelPressTracking(),
+                  child: SizedBox(
+                    width: 132,
+                    child: _PinnedMiniCard(
+                      entry: e,
+                      onTap: () => _openNote(e),
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
         ),
         const SizedBox(height: 4),
@@ -1169,24 +1180,19 @@ class _HomeScreenState extends State<HomeScreen>
                 color: accent ? kPrimaryBlue : kTextDark,
               ),
             ),
-            if (isWeekView && isToday) ...[
-              const SizedBox(width: 5),
-              const Text(
-                '今天',
-                style: TextStyle(fontSize: 10.5, color: Color(0xFF9AA8BF)),
-              ),
-            ] else if (isWeekView) ...[
+            if (isWeekView) ...[
               const SizedBox(width: 5),
               Text(
                 _weekdayLabel(group.date),
                 style: const TextStyle(fontSize: 10.5, color: kTextLight),
               ),
             ],
-            const Spacer(),
+            const SizedBox(width: 6),
             Text(
               '${group.entries.length} 篇',
               style: const TextStyle(fontSize: 10.5, color: kTextLight),
             ),
+            const Spacer(),
           ],
         ),
       ),
@@ -1391,7 +1397,7 @@ class _HomeScreenState extends State<HomeScreen>
                               _activeTopic = t;
                               _viewMode = 'all';
                               _expandedKeys.clear();
-                              _expandedKeys.add(_defaultGroupKey());
+                              _expandedKeys.addAll(_defaultExpandedKeys());
                             });
                           }
                           Navigator.pop(ctx);
@@ -1631,7 +1637,7 @@ class _PinnedMiniCard extends StatelessWidget {
         ? (entry.subtitle.isNotEmpty ? entry.subtitle : '加密笔记')
         : (entry.title.isNotEmpty ? entry.title : '（无标题）');
     return Material(
-      color: Colors.white,
+      color: Colors.transparent,
       borderRadius: BorderRadius.circular(11),
       child: InkWell(
         borderRadius: BorderRadius.circular(11),
@@ -1641,43 +1647,85 @@ class _PinnedMiniCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(11),
             border: Border.all(color: const Color(0xFFE0576A), width: 1.3),
           ),
-          padding: const EdgeInsets.fromLTRB(9, 8, 9, 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Row(
-                children: [
-                  if (encrypted) ...[
-                    const Text('🔒', style: TextStyle(fontSize: 10)),
-                    const SizedBox(width: 3),
-                  ],
-                  Expanded(
-                    child: Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w600,
-                        color: kTextDark,
-                      ),
+          // 加密笔记：卡面铺栅格纹理（隐约透出「被遮蔽」的语义）
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: CustomPaint(
+              painter: encrypted ? const _GridTexturePainter() : null,
+              child: Container(
+                color: encrypted ? const Color(0x0A3B6FE0) : Colors.white,
+                padding: const EdgeInsets.fromLTRB(9, 8, 9, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Row(
+                      children: [
+                        if (encrypted) ...[
+                          const Text('🔒', style: TextStyle(fontSize: 10)),
+                          const SizedBox(width: 3),
+                        ],
+                        Expanded(
+                          child: Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: kTextDark,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 5),
+                    Text(
+                      encrypted ? dateLabel : '$dateLabel · ${entry.mood}',
+                      maxLines: 1,
+                      style: const TextStyle(fontSize: 9.5, color: kTextLight),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 5),
-              Text(
-                encrypted ? dateLabel : '$dateLabel · ${entry.mood}',
-                maxLines: 1,
-                style: const TextStyle(fontSize: 9.5, color: kTextLight),
-              ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
+}
+
+/// 加密卡栅格纹理：1px 细格线，向右下淡出的渐变遮罩
+class _GridTexturePainter extends CustomPainter {
+  const _GridTexturePainter();
+
+  static const double _step = 7;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0x143B6FE0)
+      ..strokeWidth = 1;
+    for (double x = _step; x < size.width; x += _step) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+    for (double y = _step; y < size.height; y += _step) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+    // 右下角渐隐，避免格线把文字压得太满
+    final fade = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Colors.transparent, Colors.white.withOpacity(0.55)],
+        stops: const [0.45, 1.0],
+      ).createShader(Offset.zero & size);
+    canvas.drawRect(Offset.zero & size, fade);
+  }
+
+  @override
+  bool shouldRepaint(covariant _GridTexturePainter oldDelegate) => false;
 }
 
 class _DayCell extends StatelessWidget {

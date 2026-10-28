@@ -309,14 +309,17 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                           selected: _type == t,
                           onTap: () {
                             HapticFeedback.selectionClick();
+                            final oldDefault =
+                                CountdownEvent.defaultIconFor(_type);
+                            final newDefault =
+                                CountdownEvent.defaultIconFor(t);
                             setState(() {
-                              final oldDefault =
-                                  CountdownEvent.defaultIconFor(_type);
                               _type = t;
                               // 未手动改过图标时跟随类型换默认图标
-                              if (_iconCtrl.text.trim() == oldDefault) {
-                                _iconCtrl.text =
-                                    CountdownEvent.defaultIconFor(t);
+                              // （含图标为空、或残留另一类型的默认图标，保证来回切换也能自愈）
+                              final cur = _iconCtrl.text.trim();
+                              if (cur.isEmpty || cur == oldDefault) {
+                                _iconCtrl.text = newDefault;
                               }
                             });
                           },
