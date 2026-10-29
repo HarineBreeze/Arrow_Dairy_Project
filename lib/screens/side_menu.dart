@@ -12,6 +12,7 @@ class SideMenu extends StatelessWidget {
   final VoidCallback onOpenAssets;
   final VoidCallback onOpenCountdown;
   final VoidCallback onOpenSettings;
+  final VoidCallback onOpenGlobalSearch;
   final String currentTab; // 'diary' | 'items' | 'assets' | 'countdown'
 
   const SideMenu({
@@ -24,13 +25,13 @@ class SideMenu extends StatelessWidget {
     required this.onOpenAssets,
     required this.onOpenCountdown,
     required this.onOpenSettings,
+    required this.onOpenGlobalSearch,
     required this.currentTab,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final nickname =
-        profile.nickname.isEmpty ? '未设置昵称' : profile.nickname;
+    final nickname = profile.nickname.isEmpty ? '未设置昵称' : profile.nickname;
     return SafeArea(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,8 +67,8 @@ class SideMenu extends StatelessWidget {
                   const SizedBox(width: 6),
                   // 内测版铭牌：橙色底纹 + 白字，紧跟昵称之后
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 6, vertical: 1.5),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF08C3A),
                       borderRadius: BorderRadius.circular(4),
@@ -102,11 +103,45 @@ class SideMenu extends StatelessWidget {
           const SizedBox(height: 16),
           const Divider(height: 1, color: Color(0xFFE8EDF5)),
           const SizedBox(height: 8),
+          _buildGlobalSearchButton(),
+          const SizedBox(height: 4),
           _buildTabSwitcher(),
           const Spacer(),
           const Divider(height: 1, color: Color(0xFFE8EDF5)),
           _buildSettingsButton(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildGlobalSearchButton() {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onOpenGlobalSearch,
+        borderRadius: BorderRadius.circular(10),
+        child: SizedBox(
+          height: 48,
+          child: Row(
+            children: [
+              const SizedBox(width: 16),
+              const Icon(Icons.search_rounded,
+                  size: 22, color: Color(0xFF5A6B82)),
+              const SizedBox(width: 12),
+              const Text(
+                '全局搜索',
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Color(0xFF2A3B52),
+                ),
+              ),
+              const Spacer(),
+              const Icon(Icons.chevron_right,
+                  size: 20, color: Color(0xFFC4CEDD)),
+              const SizedBox(width: 12),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -133,7 +168,8 @@ class SideMenu extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              const Icon(Icons.chevron_right, size: 20, color: Color(0xFFC4CEDD)),
+              const Icon(Icons.chevron_right,
+                  size: 20, color: Color(0xFFC4CEDD)),
               const SizedBox(width: 12),
             ],
           ),
@@ -220,10 +256,8 @@ class SideMenu extends StatelessWidget {
       duration: const Duration(milliseconds: 280),
       curve: Curves.easeOutCubic,
       builder: (context, t, child) {
-        final iconColor =
-            Color.lerp(const Color(0xFF3B6FE0), Colors.white, t)!;
-        final textColor =
-            Color.lerp(const Color(0xFF2A3B52), Colors.white, t)!;
+        final iconColor = Color.lerp(const Color(0xFF3B6FE0), Colors.white, t)!;
+        final textColor = Color.lerp(const Color(0xFF2A3B52), Colors.white, t)!;
         return SizedBox(
           height: height,
           child: Material(
@@ -241,8 +275,7 @@ class SideMenu extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 15,
                       color: textColor,
-                      fontWeight:
-                          selected ? FontWeight.w600 : FontWeight.w400,
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                     ),
                   ),
                 ],

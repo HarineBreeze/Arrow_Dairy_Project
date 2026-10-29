@@ -12,6 +12,7 @@ import 'edit_screen.dart';
 import 'side_menu.dart';
 import 'profile_edit_screen.dart';
 import 'settings_screen.dart';
+import 'global_search_screen.dart';
 import 'note_view_screen.dart';
 import 'item_list_screen.dart';
 import 'asset_screen.dart';
@@ -808,6 +809,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                   onOpenCountdown: () =>
                                       _switchTab('countdown'),
                                   onOpenSettings: _openSettings,
+                                  onOpenGlobalSearch: () {
+                                    _closeMenu();
+                                    Navigator.of(context).push(
+                                      _slideRoute(const GlobalSearchScreen()),
+                                    );
+                                  },
                                 ),
                               ),
                             ),
@@ -1310,10 +1317,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         ? Colors.white
                         : const Color(0xFFFFD666)),
                 onPressed: _showFilterSheet,
-              ),
-              IconButton(
-                icon: const Icon(Icons.search, color: Colors.white),
-                onPressed: _openSearch,
               ),
             ],
           ),

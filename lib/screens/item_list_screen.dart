@@ -81,7 +81,8 @@ class ItemListScreenState extends State<ItemListScreen> {
           children: [
             const SizedBox(height: 10),
             ListTile(
-              leading: const Icon(Icons.edit_outlined, color: Color(0xFF3B6FE0)),
+              leading:
+                  const Icon(Icons.edit_outlined, color: Color(0xFF3B6FE0)),
               title: const Text('编辑'),
               onTap: () => Navigator.pop(ctx, 'edit'),
             ),
@@ -104,7 +105,8 @@ class ItemListScreenState extends State<ItemListScreen> {
       final ok = await showDialog<bool>(
         context: context,
         builder: (c) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text('删除「${item.name}」?'),
           content: const Text('删除后无法恢复'),
           actions: [
@@ -131,10 +133,9 @@ class ItemListScreenState extends State<ItemListScreen> {
       transitionDuration: const Duration(milliseconds: 300),
       reverseTransitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (context, animation, secondaryAnimation) => page,
-      transitionsBuilder:
-          (context, animation, secondaryAnimation, child) {
-        final curved = CurvedAnimation(
-            parent: animation, curve: Curves.easeOutCubic);
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        final curved =
+            CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
         return SlideTransition(
           position: Tween<Offset>(
             begin: const Offset(1, 0),
@@ -210,8 +211,8 @@ class ItemListScreenState extends State<ItemListScreen> {
   /// - 购买时间：愿望单一律视为最新，新添加的更新
   /// （id 为创建时的微秒时间戳，可用来比较“新添加”的先后）
   double _sortKey(Item e) {
-    final ts =
-        double.tryParse(e.id) ?? e.acquiredDate.millisecondsSinceEpoch.toDouble();
+    final ts = double.tryParse(e.id) ??
+        e.acquiredDate.millisecondsSinceEpoch.toDouble();
     switch (_sortField) {
       case _ItemSortField.usage:
         return e.wishlist ? -ts : e.usageCount.toDouble();
@@ -222,7 +223,9 @@ class ItemListScreenState extends State<ItemListScreen> {
       case _ItemSortField.avgCost:
         return e.wishlist ? -ts : e.unitPrice;
       case _ItemSortField.acquired:
-        return e.wishlist ? ts : e.acquiredDate.millisecondsSinceEpoch.toDouble();
+        return e.wishlist
+            ? ts
+            : e.acquiredDate.millisecondsSinceEpoch.toDouble();
     }
   }
 
@@ -232,22 +235,21 @@ class ItemListScreenState extends State<ItemListScreen> {
   }
 
   // 统计数据不包含愿望单物品（攒满转已拥有后参与计算）
-  List<Item> get _ownedItems =>
-      _items.where((e) => !e.wishlist).toList();
+  List<Item> get _ownedItems => _items.where((e) => !e.wishlist).toList();
 
   double get _totalValue =>
       _ownedItems.fold(0.0, (sum, e) => sum + e.actualPrice);
 
   double get _dailyCost => _ownedItems
-      .where((e) => e.calcMethod == 0 && e.lostDate == null)
-      .fold(0.0, (sum, e) {
+          .where((e) => e.calcMethod == 0 && e.lostDate == null)
+          .fold(0.0, (sum, e) {
         final days = e.acquiredDays;
         return days > 0 ? sum + e.actualPrice / days : sum;
       });
 
   double get _perUseCost => _ownedItems
-      .where((e) => e.calcMethod == 1 && e.lostDate == null)
-      .fold(0.0, (sum, e) {
+          .where((e) => e.calcMethod == 1 && e.lostDate == null)
+          .fold(0.0, (sum, e) {
         final n = e.usageCount < 1 ? 1 : e.usageCount;
         return sum + e.actualPrice / n;
       });
@@ -312,15 +314,13 @@ class ItemListScreenState extends State<ItemListScreen> {
                       children: _ItemSortField.values.map((f) {
                         final sel = f == _sortField;
                         return GestureDetector(
-                          onTap: () => setSheetState(
-                              () => _sortField = f),
+                          onTap: () => setSheetState(() => _sortField = f),
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 14, vertical: 8),
                             decoration: BoxDecoration(
-                              color: sel
-                                  ? const Color(0xFF3B6FE0)
-                                  : Colors.white,
+                              color:
+                                  sel ? const Color(0xFF3B6FE0) : Colors.white,
                               borderRadius: BorderRadius.circular(18),
                               border: Border.all(
                                 color: sel
@@ -350,14 +350,12 @@ class ItemListScreenState extends State<ItemListScreen> {
                           setState(() {});
                         },
                         style: ElevatedButton.styleFrom(
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 12),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text('完成',
-                            style: TextStyle(fontSize: 16)),
+                        child: const Text('完成', style: TextStyle(fontSize: 16)),
                       ),
                     ),
                   ],
@@ -392,44 +390,41 @@ class ItemListScreenState extends State<ItemListScreen> {
               color: const Color(0xFF3B6FE0),
               onRefresh: _load,
               child: _filtered.isEmpty
-                ? ListView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    children: [
-                      EmptyState(
-                        icon: '🎒',
-                        title: _searching ? '没有匹配的物品' : '还没有物品',
-                        subtitle: _searching
-                            ? '换个关键词试试'
-                            : '点右下角 + 添加第一件',
+                  ? ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: [
+                        EmptyState(
+                          icon: '🎒',
+                          title: _searching ? '没有匹配的物品' : '还没有物品',
+                          subtitle: _searching ? '换个关键词试试' : '点右下角 + 添加第一件',
+                        ),
+                      ],
+                    )
+                  : GridView.builder(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        childAspectRatio: 1,
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
                       ),
-                    ],
-                  )
-                : GridView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 1,
-                      crossAxisSpacing: 10,
-                      mainAxisSpacing: 10,
+                      itemCount: _filtered.length,
+                      itemBuilder: (context, i) {
+                        final it = _filtered[i];
+                        return _ItemCard(
+                          key: ValueKey(it.id),
+                          item: it,
+                          onTap: () => _openEditor(it),
+                          onLongPress: () => _showItemMenu(it),
+                          onUse: !it.wishlist && it.calcMethod == 1
+                              ? () => _incrementUsage(it)
+                              : null,
+                          onAdjustSaved:
+                              it.wishlist ? (d) => _adjustSaved(it, d) : null,
+                        );
+                      },
                     ),
-                    itemCount: _filtered.length,
-                    itemBuilder: (context, i) {
-                      final it = _filtered[i];
-                      return _ItemCard(
-                        key: ValueKey(it.id),
-                        item: it,
-                        onTap: () => _openEditor(it),
-                        onLongPress: () => _showItemMenu(it),
-                        onUse: !it.wishlist && it.calcMethod == 1
-                            ? () => _incrementUsage(it)
-                            : null,
-                        onAdjustSaved: it.wishlist
-                            ? (d) => _adjustSaved(it, d)
-                            : null,
-                      );
-                    },
-                  ),
             ),
           ),
         ],
@@ -472,13 +467,6 @@ class ItemListScreenState extends State<ItemListScreen> {
                     ),
                   )
                 : const SizedBox(),
-          ),
-          IconButton(
-            icon: Icon(
-              _searching ? Icons.close : Icons.search,
-              color: Colors.white,
-            ),
-            onPressed: _toggleSearch,
           ),
         ],
       ),
@@ -525,12 +513,11 @@ class ItemListScreenState extends State<ItemListScreen> {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
-                      fontSize: 12, color: Color(0xFF9AA8BF)),
+                  style:
+                      const TextStyle(fontSize: 12, color: Color(0xFF9AA8BF)),
                 ),
                 const SizedBox(width: 2),
-                const Icon(Icons.swap_vert,
-                    size: 14, color: Color(0xFF9AA8BF)),
+                const Icon(Icons.swap_vert, size: 14, color: Color(0xFF9AA8BF)),
               ],
             ),
           ],
@@ -576,15 +563,12 @@ class ItemListScreenState extends State<ItemListScreen> {
           _buildFilterChip('愿望单', _ItemFilter.wishlist),
           // 排序按钮位于【愿望单】右侧
           InkWell(
-            onTap: () =>
-                setState(() => _sortAscending = !_sortAscending),
+            onTap: () => setState(() => _sortAscending = !_sortAscending),
             borderRadius: BorderRadius.circular(8),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
               child: Icon(
-                _sortAscending
-                    ? Icons.arrow_upward
-                    : Icons.arrow_downward,
+                _sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
                 size: 17,
                 color: const Color(0xFF3B6FE0),
               ),
@@ -679,20 +663,20 @@ class _ItemCardState extends State<_ItemCard> {
     // 愿望单：左右滑动攒钱（页面手势闸门：滑动期间菜单让位）
     return PageGestureGate(
       child: GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onHorizontalDragUpdate: (d) =>
-          setState(() => _dx = (_dx + d.delta.dx).clamp(-_maxDx, _maxDx)),
-      onHorizontalDragEnd: (d) {
-        final v = d.primaryVelocity ?? 0;
-        if (_dx < -_triggerDx || v < -600) {
-          widget.onAdjustSaved?.call(-1);
-        } else if (_dx > _triggerDx || v > 600) {
-          widget.onAdjustSaved?.call(1);
-        }
-        setState(() => _dx = 0);
-      },
-      onHorizontalDragCancel: () => setState(() => _dx = 0),
-      child: _buildAnimatedCard(child),
+        behavior: HitTestBehavior.opaque,
+        onHorizontalDragUpdate: (d) =>
+            setState(() => _dx = (_dx + d.delta.dx).clamp(-_maxDx, _maxDx)),
+        onHorizontalDragEnd: (d) {
+          final v = d.primaryVelocity ?? 0;
+          if (_dx < -_triggerDx || v < -600) {
+            widget.onAdjustSaved?.call(-1);
+          } else if (_dx > _triggerDx || v > 600) {
+            widget.onAdjustSaved?.call(1);
+          }
+          setState(() => _dx = 0);
+        },
+        onHorizontalDragCancel: () => setState(() => _dx = 0),
+        child: _buildAnimatedCard(child),
       ),
     );
   }
@@ -762,8 +746,7 @@ class _ItemCardState extends State<_ItemCard> {
               const SizedBox(height: 4),
               Text(
                 '已攒 ¥${_fmt(item.savedAmount)}',
-                style: const TextStyle(
-                    fontSize: 12, color: Color(0xFF34A853)),
+                style: const TextStyle(fontSize: 12, color: Color(0xFF34A853)),
               ),
               const SizedBox(height: 8),
               Padding(
@@ -785,8 +768,7 @@ class _ItemCardState extends State<_ItemCard> {
           right: 10,
           child: Text(
             '¥${_fmt(item.price)}',
-            style: const TextStyle(
-                fontSize: 10, color: Color(0xFFB58793)),
+            style: const TextStyle(fontSize: 10, color: Color(0xFFB58793)),
           ),
         ),
       ],
@@ -852,8 +834,7 @@ class _ItemCardState extends State<_ItemCard> {
             children: [
               Opacity(
                 opacity: lost ? 0.5 : 1,
-                child:
-                    Text(item.icon, style: const TextStyle(fontSize: 40)),
+                child: Text(item.icon, style: const TextStyle(fontSize: 40)),
               ),
               const SizedBox(height: 8),
               Text(
@@ -863,9 +844,8 @@ class _ItemCardState extends State<_ItemCard> {
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: lost
-                      ? const Color(0xFF9AA8BF)
-                      : const Color(0xFF2A3B52),
+                  color:
+                      lost ? const Color(0xFF9AA8BF) : const Color(0xFF2A3B52),
                 ),
               ),
               const SizedBox(height: 4),
@@ -873,9 +853,8 @@ class _ItemCardState extends State<_ItemCard> {
                 '¥${item.unitPrice.toStringAsFixed(2)}/$unitLabel',
                 style: TextStyle(
                   fontSize: 13,
-                  color: lost
-                      ? const Color(0xFFB0B8C4)
-                      : const Color(0xFF3B6FE0),
+                  color:
+                      lost ? const Color(0xFFB0B8C4) : const Color(0xFF3B6FE0),
                 ),
               ),
               const SizedBox(height: 2),
@@ -902,9 +881,7 @@ class _ItemCardState extends State<_ItemCard> {
             '¥${item.actualPrice.toStringAsFixed(0)}',
             style: TextStyle(
               fontSize: 10,
-              color: lost
-                  ? const Color(0xFFB0B8C4)
-                  : const Color(0xFF9AA8BF),
+              color: lost ? const Color(0xFFB0B8C4) : const Color(0xFF9AA8BF),
             ),
           ),
         ),

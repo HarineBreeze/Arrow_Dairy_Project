@@ -204,7 +204,8 @@ class CountdownScreenState extends State<CountdownScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.edit_outlined, color: Color(0xFF3B6FE0)),
+              leading:
+                  const Icon(Icons.edit_outlined, color: Color(0xFF3B6FE0)),
               title: const Text('编辑'),
               onTap: () {
                 Navigator.pop(ctx);
@@ -238,8 +239,7 @@ class CountdownScreenState extends State<CountdownScreen> {
                   // 先算出要保存的新列表并立即刷新界面（删除反馈零延迟）；
                   // 落盘与闹钟取消异步进行，不阻塞 UI，也不出现「先顿一下再消失」。
                   final target = e;
-                  final next =
-                      _events.where((x) => x.id != target.id).toList();
+                  final next = _events.where((x) => x.id != target.id).toList();
                   setState(() => _events = next);
                   HapticFeedback.mediumImpact();
                   // 只取消这一条提醒（单次通道调用，远比整表重排快）
@@ -280,7 +280,8 @@ class CountdownScreenState extends State<CountdownScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
-                    color: on ? const Color(0xFF3B6FE0) : const Color(0xFFF5F7FB),
+                    color:
+                        on ? const Color(0xFF3B6FE0) : const Color(0xFFF5F7FB),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(label,
@@ -401,9 +402,7 @@ class CountdownScreenState extends State<CountdownScreen> {
                             EmptyState(
                               icon: '⏳',
                               title: _searching ? '没有匹配的倒数日' : '还没有倒数日',
-                              subtitle: _searching
-                                  ? '换个关键词试试'
-                                  : '点右下角 + 添加第一个',
+                              subtitle: _searching ? '换个关键词试试' : '点右下角 + 添加第一个',
                             ),
                           ],
                         )
@@ -601,9 +600,8 @@ class CountdownScreenState extends State<CountdownScreen> {
       switchInCurve: Curves.easeOutCubic,
       switchOutCurve: Curves.easeInCubic,
       transitionBuilder: (child, animation) => SlideTransition(
-        position:
-            Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
-                .animate(animation),
+        position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
+            .animate(animation),
         child: child,
       ),
       child: _searching ? _buildSearchBar() : _buildNormalBar(),
@@ -646,8 +644,8 @@ class CountdownScreenState extends State<CountdownScreen> {
           TextButton(
             onPressed: _closeSearch,
             child: const Text('全部',
-                style:
-                    TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -670,10 +668,6 @@ class CountdownScreenState extends State<CountdownScreen> {
                 onPressed: widget.onOpenMenu,
               ),
               const Spacer(),
-              IconButton(
-                icon: const Icon(Icons.search, color: Colors.white),
-                onPressed: _openSearch,
-              ),
               IconButton(
                 icon: Icon(Icons.filter_list,
                     color: _hasFilter ? const Color(0xFFFFD666) : Colors.white),
@@ -728,8 +722,8 @@ class CountdownScreenState extends State<CountdownScreen> {
                 visualDensity: VisualDensity.compact,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 32, minHeight: 36),
-                onPressed: () => setState(() => _visibleMonth = DateTime(
-                    _visibleMonth.year - 1, _visibleMonth.month, 1)),
+                onPressed: () => setState(() => _visibleMonth =
+                    DateTime(_visibleMonth.year - 1, _visibleMonth.month, 1)),
               ),
               // 上一月
               IconButton(
@@ -738,8 +732,8 @@ class CountdownScreenState extends State<CountdownScreen> {
                 visualDensity: VisualDensity.compact,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 32, minHeight: 36),
-                onPressed: () => setState(() => _visibleMonth = DateTime(
-                    _visibleMonth.year, _visibleMonth.month - 1, 1)),
+                onPressed: () => setState(() => _visibleMonth =
+                    DateTime(_visibleMonth.year, _visibleMonth.month - 1, 1)),
               ),
               Expanded(
                 child: Center(
@@ -757,8 +751,8 @@ class CountdownScreenState extends State<CountdownScreen> {
                 visualDensity: VisualDensity.compact,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 32, minHeight: 36),
-                onPressed: () => setState(() => _visibleMonth = DateTime(
-                    _visibleMonth.year, _visibleMonth.month + 1, 1)),
+                onPressed: () => setState(() => _visibleMonth =
+                    DateTime(_visibleMonth.year, _visibleMonth.month + 1, 1)),
               ),
               // 下一年
               IconButton(
@@ -768,8 +762,8 @@ class CountdownScreenState extends State<CountdownScreen> {
                 visualDensity: VisualDensity.compact,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 32, minHeight: 36),
-                onPressed: () => setState(() => _visibleMonth = DateTime(
-                    _visibleMonth.year + 1, _visibleMonth.month, 1)),
+                onPressed: () => setState(() => _visibleMonth =
+                    DateTime(_visibleMonth.year + 1, _visibleMonth.month, 1)),
               ),
               TextButton(
                 onPressed: () {
