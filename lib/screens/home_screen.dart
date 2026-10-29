@@ -604,11 +604,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       _closeMenu();
       return false;
     }
-    if (_currentTab == 'search') {
-      // 全局搜索不是常驻主页：返回键先回到「写日记」
-      _switchTab('diary');
-      return false;
-    }
     if (_currentTab == 'items') {
       final itemsState = _itemListKey.currentState;
       if (itemsState != null && itemsState.isSearching) {
