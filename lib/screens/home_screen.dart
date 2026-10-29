@@ -58,12 +58,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   final Set<String> _expandedKeys = {};
   String _viewMode = 'all'; // all | month | year
   String? _activeTopic; // 当前筛选的话题（null = 未筛选）
-  String _currentTab = 'diary'; // diary | items | assets | countdown
-  bool _searchVisited = false; // 刚从菜单进入全局搜索 → 侧栏高亮停在搜索项
-
-  /// 侧边栏高亮项：进入过全局搜索后高亮停在「全局搜索」块，
-  /// 切换其它选项卡时恢复跟随内容页
-  String get _menuHighlight => _searchVisited ? 'search' : _currentTab;
+  String _currentTab = 'diary'; // diary | items | assets | countdown | search
   final GlobalKey<AssetScreenState> _assetListKey = GlobalKey();
   final GlobalKey<ItemListScreenState> _itemListKey =
       GlobalKey<ItemListScreenState>();
@@ -435,10 +430,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   void _switchTab(String tab) {
-    setState(() {
-      _currentTab = tab;
-      _searchVisited = false;
-    });
+    setState(() => _currentTab = tab);
     _closeMenu();
   }
 
@@ -610,6 +602,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Future<bool> _handleBack() async {
     if (_menuOpen) {
       _closeMenu();
+      return false;
+    }
+    if (_currentTab == 'search') {
+      // 全局搜索不是常驻主页：返回键先回到「写日记」
+      _switchTab('diary');
       return false;
     }
     if (_currentTab == 'items') {
@@ -808,7 +805,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                 bottom: false,
                                 child: SideMenu(
                                   profile: _profile,
-                                  currentTab: _menuHighlight,
+                                  currentTab: _currentTab,
                                   onClose: _closeMenu,
                                   onOpenProfile: _openProfileEditor,
                                   onOpenDiary: () => _switchTab('diary'),
@@ -818,19 +815,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                       _switchTab('countdown'),
                                   onOpenSettings: _openSettings,
                                   onOpenGlobalSearch: () {
-                                    // 高亮底纹先从当前块平滑滑到「全局搜索」块，
-                                    // 随后菜单收起、进入搜索页
-                                    setState(() => _searchVisited = true);
-                                    _closeMenu();
-                                    Navigator.of(context)
-                                        .push(_slideRoute(
-                                            const GlobalSearchScreen()))
-                                        .then((r) {
-                                      // 搜索页内三横杠/左右滑 → 返回并拉出菜单侧边栏
-                                      if (r == 'open-menu' && mounted) {
-                                        _openMenu();
-                                      }
-                                    });
+                                    // 全局搜索现为普通主页选项卡：
+                                    // 高亮底纹滑至该项并切换内容，菜单收起
+                                    _switchTab('search');
                                   },
                                 ),
                               ),
@@ -913,19 +900,26 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                     onOpenMenu: _openMenu,
                                   ),
                                 )
-                              : _loading
+                              : _currentTab == 'search'
                                   ? KeyedSubtree(
-                                      key: const ValueKey('loading'),
-                                      child: _buildSkeleton(),
+                                      key: const ValueKey('search'),
+                                      child: GlobalSearchScreen(
+                                        onOpenMenu: _openMenu,
+                                      ),
                                     )
-                                  : KeyedSubtree(
-                                      key: const ValueKey('diary'),
-                                      child: _buildBody(),
-                                    ),
+                                  : _loading
+                                      ? KeyedSubtree(
+                                          key: const ValueKey('loading'),
+                                          child: _buildSkeleton(),
+                                        )
+                                      : KeyedSubtree(
+                                          key: const ValueKey('diary'),
+                                          child: _buildBody(),
+                                        ),
                 ),
               ),
             ),
-            floatingActionButton: _menuOpen
+            floatingActionButton: _menuOpen || _currentTab == 'search'
                 ? null
                 : FloatingActionButton(
                     onPressed: () {

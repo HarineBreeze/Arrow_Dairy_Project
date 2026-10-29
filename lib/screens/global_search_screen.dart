@@ -16,8 +16,15 @@ import 'note_view_screen.dart';
 
 /// 全局搜索主页：一个搜索框同时检索 笔记标题 / 物品名称 / 事件名称 / 资产备注。
 /// 顶部搜索框持久保持；结果用「收纳栏」（笔记/物品/事件/资产 + 数量）+ 分区列表呈现。
+///
+/// 本页以「主页选项卡」形式嵌入 [HomeScreen] 的 Stack，与其它主页（写日记 /
+/// 物品清单 / 重要事件 / 资产全景）一致：状态栏贯通、左右滑跟手拉出/收回
+/// 菜单侧边栏，均由主页统一提供，这里只负责页内内容。
 class GlobalSearchScreen extends StatefulWidget {
-  const GlobalSearchScreen({Key? key}) : super(key: key);
+  final VoidCallback onOpenMenu;
+
+  const GlobalSearchScreen({Key? key, required this.onOpenMenu})
+      : super(key: key);
 
   @override
   State<GlobalSearchScreen> createState() => _GlobalSearchScreenState();
@@ -135,73 +142,36 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
     final assets = _hitAssets;
     final query = _ctrl.text.trim();
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      // 与主页一致：状态栏透明、浅色图标，蓝色顶栏贯通通知栏区域
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-      ),
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF3F6FB),
-        body: Column(
-          children: [
-            // 蓝色顶栏贯通状态栏区域（SafeArea 只包住顶栏内容），
-            // 注意：底色只在最外层铺一次，搜索框行不再重复铺色，
-            // 否则半透明蓝叠加两次会出现「通知栏 / 顶栏」色块断层。
-            Container(
-              color: const Color(0xB33B6FE0),
-              child: SafeArea(bottom: false, child: _buildSearchBar()),
-            ),
-            Expanded(
-              child: GestureDetector(
-                // 与其它主页一致：左右滑均可拉出菜单侧边栏
-                //（返回菜单指令给主页，由主页打开侧栏动画）
-                // 记录累计横向位移：慢速拖动（无甩动速度）也能触发
-                onHorizontalDragStart: (_) => _swipeDx = 0,
-                onHorizontalDragUpdate: (d) => _swipeDx += d.delta.dx,
-                onHorizontalDragEnd: _onDragEndOpenMenu,
-                child: _loading
-                    ? const SizedBox()
-                    : query.isEmpty
-                        ? _buildEmptyHint()
-                        : _buildResults(diaries, items, events, assets),
-              ),
-            ),
-          ],
+    // 主页选项卡形态：不自带 Scaffold / 状态栏处理。状态栏贯通与
+    // 左右滑跟手菜单均由 HomeScreen 统一提供，这里只输出页内内容。
+    return Column(
+      children: [
+        _buildSearchBar(),
+        Expanded(
+          child: _loading
+              ? const SizedBox()
+              : query.isEmpty
+                  ? _buildEmptyHint()
+                  : _buildResults(diaries, items, events, assets),
         ),
-      ),
+      ],
     );
   }
 
-  /// 本次横向拖动的累计位移
-  double _swipeDx = 0;
-
-  /// 水平滑动结束 → 返回主页并打开菜单侧边栏。
-  /// 快速甩动（速度超过阈值）或慢速拖动超过 60px 均触发，
-  /// 与主页「左右滑开菜单」的手感保持一致。
-  void _onDragEndOpenMenu(DragEndDetails details) {
-    final v = details.primaryVelocity ?? 0;
-    final dx = _swipeDx;
-    _swipeDx = 0;
-    if (v > 250 || v < -250 || dx > 60 || dx < -60) {
-      Navigator.of(context).pop('open-menu');
-    }
-  }
-
   /// 顶部持久搜索框（不默认吊起输入法，点击后才聚焦）。
-  /// 注意：这里不再铺底色 —— 半透明蓝由外层顶栏 Container 统一铺一次，
-  /// 若此处再铺一层，两层 0xB3 蓝叠加会让搜索框行比状态栏区域更深，
-  /// 造成顶部色块「断层」。
+  /// 作为主页选项卡：蓝色顶栏在 SafeArea 内容区内（状态栏区域由主页统一
+  /// 铺蓝贯通），这里只铺一层 0xB3 蓝即可，与其它主页顶栏一致。
   Widget _buildSearchBar() {
     return Container(
       height: 56,
+      color: const Color(0xB33B6FE0),
       padding: const EdgeInsets.fromLTRB(4, 6, 12, 6),
       child: Row(
         children: [
           IconButton(
             icon: const Icon(Icons.menu, color: Colors.white),
             tooltip: '菜单',
-            onPressed: () => Navigator.of(context).pop('open-menu'),
+            onPressed: widget.onOpenMenu,
           ),
           Expanded(
             child: Container(
