@@ -137,22 +137,37 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF3F6FB),
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            _buildSearchBar(),
-            Expanded(
+      body: Column(
+        children: [
+          // 蓝色顶栏贯通状态栏区域（SafeArea 只包住顶栏内容），
+          // 与其它主页一致：通知栏色块跟随页面
+          Container(
+            color: const Color(0xB33B6FE0),
+            child: SafeArea(bottom: false, child: _buildSearchBar()),
+          ),
+          Expanded(
+            child: GestureDetector(
+              // 与其它主页一致：左右滑均可拉出菜单侧边栏
+              //（返回菜单指令给主页，由主页打开侧栏动画）
+              onHorizontalDragEnd: _onDragEndOpenMenu,
               child: _loading
                   ? const SizedBox()
                   : query.isEmpty
                       ? _buildEmptyHint()
                       : _buildResults(diaries, items, events, assets),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
+  }
+
+  /// 水平快速滑动 → 返回主页并打开菜单侧边栏
+  void _onDragEndOpenMenu(DragEndDetails details) {
+    final v = details.primaryVelocity ?? 0;
+    if (v > 250 || v < -250) {
+      Navigator.of(context).pop('open-menu');
+    }
   }
 
   /// 顶部持久搜索框（不默认吊起输入法，点击后才聚焦）
@@ -164,8 +179,9 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () => Navigator.of(context).maybePop(),
+            icon: const Icon(Icons.menu, color: Colors.white),
+            tooltip: '菜单',
+            onPressed: () => Navigator.of(context).pop('open-menu'),
           ),
           Expanded(
             child: Container(
@@ -277,8 +293,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           items.isNotEmpty),
       _SearchCategory('事件', '${events.length} 个',
           Icons.event_available_outlined, events.isNotEmpty),
-      _SearchCategory('资产',
-          _assetLocked ? '已加密' : '${assets.length} 项',
+      _SearchCategory('资产', _assetLocked ? '已加密' : '${assets.length} 项',
           Icons.account_balance_outlined, assets.isNotEmpty),
     ];
 

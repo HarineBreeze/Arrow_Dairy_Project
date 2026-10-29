@@ -115,31 +115,35 @@ class SideMenu extends StatelessWidget {
   }
 
   Widget _buildGlobalSearchButton() {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onOpenGlobalSearch,
-        borderRadius: BorderRadius.circular(10),
-        child: SizedBox(
-          height: 48,
-          child: Row(
-            children: [
-              const SizedBox(width: 16),
-              const Icon(Icons.search_rounded,
-                  size: 22, color: Color(0xFF5A6B82)),
-              const SizedBox(width: 12),
-              const Text(
-                '全局搜索',
-                style: TextStyle(
-                  fontSize: 15,
-                  color: Color(0xFF2A3B52),
+    // 与导航选项卡同款排版：同宽度（horizontal 12）、同高度 52、同圆角 10
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onOpenGlobalSearch,
+          borderRadius: BorderRadius.circular(10),
+          child: SizedBox(
+            height: 52,
+            child: Row(
+              children: [
+                const SizedBox(width: 16),
+                const Icon(Icons.search_rounded,
+                    size: 22, color: Color(0xFF5A6B82)),
+                const SizedBox(width: 12),
+                const Text(
+                  '全局搜索',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Color(0xFF2A3B52),
+                  ),
                 ),
-              ),
-              const Spacer(),
-              const Icon(Icons.chevron_right,
-                  size: 20, color: Color(0xFFC4CEDD)),
-              const SizedBox(width: 12),
-            ],
+                const Spacer(),
+                const Icon(Icons.chevron_right,
+                    size: 20, color: Color(0xFFC4CEDD)),
+                const SizedBox(width: 12),
+              ],
+            ),
           ),
         ),
       ),

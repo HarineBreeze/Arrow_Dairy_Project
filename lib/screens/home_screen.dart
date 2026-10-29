@@ -811,9 +811,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                   onOpenSettings: _openSettings,
                                   onOpenGlobalSearch: () {
                                     _closeMenu();
-                                    Navigator.of(context).push(
-                                      _slideRoute(const GlobalSearchScreen()),
-                                    );
+                                    Navigator.of(context)
+                                        .push(_slideRoute(
+                                            const GlobalSearchScreen()))
+                                        .then((r) {
+                                      // 搜索页内三横杠/左右滑 → 返回并拉出菜单侧边栏
+                                      if (r == 'open-menu' && mounted) {
+                                        _openMenu();
+                                      }
+                                    });
                                   },
                                 ),
                               ),
