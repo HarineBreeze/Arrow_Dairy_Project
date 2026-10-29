@@ -59,6 +59,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   String _viewMode = 'all'; // all | month | year
   String? _activeTopic; // 当前筛选的话题（null = 未筛选）
   String _currentTab = 'diary'; // diary | items | assets | countdown
+  bool _searchVisited = false; // 刚从菜单进入全局搜索 → 侧栏高亮停在搜索项
+
+  /// 侧边栏高亮项：进入过全局搜索后高亮停在「全局搜索」块，
+  /// 切换其它选项卡时恢复跟随内容页
+  String get _menuHighlight => _searchVisited ? 'search' : _currentTab;
   final GlobalKey<AssetScreenState> _assetListKey = GlobalKey();
   final GlobalKey<ItemListScreenState> _itemListKey =
       GlobalKey<ItemListScreenState>();
@@ -430,7 +435,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   void _switchTab(String tab) {
-    setState(() => _currentTab = tab);
+    setState(() {
+      _currentTab = tab;
+      _searchVisited = false;
+    });
     _closeMenu();
   }
 
@@ -800,7 +808,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                 bottom: false,
                                 child: SideMenu(
                                   profile: _profile,
-                                  currentTab: _currentTab,
+                                  currentTab: _menuHighlight,
                                   onClose: _closeMenu,
                                   onOpenProfile: _openProfileEditor,
                                   onOpenDiary: () => _switchTab('diary'),
@@ -810,6 +818,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                       _switchTab('countdown'),
                                   onOpenSettings: _openSettings,
                                   onOpenGlobalSearch: () {
+                                    // 高亮底纹先从当前块平滑滑到「全局搜索」块，
+                                    // 随后菜单收起、进入搜索页
+                                    setState(() => _searchVisited = true);
                                     _closeMenu();
                                     Navigator.of(context)
                                         .push(_slideRoute(

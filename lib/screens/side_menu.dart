@@ -103,9 +103,7 @@ class SideMenu extends StatelessWidget {
           const SizedBox(height: 16),
           const Divider(height: 1, color: Color(0xFFE8EDF5)),
           const SizedBox(height: 8),
-          _buildGlobalSearchButton(),
-          const SizedBox(height: 4),
-          _buildTabSwitcher(),
+          _buildNavStack(),
           const Spacer(),
           const Divider(height: 1, color: Color(0xFFE8EDF5)),
           _buildSettingsButton(),
@@ -114,83 +112,27 @@ class SideMenu extends StatelessWidget {
     );
   }
 
-  Widget _buildGlobalSearchButton() {
-    // 与导航选项卡同款排版：同宽度（horizontal 12）、同高度 52、同圆角 10
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onOpenGlobalSearch,
-          borderRadius: BorderRadius.circular(10),
-          child: SizedBox(
-            height: 52,
-            child: Row(
-              children: [
-                const SizedBox(width: 16),
-                const Icon(Icons.search_rounded,
-                    size: 22, color: Color(0xFF5A6B82)),
-                const SizedBox(width: 12),
-                const Text(
-                  '全局搜索',
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Color(0xFF2A3B52),
-                  ),
-                ),
-                const Spacer(),
-                const Icon(Icons.chevron_right,
-                    size: 20, color: Color(0xFFC4CEDD)),
-                const SizedBox(width: 12),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSettingsButton() {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onOpenSettings,
-        borderRadius: BorderRadius.circular(10),
-        child: SizedBox(
-          height: 52,
-          child: Row(
-            children: [
-              const SizedBox(width: 16),
-              const Icon(Icons.settings_outlined,
-                  size: 22, color: Color(0xFF5A6B82)),
-              const SizedBox(width: 12),
-              const Text(
-                '设置',
-                style: TextStyle(
-                  fontSize: 15,
-                  color: Color(0xFF2A3B52),
-                ),
-              ),
-              const Spacer(),
-              const Icon(Icons.chevron_right,
-                  size: 20, color: Color(0xFFC4CEDD)),
-              const SizedBox(width: 12),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTabSwitcher() {
+  /// 侧栏导航整体（全局搜索 + 4 个选项卡）：
+  /// 高亮底纹共用一个 AnimatedPositioned 块，点击任意项时
+  /// 底纹从当前块平滑滑动到目标块（含从选项卡滑到全局搜索项）。
+  Widget _buildNavStack() {
     const tabHeight = 52.0;
     const gap = 8.0;
-    const tabs = ['diary', 'items', 'countdown', 'assets'];
-    final selectedIndex = tabs.indexOf(currentTab).clamp(0, 3);
+    final items = <_NavItem>[
+      _NavItem(Icons.search_rounded, '全局搜索', 'search', onOpenGlobalSearch),
+      _NavItem(Icons.book_outlined, '写日记', 'diary', onOpenDiary),
+      _NavItem(Icons.inventory_2_outlined, '物品清单', 'items', onOpenItems),
+      _NavItem(Icons.event_available_outlined, '重要事件', 'countdown',
+          onOpenCountdown),
+      _NavItem(Icons.account_balance_outlined, '资产全景', 'assets',
+          onOpenAssets),
+    ];
+    final selectedIndex =
+        items.indexWhere((n) => n.key == currentTab).clamp(0, items.length - 1);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: SizedBox(
-        height: tabHeight * 4 + gap * 3,
+        height: tabHeight * items.length + gap * (items.length - 1),
         child: Stack(
           children: [
             AnimatedPositioned(
@@ -209,37 +151,16 @@ class SideMenu extends StatelessWidget {
             ),
             Column(
               children: [
-                _buildTabItem(
-                  icon: Icons.book_outlined,
-                  label: '写日记',
-                  selected: currentTab == 'diary',
-                  onTap: onOpenDiary,
-                  height: tabHeight,
-                ),
-                const SizedBox(height: gap),
-                _buildTabItem(
-                  icon: Icons.inventory_2_outlined,
-                  label: '物品清单',
-                  selected: currentTab == 'items',
-                  onTap: onOpenItems,
-                  height: tabHeight,
-                ),
-                const SizedBox(height: gap),
-                _buildTabItem(
-                  icon: Icons.event_available_outlined,
-                  label: '重要事件',
-                  selected: currentTab == 'countdown',
-                  onTap: onOpenCountdown,
-                  height: tabHeight,
-                ),
-                const SizedBox(height: gap),
-                _buildTabItem(
-                  icon: Icons.account_balance_outlined,
-                  label: '资产全景',
-                  selected: currentTab == 'assets',
-                  onTap: onOpenAssets,
-                  height: tabHeight,
-                ),
+                for (var i = 0; i < items.length; i++) ...[
+                  if (i > 0) const SizedBox(height: gap),
+                  _buildNavItem(
+                    icon: items[i].icon,
+                    label: items[i].label,
+                    selected: i == selectedIndex,
+                    onTap: items[i].onTap,
+                    height: tabHeight,
+                  ),
+                ],
               ],
             ),
           ],
@@ -248,7 +169,7 @@ class SideMenu extends StatelessWidget {
     );
   }
 
-  Widget _buildTabItem({
+  Widget _buildNavItem({
     required IconData icon,
     required String label,
     required bool selected,
@@ -290,4 +211,45 @@ class SideMenu extends StatelessWidget {
       },
     );
   }
+
+  Widget _buildSettingsButton() {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onOpenSettings,
+        borderRadius: BorderRadius.circular(10),
+        child: SizedBox(
+          height: 52,
+          child: Row(
+            children: [
+              const SizedBox(width: 16),
+              const Icon(Icons.settings_outlined,
+                  size: 22, color: Color(0xFF5A6B82)),
+              const SizedBox(width: 12),
+              const Text(
+                '设置',
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Color(0xFF2A3B52),
+                ),
+              ),
+              const Spacer(),
+              const Icon(Icons.chevron_right,
+                  size: 20, color: Color(0xFFC4CEDD)),
+              const SizedBox(width: 12),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 侧栏导航项数据（全局搜索 + 选项卡统一结构）
+class _NavItem {
+  final IconData icon;
+  final String label;
+  final String key;
+  final VoidCallback onTap;
+  const _NavItem(this.icon, this.label, this.key, this.onTap);
 }
