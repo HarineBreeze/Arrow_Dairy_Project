@@ -20,6 +20,7 @@ import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
     private val channelName = "vector_diary/countdown"
+    private val hapticChannelName = "vector_diary/haptic"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -50,6 +51,59 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+
+        // 触感反馈通道：直接驱动 Vibrator，绕开系统 View 反馈
+        // （部分 ROM 把 HapticFeedback 弱化或关闭，导致「震动没了」）
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, hapticChannelName)
+            .setMethodCallHandler { call, result ->
+                val ms = call.argument<Int>("ms") ?: 12
+                val amplitude = call.argument<Int>("amplitude") ?: -1
+                try {
+                    Haptics.vibrate(context, ms.toLong(), amplitude)
+                    result.success(true)
+                } catch (e: Exception) {
+                    result.success(false)
+                }
+            }
+    }
+}
+
+/** 直接调用系统振动器：不依赖 View 的 hapticFeedbackEnabled。 */
+object Haptics {
+    fun vibrate(context: Context, ms: Long, amplitude: Int) {
+        val vib = if (Build.VERSION.SDK_INT >= 31) {
+            val manager =
+                context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE)
+                        as? android.os.VibratorManager
+            manager?.defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            context.getSystemService(Context.VIBRATOR_SERVICE) as? android.os.Vibrator
+        } ?: return
+        if (!vib.hasVibrator()) return
+
+        if (Build.VERSION.SDK_INT >= 26) {
+            val attrs = android.media.AudioAttributes.Builder()
+                .setUsage(android.media.AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+                .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build()
+            if (amplitude >= 1 && amplitude <= 255 && vib.hasAmplitudeControl()) {
+                vib.vibrate(
+                    android.os.VibrationEffect.createOneShot(
+                        ms, amplitude
+                    ), attrs
+                )
+            } else {
+                vib.vibrate(
+                    android.os.VibrationEffect.createOneShot(
+                        ms, android.os.VibrationEffect.DEFAULT_AMPLITUDE
+                    ), attrs
+                )
+            }
+        } else {
+            @Suppress("DEPRECATION")
+            vib.vibrate(ms)
+        }
     }
 }
 

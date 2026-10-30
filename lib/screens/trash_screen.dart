@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../services/trash_storage.dart';
+import '../utils/haptics.dart';
 
 /// 回收站主页。
 /// 交互与其它主页一致：顶部蓝色三横杠 + 标题、左右滑由 HomeScreen 统一处理。
@@ -67,7 +68,7 @@ class TrashScreenState extends State<TrashScreen> {
   // ---------- 操作 ----------
 
   Future<void> _restore(TrashEntry e) async {
-    HapticFeedback.selectionClick();
+    Haptics.light();
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -93,7 +94,7 @@ class TrashScreenState extends State<TrashScreen> {
 
   /// 二次删除：彻底删除，不可恢复
   Future<void> _purge(TrashEntry e) async {
-    HapticFeedback.selectionClick();
+    Haptics.light();
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -123,7 +124,7 @@ class TrashScreenState extends State<TrashScreen> {
     final scope = _category;
     final n = scope == null ? _entries.length : _countOf(scope);
     if (n == 0) return;
-    HapticFeedback.selectionClick();
+    Haptics.light();
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -317,7 +318,7 @@ class TrashScreenState extends State<TrashScreen> {
             onTap: disabled
                 ? null
                 : () {
-                    HapticFeedback.selectionClick();
+                    Haptics.light();
                     setState(() => _category = c.kind);
                   },
             child: Container(

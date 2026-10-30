@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../utils/text_format.dart';
+import '../utils/haptics.dart';
 
 /// 富文本格式工具栏：选中文字后点击即可应用样式。
 /// 颜色 / 字号用「内嵌展开行」而非 PopupMenu，避免菜单抢焦点导致选区丢失。
@@ -158,7 +159,7 @@ class _FormatToolbarState extends State<FormatToolbar> {
   }
 
   void _togglePanel(int which) {
-    HapticFeedback.selectionClick();
+    Haptics.light();
     if (_panel == which) {
       setState(() {
         _panel = 0;
@@ -180,7 +181,7 @@ class _FormatToolbarState extends State<FormatToolbar> {
   }) {
     return InkWell(
       onTap: () {
-        HapticFeedback.selectionClick();
+        Haptics.light();
         onTap();
       },
       borderRadius: BorderRadius.circular(8),
@@ -405,7 +406,7 @@ class _FormatToolbarState extends State<FormatToolbar> {
               padding: const EdgeInsets.only(right: 10),
               child: GestureDetector(
                 onTap: () {
-                  HapticFeedback.selectionClick();
+                  Haptics.light();
                   _setHighlight(active ? null : c);
                 },
                 child: Container(
@@ -432,7 +433,7 @@ class _FormatToolbarState extends State<FormatToolbar> {
           const Spacer(),
           GestureDetector(
             onTap: () {
-              HapticFeedback.selectionClick();
+              Haptics.light();
               _setHighlight(null);
             },
             child: Container(
@@ -468,7 +469,7 @@ class _FormatToolbarState extends State<FormatToolbar> {
               padding: const EdgeInsets.only(right: 8),
               child: GestureDetector(
                 onTap: () {
-                  HapticFeedback.selectionClick();
+                  Haptics.light();
                   _setSize(sz);
                 },
                 child: Container(

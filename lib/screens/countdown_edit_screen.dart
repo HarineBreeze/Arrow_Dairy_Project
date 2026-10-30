@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/countdown_event.dart';
+import '../services/trash_storage.dart';
 import '../widgets/unsaved_guard.dart';
+import '../utils/haptics.dart';
 
 /// 新增 / 编辑倒数日。
 class CountdownEditScreen extends StatefulWidget {
@@ -58,7 +60,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
     }
     if (!mounted) return false;
     setState(() => _saving = true);
-    HapticFeedback.selectionClick();
+    Haptics.light();
     final e = widget.event ??
         CountdownEvent(
           id: DateTime.now().microsecondsSinceEpoch.toString(),
@@ -137,7 +139,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('删除这个倒数日?'),
-        content: const Text('删除后无法恢复'),
+        content: const Text('删除后可在「回收站」保留 7 天，期间可还原'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
@@ -148,12 +150,18 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
         ],
       ),
     );
-    if (ok == true && mounted) Navigator.pop(context, 'deleted');
+    if (ok == true && mounted) {
+      Haptics.medium();
+      // 编辑页删除同样入回收站
+      await TrashStorage.addEvent(widget.event!);
+      if (!mounted) return;
+      Navigator.pop(context, 'deleted');
+    }
   }
 
   /// 日历选日：支持左右滑动翻页
   Future<void> _pickDate() async {
-    HapticFeedback.selectionClick();
+    Haptics.light();
     final picked = await Navigator.push<DateTime>(
       context,
       MaterialPageRoute(
@@ -337,7 +345,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                           label: t,
                           selected: _type == t,
                           onTap: () {
-                            HapticFeedback.selectionClick();
+                            Haptics.light();
                             // 顺序很关键：必须在改 _type 之前判断，
                             // 否则比较的是「新类型的默认图标」，导致永远命中
                             // 或永远不命中。
@@ -374,7 +382,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                       label: r.label,
                       selected: _repeat == r,
                       onTap: () {
-                        HapticFeedback.selectionClick();
+                        Haptics.light();
                         setState(() => _repeat = r);
                       },
                     ),
@@ -404,7 +412,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                       label: d == 0 ? '当天' : '提前 $d 天',
                       selected: _remindBeforeDays == d,
                       onTap: () {
-                        HapticFeedback.selectionClick();
+                        Haptics.light();
                         setState(() => _remindBeforeDays = d);
                       },
                     ),
@@ -532,7 +540,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
     return Expanded(
       child: GestureDetector(
         onTap: () {
-          HapticFeedback.selectionClick();
+          Haptics.light();
           if (isMore) {
             _showMoreIcons();
           } else {
@@ -591,7 +599,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                     final sel = tmpCtrl.text.trim() == e;
                     return GestureDetector(
                       onTap: () {
-                        HapticFeedback.selectionClick();
+                        Haptics.light();
                         setSheet(() => tmpCtrl.text = e);
                       },
                       child: Container(
@@ -684,7 +692,7 @@ class _DatePickerPageState extends State<_DatePickerPage> {
       _selected.day, _time.hour, _time.minute);
 
   Future<void> _pickTime() async {
-    HapticFeedback.selectionClick();
+    Haptics.light();
     final t = await showTimePicker(
       context: context,
       initialTime: _time,
@@ -702,7 +710,7 @@ class _DatePickerPageState extends State<_DatePickerPage> {
 
   /// 按年翻页（保持当前月份）
   void _shiftYear(int delta) {
-    HapticFeedback.selectionClick();
+    Haptics.light();
     setState(() => _month = DateTime(
         _month.year + delta, _month.month, 1));
   }
@@ -729,7 +737,7 @@ class _DatePickerPageState extends State<_DatePickerPage> {
           date.day == today.day;
       cells.add(GestureDetector(
         onTap: () {
-          HapticFeedback.selectionClick();
+          Haptics.light();
           setState(() => _selected = date);
         },
         child: Center(

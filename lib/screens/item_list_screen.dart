@@ -7,6 +7,7 @@ import '../utils/menu_gesture_gate.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/loading_skeleton.dart';
 import 'item_edit_screen.dart';
+import '../utils/haptics.dart';
 
 enum _ItemFilter { all, owning, lost, wishlist }
 
@@ -69,7 +70,7 @@ class ItemListScreenState extends State<ItemListScreen> {
 
   /// 长按物品卡片：编辑 / 删除
   Future<void> _showItemMenu(Item item) async {
-    HapticFeedback.mediumImpact(); // 长按菜单震动反馈
+    Haptics.mediumNow(); // 长按菜单：同步触发，避免异步等待导致振动被丢弃
     final action = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: Colors.white,

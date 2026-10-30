@@ -4,11 +4,13 @@ import 'dart:async';
 import '../models/diary_entry.dart';
 import '../services/diary_storage.dart';
 import '../services/item_storage.dart';
+import '../services/trash_storage.dart';
 import '../widgets/highlight_controller.dart';
 import '../widgets/format_toolbar.dart';
 import '../utils/text_format.dart';
 import '../utils/writing_prompts.dart';
 import '../widgets/unsaved_guard.dart';
+import '../utils/haptics.dart';
 
 class EditScreen extends StatefulWidget {
   final DiaryEntry? entry;
@@ -64,7 +66,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
   /// 换一个话题（点提示语右侧的小图标）。
   void _shufflePrompt() {
     setState(() => _prompt = WritingPrompts.random(exclude: _prompt));
-    HapticFeedback.selectionClick();
+    Haptics.light();
   }
 
   // ---------- 撤销 / 重做 ----------
@@ -116,7 +118,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     _contentCtrl.setFormats(s.formats);
     _formats = List<TextFormat>.from(s.formats);
     _lastContent = s.text;
-    HapticFeedback.selectionClick();
+    Haptics.light();
     setState(() {
       _savedStart = 0;
       _savedEnd = 0;
@@ -460,7 +462,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     _contentCtrl.setFormats(_formats);
     _lastContent = newText;
 
-    HapticFeedback.selectionClick();
+    Haptics.light();
     setState(() {
       _savedStart = 0;
       _savedEnd = 0;
@@ -579,7 +581,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('确认要删除这篇日记吗?'),
-        content: const Text('注意！删除后无法恢复！'),
+        content: const Text('删除后可在「回收站」保留 7 天，期间可还原'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -593,9 +595,12 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
       ),
     );
     if (confirmed == true) {
+      Haptics.medium();
       final list = await DiaryStorage.load();
       list.removeWhere((e) => e.id == widget.entry!.id);
       await DiaryStorage.save(list);
+      // 编辑页删除同样入回收站
+      await TrashStorage.addDiary(widget.entry!);
       if (!mounted) return;
       Navigator.pop(context, true);
     }

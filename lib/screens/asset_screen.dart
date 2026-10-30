@@ -6,6 +6,7 @@ import '../services/trash_storage.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/loading_skeleton.dart';
 import 'asset_edit_screen.dart';
+import '../utils/haptics.dart';
 
 /// 资产全景主页。默认无需密码即可查看；
 /// 开启「加密访问」后，进入本页需先输入密码解锁。
@@ -451,8 +452,8 @@ class AssetScreenState extends State<AssetScreen> {
 
   /// 长按（500ms 系统默认）弹出编辑/删除选框
   void _showCardMenu(Asset a) {
-    HapticFeedback.mediumImpact(); // 长按菜单震动反馈
-    HapticFeedback.mediumImpact();
+    Haptics.mediumNow(); // 长按菜单：同步触发，避免异步等待导致振动被丢弃
+    Haptics.medium();
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -642,7 +643,7 @@ class AssetScreenState extends State<AssetScreen> {
               // 隐藏/显示看板数字（默认显示）
               GestureDetector(
                 onTap: () {
-                  HapticFeedback.selectionClick();
+                  Haptics.light();
                   setState(() => _hideNumbers = !_hideNumbers);
                 },
                 behavior: HitTestBehavior.opaque,

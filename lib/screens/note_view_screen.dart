@@ -4,10 +4,13 @@ import '../models/item.dart';
 import '../services/app_settings.dart';
 import '../services/diary_storage.dart';
 import '../services/item_storage.dart';
+import '../services/trash_storage.dart';
+import 'package:flutter/services.dart';
 import '../widgets/rich_note_text.dart';
 import '../utils/text_format.dart';
 import 'edit_screen.dart';
 import 'item_edit_screen.dart';
+import '../utils/haptics.dart';
 
 class NoteViewScreen extends StatefulWidget {
   final DiaryEntry entry;
@@ -101,7 +104,7 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('确认要删除这篇日记吗?'),
-        content: const Text('注意！删除后无法恢复！'),
+        content: const Text('删除后可在「回收站」保留 7 天，期间可还原'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -115,9 +118,12 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
       ),
     );
     if (confirmed == true) {
+      Haptics.medium();
       final list = await DiaryStorage.load();
       list.removeWhere((e) => e.id == _entry.id);
       await DiaryStorage.save(list);
+      // 阅读页删除同样入回收站
+      await TrashStorage.addDiary(_entry);
       if (!mounted) return;
       Navigator.pop(context, true);
     }

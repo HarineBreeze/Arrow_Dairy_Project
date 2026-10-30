@@ -13,6 +13,7 @@ import 'asset_edit_screen.dart';
 import 'countdown_edit_screen.dart';
 import 'item_edit_screen.dart';
 import 'note_view_screen.dart';
+import '../utils/haptics.dart';
 
 /// 全局搜索主页：一个搜索框同时检索 笔记标题 / 物品名称 / 事件名称 / 资产备注。
 /// 顶部搜索框持久保持；结果用「收纳栏」（笔记/物品/事件/资产 + 数量）+ 分区列表呈现。
@@ -303,7 +304,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
               final selected = _category == c.name;
               return GestureDetector(
                 onTap: () {
-                  HapticFeedback.selectionClick();
+                  Haptics.light();
                   setState(() => _category = selected ? null : c.name);
                 },
                 child: Container(
@@ -442,7 +443,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
   Widget _buildAssetEye() {
     return GestureDetector(
       onTap: () {
-        HapticFeedback.selectionClick();
+        Haptics.light();
         setState(() => _hideAssetAmount = !_hideAssetAmount);
       },
       behavior: HitTestBehavior.opaque,

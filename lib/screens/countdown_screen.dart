@@ -8,6 +8,7 @@ import '../widgets/empty_state.dart';
 import '../widgets/loading_skeleton.dart';
 import '../utils/menu_gesture_gate.dart';
 import 'countdown_edit_screen.dart';
+import '../utils/haptics.dart';
 
 /// 倒数日主页：顶栏（年月 + 搜索 + 筛选）、日历视图、
 /// 置顶组 / 纪念日 / 资产日 三个可折叠分组的长条卡片列表。
@@ -67,7 +68,7 @@ class CountdownScreenState extends State<CountdownScreen> {
     if (!mounted) return;
     // 提醒同步不阻塞刷新动画
     CountdownReminder.syncAll(_events);
-    HapticFeedback.selectionClick();
+    Haptics.light();
   }
 
   /// 供外部（首页 FAB）调用的快捷入口
@@ -178,8 +179,8 @@ class CountdownScreenState extends State<CountdownScreen> {
 
   /// 长按 500ms → 选框：置顶 / 编辑 / 删除
   void _showCardMenu(CountdownEvent e) {
-    HapticFeedback.mediumImpact(); // 长按菜单震动反馈
-    HapticFeedback.mediumImpact();
+    Haptics.mediumNow(); // 长按菜单：同步触发，避免异步等待导致振动被丢弃
+    Haptics.medium();
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -242,7 +243,7 @@ class CountdownScreenState extends State<CountdownScreen> {
                   final target = e;
                   final next = _events.where((x) => x.id != target.id).toList();
                   setState(() => _events = next);
-                  HapticFeedback.mediumImpact();
+                  Haptics.medium();
                   // 只取消这一条提醒（单次通道调用，远比整表重排快）
                   CountdownReminder.cancelOne(target.id);
                   CountdownStorage.save(next);
@@ -273,7 +274,7 @@ class CountdownScreenState extends State<CountdownScreen> {
               padding: const EdgeInsets.only(right: 8, bottom: 8),
               child: GestureDetector(
                 onTap: () {
-                  HapticFeedback.selectionClick();
+                  Haptics.light();
                   setSheet(() {
                     // 再次点击已选项 → 恢复全部
                     _typeFilter = on ? null : value;
@@ -439,7 +440,7 @@ class CountdownScreenState extends State<CountdownScreen> {
   Widget _buildSectionHeader(String title, int count, bool expanded) {
     return InkWell(
       onTap: () {
-        HapticFeedback.selectionClick();
+        Haptics.light();
         setState(() {
           if (expanded) {
             _collapsed.add(title);

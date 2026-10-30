@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import '../models/item.dart';
 import '../services/item_storage.dart';
+import '../services/trash_storage.dart';
+import 'package:flutter/services.dart';
 import '../widgets/unsaved_guard.dart';
+import '../utils/haptics.dart';
 
 const List<String> kCategories = ['数码设备', '衣物', '配饰', '家具'];
 const Map<String, List<String>> kCategoryIcons = {
@@ -180,7 +183,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('确认删除这件物品吗?'),
-        content: const Text('注意！删除后无法恢复！'),
+        content: const Text('删除后可在「回收站」保留 7 天，期间可还原'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -194,10 +197,13 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
       ),
     );
     if (confirmed != true) return;
+    Haptics.medium();
 
     final list = await ItemStorage.load();
     list.removeWhere((e) => e.id == widget.item!.id);
     await ItemStorage.save(list);
+    // 编辑页删除同样入回收站
+    await TrashStorage.addItem(widget.item!);
 
     if (!mounted) return;
     Navigator.pop(context, true);

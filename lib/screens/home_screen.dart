@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart' show DragStartBehavior;
-import 'package:flutter/services.dart'
-    show SystemUiOverlayStyle, HapticFeedback;
+import 'package:flutter/services.dart' show SystemUiOverlayStyle;
+import '../utils/haptics.dart';
 import '../models/diary_entry.dart';
 import '../models/user_profile.dart';
 import '../services/diary_storage.dart';
@@ -161,7 +161,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       if (_pressEntry == e && _pressMoved < 6) {
         final entry = e;
         _cancelPressTracking();
-        HapticFeedback.mediumImpact(); // 长按菜单震动反馈（与资产全景小眼睛一致的手感类型）
+        Haptics.mediumNow(); // 长按菜单：同步触发，避免异步等待导致振动被丢弃
         _showNoteActions(entry);
       }
     });

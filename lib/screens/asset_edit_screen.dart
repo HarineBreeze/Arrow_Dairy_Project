@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/asset.dart';
+import '../services/trash_storage.dart';
 import '../widgets/unsaved_guard.dart';
+import '../utils/haptics.dart';
 
 /// 新增 / 编辑资产卡片。
 class AssetEditScreen extends StatefulWidget {
@@ -71,7 +73,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('删除这张资产卡片?'),
-        content: const Text('删除后无法恢复'),
+        content: const Text('删除后可在「回收站」保留 7 天，期间可还原'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
@@ -83,7 +85,13 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
         ],
       ),
     );
-    if (confirmed == true && mounted) Navigator.pop(context, 'deleted');
+    if (confirmed == true && mounted) {
+      Haptics.medium();
+      // 编辑页删除同样入回收站（与列表长按删除保持一致）
+      await TrashStorage.addAsset(widget.asset!);
+      if (!mounted) return;
+      Navigator.pop(context, 'deleted');
+    }
   }
 
   Future<bool> _save() async {
@@ -96,7 +104,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
     }
     if (!mounted) return false;
     setState(() => _saving = true);
-    HapticFeedback.selectionClick();
+    Haptics.light();
     final a = widget.asset ?? Asset(id: DateTime.now().microsecondsSinceEpoch.toString());
     a.icon = _iconCtrl.text.trim().isEmpty
         ? Asset.defaultIconFor(_type)
@@ -158,7 +166,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
             _sectionLabel('资产类型'),
             GestureDetector(
               onTap: () {
-                HapticFeedback.selectionClick();
+                Haptics.light();
                 setState(() => _typeOpen = !_typeOpen);
               },
               child: Container(
@@ -196,7 +204,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                           for (final t in Asset.types)
                             InkWell(
                               onTap: () {
-                                HapticFeedback.selectionClick();
+                                Haptics.light();
                                 setState(() {
                                   _type = t;
                                   _typeOpen = false;
@@ -353,7 +361,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
     return Expanded(
       child: GestureDetector(
         onTap: () {
-          HapticFeedback.selectionClick();
+          Haptics.light();
           if (isMore) {
             _showMoreIcons();
           } else {
@@ -414,7 +422,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                         final sel = tmpCtrl.text.trim() == e;
                         return GestureDetector(
                           onTap: () {
-                            HapticFeedback.selectionClick();
+                            Haptics.light();
                             setSheetState(() => tmpCtrl.text = e);
                           },
                           child: Container(
