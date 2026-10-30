@@ -643,7 +643,8 @@ class AssetScreenState extends State<AssetScreen> {
               // 隐藏/显示看板数字（默认显示）
               GestureDetector(
                 onTap: () {
-                  Haptics.light();
+                  // 小眼睛：同步触发中震动，切换金额可见性给予明确触感
+                  Haptics.mediumNow();
                   setState(() => _hideNumbers = !_hideNumbers);
                 },
                 behavior: HitTestBehavior.opaque,

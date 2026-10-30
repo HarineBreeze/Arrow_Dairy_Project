@@ -2015,57 +2015,125 @@ class _DiaryCard extends StatelessWidget {
   /// 顶部斜纹密封带（🔒 已加密 · 月日）+ 下方副标题与时间，虚线边框。
   /// 只外显副标题、日期、时间，不涉及任何笔记内容。
   Widget _buildEncryptedCard() {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      // 置顶的加密笔记：与未置顶封条卡保持同款，但底纹换成斜纹 + 红虚线边
-      // （虚线颜色 = 置顶红，未置顶为灰），让置顶状态一望即知。
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(14),
-        child: ColoredBox(
-          color: isPinned ? const Color(0xFFFBE3E8) : Colors.transparent,
-          child: CustomPaint(
-            foregroundPainter: _DashedRRectPainter(
-                color: isPinned
-                    ? const Color(0xFFE0576A)
-                    : const Color(0xFFC9CFD9),
-                radius: 14),
+    // 置顶的加密笔记：粉底斜纹 + 红虚线边，置顶状态一望即知
+    if (isPinned) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: ColoredBox(
+            color: const Color(0xFFFBE3E8),
             child: CustomPaint(
-              painter: isPinned ? const _PinnedStripePainter() : null,
-              child: Material(
-                // 置顶加密卡：沿用封条式排版（顶部密封带 + 副标题时间行），
-                // 仅把锁图标从标题前移到时间右侧。
-                color: isPinned ? const Color(0xE6FFFFFF) : Colors.white,
-                child: InkWell(
-                  onTap: onTap,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            entry.subtitle.isNotEmpty ? entry.subtitle : '加密笔记',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                              color: entry.subtitle.isNotEmpty
-                                  ? const Color(0xFF5A6B82)
-                                  : const Color(0xFF9AA8BF),
+              foregroundPainter: const _DashedRRectPainter(
+                  color: Color(0xFFE0576A), radius: 14),
+              child: CustomPaint(
+                painter: const _PinnedStripePainter(),
+                child: Material(
+                  color: const Color(0xE6FFFFFF),
+                  child: InkWell(
+                    onTap: onTap,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              entry.subtitle.isNotEmpty
+                                  ? entry.subtitle
+                                  : '加密笔记',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                                color: entry.subtitle.isNotEmpty
+                                    ? const Color(0xFF5A6B82)
+                                    : const Color(0xFF9AA8BF),
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(_timeLabel(entry.createdAt),
-                            style: const TextStyle(
-                                fontSize: 11, color: kTextLight)),
-                        const SizedBox(width: 4),
-                        const Icon(Icons.lock, size: 12, color: kTextLight),
-                      ],
+                          const SizedBox(width: 8),
+                          Text(_timeLabel(entry.createdAt),
+                              style: const TextStyle(
+                                  fontSize: 11, color: kTextLight)),
+                          const SizedBox(width: 4),
+                          const Icon(Icons.lock,
+                              size: 12, color: kTextLight),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
+            ),
+          ),
+        ),
+      );
+    }
+    // 非置顶：封条带在上（🔒已加密 / 发布日期，斜纹底），白色主体在下
+    //（副标题 + 记录时间），整卡无描边 —— 与封条档案袋观感一致。
+    final d = entry.publishDate;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: Material(
+          color: Colors.white,
+          child: InkWell(
+            onTap: onTap,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 密封带：斜纹底 + 🔒已加密 / 月.日
+                CustomPaint(
+                  painter: const _SealStripePainter(),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 6, 14, 6),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.lock,
+                            size: 11, color: kTextLight),
+                        const SizedBox(width: 4),
+                        const Text('已加密',
+                            style: TextStyle(
+                                fontSize: 11, color: kTextLight)),
+                        const Spacer(),
+                        Text('${d.month}月${d.day}日',
+                            style: const TextStyle(
+                                fontSize: 11, color: kTextLight)),
+                      ],
+                    ),
+                  ),
+                ),
+                // 主体：副标题 + 时间
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          entry.subtitle.isNotEmpty
+                              ? entry.subtitle
+                              : '加密笔记',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                            color: entry.subtitle.isNotEmpty
+                                ? const Color(0xFF2A3B52)
+                                : const Color(0xFF9AA8BF),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(_timeLabel(entry.createdAt),
+                          style: const TextStyle(
+                              fontSize: 11, color: kTextLight)),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -2075,6 +2143,29 @@ class _DiaryCard extends StatelessWidget {
 
   /// 置顶加密卡底纹：与封条卡同款 45° 斜纹，叠一层极淡的置顶粉
   /// （卡片真实渲染代码，不能只停留在设计稿）
+}
+
+/// 非置顶加密卡顶部「封条带」：淡灰底 + 45° 斜纹（16px 周期、4px 线宽），
+/// 与置顶卡 / 置顶迷你卡的斜纹同一语言，仅不做中央提亮（带内无正文）。
+class _SealStripePainter extends CustomPainter {
+  const _SealStripePainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawRect(
+        Offset.zero & size, Paint()..color = const Color(0xFFEFF2F7));
+    final paint = Paint()
+      ..color = const Color(0xFFE7EBF1)
+      ..strokeWidth = 4
+      ..style = PaintingStyle.stroke;
+    for (double x = -size.height; x < size.width + size.height; x += 16) {
+      canvas.drawLine(
+          Offset(x, size.height), Offset(x + size.height, 0), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _SealStripePainter oldDelegate) => false;
 }
 
 /// 虚线圆角边框（加密卡片的「档案袋」外框）
