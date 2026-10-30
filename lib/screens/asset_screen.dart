@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/asset.dart';
 import '../services/asset_storage.dart';
+import '../services/trash_storage.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/loading_skeleton.dart';
 import 'asset_edit_screen.dart';
@@ -483,7 +484,7 @@ class AssetScreenState extends State<AssetScreen> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16)),
                     title: const Text('删除这张资产卡片?'),
-                    content: const Text('删除后无法恢复'),
+                    content: const Text('删除后可在「回收站」保留 7 天，期间可还原'),
                     actions: [
                       TextButton(
                           onPressed: () => Navigator.pop(c, false),
@@ -498,6 +499,7 @@ class AssetScreenState extends State<AssetScreen> {
                 if (ok == true) {
                   _assets.removeWhere((e) => e.id == a.id);
                   await AssetStorage.save(_assets);
+                  await TrashStorage.addAsset(a);
                   if (mounted) setState(() {});
                 }
               },

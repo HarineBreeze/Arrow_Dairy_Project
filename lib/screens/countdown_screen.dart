@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../models/countdown_event.dart';
 import '../services/countdown_storage.dart';
 import '../services/countdown_reminder.dart';
+import '../services/trash_storage.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/loading_skeleton.dart';
 import '../utils/menu_gesture_gate.dart';
@@ -223,7 +224,7 @@ class CountdownScreenState extends State<CountdownScreen> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16)),
                     title: const Text('删除这个倒数日?'),
-                    content: const Text('删除后无法恢复'),
+                    content: const Text('删除后可在「回收站」保留 7 天，期间可还原'),
                     actions: [
                       TextButton(
                           onPressed: () => Navigator.pop(c, false),
@@ -245,6 +246,8 @@ class CountdownScreenState extends State<CountdownScreen> {
                   // 只取消这一条提醒（单次通道调用，远比整表重排快）
                   CountdownReminder.cancelOne(target.id);
                   CountdownStorage.save(next);
+                  // 入回收站，7 天内可还原
+                  TrashStorage.addEvent(target);
                 }
               },
             ),
@@ -531,6 +534,26 @@ class CountdownScreenState extends State<CountdownScreen> {
                           color: grey
                               ? const Color(0xFF9AA8BF)
                               : const Color(0xFF2A3B52))),
+                  // 重复规则铭牌：仅重复事件显示（每年 / 每月 / 每周）
+                  if (e.repeat != RepeatRule.none) ...[
+                    const SizedBox(height: 3),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 5, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8F0FE),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        '${e.repeatLabel}重复',
+                        style: const TextStyle(
+                            fontSize: 9.5,
+                            height: 1.3,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF3B6FE0)),
+                      ),
+                    ),
+                  ],
                   // 卡片上不展示事件类型，该位置显示事件备注；无备注则留空
                   if (e.note.isNotEmpty) ...[
                     const SizedBox(height: 2),

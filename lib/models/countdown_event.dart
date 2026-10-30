@@ -1,9 +1,46 @@
 import 'dart:convert';
 
+/// 重复规则：
+/// - none  一次性（到期后停止计数）
+/// - yearly 每年同日（生日 / 纪念日）
+/// - monthly 每月同日
+/// - weekly 每周同日
+enum RepeatRule { none, yearly, monthly, weekly }
+
+extension RepeatRuleX on RepeatRule {
+  String get label {
+    switch (this) {
+      case RepeatRule.none:
+        return '不重复';
+      case RepeatRule.yearly:
+        return '每年';
+      case RepeatRule.monthly:
+        return '每月';
+      case RepeatRule.weekly:
+        return '每周';
+    }
+  }
+
+  String get keyName => name;
+
+  static RepeatRule fromKey(String? key) {
+    switch (key) {
+      case 'yearly':
+        return RepeatRule.yearly;
+      case 'monthly':
+        return RepeatRule.monthly;
+      case 'weekly':
+        return RepeatRule.weekly;
+      default:
+        return RepeatRule.none;
+    }
+  }
+}
+
 /// 倒数日事件。
 /// - 日期类型：纪念日 / 资产日
 /// - 目的日含时分；未来 → 倒数，过去 → 正数
-/// - 循环：到期后进入下一年的该月该日倒计时，仅当日加红色描边
+/// - 重复：支持每年 / 每月 / 每周 / 一次性，到期后进入下一个周期的倒计时
 class CountdownEvent {
   final String id;
   String icon;
@@ -11,7 +48,8 @@ class CountdownEvent {
   String note; // 事件备注（15 字以内）
   DateTime target; // 目的日（含时分）
   String type; // 纪念日 | 资产日
-  bool loop; // 是否循环
+  RepeatRule repeat; // 重复规则
+  int remindBeforeDays; // 提前几天提醒（0 = 当天）
   bool pinned; // 是否置顶
 
   CountdownEvent({
@@ -21,9 +59,18 @@ class CountdownEvent {
     this.note = '',
     required this.target,
     required this.type,
-    this.loop = false,
+    RepeatRule? repeat,
+    bool loop = false, // 兼容旧参数：loop=true 等价每年重复
+    this.remindBeforeDays = 0,
     this.pinned = false,
-  });
+  }) : repeat = repeat ??
+            (loop ? RepeatRule.yearly : RepeatRule.none);
+
+  /// 是否循环（非一次性）
+  bool get loop => repeat != RepeatRule.none;
+
+  /// 重复规则的中文描述（列表卡片副标题用）
+  String get repeatLabel => repeat.label;
 
   static const List<String> types = ['纪念日', '资产日'];
 
@@ -51,23 +98,55 @@ class CountdownEvent {
   /// 今天是否为目的日当天
   bool get isDueToday => daysLeft == 0;
 
-  /// 循环模式：取今年或明年的目标日（保持时分）。
-  /// 注意只比较「日期」：目的日就是今天时不能因时刻差几毫秒而跳到明年。
-  DateTime _loopTarget(DateTime from) {
+  /// 按重复规则推算 `from` 之后（含当天）的下一个目标日，保持时分。
+  /// 一次性事件直接返回原 target。
+  DateTime _nextTarget(DateTime from) {
     final t = dateOnly(target);
     final f = dateOnly(from);
-    var candidate =
-        DateTime(f.year, t.month, t.day, target.hour, target.minute);
-    if (dateOnly(candidate).isBefore(f)) {
-      candidate = DateTime(
-          f.year + 1, t.month, t.day, target.hour, target.minute);
+    final hh = target.hour, mm = target.minute;
+    switch (repeat) {
+      case RepeatRule.none:
+        return target;
+      case RepeatRule.yearly:
+        var y = f.year;
+        var candidate = DateTime(y, t.month, t.day, hh, mm);
+        if (dateOnly(candidate).isBefore(f)) {
+          y += 1;
+          candidate = DateTime(y, t.month, t.day, hh, mm);
+        }
+        return candidate;
+      case RepeatRule.monthly:
+        // 逐月推进，处理 31 号在小月的情况（落到该月最后一天）
+        var y = f.year, m = f.month;
+        for (var i = 0; i < 24; i++) {
+          final lastDay = DateTime(y, m + 1, 0).day;
+          final d = t.day > lastDay ? lastDay : t.day;
+          final candidate = DateTime(y, m, d, hh, mm);
+          if (!dateOnly(candidate).isBefore(f)) return candidate;
+          m += 1;
+          if (m > 12) {
+            m = 1;
+            y += 1;
+          }
+        }
+        return DateTime(f.year, f.month, f.day, hh, mm);
+      case RepeatRule.weekly:
+        // 以原目标日的星期为准，推进到本周或下周的同一天
+        final base = DateTime(f.year, f.month, f.day, hh, mm);
+        final offset = (t.weekday - f.weekday) % 7;
+        var candidate = base.add(Duration(days: offset));
+        if (offset == 0 && DateTime(f.year, f.month, f.day, hh, mm)
+            .isBefore(DateTime.now()) &&
+            hh * 60 + mm <= DateTime.now().hour * 60 + DateTime.now().minute) {
+          candidate = candidate.add(const Duration(days: 7));
+        }
+        return candidate;
     }
-    return candidate;
   }
 
   DateTime get effectiveTarget {
     if (!loop) return target;
-    return _loopTarget(DateTime.now());
+    return _nextTarget(DateTime.now());
   }
 
   /// 距目的日天数：未来为正（倒数），过去为负（正数）
@@ -107,21 +186,32 @@ class CountdownEvent {
         'note': note,
         'target': target.toIso8601String(),
         'type': type,
-        'loop': loop,
+        'repeat': repeat.keyName,
+        'loop': loop, // 兼容旧版本读取
+        'remindBeforeDays': remindBeforeDays,
         'pinned': pinned,
       };
 
-  factory CountdownEvent.fromJson(Map<String, dynamic> j) => CountdownEvent(
-        id: j['id'] as String? ?? '',
-        icon: (j['icon'] as String? ?? '').trim().isEmpty
-            ? defaultIconFor(j['type'] as String? ?? '纪念日')
-            : j['icon'] as String,
-        name: j['name'] as String? ?? '',
-        note: j['note'] as String? ?? '',
-        target: DateTime.tryParse(j['target'] as String? ?? '') ??
-            DateTime.now(),
-        type: j['type'] as String? ?? '纪念日',
-        loop: j['loop'] as bool? ?? false,
-        pinned: j['pinned'] as bool? ?? false,
-      );
+  factory CountdownEvent.fromJson(Map<String, dynamic> j) {
+    final type = j['type'] as String? ?? '纪念日';
+    // 新数据读 repeat；旧数据只有 loop 布尔 → 等价每年
+    var repeat = RepeatRuleX.fromKey(j['repeat'] as String?);
+    if (repeat == RepeatRule.none && (j['loop'] as bool? ?? false)) {
+      repeat = RepeatRule.yearly;
+    }
+    return CountdownEvent(
+      id: j['id'] as String? ?? '',
+      icon: (j['icon'] as String? ?? '').trim().isEmpty
+          ? defaultIconFor(type)
+          : j['icon'] as String,
+      name: j['name'] as String? ?? '',
+      note: j['note'] as String? ?? '',
+      target:
+          DateTime.tryParse(j['target'] as String? ?? '') ?? DateTime.now(),
+      type: type,
+      repeat: repeat,
+      remindBeforeDays: (j['remindBeforeDays'] as num?)?.toInt() ?? 0,
+      pinned: j['pinned'] as bool? ?? false,
+    );
+  }
 }

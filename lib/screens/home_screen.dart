@@ -13,6 +13,8 @@ import 'side_menu.dart';
 import 'profile_edit_screen.dart';
 import 'settings_screen.dart';
 import 'global_search_screen.dart';
+import 'trash_screen.dart';
+import '../services/trash_storage.dart';
 import 'note_view_screen.dart';
 import 'item_list_screen.dart';
 import 'asset_screen.dart';
@@ -58,12 +60,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   final Set<String> _expandedKeys = {};
   String _viewMode = 'all'; // all | month | year
   String? _activeTopic; // 当前筛选的话题（null = 未筛选）
-  String _currentTab = 'diary'; // diary | items | assets | countdown | search
+  String _currentTab = 'diary'; // diary | items | assets | countdown | search | trash
   final GlobalKey<AssetScreenState> _assetListKey = GlobalKey();
   final GlobalKey<ItemListScreenState> _itemListKey =
       GlobalKey<ItemListScreenState>();
   final GlobalKey<CountdownScreenState> _countdownKey =
       GlobalKey<CountdownScreenState>();
+  final GlobalKey<TrashScreenState> _trashKey = GlobalKey<TrashScreenState>();
   final GlobalKey<CountdownBannerHostState> _bannerKey =
       GlobalKey<CountdownBannerHostState>();
 
@@ -604,6 +607,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       _closeMenu();
       return false;
     }
+    if (_currentTab == 'trash') {
+      // 回收站：筛选状态下返回先回到「全部」
+      final trash = _trashKey.currentState;
+      if (trash != null && trash.handleBack()) return false;
+    }
     if (_currentTab == 'items') {
       final itemsState = _itemListKey.currentState;
       if (itemsState != null && itemsState.isSearching) {
@@ -645,7 +653,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('确认要删除这篇日记吗?'),
-        content: const Text('注意！删除后无法恢复！'),
+        content: const Text('删除后可在「回收站」保留 7 天，期间可还原。'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -661,6 +669,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     if (confirmed == true) {
       setState(() => _entries.removeWhere((e) => e.id == entry.id));
       await DiaryStorage.save(_entries);
+      // 先入回收站：7 天内可从侧栏「回收站」还原
+      await TrashStorage.addDiary(entry);
     }
   }
 
@@ -814,6 +824,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                     // 高亮底纹滑至该项并切换内容，菜单收起
                                     _switchTab('search');
                                   },
+                                  onOpenTrash: () {
+                                    _switchTab('trash');
+                                    // 切进来时重新读一次：期间可能刚删了东西
+                                    _trashKey.currentState?.reload();
+                                  },
                                 ),
                               ),
                             ),
@@ -902,6 +917,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                         onOpenMenu: _openMenu,
                                       ),
                                     )
+                                  : _currentTab == 'trash'
+                                      ? KeyedSubtree(
+                                          key: const ValueKey('trash'),
+                                          child: TrashScreen(
+                                            key: _trashKey,
+                                            onOpenMenu: _openMenu,
+                                          ),
+                                        )
                                   : _loading
                                       ? KeyedSubtree(
                                           key: const ValueKey('loading'),
@@ -914,7 +937,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 ),
               ),
             ),
-            floatingActionButton: _menuOpen || _currentTab == 'search'
+            floatingActionButton: _menuOpen ||
+                    _currentTab == 'search' ||
+                    _currentTab == 'trash'
                 ? null
                 : FloatingActionButton(
                     onPressed: () {

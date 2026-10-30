@@ -33,26 +33,64 @@ class CountdownReminder {
 
   static Future<void> _scheduleOne(CountdownEvent e) async {
     final id = _stableId(e.id);
-    final t = CountdownEvent.dateOnly(e.target);
     final now = DateTime.now();
-
-    // 本次目标日（未过则为原日期，已过且循环则推算到今年/明年），提醒时刻取用户设定时分
-    final due = e.loop ? e.effectiveTarget : t;
     final hh = e.target.hour;
     final mm = e.target.minute;
-    final at = DateTime(due.year, due.month, due.day, hh, mm);
-    if (at.isBefore(now)) {
-      if (!e.loop) return; // 不循环且已过 → 不再提醒
-      // 循环：注册明年的该月该日
-      await _register(
-          id, e, DateTime(due.year + 1, due.month, due.day, hh, mm));
-      return;
+
+    // 提醒时刻 = 目标日 − 提前天数，时分沿用用户设定
+    DateTime remindAt(DateTime due) {
+      final d = due.subtract(Duration(days: e.remindBeforeDays));
+      return DateTime(d.year, d.month, d.day, hh, mm);
     }
+
+    // 本次目标日：重复事件由模型按规则算出；一次性事件取原日期
+    var due = e.loop ? e.effectiveTarget : CountdownEvent.dateOnly(e.target);
+    var at = remindAt(due);
+
+    // 已过期（含提前天数导致提醒时刻已过）→ 重复事件再推一个周期
+    if (at.isBefore(now)) {
+      if (!e.loop) return; // 一次性且已过 → 不再提醒
+      final probe = CountdownEvent(
+        id: e.id,
+        icon: e.icon,
+        name: e.name,
+        target: due.add(Duration(days: _periodDays(e.repeat, due))),
+        type: e.type,
+        repeat: e.repeat,
+        remindBeforeDays: e.remindBeforeDays,
+      );
+      due = probe.effectiveTarget;
+      at = remindAt(due);
+      if (at.isBefore(now)) return;
+    }
+
     await _register(id, e, at);
-    // 循环事件：顺带注册下一年（长期提醒）；不循环只注册一次
+
+    // 重复事件：顺带注册下一个周期，保证长期提醒不断档
     if (e.loop) {
-      await _register(
-          id, e, DateTime(at.year + 1, at.month, at.day, hh, mm));
+      final nextProbe = CountdownEvent(
+        id: e.id,
+        icon: e.icon,
+        name: e.name,
+        target: due.add(Duration(days: _periodDays(e.repeat, due))),
+        type: e.type,
+        repeat: e.repeat,
+        remindBeforeDays: e.remindBeforeDays,
+      );
+      await _register(id, e, remindAt(nextProbe.effectiveTarget));
+    }
+  }
+
+  /// 一个重复周期的近似天数（仅用于把日期推过当前点，实际日期由模型对齐）
+  static int _periodDays(RepeatRule r, DateTime from) {
+    switch (r) {
+      case RepeatRule.weekly:
+        return 7;
+      case RepeatRule.monthly:
+        return 28;
+      case RepeatRule.yearly:
+      case RepeatRule.none:
+        return 365;
     }
   }
 

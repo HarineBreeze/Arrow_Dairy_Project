@@ -18,7 +18,8 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
   late final TextEditingController _iconCtrl;
   DateTime? _target;
   late String _type;
-  late bool _loop;
+  late RepeatRule _repeat;
+  late int _remindBeforeDays;
   bool _saving = false;
 
   /// 进入页面时的内容快照，用于判断是否有未保存的修改
@@ -30,7 +31,8 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
         _noteCtrl.text,
         _iconCtrl.text,
         _type,
-        _loop ? '1' : '0',
+        _repeat.keyName,
+        '$_remindBeforeDays',
         _target?.toIso8601String() ?? '',
       ].join('\u0001');
 
@@ -73,12 +75,27 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
       ..note = _noteCtrl.text.trim()
       ..target = _target!
       ..type = _type
-      ..loop = _loop;
+      ..repeat = _repeat
+      ..remindBeforeDays = _remindBeforeDays;
     Navigator.pop(context, e);
     return true;
   }
 
   static const List<String> _quickIcons = CountdownEvent.quickIcons;
+
+  /// 重复规则的说明文案
+  String get _repeatHint {
+    switch (_repeat) {
+      case RepeatRule.none:
+        return '到期后停止计数，不再重复';
+      case RepeatRule.yearly:
+        return '到期后自动进入下一年的同月同日倒计时';
+      case RepeatRule.monthly:
+        return '到期后自动进入下一个月的同日倒计时（小月自动取当月最后一天）';
+      case RepeatRule.weekly:
+        return '到期后自动进入下一周的同一天倒计时';
+    }
+  }
 
   /// 进入页面时保存的图标原文（可能为空 → 表示用类型默认）
   String _initIcon = '';
@@ -94,7 +111,8 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
     _noteCtrl = TextEditingController(text: e?.note ?? '');
     _target = e?.target == null ? null : CountdownEvent.dateOnly(e!.target);
     _type = e?.type ?? '纪念日';
-    _loop = e?.loop ?? false;
+    _repeat = e?.repeat ?? RepeatRule.none;
+    _remindBeforeDays = e?.remindBeforeDays ?? 0;
     // 记住进入时的图标（可能为空），用于判断用户是否手动改过图标
     _initIcon = (e?.icon ?? '').trim();
     _iconCtrl = TextEditingController(
@@ -344,29 +362,23 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
             ),
             const SizedBox(height: 16),
 
-            // 是否循环（单选）
-            _sectionLabel('是否循环'),
+            // 重复规则（单排胶囊：不重复 / 每年 / 每月 / 每周）
+            _sectionLabel('重复规则'),
             Container(
               padding: const EdgeInsets.all(8),
               decoration: _box(),
               child: Row(
                 children: [
-                  _radioTile(
-                    label: '是',
-                    selected: _loop,
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                      setState(() => _loop = true);
-                    },
-                  ),
-                  _radioTile(
-                    label: '否',
-                    selected: !_loop,
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                      setState(() => _loop = false);
-                    },
-                  ),
+                  for (final r in RepeatRule.values) ...[
+                    _radioTile(
+                      label: r.label,
+                      selected: _repeat == r,
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        setState(() => _repeat = r);
+                      },
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -374,9 +386,39 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
             Padding(
               padding: const EdgeInsets.only(left: 4),
               child: Text(
-                _loop
-                    ? '到期后提醒，并从次日起自动进入下一年的同日倒计时'
-                    : '到期后停止计数',
+                _repeatHint,
+                style: const TextStyle(fontSize: 12, color: Color(0xFF9AA8BF)),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // 提前提醒（0 = 当天）
+            _sectionLabel('提前提醒'),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: _box(),
+              child: Row(
+                children: [
+                  for (final d in const [0, 1, 3, 7]) ...[
+                    _radioTile(
+                      label: d == 0 ? '当天' : '提前 $d 天',
+                      selected: _remindBeforeDays == d,
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        setState(() => _remindBeforeDays = d);
+                      },
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(
+                _remindBeforeDays == 0
+                    ? '在事件日当天的设定时间提醒'
+                    : '在事件日前 $_remindBeforeDays 天的设定时间提醒',
                 style: const TextStyle(fontSize: 12, color: Color(0xFF9AA8BF)),
               ),
             ),

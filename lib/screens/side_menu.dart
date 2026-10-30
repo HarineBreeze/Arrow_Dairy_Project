@@ -13,7 +13,8 @@ class SideMenu extends StatelessWidget {
   final VoidCallback onOpenCountdown;
   final VoidCallback onOpenSettings;
   final VoidCallback onOpenGlobalSearch;
-  final String currentTab; // 'diary' | 'items' | 'assets' | 'countdown'
+  final VoidCallback onOpenTrash;
+  final String currentTab; // 'search' | 'diary' | 'items' | 'countdown' | 'assets' | 'trash'
 
   const SideMenu({
     Key? key,
@@ -26,6 +27,7 @@ class SideMenu extends StatelessWidget {
     required this.onOpenCountdown,
     required this.onOpenSettings,
     required this.onOpenGlobalSearch,
+    required this.onOpenTrash,
     required this.currentTab,
   }) : super(key: key);
 
@@ -36,75 +38,19 @@ class SideMenu extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 28),
-          // 头像 / 昵称 / UID 统一左对齐，与下方导航项左边缘对齐
-          GestureDetector(
-            onTap: onOpenProfile,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 28),
-              child: buildAppAvatar(profile, radius: 42),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.only(left: 28, right: 20),
-            child: Row(
-              children: [
-                Flexible(
-                  child: Text(
-                    nickname,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.left,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF2A3B52),
-                    ),
-                  ),
-                ),
-                if (AppVersion.isBeta) ...[
-                  const SizedBox(width: 6),
-                  // 内测版铭牌：橙色底纹 + 白字，紧跟昵称之后
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 6, vertical: 1.5),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF08C3A),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: const Text(
-                      '内测版',
-                      style: TextStyle(
-                        fontSize: 10,
-                        height: 1.2,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          const SizedBox(height: 4),
-          // 用户 ID：暂用固定值，后续接入服务器后再按规则生成
-          const Padding(
-            padding: EdgeInsets.only(left: 28, right: 20),
-            child: Text(
-              'ID：10001',
-              textAlign: TextAlign.left,
-              style: TextStyle(
-                fontSize: 12,
-                color: Color(0xFF9AA8BF),
-              ),
-            ),
-          ),
+          // 头部：头像 / 昵称 / UID（固定不滚动）
+          _buildHeader(nickname),
           const SizedBox(height: 16),
           const Divider(height: 1, color: Color(0xFFE8EDF5)),
           const SizedBox(height: 8),
-          _buildNavStack(),
-          const Spacer(),
+          // 导航区：条目较多（全局搜索 + 4 个主页 + 回收站），
+          // 小屏或大字体下可滚动，避免纵向溢出
+          Expanded(
+            child: SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              child: _buildNavStack(),
+            ),
+          ),
           const Divider(height: 1, color: Color(0xFFE8EDF5)),
           _buildSettingsButton(),
         ],
@@ -112,9 +58,81 @@ class SideMenu extends StatelessWidget {
     );
   }
 
-  /// 侧栏导航整体（全局搜索 + 4 个选项卡）：
+  /// 头像 / 昵称（含内测版铭牌）/ UID，统一左对齐
+  Widget _buildHeader(String nickname) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 28),
+        GestureDetector(
+          onTap: onOpenProfile,
+          child: Padding(
+            padding: const EdgeInsets.only(left: 28),
+            child: buildAppAvatar(profile, radius: 42),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.only(left: 28, right: 20),
+          child: Row(
+            children: [
+              Flexible(
+                child: Text(
+                  nickname,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.left,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF2A3B52),
+                  ),
+                ),
+              ),
+              if (AppVersion.isBeta) ...[
+                const SizedBox(width: 6),
+                // 内测版铭牌：橙色底纹 + 白字，紧跟昵称之后
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF08C3A),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Text(
+                    '内测版',
+                    style: TextStyle(
+                      fontSize: 10,
+                      height: 1.2,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 4),
+        // 用户 ID：暂用固定值，后续接入服务器后再按规则生成
+        const Padding(
+          padding: EdgeInsets.only(left: 28, right: 20),
+          child: Text(
+            'ID：10001',
+            textAlign: TextAlign.left,
+            style: TextStyle(
+              fontSize: 12,
+              color: Color(0xFF9AA8BF),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 侧栏导航整体（全局搜索 + 4 个主页 + 回收站）：
   /// 高亮底纹共用一个 AnimatedPositioned 块，点击任意项时
-  /// 底纹从当前块平滑滑动到目标块（含从选项卡滑到全局搜索项）。
+  /// 底纹从当前块平滑滑动到目标块。
   Widget _buildNavStack() {
     const tabHeight = 52.0;
     const gap = 8.0;
@@ -126,6 +144,7 @@ class SideMenu extends StatelessWidget {
           onOpenCountdown),
       _NavItem(Icons.account_balance_outlined, '资产全景', 'assets',
           onOpenAssets),
+      _NavItem(Icons.delete_outline, '回收站', 'trash', onOpenTrash),
     ];
     final selectedIndex =
         items.indexWhere((n) => n.key == currentTab).clamp(0, items.length - 1);
@@ -245,7 +264,7 @@ class SideMenu extends StatelessWidget {
   }
 }
 
-/// 侧栏导航项数据（全局搜索 + 选项卡统一结构）
+/// 侧栏导航项数据（全局搜索 + 主页 + 回收站统一结构）
 class _NavItem {
   final IconData icon;
   final String label;
