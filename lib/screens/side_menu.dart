@@ -33,7 +33,9 @@ class SideMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final nickname = profile.nickname.isEmpty ? '未设置昵称' : profile.nickname;
+    final nickname = profile.nickname.isEmpty
+        ? UserProfile.defaultNickname
+        : profile.nickname;
     return SafeArea(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

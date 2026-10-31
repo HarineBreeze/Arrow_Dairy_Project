@@ -84,8 +84,10 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
 
   Future<void> _save() async {
     setState(() => _saving = true);
+    final name = _nicknameCtrl.text.trim();
     final profile = UserProfile(
-      nickname: _nicknameCtrl.text.trim(),
+      // 清空后直接保存 = 恢复默认昵称
+      nickname: name.isEmpty ? UserProfile.defaultNickname : name,
       gender: _gender,
       avatarPath: _avatarPath,
     );
@@ -188,10 +190,10 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         Expanded(
           child: TextField(
             controller: _nicknameCtrl,
-            maxLength: 8,
+            maxLength: 10,
             style: const TextStyle(fontSize: 16),
             decoration: const InputDecoration(
-              hintText: '未设置昵称',
+              hintText: UserProfile.defaultNickname,
               hintStyle: TextStyle(color: Color(0xFF9AA8BF)),
               border: InputBorder.none,
               counterText: '',
@@ -199,7 +201,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
           ),
         ),
         Text(
-          '${_nicknameCtrl.text.length}/8',
+          '${_nicknameCtrl.text.length}/10',
           style: const TextStyle(fontSize: 12, color: Color(0xFF9AA8BF)),
         ),
       ],
