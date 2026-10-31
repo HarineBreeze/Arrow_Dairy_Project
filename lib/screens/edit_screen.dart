@@ -11,6 +11,7 @@ import '../utils/text_format.dart';
 import '../utils/writing_prompts.dart';
 import '../widgets/unsaved_guard.dart';
 import '../utils/haptics.dart';
+import '../widgets/pressable.dart';
 
 class EditScreen extends StatefulWidget {
   final DiaryEntry? entry;
@@ -583,13 +584,19 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
         title: const Text('确认要删除这篇日记吗?'),
         content: const Text('删除后可在「回收站」保留 7 天，期间可还原'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('取消'),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('取消'),
+            ),
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('删除', style: TextStyle(color: Colors.red)),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('删除', style: TextStyle(color: Colors.red)),
+            ),
           ),
         ],
       ),
@@ -631,11 +638,17 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
             ],
           ),
           actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
-            TextButton(
-                onPressed: () => Navigator.pop(ctx, choice),
-                child: const Text('确定')),
+            Pressable(
+              enabled: true,
+              child: TextButton(
+                  onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
+            ),
+            Pressable(
+              enabled: true,
+              child: TextButton(
+                  onPressed: () => Navigator.pop(ctx, choice),
+                  child: const Text('确定')),
+            ),
           ],
         ),
       ),
@@ -702,15 +715,21 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
           ),
         ),
         actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, {
-                    'pwd': ctrl.text,
-                    'hint': hintCtrl.text.trim(),
-                    'answer': ansCtrl.text.trim(),
-                  }),
-              child: const Text('确定')),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+                onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
+          ),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+                onPressed: () => Navigator.pop(ctx, {
+                      'pwd': ctrl.text,
+                      'hint': hintCtrl.text.trim(),
+                      'answer': ansCtrl.text.trim(),
+                    }),
+                child: const Text('确定')),
+          ),
         ],
       ),
     );
@@ -876,13 +895,19 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('取消'),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('取消'),
+            ),
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
-            child: const Text('确定'),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+              onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+              child: const Text('确定'),
+            ),
           ),
         ],
       ),
@@ -1143,38 +1168,44 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
               child: Row(
             children: [
               Expanded(
-                child: OutlinedButton(
-                  onPressed: _saving ? null : _cancel,
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    side: const BorderSide(color: Color(0xFF3B6FE0)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                child: Pressable(
+                  enabled: true,
+                  child: OutlinedButton(
+                    onPressed: _saving ? null : _cancel,
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      side: const BorderSide(color: Color(0xFF3B6FE0)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
+                    child: const Text('取消', style: TextStyle(fontSize: 16)),
                   ),
-                  child: const Text('取消', style: TextStyle(fontSize: 16)),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: ElevatedButton(
-                  onPressed: _saving ? null : _save,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                child: Pressable(
+                  enabled: true,
+                  child: ElevatedButton(
+                    onPressed: _saving ? null : _save,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
+                    child: _saving
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text('完成', style: TextStyle(fontSize: 16)),
                   ),
-                  child: _saving
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text('完成', style: TextStyle(fontSize: 16)),
                 ),
               ),
             ],

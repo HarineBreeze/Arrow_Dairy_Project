@@ -8,6 +8,7 @@ import '../widgets/empty_state.dart';
 import '../widgets/loading_skeleton.dart';
 import 'item_edit_screen.dart';
 import '../utils/haptics.dart';
+import '../widgets/pressable.dart';
 
 enum _ItemFilter { all, owning, lost, wishlist }
 
@@ -112,12 +113,18 @@ class ItemListScreenState extends State<ItemListScreen> {
           title: Text('删除「${item.name}」?'),
           content: const Text('删除后可在「回收站」保留 7 天，期间可还原'),
           actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(c, false),
-                child: const Text('取消')),
-            TextButton(
-                onPressed: () => Navigator.pop(c, true),
-                child: const Text('删除', style: TextStyle(color: Colors.red))),
+            Pressable(
+              enabled: true,
+              child: TextButton(
+                  onPressed: () => Navigator.pop(c, false),
+                  child: const Text('取消')),
+            ),
+            Pressable(
+              enabled: true,
+              child: TextButton(
+                  onPressed: () => Navigator.pop(c, true),
+                  child: const Text('删除', style: TextStyle(color: Colors.red))),
+            ),
           ],
         ),
       );
@@ -347,18 +354,21 @@ class ItemListScreenState extends State<ItemListScreen> {
                     const SizedBox(height: 20),
                     SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(ctx);
-                          setState(() {});
-                        },
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                      child: Pressable(
+                        enabled: true,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            setState(() {});
+                          },
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
+                          child: const Text('完成', style: TextStyle(fontSize: 16)),
                         ),
-                        child: const Text('完成', style: TextStyle(fontSize: 16)),
                       ),
                     ),
                   ],
@@ -685,42 +695,44 @@ class _ItemCardState extends State<_ItemCard> {
   }
 
   Widget _buildAnimatedCard(Widget child) {
-    return AnimatedContainer(
-      duration: _dx == 0
-          ? const Duration(milliseconds: 300)
-          : Duration.zero, // 松手后自然回弹
-      curve: Curves.easeOutCubic,
-      transform: Matrix4.translationValues(_dx, 0, 0),
-      margin: EdgeInsets.zero,
-      decoration: BoxDecoration(
-        color: item.wishlist
-            ? const Color(0xFFFBE9EC) // 低饱和度淡粉色
-            : (item.lostDate != null ? const Color(0xFFE4E7EC) : Colors.white),
-        borderRadius: BorderRadius.circular(14),
-        // 愿望单物品：红色描边
-        border: item.wishlist
-            ? Border.all(color: const Color(0xFFE0576A), width: 1.5)
-            : null,
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: widget.onTap,
-        onLongPress: widget.onLongPress,
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 500),
-          switchInCurve: Curves.easeOutCubic,
-          switchOutCurve: Curves.easeInCubic,
-          transitionBuilder: (child, animation) => FadeTransition(
-            opacity: animation,
-            child: ScaleTransition(scale: animation, child: child),
-          ),
-          // key 随状态变化触发自然过渡
-          child: item.wishlist
-              ? _buildWishlistBody()
-              : _buildOwnedBody(item.lostDate != null),
+    return Pressable(
+      child:   AnimatedContainer(
+        duration: _dx == 0
+            ? const Duration(milliseconds: 300)
+            : Duration.zero, // 松手后自然回弹
+        curve: Curves.easeOutCubic,
+        transform: Matrix4.translationValues(_dx, 0, 0),
+        margin: EdgeInsets.zero,
+        decoration: BoxDecoration(
+          color: item.wishlist
+              ? const Color(0xFFFBE9EC) // 低饱和度淡粉色
+              : (item.lostDate != null ? const Color(0xFFE4E7EC) : Colors.white),
+          borderRadius: BorderRadius.circular(14),
+          // 愿望单物品：红色描边
+          border: item.wishlist
+              ? Border.all(color: const Color(0xFFE0576A), width: 1.5)
+              : null,
         ),
-      ),
-    );
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: widget.onTap,
+          onLongPress: widget.onLongPress,
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 500),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            transitionBuilder: (child, animation) => FadeTransition(
+              opacity: animation,
+              child: ScaleTransition(scale: animation, child: child),
+            ),
+            // key 随状态变化触发自然过渡
+            child: item.wishlist
+                ? _buildWishlistBody()
+                : _buildOwnedBody(item.lostDate != null),
+          ),
+        ),
+      )
+    );;
   }
 
   // ---------- 愿望单卡片 ----------

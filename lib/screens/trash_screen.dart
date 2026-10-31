@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../services/trash_storage.dart';
 import '../utils/haptics.dart';
+import '../widgets/pressable.dart';
 
 /// 回收站主页。
 /// 交互与其它主页一致：顶部蓝色三横杠 + 标题、左右滑由 HomeScreen 统一处理。
@@ -76,12 +77,18 @@ class TrashScreenState extends State<TrashScreen> {
         title: Text('还原「${e.title}」?'),
         content: Text('将还原到${e.kind.label}页，回收站记录同时移除。'),
         actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('取消')),
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('还原')),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('取消')),
+          ),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('还原')),
+          ),
         ],
       ),
     );
@@ -102,13 +109,19 @@ class TrashScreenState extends State<TrashScreen> {
         title: const Text('彻底删除?'),
         content: Text('「${e.title}」将被永久删除，无法恢复。'),
         actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('取消')),
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child:
-                  const Text('彻底删除', style: TextStyle(color: Colors.red))),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('取消')),
+          ),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child:
+                    const Text('彻底删除', style: TextStyle(color: Colors.red))),
+          ),
         ],
       ),
     );
@@ -132,12 +145,18 @@ class TrashScreenState extends State<TrashScreen> {
         title: Text('清空${scope == null ? '回收站' : scope.label}?'),
         content: Text('共 $n 项将被永久删除，无法恢复。'),
         actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('取消')),
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('清空', style: TextStyle(color: Colors.red))),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('取消')),
+          ),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('清空', style: TextStyle(color: Colors.red))),
+          ),
         ],
       ),
     );

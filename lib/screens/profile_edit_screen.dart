@@ -6,6 +6,7 @@ import '../models/user_profile.dart';
 import '../services/user_storage.dart';
 import '../widgets/avatar.dart';
 import '../widgets/unsaved_guard.dart';
+import '../widgets/pressable.dart';
 
 class ProfileEditScreen extends StatefulWidget {
   final UserProfile profile;
@@ -142,22 +143,25 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 8, 24, 12),
-          child: ElevatedButton(
-            onPressed: _saving ? null : _save,
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+          child: Pressable(
+            enabled: true,
+            child: ElevatedButton(
+              onPressed: _saving ? null : _save,
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
+              child: _saving
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Text('保存', style: TextStyle(fontSize: 16)),
             ),
-            child: _saving
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white),
-                  )
-                : const Text('保存', style: TextStyle(fontSize: 16)),
           ),
         ),
       ),

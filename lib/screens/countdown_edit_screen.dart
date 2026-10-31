@@ -4,6 +4,7 @@ import '../models/countdown_event.dart';
 import '../services/trash_storage.dart';
 import '../widgets/unsaved_guard.dart';
 import '../utils/haptics.dart';
+import '../widgets/pressable.dart';
 
 /// 新增 / 编辑倒数日。
 class CountdownEditScreen extends StatefulWidget {
@@ -141,12 +142,18 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
         title: const Text('删除这个倒数日?'),
         content: const Text('删除后可在「回收站」保留 7 天，期间可还原'),
         actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('取消')),
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('删除', style: TextStyle(color: Colors.red))),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('取消')),
+          ),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('删除', style: TextStyle(color: Colors.red))),
+          ),
         ],
       ),
     );
@@ -440,27 +447,33 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
           child: Row(
             children: [
               Expanded(
-                child: OutlinedButton(
-                  onPressed: _saving ? null : () => Navigator.pop(context),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    side: const BorderSide(color: Color(0xFF3B6FE0)),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                child: Pressable(
+                  enabled: true,
+                  child: OutlinedButton(
+                    onPressed: _saving ? null : () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      side: const BorderSide(color: Color(0xFF3B6FE0)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('取消', style: TextStyle(fontSize: 16)),
                   ),
-                  child: const Text('取消', style: TextStyle(fontSize: 16)),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: ElevatedButton(
-                  onPressed: _saving ? null : _save,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                child: Pressable(
+                  enabled: true,
+                  child: ElevatedButton(
+                    onPressed: _saving ? null : _save,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('完成', style: TextStyle(fontSize: 16)),
                   ),
-                  child: const Text('完成', style: TextStyle(fontSize: 16)),
                 ),
               ),
             ],
@@ -655,19 +668,25 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                 Row(
                   children: [
                     const Spacer(),
-                    TextButton(
-                        onPressed: () => Navigator.pop(ctx),
-                        child: const Text('取消')),
+                    Pressable(
+                      enabled: true,
+                      child: TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text('取消')),
+                    ),
                     const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          _iconCtrl.text = tmpCtrl.text.trim();
-                          _iconTouched = true;
-                        });
-                        Navigator.pop(ctx);
-                      },
-                      child: const Text('确定'),
+                    Pressable(
+                      enabled: true,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            _iconCtrl.text = tmpCtrl.text.trim();
+                            _iconTouched = true;
+                          });
+                          Navigator.pop(ctx);
+                        },
+                        child: const Text('确定'),
+                      ),
                     ),
                   ],
                 ),
@@ -912,17 +931,20 @@ class _DatePickerPageState extends State<_DatePickerPage> {
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
             child: SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context, _result),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+              child: Pressable(
+                enabled: true,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context, _result),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: Text(
+                      '确定 ${_selected.year}-${_selected.month.toString().padLeft(2, '0')}-${_selected.day.toString().padLeft(2, '0')} '
+                      '${_time.hour.toString().padLeft(2, '0')}:${_time.minute.toString().padLeft(2, '0')}',
+                      style: const TextStyle(fontSize: 16)),
                 ),
-                child: Text(
-                    '确定 ${_selected.year}-${_selected.month.toString().padLeft(2, '0')}-${_selected.day.toString().padLeft(2, '0')} '
-                    '${_time.hour.toString().padLeft(2, '0')}:${_time.minute.toString().padLeft(2, '0')}',
-                    style: const TextStyle(fontSize: 16)),
               ),
             ),
           ),

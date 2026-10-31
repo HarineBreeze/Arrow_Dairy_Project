@@ -4,6 +4,7 @@ import '../models/asset.dart';
 import '../services/trash_storage.dart';
 import '../widgets/unsaved_guard.dart';
 import '../utils/haptics.dart';
+import '../widgets/pressable.dart';
 
 /// 新增 / 编辑资产卡片。
 class AssetEditScreen extends StatefulWidget {
@@ -75,12 +76,18 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
         title: const Text('删除这张资产卡片?'),
         content: const Text('删除后可在「回收站」保留 7 天，期间可还原'),
         actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('取消')),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('删除', style: TextStyle(color: Colors.red)),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('取消')),
+          ),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('删除', style: TextStyle(color: Colors.red)),
+            ),
           ),
         ],
       ),
@@ -322,16 +329,19 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
             SizedBox(
               width: double.infinity,
               height: 48,
-              child: ElevatedButton(
-                onPressed: _saving ? null : _save,
-                style: ElevatedButton.styleFrom(
-                  primary: const Color(0xFF3B6FE0),
-                  onPrimary: Colors.white,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+              child: Pressable(
+                enabled: true,
+                child: ElevatedButton(
+                  onPressed: _saving ? null : _save,
+                  style: ElevatedButton.styleFrom(
+                    primary: const Color(0xFF3B6FE0),
+                    onPrimary: Colors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: Text(widget.asset == null ? '添加' : '保存',
+                      style: const TextStyle(fontSize: 16)),
                 ),
-                child: Text(widget.asset == null ? '添加' : '保存',
-                    style: const TextStyle(fontSize: 16)),
               ),
             ),
           ],
@@ -467,23 +477,26 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                     SizedBox(
                       width: double.infinity,
                       height: 44,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          primary: const Color(0xFF3B6FE0),
-                          onPrimary: Colors.white,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
+                      child: Pressable(
+                        enabled: true,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            primary: const Color(0xFF3B6FE0),
+                            onPrimary: Colors.white,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                          ),
+                          onPressed: () {
+                            final v = tmpCtrl.text.trim();
+                            Navigator.pop(ctx);
+                            setState(() {
+                              _iconCtrl.text = v.characters.isEmpty
+                                  ? Asset.defaultIconFor(_type)
+                                  : v.characters.first;
+                            });
+                          },
+                          child: const Text('确定', style: TextStyle(fontSize: 15)),
                         ),
-                        onPressed: () {
-                          final v = tmpCtrl.text.trim();
-                          Navigator.pop(ctx);
-                          setState(() {
-                            _iconCtrl.text = v.characters.isEmpty
-                                ? Asset.defaultIconFor(_type)
-                                : v.characters.first;
-                          });
-                        },
-                        child: const Text('确定', style: TextStyle(fontSize: 15)),
                       ),
                     ),
                   ],

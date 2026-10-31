@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/pressable.dart';
 
 /// 全局统一的空状态引导组件。
 ///
@@ -68,15 +69,18 @@ class EmptyState extends StatelessWidget {
         ),
         if (actionLabel != null && onAction != null) ...[
           const SizedBox(height: 20),
-          TextButton(
-            onPressed: onAction,
-            style: TextButton.styleFrom(
-              primary: const Color(0xFF3B6FE0),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+              onPressed: onAction,
+              style: TextButton.styleFrom(
+                primary: const Color(0xFF3B6FE0),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              ),
+              child: Text(actionLabel!,
+                  style: const TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w600)),
             ),
-            child: Text(actionLabel!,
-                style: const TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.w600)),
           ),
         ],
       ],

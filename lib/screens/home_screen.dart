@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart' show DragStartBehavior;
 import 'package:flutter/services.dart' show SystemUiOverlayStyle;
 import '../utils/haptics.dart';
+import '../widgets/pressable.dart';
 import '../models/diary_entry.dart';
 import '../models/user_profile.dart';
 import '../services/diary_storage.dart';
@@ -292,25 +293,34 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             ),
             actions: [
               // 注意：不要在 actions（OverflowBar）里用 Spacer，会导致无限膨胀灰块
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('取消'),
+              Pressable(
+                enabled: true,
+                child: TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text('取消'),
+                ),
               ),
-              TextButton(
-                onPressed: () {
-                  if (ctrl.text == entry.password) {
-                    Navigator.pop(ctx, true);
-                  } else {
-                    setState(() => error = '密码错误，再试试吧～');
-                  }
-                },
-                child: const Text('确认'),
+              Pressable(
+                enabled: true,
+                child: TextButton(
+                  onPressed: () {
+                    if (ctrl.text == entry.password) {
+                      Navigator.pop(ctx, true);
+                    } else {
+                      setState(() => error = '密码错误，再试试吧～');
+                    }
+                  },
+                  child: const Text('确认'),
+                ),
               ),
-              TextButton(
-                onPressed: () => _showAnswerDialog(entry),
-                child: const Text(
-                  '忘记密码',
-                  style: TextStyle(fontSize: 13, color: Color(0xFF9AA8BF)),
+              Pressable(
+                enabled: true,
+                child: TextButton(
+                  onPressed: () => _showAnswerDialog(entry),
+                  child: const Text(
+                    '忘记密码',
+                    style: TextStyle(fontSize: 13, color: Color(0xFF9AA8BF)),
+                  ),
                 ),
               ),
             ],
@@ -387,21 +397,27 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             ),
             actions: [
               if (revealedPwd == null && entry.passwordHint.isNotEmpty) ...[
-                TextButton(
-                  onPressed: () {
-                    if (ctrl.text.trim() == entry.passwordAnswer.trim() &&
-                        entry.passwordAnswer.trim().isNotEmpty) {
-                      setState(() => revealedPwd = entry.password);
-                    } else {
-                      setState(() => error = '答案不正确，再想想～');
-                    }
-                  },
-                  child: const Text('确认'),
+                Pressable(
+                  enabled: true,
+                  child: TextButton(
+                    onPressed: () {
+                      if (ctrl.text.trim() == entry.passwordAnswer.trim() &&
+                          entry.passwordAnswer.trim().isNotEmpty) {
+                        setState(() => revealedPwd = entry.password);
+                      } else {
+                        setState(() => error = '答案不正确，再想想～');
+                      }
+                    },
+                    child: const Text('确认'),
+                  ),
                 ),
               ],
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('关闭'),
+              Pressable(
+                enabled: true,
+                child: TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('关闭'),
+                ),
               ),
             ],
           ),
@@ -655,13 +671,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         title: const Text('确认要删除这篇日记吗?'),
         content: const Text('删除后可在「回收站」保留 7 天，期间可还原。'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('取消'),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('取消'),
+            ),
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('删除', style: TextStyle(color: Colors.red)),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('删除', style: TextStyle(color: Colors.red)),
+            ),
           ),
         ],
       ),
@@ -1307,13 +1329,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               onChanged: (v) => setState(() => _query = v),
             ),
           ),
-          TextButton(
-            onPressed: _closeSearch,
-            child: const Text(
-              '全部',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
+          Pressable(
+            enabled: true,
+            child: TextButton(
+              onPressed: _closeSearch,
+              child: const Text(
+                '全部',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ),
@@ -1409,14 +1434,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       ),
                     ),
                     const Spacer(),
-                    TextButton(
-                      onPressed: () {
-                        setState(() => _activeTopic = null);
-                        Navigator.pop(ctx);
-                      },
-                      child: const Text(
-                        '取消',
-                        style: TextStyle(color: Color(0xFF9AA8BF)),
+                    Pressable(
+                      enabled: true,
+                      child: TextButton(
+                        onPressed: () {
+                          setState(() => _activeTopic = null);
+                          Navigator.pop(ctx);
+                        },
+                        child: const Text(
+                          '取消',
+                          style: TextStyle(color: Color(0xFF9AA8BF)),
+                        ),
                       ),
                     ),
                   ],
@@ -1569,13 +1597,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               DateTime(_visibleMonth.year + 1, _visibleMonth.month, 1)),
         ),
         const Spacer(),
-        TextButton(
-          onPressed: _showAll,
-          child: const Text(
-            '全部',
-            style: TextStyle(
-              color: kPrimaryBlue,
-              fontWeight: FontWeight.w600,
+        Pressable(
+          enabled: true,
+          child: TextButton(
+            onPressed: _showAll,
+            child: const Text(
+              '全部',
+              style: TextStyle(
+                color: kPrimaryBlue,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ),
@@ -1690,69 +1721,71 @@ class _PinnedMiniCard extends StatelessWidget {
     final title = encrypted
         ? (entry.subtitle.isNotEmpty ? entry.subtitle : '加密笔记')
         : (entry.title.isNotEmpty ? entry.title : '（无标题）');
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(11),
-      child: InkWell(
+    return Pressable(
+      child:   Material(
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(11),
-        onTap: onTap,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(11),
-            border: Border.all(color: const Color(0xFFE0576A), width: 1.3),
-          ),
-          // 加密笔记：卡面铺斜纹纹理（与未置顶封条卡同一语言）
-          // 注意：底色必须透明，否则会盖住下面的 painter
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: CustomPaint(
-              painter: encrypted ? const _GridTexturePainter() : null,
-              child: Container(
-                color: encrypted ? Colors.transparent : Colors.white,
-                padding: const EdgeInsets.fromLTRB(9, 8, 9, 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // 第 1 行：标题 / 副标题
-                    Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w600,
-                        color: kTextDark,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    // 第 2 行：月.日 + （加密：锁 / 公开：心情）
-                    Row(
-                      children: [
-                        Text(
-                          '${d.month}.${d.day}',
-                          style:
-                              const TextStyle(fontSize: 9.5, color: kTextLight),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(11),
+          onTap: onTap,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(11),
+              border: Border.all(color: const Color(0xFFE0576A), width: 1.3),
+            ),
+            // 加密笔记：卡面铺斜纹纹理（与未置顶封条卡同一语言）
+            // 注意：底色必须透明，否则会盖住下面的 painter
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: CustomPaint(
+                painter: encrypted ? const _GridTexturePainter() : null,
+                child: Container(
+                  color: encrypted ? Colors.transparent : Colors.white,
+                  padding: const EdgeInsets.fromLTRB(9, 8, 9, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // 第 1 行：标题 / 副标题
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: kTextDark,
                         ),
-                        const SizedBox(width: 3),
-                        if (encrypted)
-                          const Icon(Icons.lock, size: 10, color: kTextLight)
-                        else
+                      ),
+                      const SizedBox(height: 5),
+                      // 第 2 行：月.日 + （加密：锁 / 公开：心情）
+                      Row(
+                        children: [
                           Text(
-                            entry.mood,
-                            maxLines: 1,
-                            style: const TextStyle(fontSize: 9.5),
+                            '${d.month}.${d.day}',
+                            style:
+                                const TextStyle(fontSize: 9.5, color: kTextLight),
                           ),
-                      ],
-                    ),
-                  ],
+                          const SizedBox(width: 3),
+                          if (encrypted)
+                            const Icon(Icons.lock, size: 10, color: kTextLight)
+                          else
+                            Text(
+                              entry.mood,
+                              maxLines: 1,
+                              style: const TextStyle(fontSize: 9.5),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
         ),
-      ),
-    );
+      )
+    );;
   }
 }
 
@@ -1880,135 +1913,137 @@ class _DiaryCard extends StatelessWidget {
     final isEncrypted = entry.encrypted;
     // 加密笔记：封条风卡片（斜纹密封带 + 虚线边框），只外显副标题与日期时间
     if (isEncrypted) return _buildEncryptedCard();
-    return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        // 置顶笔记：红色描边（收纳栏不变）
-        side: isPinned
-            ? const BorderSide(color: Color(0xFFE0576A), width: 1.5)
-            : BorderSide.none,
-      ),
-      color: Colors.white,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(13, 12, 14, 12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // 左侧日期徽章：大号「日」+ 年月小字，像撕页日历
-              Container(
-                width: 52,
-                padding: const EdgeInsets.only(right: 10),
-                margin: const EdgeInsets.symmetric(vertical: 4),
-                decoration: const BoxDecoration(
-                  border: Border(
-                    right: BorderSide(color: Color(0xFFE8EDF5)),
+    return Pressable(
+      child:   Card(
+        margin: const EdgeInsets.only(bottom: 10),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          // 置顶笔记：红色描边（收纳栏不变）
+          side: isPinned
+              ? const BorderSide(color: Color(0xFFE0576A), width: 1.5)
+              : BorderSide.none,
+        ),
+        color: Colors.white,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(13, 12, 14, 12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // 左侧日期徽章：大号「日」+ 年月小字，像撕页日历
+                Container(
+                  width: 52,
+                  padding: const EdgeInsets.only(right: 10),
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  decoration: const BoxDecoration(
+                    border: Border(
+                      right: BorderSide(color: Color(0xFFE8EDF5)),
+                    ),
                   ),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text('${entry.publishDate.day}',
-                        style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF3B6FE0),
-                            height: 1.1)),
-                    const SizedBox(height: 2),
-                    // 年月：不换行，超宽时整体缩小适配两位月份
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                          '${entry.publishDate.year}.${entry.publishDate.month.toString().padLeft(2, '0')}',
-                          maxLines: 1,
-                          softWrap: false,
-                          style:
-                              const TextStyle(fontSize: 10, color: kTextLight)),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              // 右侧：标题 / 摘要 / 心情天气地点脚注
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            entry.title.isNotEmpty ? entry.title : '（无标题）',
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text('${entry.publishDate.day}',
+                          style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF3B6FE0),
+                              height: 1.1)),
+                      const SizedBox(height: 2),
+                      // 年月：不换行，超宽时整体缩小适配两位月份
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                            '${entry.publishDate.year}.${entry.publishDate.month.toString().padLeft(2, '0')}',
                             maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 15.5,
-                              fontWeight: FontWeight.w600,
-                              color: kTextDark,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (entry.content.isNotEmpty) ...[
-                      const SizedBox(height: 3),
-                      Text(
-                        entry.content,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 12.5, color: kTextMid),
+                            softWrap: false,
+                            style:
+                                const TextStyle(fontSize: 10, color: kTextLight)),
                       ),
                     ],
-                    const SizedBox(height: 5),
-                    Row(
-                      children: [
-                        Text(entry.mood, style: const TextStyle(fontSize: 14)),
-                        const SizedBox(width: 4),
-                        Text(entry.weather,
-                            style: const TextStyle(fontSize: 12)),
-                        const SizedBox(width: 6),
-                        Text(_timeLabel(entry.createdAt),
-                            style: const TextStyle(
-                                fontSize: 11, color: kTextLight)),
-                        if (entry.location.isNotEmpty) ...[
-                          const SizedBox(width: 6),
-                          const Icon(Icons.location_on,
-                              size: 13, color: kTextLight),
-                          const SizedBox(width: 1),
-                          Flexible(
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // 右侧：标题 / 摘要 / 心情天气地点脚注
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
                             child: Text(
-                              entry.location,
+                              entry.title.isNotEmpty ? entry.title : '（无标题）',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                  fontSize: 11, color: kTextLight),
+                                fontSize: 15.5,
+                                fontWeight: FontWeight.w600,
+                                color: kTextDark,
+                              ),
                             ),
                           ),
                         ],
-                        const Spacer(),
-                        GestureDetector(
-                          onTap: onDelete,
-                          child: const Icon(
-                            Icons.delete_outline,
-                            size: 18,
-                            color: kTextLight,
-                          ),
+                      ),
+                      if (entry.content.isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          entry.content,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 12.5, color: kTextMid),
                         ),
                       ],
-                    ),
-                  ],
+                      const SizedBox(height: 5),
+                      Row(
+                        children: [
+                          Text(entry.mood, style: const TextStyle(fontSize: 14)),
+                          const SizedBox(width: 4),
+                          Text(entry.weather,
+                              style: const TextStyle(fontSize: 12)),
+                          const SizedBox(width: 6),
+                          Text(_timeLabel(entry.createdAt),
+                              style: const TextStyle(
+                                  fontSize: 11, color: kTextLight)),
+                          if (entry.location.isNotEmpty) ...[
+                            const SizedBox(width: 6),
+                            const Icon(Icons.location_on,
+                                size: 13, color: kTextLight),
+                            const SizedBox(width: 1),
+                            Flexible(
+                              child: Text(
+                                entry.location,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                    fontSize: 11, color: kTextLight),
+                              ),
+                            ),
+                          ],
+                          const Spacer(),
+                          GestureDetector(
+                            onTap: onDelete,
+                            child: const Icon(
+                              Icons.delete_outline,
+                              size: 18,
+                              color: kTextLight,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-      ),
-    );
+      )
+    );;
   }
 
   /// 加密笔记卡片（封条风）：
@@ -2017,49 +2052,51 @@ class _DiaryCard extends StatelessWidget {
   Widget _buildEncryptedCard() {
     // 置顶的加密笔记：粉底斜纹 + 红虚线边，置顶状态一望即知
     if (isPinned) {
-      return Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(14),
-          child: ColoredBox(
-            color: const Color(0xFFFBE3E8),
-            child: CustomPaint(
-              foregroundPainter: const _DashedRRectPainter(
-                  color: Color(0xFFE0576A), radius: 14),
+      return Pressable(
+        child:   Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: ColoredBox(
+              color: const Color(0xFFFBE3E8),
               child: CustomPaint(
-                painter: const _PinnedStripePainter(),
-                child: Material(
-                  color: const Color(0xE6FFFFFF),
-                  child: InkWell(
-                    onTap: onTap,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              entry.subtitle.isNotEmpty
-                                  ? entry.subtitle
-                                  : '加密笔记',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                                color: entry.subtitle.isNotEmpty
-                                    ? const Color(0xFF5A6B82)
-                                    : const Color(0xFF9AA8BF),
+                foregroundPainter: const _DashedRRectPainter(
+                    color: Color(0xFFE0576A), radius: 14),
+                child: CustomPaint(
+                  painter: const _PinnedStripePainter(),
+                  child: Material(
+                    color: const Color(0xE6FFFFFF),
+                    child: InkWell(
+                      onTap: onTap,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                entry.subtitle.isNotEmpty
+                                    ? entry.subtitle
+                                    : '加密笔记',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                  color: entry.subtitle.isNotEmpty
+                                      ? const Color(0xFF5A6B82)
+                                      : const Color(0xFF9AA8BF),
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(_timeLabel(entry.createdAt),
-                              style: const TextStyle(
-                                  fontSize: 11, color: kTextLight)),
-                          const SizedBox(width: 4),
-                          const Icon(Icons.lock,
-                              size: 12, color: kTextLight),
-                        ],
+                            const SizedBox(width: 8),
+                            Text(_timeLabel(entry.createdAt),
+                                style: const TextStyle(
+                                    fontSize: 11, color: kTextLight)),
+                            const SizedBox(width: 4),
+                            const Icon(Icons.lock,
+                                size: 12, color: kTextLight),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -2067,78 +2104,80 @@ class _DiaryCard extends StatelessWidget {
               ),
             ),
           ),
-        ),
-      );
+        )
+      );;
     }
     // 非置顶：封条带在上（🔒已加密 / 发布日期，斜纹底），白色主体在下
     //（副标题 + 记录时间），整卡无描边 —— 与封条档案袋观感一致。
     final d = entry.publishDate;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(14),
-        child: Material(
-          color: Colors.white,
-          child: InkWell(
-            onTap: onTap,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // 密封带：斜纹底 + 🔒已加密 / 月.日
-                CustomPaint(
-                  painter: const _SealStripePainter(),
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 6, 14, 6),
+    return Pressable(
+      child:   Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: Material(
+            color: Colors.white,
+            child: InkWell(
+              onTap: onTap,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // 密封带：斜纹底 + 🔒已加密 / 月.日
+                  CustomPaint(
+                    painter: const _SealStripePainter(),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 6, 14, 6),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.lock,
+                              size: 11, color: kTextLight),
+                          const SizedBox(width: 4),
+                          const Text('已加密',
+                              style: TextStyle(
+                                  fontSize: 11, color: kTextLight)),
+                          const Spacer(),
+                          Text('${d.month}月${d.day}日',
+                              style: const TextStyle(
+                                  fontSize: 11, color: kTextLight)),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // 主体：副标题 + 时间
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
                     child: Row(
                       children: [
-                        const Icon(Icons.lock,
-                            size: 11, color: kTextLight),
-                        const SizedBox(width: 4),
-                        const Text('已加密',
+                        Expanded(
+                          child: Text(
+                            entry.subtitle.isNotEmpty
+                                ? entry.subtitle
+                                : '加密笔记',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                                fontSize: 11, color: kTextLight)),
-                        const Spacer(),
-                        Text('${d.month}月${d.day}日',
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: entry.subtitle.isNotEmpty
+                                  ? const Color(0xFF2A3B52)
+                                  : const Color(0xFF9AA8BF),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(_timeLabel(entry.createdAt),
                             style: const TextStyle(
                                 fontSize: 11, color: kTextLight)),
                       ],
                     ),
                   ),
-                ),
-                // 主体：副标题 + 时间
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          entry.subtitle.isNotEmpty
-                              ? entry.subtitle
-                              : '加密笔记',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                            color: entry.subtitle.isNotEmpty
-                                ? const Color(0xFF2A3B52)
-                                : const Color(0xFF9AA8BF),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(_timeLabel(entry.createdAt),
-                          style: const TextStyle(
-                              fontSize: 11, color: kTextLight)),
-                    ],
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
-      ),
-    );
+      )
+    );;
   }
 
   /// 置顶加密卡底纹：与封条卡同款 45° 斜纹，叠一层极淡的置顶粉

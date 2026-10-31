@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/pressable.dart';
 
 /// 全局「未保存修改」拦截。
 ///
@@ -33,18 +34,24 @@ Future<bool> confirmLeaveIfDirty(
         style: TextStyle(fontSize: 13, color: Color(0xFF8A99B3), height: 1.6),
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(false),
-          child: const Text('取消',
-              style: TextStyle(color: Color(0xFF8A99B3), fontSize: 14)),
+        Pressable(
+          enabled: true,
+          child: TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('取消',
+                style: TextStyle(color: Color(0xFF8A99B3), fontSize: 14)),
+          ),
         ),
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(true),
-          child: const Text('确定',
-              style: TextStyle(
-                  color: Color(0xFF3B6FE0),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600)),
+        Pressable(
+          enabled: true,
+          child: TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('确定',
+                style: TextStyle(
+                    color: Color(0xFF3B6FE0),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600)),
+          ),
         ),
       ],
     ),

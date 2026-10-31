@@ -9,6 +9,7 @@ import '../widgets/loading_skeleton.dart';
 import '../utils/menu_gesture_gate.dart';
 import 'countdown_edit_screen.dart';
 import '../utils/haptics.dart';
+import '../widgets/pressable.dart';
 
 /// 倒数日主页：顶栏（年月 + 搜索 + 筛选）、日历视图、
 /// 置顶组 / 纪念日 / 资产日 三个可折叠分组的长条卡片列表。
@@ -227,13 +228,19 @@ class CountdownScreenState extends State<CountdownScreen> {
                     title: const Text('删除这个倒数日?'),
                     content: const Text('删除后可在「回收站」保留 7 天，期间可还原'),
                     actions: [
-                      TextButton(
-                          onPressed: () => Navigator.pop(c, false),
-                          child: const Text('取消')),
-                      TextButton(
-                          onPressed: () => Navigator.pop(c, true),
-                          child: const Text('删除',
-                              style: TextStyle(color: Colors.red))),
+                      Pressable(
+                        enabled: true,
+                        child: TextButton(
+                            onPressed: () => Navigator.pop(c, false),
+                            child: const Text('取消')),
+                      ),
+                      Pressable(
+                        enabled: true,
+                        child: TextButton(
+                            onPressed: () => Navigator.pop(c, true),
+                            child: const Text('删除',
+                                style: TextStyle(color: Colors.red))),
+                      ),
                     ],
                   ),
                 );
@@ -319,12 +326,15 @@ class CountdownScreenState extends State<CountdownScreen> {
                   const SizedBox(height: 10),
                   Align(
                     alignment: Alignment.centerRight,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        setState(() {});
-                      },
-                      child: const Text('确定'),
+                    child: Pressable(
+                      enabled: true,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          setState(() {});
+                        },
+                        child: const Text('确定'),
+                      ),
                     ),
                   ),
                 ],
@@ -492,110 +502,112 @@ class CountdownScreenState extends State<CountdownScreen> {
     Color bg = Colors.white;
     if (grey) bg = const Color(0xFFF0F1F3);
 
-    return GestureDetector(
-      onTap: () => _openEditor(e),
-      onLongPress: () => _showCardMenu(e),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(14),
-          // 置顶 / 到期循环标记：红色描边（与其它主页置顶描边统一）
-          border: (loopRed || e.pinned)
-              ? Border.all(color: const Color(0xFFE0576A), width: 1.5)
-              : null,
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 46,
-              height: 46,
-              alignment: Alignment.center,
-              // 不再给图标加底纹色块，图标直接落在卡片底色上
-              child: Text(
-                  e.icon.trim().isEmpty
-                      ? CountdownEvent.defaultIconFor(e.type)
-                      : e.icon,
-                  style: TextStyle(
-                      fontSize: 24,
-                      color: grey ? const Color(0xFF9AA8BF) : null)),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(e.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: grey
-                              ? const Color(0xFF9AA8BF)
-                              : const Color(0xFF2A3B52))),
-                  // 重复规则不在卡片上外显：仅作为内部行为（
-                  // 提醒与倒计时推进），避免卡片信息过载
-                  // 卡片上不展示事件类型，该位置显示事件备注；无备注则留空
-                  if (e.note.isNotEmpty) ...[
-                    const SizedBox(height: 2),
-                    Text(e.note,
+    return Pressable(
+      child:   GestureDetector(
+        onTap: () => _openEditor(e),
+        onLongPress: () => _showCardMenu(e),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(14),
+            // 置顶 / 到期循环标记：红色描边（与其它主页置顶描边统一）
+            border: (loopRed || e.pinned)
+                ? Border.all(color: const Color(0xFFE0576A), width: 1.5)
+                : null,
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                alignment: Alignment.center,
+                // 不再给图标加底纹色块，图标直接落在卡片底色上
+                child: Text(
+                    e.icon.trim().isEmpty
+                        ? CountdownEvent.defaultIconFor(e.type)
+                        : e.icon,
+                    style: TextStyle(
+                        fontSize: 24,
+                        color: grey ? const Color(0xFF9AA8BF) : null)),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(e.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
                             color: grey
-                                ? const Color(0xFFB4BCC8)
-                                : const Color(0xFF5A6B82))),
+                                ? const Color(0xFF9AA8BF)
+                                : const Color(0xFF2A3B52))),
+                    // 重复规则不在卡片上外显：仅作为内部行为（
+                    // 提醒与倒计时推进），避免卡片信息过载
+                    // 卡片上不展示事件类型，该位置显示事件备注；无备注则留空
+                    if (e.note.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(e.note,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: grey
+                                  ? const Color(0xFFB4BCC8)
+                                  : const Color(0xFF5A6B82))),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // 已结束（主文案为空）时，副标题升为主文案，避免重复展示
-                if (e.displayText.isNotEmpty)
-                  Text(
-                    e.displayText,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: grey
-                          ? const Color(0xFFB4BCC8)
-                          : (e.daysLeft == 0
-                              ? const Color(0xFFE0576A)
-                              : const Color(0xFF3B6FE0)),
-                    ),
-                  ),
-                // 副标题：资产日「已拥有 x 天」/ 纪念日「已过去 x 天」
-                if (e.subtitle != null && e.displayText.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(e.subtitle!,
-                      style: TextStyle(
-                          fontSize: 11,
-                          color: grey
-                              ? const Color(0xFFB4BCC8)
-                              : const Color(0xFF9AA8BF))),
-                ],
-                if (e.displayText.isEmpty && e.subtitle != null)
-                  Text(e.subtitle!,
+              const SizedBox(width: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // 已结束（主文案为空）时，副标题升为主文案，避免重复展示
+                  if (e.displayText.isNotEmpty)
+                    Text(
+                      e.displayText,
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
                         color: grey
                             ? const Color(0xFFB4BCC8)
-                            : const Color(0xFF3B6FE0),
-                      )),
-              ],
-            ),
-          ],
+                            : (e.daysLeft == 0
+                                ? const Color(0xFFE0576A)
+                                : const Color(0xFF3B6FE0)),
+                      ),
+                    ),
+                  // 副标题：资产日「已拥有 x 天」/ 纪念日「已过去 x 天」
+                  if (e.subtitle != null && e.displayText.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(e.subtitle!,
+                        style: TextStyle(
+                            fontSize: 11,
+                            color: grey
+                                ? const Color(0xFFB4BCC8)
+                                : const Color(0xFF9AA8BF))),
+                  ],
+                  if (e.displayText.isEmpty && e.subtitle != null)
+                    Text(e.subtitle!,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: grey
+                              ? const Color(0xFFB4BCC8)
+                              : const Color(0xFF3B6FE0),
+                        )),
+                ],
+              ),
+            ],
+          ),
         ),
-      ),
-    );
+      )
+    );;
   }
 
   // ---------- 顶栏 ----------
@@ -647,11 +659,14 @@ class CountdownScreenState extends State<CountdownScreen> {
               onChanged: (v) => setState(() => _query = v),
             ),
           ),
-          TextButton(
-            onPressed: _closeSearch,
-            child: const Text('全部',
-                style: TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.w600)),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+              onPressed: _closeSearch,
+              child: const Text('全部',
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.w600)),
+            ),
           ),
         ],
       ),
@@ -771,24 +786,27 @@ class CountdownScreenState extends State<CountdownScreen> {
                 onPressed: () => setState(() => _visibleMonth =
                     DateTime(_visibleMonth.year + 1, _visibleMonth.month, 1)),
               ),
-              TextButton(
-                onPressed: () {
-                  final now = DateTime.now();
-                  setState(() {
-                    _visibleMonth = DateTime(now.year, now.month, 1);
-                    _calendarExpanded = false;
-                  });
-                },
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              Pressable(
+                enabled: true,
+                child: TextButton(
+                  onPressed: () {
+                    final now = DateTime.now();
+                    setState(() {
+                      _visibleMonth = DateTime(now.year, now.month, 1);
+                      _calendarExpanded = false;
+                    });
+                  },
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Text('今天',
+                      style: TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF3B6FE0),
+                          fontWeight: FontWeight.w600)),
                 ),
-                child: const Text('今天',
-                    style: TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF3B6FE0),
-                        fontWeight: FontWeight.w600)),
               ),
             ],
           ),

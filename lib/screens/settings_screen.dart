@@ -4,6 +4,7 @@ import 'package:share_plus/share_plus.dart';
 import '../services/app_settings.dart';
 import '../services/backup_service.dart';
 import '../utils/app_version.dart';
+import '../widgets/pressable.dart';
 import 'font_picker_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -98,13 +99,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   fontSize: 14, color: Color(0xFF5A6B82), height: 1.6),
             ),
             actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('取消'),
+              Pressable(
+                enabled: true,
+                child: TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text('取消'),
+                ),
               ),
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('覆盖导入', style: TextStyle(color: Colors.red)),
+              Pressable(
+                enabled: true,
+                child: TextButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: const Text('覆盖导入', style: TextStyle(color: Colors.red)),
+                ),
               ),
             ],
           ),
@@ -189,16 +196,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child:
-                  const Text('取消', style: TextStyle(color: Color(0xFF8A99B3))),
+            Pressable(
+              enabled: true,
+              child: TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child:
+                    const Text('取消', style: TextStyle(color: Color(0xFF8A99B3))),
+              ),
             ),
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, selected),
-              child: const Text('确定',
-                  style: TextStyle(
-                      color: Color(0xFF3B6FE0), fontWeight: FontWeight.w600)),
+            Pressable(
+              enabled: true,
+              child: TextButton(
+                onPressed: () => Navigator.pop(ctx, selected),
+                child: const Text('确定',
+                    style: TextStyle(
+                        color: Color(0xFF3B6FE0), fontWeight: FontWeight.w600)),
+              ),
             ),
           ],
         ),
@@ -445,9 +458,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           style: TextStyle(fontSize: 13, height: 1.6),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('知道了'),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('知道了'),
+            ),
           ),
         ],
       ),
@@ -471,9 +487,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('知道了'),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('知道了'),
+            ),
           ),
         ],
       ),

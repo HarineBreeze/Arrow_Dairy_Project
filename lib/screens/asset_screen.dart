@@ -8,6 +8,7 @@ import '../widgets/empty_state.dart';
 import '../widgets/loading_skeleton.dart';
 import 'asset_edit_screen.dart';
 import '../utils/haptics.dart';
+import '../widgets/pressable.dart';
 
 /// 资产全景主页。默认无需密码即可查看；
 /// 开启「加密访问」后，进入本页需先输入密码解锁。
@@ -341,23 +342,26 @@ class AssetScreenState extends State<AssetScreen> {
                         Expanded(
                           child: SizedBox(
                             height: 44,
-                            child: OutlinedButton(
-                              style: OutlinedButton.styleFrom(
-                                primary: const Color(0xFF5A6B82),
-                                side: const BorderSide(
-                                    color: Color(0xFFD6DCE8)),
-                                shape: RoundedRectangleBorder(
-                                    borderRadius:
-                                        BorderRadius.circular(12)),
+                            child: Pressable(
+                              enabled: true,
+                              child: OutlinedButton(
+                                style: OutlinedButton.styleFrom(
+                                  primary: const Color(0xFF5A6B82),
+                                  side: const BorderSide(
+                                      color: Color(0xFFD6DCE8)),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius:
+                                          BorderRadius.circular(12)),
+                                ),
+                                onPressed: () {
+                                  // 取消 → 恢复默认筛选（全部）
+                                  _typeFilter = '全部';
+                                  _signFilter = '全部';
+                                  Navigator.pop(ctx);
+                                  setState(() {});
+                                },
+                                child: const Text('取消'),
                               ),
-                              onPressed: () {
-                                // 取消 → 恢复默认筛选（全部）
-                                _typeFilter = '全部';
-                                _signFilter = '全部';
-                                Navigator.pop(ctx);
-                                setState(() {});
-                              },
-                              child: const Text('取消'),
                             ),
                           ),
                         ),
@@ -365,19 +369,22 @@ class AssetScreenState extends State<AssetScreen> {
                         Expanded(
                           child: SizedBox(
                             height: 44,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                primary: const Color(0xFF3B6FE0),
-                                onPrimary: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                    borderRadius:
-                                        BorderRadius.circular(12)),
+                            child: Pressable(
+                              enabled: true,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  primary: const Color(0xFF3B6FE0),
+                                  onPrimary: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius:
+                                          BorderRadius.circular(12)),
+                                ),
+                                onPressed: () {
+                                  Navigator.pop(ctx);
+                                  setState(() {});
+                                },
+                                child: const Text('确定'),
                               ),
-                              onPressed: () {
-                                Navigator.pop(ctx);
-                                setState(() {});
-                              },
-                              child: const Text('确定'),
                             ),
                           ),
                         ),
@@ -561,13 +568,19 @@ class AssetScreenState extends State<AssetScreen> {
                     title: const Text('删除这张资产卡片?'),
                     content: const Text('删除后可在「回收站」保留 7 天，期间可还原'),
                     actions: [
-                      TextButton(
-                          onPressed: () => Navigator.pop(c, false),
-                          child: const Text('取消')),
-                      TextButton(
-                          onPressed: () => Navigator.pop(c, true),
-                          child: const Text('删除',
-                              style: TextStyle(color: Colors.red))),
+                      Pressable(
+                        enabled: true,
+                        child: TextButton(
+                            onPressed: () => Navigator.pop(c, false),
+                            child: const Text('取消')),
+                      ),
+                      Pressable(
+                        enabled: true,
+                        child: TextButton(
+                            onPressed: () => Navigator.pop(c, true),
+                            child: const Text('删除',
+                                style: TextStyle(color: Colors.red))),
+                      ),
                     ],
                   ),
                 );
@@ -670,15 +683,19 @@ class AssetScreenState extends State<AssetScreen> {
                                 final a = _filtered[i - 1];
                                 // key 必须挂在 ListView 的直接子项上。
                                 // 长按语义由 _CardShell 统一裁决：按住 → 松手判定菜单/排序
+                                final handle = PressableHandle();
                                 return _CardShell(
                                   key: ValueKey('asset-${a.id}'),
                                   index: i,
                                   held: _pendingId == a.id,
+                                  pressHandle: handle,
                                   onHold: () => _onCardHold(a),
                                   onRelease: (moved) =>
                                       _onCardRelease(a, moved: moved),
-                                  builder: (held, moved) =>
-                                      _buildCard(a, held: held, moved: moved),
+                                  builder: (held, moved) => _buildCard(a,
+                                      held: held,
+                                      moved: moved,
+                                      pressHandle: handle),
                                 );
                               },
                             ),
@@ -705,15 +722,18 @@ class AssetScreenState extends State<AssetScreen> {
           const Text('输入密码后查看',
               style: TextStyle(fontSize: 13, color: Color(0xFF9AA8BF))),
           const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _unlockManually,
-            style: ElevatedButton.styleFrom(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+          Pressable(
+            enabled: true,
+            child: ElevatedButton(
+              onPressed: _unlockManually,
+              style: ElevatedButton.styleFrom(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text('解锁'),
             ),
-            child: const Text('解锁'),
           ),
         ],
       ),
@@ -860,7 +880,7 @@ class AssetScreenState extends State<AssetScreen> {
 
   /// 资产卡片本体。长按语义由外层 [_CardShell] 提供（按住 → 松手判定）。
   Widget _buildCard(Asset a,
-      {bool held = false, bool moved = false}) {
+      {bool held = false, bool moved = false, required PressableHandle pressHandle}) {
     final negative = a.amount < 0;
     final invest = _investTypes.contains(a.type);
     // 左侧色条代表资产性质：负资产红 / 理财蓝 / 其它绿
@@ -869,12 +889,16 @@ class AssetScreenState extends State<AssetScreen> {
         : (invest ? const Color(0xFF3B6FE0) : const Color(0xFF2A9D5C));
     return GestureDetector(
       onTap: () => _openEditor(a),
-      child: Stack(
-        children: [
-          Opacity(opacity: held ? 0.55 : 1, child: _cardBody(a, barColor)),
-          // 按住时的提示层：告诉用户「松手是菜单、拖动是排序」
-          if (held && !moved) _holdHint(),
-        ],
+      child: Pressable(
+        external: true,
+        handle: pressHandle,
+        child: Stack(
+          children: [
+            Opacity(opacity: held ? 0.55 : 1, child: _cardBody(a, barColor)),
+            // 按住时的提示层：告诉用户「松手是菜单、拖动是排序」
+            if (held && !moved) _holdHint(),
+          ],
+        ),
       ),
     );
   }
@@ -997,6 +1021,8 @@ class _CardShell extends StatefulWidget {
   final VoidCallback onHold;
   final ValueChanged<bool> onRelease;
   final Widget Function(bool held, bool moved) builder;
+  /// 按压回弹的驱动句柄（卡片本体已有指针监听，故由这里代驱动）
+  final PressableHandle pressHandle;
 
   const _CardShell({
     Key? key,
@@ -1005,6 +1031,7 @@ class _CardShell extends StatefulWidget {
     required this.onHold,
     required this.onRelease,
     required this.builder,
+    required this.pressHandle,
   }) : super(key: key);
 
   @override
@@ -1024,6 +1051,7 @@ class _CardShellState extends State<_CardShell> {
     _downAt = e.position;
     _moved = false;
     _fired = false;
+    widget.pressHandle.press();
   }
 
   void _onMove(PointerMoveEvent e) {
@@ -1038,6 +1066,7 @@ class _CardShellState extends State<_CardShell> {
   void _onUp(PointerUpEvent e) {
     final start = _downAt;
     _downAt = null;
+    widget.pressHandle.release();
     if (start == null) return;
     widget.onRelease(_moved);
     if (mounted) setState(() => _moved = false);
@@ -1045,6 +1074,7 @@ class _CardShellState extends State<_CardShell> {
 
   void _onCancel(PointerCancelEvent e) {
     _downAt = null;
+    widget.pressHandle.release();
     if (mounted) setState(() => _moved = false);
   }
 
@@ -1259,18 +1289,24 @@ class _PinSetupDialogState extends State<_PinSetupDialog> {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: _saving ? null : () => Navigator.pop(context, false),
-            child: const Text('取消',
-                style: TextStyle(color: Color(0xFF8A9AB0))),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+              onPressed: _saving ? null : () => Navigator.pop(context, false),
+              child: const Text('取消',
+                  style: TextStyle(color: Color(0xFF8A9AB0))),
+            ),
           ),
-          TextButton(
-            onPressed: _saving ? null : _submit,
-            child: Text('确认',
-                style: TextStyle(
-                    color: _valid
-                        ? const Color(0xFF3B6FE0)
-                        : const Color(0xFF9AA8BF))),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+              onPressed: _saving ? null : _submit,
+              child: Text('确认',
+                  style: TextStyle(
+                      color: _valid
+                          ? const Color(0xFF3B6FE0)
+                          : const Color(0xFF9AA8BF))),
+            ),
           ),
         ],
       ),
@@ -1352,15 +1388,18 @@ class _PinUnlockDialogState extends State<_PinUnlockDialog> {
             ],
           ),
           actions: [
-            TextButton(
-              onPressed: () async {
-                if (p1.text.trim().length >= 4 &&
-                    p1.text.trim() == p2.text.trim()) {
-                  await AssetStorage.resetPin(p1.text.trim());
-                  Navigator.pop(c, p1.text.trim());
-                }
-              },
-              child: const Text('重置'),
+            Pressable(
+              enabled: true,
+              child: TextButton(
+                onPressed: () async {
+                  if (p1.text.trim().length >= 4 &&
+                      p1.text.trim() == p2.text.trim()) {
+                    await AssetStorage.resetPin(p1.text.trim());
+                    Navigator.pop(c, p1.text.trim());
+                  }
+                },
+                child: const Text('重置'),
+              ),
             ),
           ],
         );
@@ -1429,14 +1468,17 @@ class _PinUnlockDialogState extends State<_PinUnlockDialog> {
               const SizedBox(height: 2),
               Align(
                 alignment: Alignment.centerLeft,
-                child: TextButton(
-                  onPressed: () => setState(() {
-                    _forgot = true;
-                    _error = null;
-                    _ctrl.clear();
-                  }),
-                  child: const Text('忘记密码？',
-                      style: TextStyle(fontSize: 13)),
+                child: Pressable(
+                  enabled: true,
+                  child: TextButton(
+                    onPressed: () => setState(() {
+                      _forgot = true;
+                      _error = null;
+                      _ctrl.clear();
+                    }),
+                    child: const Text('忘记密码？',
+                        style: TextStyle(fontSize: 13)),
+                  ),
                 ),
               ),
             ] else ...[
@@ -1481,29 +1523,38 @@ class _PinUnlockDialogState extends State<_PinUnlockDialog> {
               const SizedBox(height: 2),
               Align(
                 alignment: Alignment.centerLeft,
-                child: TextButton(
-                  onPressed: () => setState(() {
-                    _forgot = false;
-                    _error = null;
-                    _ctrl.clear();
-                  }),
-                  child: const Text('返回输入密码',
-                      style: TextStyle(fontSize: 13)),
+                child: Pressable(
+                  enabled: true,
+                  child: TextButton(
+                    onPressed: () => setState(() {
+                      _forgot = false;
+                      _error = null;
+                      _ctrl.clear();
+                    }),
+                    child: const Text('返回输入密码',
+                        style: TextStyle(fontSize: 13)),
+                  ),
                 ),
               ),
             ],
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('取消',
-                style: TextStyle(color: Color(0xFF8A9AB0))),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('取消',
+                  style: TextStyle(color: Color(0xFF8A9AB0))),
+            ),
           ),
-          TextButton(
-            onPressed: _forgot ? _resetByAnswer : _submit,
-            child: Text('确认',
-                style: const TextStyle(color: Color(0xFF3B6FE0))),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+              onPressed: _forgot ? _resetByAnswer : _submit,
+              child: Text('确认',
+                  style: const TextStyle(color: Color(0xFF3B6FE0))),
+            ),
           ),
         ],
       ),
@@ -1662,15 +1713,21 @@ class _DisablePinDialogState extends State<_DisablePinDialog> {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: _busy ? null : () => Navigator.pop(context, false),
-            child: const Text('取消',
-                style: TextStyle(color: Color(0xFF8A9AB0))),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+              onPressed: _busy ? null : () => Navigator.pop(context, false),
+              child: const Text('取消',
+                  style: TextStyle(color: Color(0xFF8A9AB0))),
+            ),
           ),
-          TextButton(
-            onPressed: _busy ? null : _confirm,
-            child: const Text('确认取消',
-                style: TextStyle(color: Color(0xFFD9534F))),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+              onPressed: _busy ? null : _confirm,
+              child: const Text('确认取消',
+                  style: TextStyle(color: Color(0xFFD9534F))),
+            ),
           ),
         ],
       ),
@@ -1924,15 +1981,21 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: _saving ? null : () => Navigator.pop(context, false),
-            child: const Text('取消',
-                style: TextStyle(color: Color(0xFF8A9AB0))),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+              onPressed: _saving ? null : () => Navigator.pop(context, false),
+              child: const Text('取消',
+                  style: TextStyle(color: Color(0xFF8A9AB0))),
+            ),
           ),
-          TextButton(
-            onPressed: _saving ? null : (_verified ? _save : _verify),
-            child: Text(_verified ? '保存' : '下一步',
-                style: const TextStyle(color: Color(0xFF3B6FE0))),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+              onPressed: _saving ? null : (_verified ? _save : _verify),
+              child: Text(_verified ? '保存' : '下一步',
+                  style: const TextStyle(color: Color(0xFF3B6FE0))),
+            ),
           ),
         ],
       ),

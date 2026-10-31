@@ -11,6 +11,7 @@ import '../utils/text_format.dart';
 import 'edit_screen.dart';
 import 'item_edit_screen.dart';
 import '../utils/haptics.dart';
+import '../widgets/pressable.dart';
 
 class NoteViewScreen extends StatefulWidget {
   final DiaryEntry entry;
@@ -106,13 +107,19 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
         title: const Text('确认要删除这篇日记吗?'),
         content: const Text('删除后可在「回收站」保留 7 天，期间可还原'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('取消'),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('取消'),
+            ),
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('删除', style: TextStyle(color: Colors.red)),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('删除', style: TextStyle(color: Colors.red)),
+            ),
           ),
         ],
       ),

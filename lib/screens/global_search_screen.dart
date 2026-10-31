@@ -14,6 +14,7 @@ import 'countdown_edit_screen.dart';
 import 'item_edit_screen.dart';
 import 'note_view_screen.dart';
 import '../utils/haptics.dart';
+import '../widgets/pressable.dart';
 
 /// 全局搜索主页：一个搜索框同时检索 笔记标题 / 物品名称 / 事件名称 / 资产备注。
 /// 顶部搜索框持久保持；结果用「收纳栏」（笔记/物品/事件/资产 + 数量）+ 分区列表呈现。
@@ -544,49 +545,51 @@ class _ResultRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-        child: Row(
-          children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: iconBg,
-                borderRadius: BorderRadius.circular(10),
+    return Pressable(
+      child:   InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: iconBg,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                alignment: Alignment.center,
+                child: Icon(icon, size: 18, color: iconColor),
               ),
-              alignment: Alignment.center,
-              child: Icon(icon, size: 18, color: iconColor),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF2A3B52))),
-                  const SizedBox(height: 2),
-                  Text(subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                          fontSize: 11.5, color: Color(0xFF9AA8BF))),
-                ],
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF2A3B52))),
+                    const SizedBox(height: 2),
+                    Text(subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 11.5, color: Color(0xFF9AA8BF))),
+                  ],
+                ),
               ),
-            ),
-            if (trailing != null) trailing!,
-            const Icon(Icons.chevron_right, size: 18, color: Color(0xFFC4CEDD)),
-          ],
+              if (trailing != null) trailing!,
+              const Icon(Icons.chevron_right, size: 18, color: Color(0xFFC4CEDD)),
+            ],
+          ),
         ),
-      ),
-    );
+      )
+    );;
   }
 }
