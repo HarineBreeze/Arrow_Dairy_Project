@@ -37,22 +37,32 @@ class TodoLine {
 class TodoText {
   TodoText._();
 
-  /// 行首标记：允许前面有缩进空格
-  static final RegExp _marker = RegExp(r'^(\s*)\[( |x|X)\]\s?(.*)$');
+  /// 行首标记：允许前面有缩进空格。
+  ///
+  /// 支持两种写法：
+  /// - 符号式（当前插入用）：`☐ 买牛奶` / `☑ 交电费`
+  /// - 括号式（旧格式，继续兼容）：`[ ] 买牛奶` / `[x] 交电费`
+  static final RegExp _marker =
+      RegExp(r'^(\s*)(\[ \]|\[[xX]\]|☐|☑)\s?(.*)$');
 
-  /// 待办前缀（插入时用）
-  static const String uncheckedPrefix = '[ ] ';
-  static const String checkedPrefix = '[x] ';
+  /// 待办符号（插入时用）：正文里直接就是一个方框字符，
+  /// 在编辑框中一眼就能看出「这是一条待办」。
+  static const String uncheckedSymbol = '☐';
+  static const String checkedSymbol = '☑';
+  static const String uncheckedPrefix = '$uncheckedSymbol ';
+  static const String checkedPrefix = '$checkedSymbol ';
+
+  static bool _markerDone(String mark) =>
+      mark == checkedSymbol || mark.toLowerCase() == '[x]';
 
   /// 解析第 [line] 行；不是待办则返回 null。
   static TodoLine? parseLine(String line, int start) {
     final m = _marker.firstMatch(line);
     if (m == null) return null;
-    final done = m.group(2)!.toLowerCase() == 'x';
     return TodoLine(
       start: start,
       end: start + line.length,
-      done: done,
+      done: _markerDone(m.group(2)!),
       text: m.group(3) ?? '',
     );
   }
@@ -74,23 +84,27 @@ class TodoText {
 
   /// 切换第 [index] 行的勾选状态，返回新的整篇正文。
   ///
-  /// 只改动 `[` 与 `]` 之间的那一个字符，其他字符（含缩进、空格）原样保留，
-  /// 因此不会影响任何既有的格式区间偏移。
+  /// 只替换行首的标记符号（☐↔☑ 或 [ ]↔[x]），其他字符（含缩进、空格）
+  /// 原样保留，因此不会影响任何既有的格式区间偏移。
   static String toggleAt(String text, int lineIndex) {
-    // 用 split 而不是正则替换：需要精确落到第 N 行
     final parts = text.split('\n');
     if (lineIndex < 0 || lineIndex >= parts.length) return text;
     final line = parts[lineIndex];
     final m = _marker.firstMatch(line);
     if (m == null) return text;
-    final indent = m.group(1)!;
-    final done = m.group(2)!.toLowerCase() == 'x';
-    final rest = m.group(3) ?? '';
-    final open = line.indexOf('[', indent.length);
-    final close = open < 0 ? -1 : line.indexOf(']', open);
-    if (open < 0 || close < 0) return text;
+    final mark = m.group(2)!;
+    final String flipped;
+    if (mark == uncheckedSymbol) {
+      flipped = checkedSymbol;
+    } else if (mark == checkedSymbol) {
+      flipped = uncheckedSymbol;
+    } else {
+      flipped = mark.toLowerCase() == '[x]' ? '[ ]' : '[x]';
+    }
+    // group(2) 紧跟在缩进之后（regex 里 \s* 只匹配空白），可安全推算位置
+    final markStart = m.group(1)!.length;
     parts[lineIndex] =
-        '${line.substring(0, open)}[${done ? ' ' : 'x'}]${line.substring(close + 1)}';
+        line.replaceRange(markStart, markStart + mark.length, flipped);
     return parts.join('\n');
   }
 

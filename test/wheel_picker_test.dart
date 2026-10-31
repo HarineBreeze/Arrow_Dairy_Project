@@ -79,7 +79,7 @@ void main() {
     expect(monthX, lessThan(dayX));
   });
 
-  testWidgets('滚轮时间选择器：弹出 CupertinoTimerPicker 并返回时间', (tester) async {
+  testWidgets('滚轮时间选择器：时/分两列中文滚轮并返回时间', (tester) async {
     TimeOfDay? result;
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -100,7 +100,11 @@ void main() {
     await tester.tap(find.text('打开时间'));
     await tester.pumpAndSettle();
 
-    expect(find.byType(CupertinoTimerPicker), findsOneWidget);
+    // 与日期滚轮同一套样式：两列、中文单位，不再用 CupertinoTimerPicker
+    expect(find.byType(CupertinoTimerPicker), findsNothing);
+    expect(find.byType(CupertinoPicker), findsNWidgets(2));
+    expect(find.text('时', skipOffstage: false), findsWidgets);
+    expect(find.text('分', skipOffstage: false), findsWidgets);
 
     await tester.tap(find.text('确定'));
     await tester.pumpAndSettle();
@@ -110,14 +114,17 @@ void main() {
     expect(result!.minute, 30);
   });
 
-  testWidgets('滚轮日期+时间：日期段同样是中文三列', (tester) async {
+  testWidgets('滚轮日期+时间：上段日期、下段时间，均为中文滚轮', (tester) async {
+    DateTime? result;
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: Builder(
           builder: (context) => Center(
             child: ElevatedButton(
-              onPressed: () => showWheelDateTimePicker(context,
-                  initial: DateTime(2025, 1, 8, 14, 30)),
+              onPressed: () async {
+                result = await showWheelDateTimePicker(context,
+                    initial: DateTime(2025, 1, 8, 14, 30));
+              },
               child: const Text('打开'),
             ),
           ),
@@ -128,9 +135,21 @@ void main() {
     await tester.tap(find.text('打开'));
     await tester.pumpAndSettle();
 
-    expect(find.byType(CupertinoPicker), findsWidgets);
+    // 五列：年月日 + 时分；两段滚轮样式一致
+    expect(find.byType(CupertinoPicker), findsNWidgets(5));
     expect(find.byType(CupertinoDatePicker), findsNothing);
-    expect(find.text('年', skipOffstage: false), findsWidgets);
-    expect(find.text('日', skipOffstage: false), findsWidgets);
+    expect(find.byType(CupertinoTimerPicker), findsNothing);
+    for (final unit in ['年', '月', '日', '时', '分']) {
+      expect(find.text(unit, skipOffstage: false), findsWidgets);
+    }
+
+    await tester.tap(find.text('确定'));
+    await tester.pumpAndSettle();
+    expect(result, isNotNull);
+    expect(result!.year, 2025);
+    expect(result!.month, 1);
+    expect(result!.day, 8);
+    expect(result!.hour, 14);
+    expect(result!.minute, 30);
   });
 }

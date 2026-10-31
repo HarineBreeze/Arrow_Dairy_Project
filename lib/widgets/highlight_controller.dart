@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/rich_text.dart';
+import '../utils/todo_text.dart';
 import '../utils/text_format.dart';
 
 /// 在输入框中实时将 `@物品` 与 `#话题` 渲染为蓝色的控制器，
@@ -82,6 +83,13 @@ class HighlightEditingController extends TextEditingController {
   }
 
   TextStyle? _styleAt(int pos) {
+    // 待办符号（☐/☑）染主题蓝：编辑框里一眼认出「这是一条待办」
+    if (pos < text.length &&
+        (text[pos] == TodoText.uncheckedSymbol ||
+            text[pos] == TodoText.checkedSymbol)) {
+      return const TextStyle(
+          color: Color(0xFF3B6FE0), fontWeight: FontWeight.w700);
+    }
     bool bold = false, italic = false, underline = false, strike = false;
     String? highlight;
     double? size;

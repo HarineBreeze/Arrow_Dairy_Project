@@ -1243,6 +1243,12 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     _contentCtrl.setFormats(_formats);
     _lastContent = newText;
     Haptics.light();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('已插入待办 ☐，输入事项内容即可'),
+        duration: Duration(milliseconds: 1500),
+      ),
+    );
     // 工具栏换新 key：上一把区间锁（可能是整行）会立刻作用到新插入的空待办上
     _toolbarKey.currentState?.resetRange();
     setState(() {

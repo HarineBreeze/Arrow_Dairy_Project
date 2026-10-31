@@ -279,7 +279,58 @@ class _DateWheelSheetState extends State<_DateWheelSheet> {
   }
 }
 
-/// 滚轮时间选择器（时 : 分，24 小时制）。
+/// 内嵌时间滚轮：两列（时 / 分），样式与日期滚轮完全一致。
+class _InlineTimeWheel extends StatefulWidget {
+  final int initialHour;
+  final int initialMinute;
+  final void Function(int hour, int minute) onChanged;
+
+  const _InlineTimeWheel({
+    required this.initialHour,
+    required this.initialMinute,
+    required this.onChanged,
+  });
+
+  @override
+  State<_InlineTimeWheel> createState() => _InlineTimeWheelState();
+}
+
+class _InlineTimeWheelState extends State<_InlineTimeWheel> {
+  late int _hour = widget.initialHour;
+  late int _minute = widget.initialMinute;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: WheelColumn(
+            items: [for (var h = 0; h < 24; h++) h],
+            initialIndex: _hour.clamp(0, 23),
+            unit: '时',
+            onSelected: (v) {
+              setState(() => _hour = v);
+              widget.onChanged(_hour, _minute);
+            },
+          ),
+        ),
+        Expanded(
+          child: WheelColumn(
+            items: [for (var m = 0; m < 60; m++) m],
+            initialIndex: _minute.clamp(0, 59),
+            unit: '分',
+            onSelected: (v) {
+              setState(() => _minute = v);
+              widget.onChanged(_hour, _minute);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// 滚轮时间选择器（时 / 分，24 小时制，样式与日期滚轮一致）。
 Future<TimeOfDay?> showWheelTimePicker(
   BuildContext context, {
   required TimeOfDay initial,
@@ -295,13 +346,13 @@ Future<TimeOfDay?> showWheelTimePicker(
     builder: (ctx) => _WheelSheet(
       title: '选择时间',
       child: SizedBox(
-        height: 216,
-        child: CupertinoTimerPicker(
-          mode: CupertinoTimerPickerMode.hm,
-          initialTimerDuration: Duration(hours: hour, minutes: minute),
-          onTimerDurationChanged: (d) {
-            hour = d.inHours;
-            minute = d.inMinutes % 60;
+        height: kWheelHeight,
+        child: _InlineTimeWheel(
+          initialHour: hour,
+          initialMinute: minute,
+          onChanged: (h, m) {
+            hour = h;
+            minute = m;
           },
         ),
       ),
@@ -310,15 +361,16 @@ Future<TimeOfDay?> showWheelTimePicker(
   );
 }
 
-/// 滚轮日期 + 时间选择器（年 / 月 / 日 + 时 : 分），用于倒数日等需要精确到分钟的场景。
+/// 滚轮日期 + 时间选择器（用于倒数日等需要精确到分钟的场景）。
+///
+/// 上下两段：上段「年 / 月 / 日」，下段「时 / 分」，两段都是同一套
+/// [WheelColumn] 样式，不再混用 CupertinoTimerPicker 的大字转盘。
 Future<DateTime?> showWheelDateTimePicker(
   BuildContext context, {
   required DateTime initial,
   DateTime? minimum,
   DateTime? maximum,
 }) {
-  var hour = initial.hour;
-  var minute = initial.minute;
   return showModalBottomSheet<DateTime>(
     context: context,
     backgroundColor: Colors.white,
@@ -326,172 +378,122 @@ Future<DateTime?> showWheelDateTimePicker(
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
-    builder: (ctx) => _WheelSheet(
-      title: '选择事件日',
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _DateTimeWheel(
-            initial: initial,
-            minimum: minimum,
-            maximum: maximum,
-            onChanged: (d) {
-              hour = d.hour;
-              minute = d.minute;
-            },
-            onHourMinute: (h, m) {
-              hour = h;
-              minute = m;
-            },
-          ),
-        ],
-      ),
-      onConfirm: () => Navigator.pop(
-        ctx,
-        DateTime(initial.year, initial.month, initial.day, hour, minute),
-      ),
+    builder: (ctx) => _DateTimeSheet(
+      initial: initial,
+      minimum: minimum,
+      maximum: maximum,
     ),
   );
 }
 
-/// 日期 + 时间两段滚轮：上段年月日（自绘中文），下段时 : 分（Cupertino 计时器）。
-class _DateTimeWheel extends StatefulWidget {
+class _DateTimeSheet extends StatefulWidget {
   final DateTime initial;
   final DateTime? minimum;
   final DateTime? maximum;
-  final ValueChanged<DateTime> onChanged;
-  final void Function(int hour, int minute) onHourMinute;
 
-  const _DateTimeWheel({
+  const _DateTimeSheet({
     required this.initial,
     required this.minimum,
     required this.maximum,
-    required this.onChanged,
-    required this.onHourMinute,
   });
 
   @override
-  State<_DateTimeWheel> createState() => _DateTimeWheelState();
+  State<_DateTimeSheet> createState() => _DateTimeSheetState();
 }
 
-class _DateTimeWheelState extends State<_DateTimeWheel> {
-  late DateTime _date = widget.initial;
-
-  @override
-  Widget build(BuildContext context) {
-    final min = widget.minimum ?? DateTime(2000);
-    final max = widget.maximum ?? DateTime(2100);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(
-          height: kWheelHeight,
-          child: _InlineDateWheel(
-            initial: _date,
-            minimum: min,
-            maximum: max,
-            onChanged: (d) {
-              setState(() => _date = DateTime(
-                  d.year, d.month, d.day, _date.hour, _date.minute));
-              widget.onChanged(_date);
-            },
-          ),
-        ),
-        const Divider(height: 1, color: Color(0xFFEEF1F6)),
-        SizedBox(
-          height: 180,
-          child: CupertinoTimerPicker(
-            mode: CupertinoTimerPickerMode.hm,
-            initialTimerDuration:
-                Duration(hours: _date.hour, minutes: _date.minute),
-            onTimerDurationChanged: (d) {
-              widget.onHourMinute(d.inHours, d.inMinutes % 60);
-            },
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// 内嵌版「年 / 月 / 日」三列（与 [_DateWheelSheet] 共用同一套列逻辑）。
-class _InlineDateWheel extends StatefulWidget {
-  final DateTime initial;
-  final DateTime minimum;
-  final DateTime maximum;
-  final ValueChanged<DateTime> onChanged;
-
-  const _InlineDateWheel({
-    required this.initial,
-    required this.minimum,
-    required this.maximum,
-    required this.onChanged,
-  });
-
-  @override
-  State<_InlineDateWheel> createState() => _InlineDateWheelState();
-}
-
-class _InlineDateWheelState extends State<_InlineDateWheel> {
+class _DateTimeSheetState extends State<_DateTimeSheet> {
   final GlobalKey<WheelColumnState> _dayKey = GlobalKey();
 
   late int _year = widget.initial.year;
   late int _month = widget.initial.month;
   late int _day = widget.initial.day;
+  late int _hour = widget.initial.hour;
+  late int _minute = widget.initial.minute;
 
   static int _daysIn(int y, int m) => DateTime(y, m + 1, 0).day;
 
-  void _emit() {
+  int get _minYear => (widget.minimum ?? DateTime(2000)).year;
+  int get _maxYear => (widget.maximum ?? DateTime(2100)).year;
+
+  void _clampDay() {
     final maxDay = _daysIn(_year, _month);
     if (_day > maxDay) {
       _day = maxDay;
       _dayKey.currentState?.jumpTo(_day - 1);
     }
-    widget.onChanged(DateTime(_year, _month, _day));
   }
 
   @override
   Widget build(BuildContext context) {
     final days = _daysIn(_year, _month);
-    return Row(
-      children: [
-        Expanded(
-          child: WheelColumn(
-            items: [
-              for (var y = widget.minimum.year; y <= widget.maximum.year; y++) y
-            ],
-            initialIndex: _year - widget.minimum.year,
-            unit: '年',
-            onSelected: (v) {
-              setState(() => _year = v);
-              _emit();
-            },
+    return SafeArea(
+      top: false,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _SheetHeader(
+            title: '选择事件日',
+            onConfirm: () =>
+                Navigator.pop(context, DateTime(_year, _month, _day, _hour, _minute)),
           ),
-        ),
-        Expanded(
-          child: WheelColumn(
-            items: const [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-            initialIndex: _month - 1,
-            unit: '月',
-            onSelected: (v) {
-              setState(() => _month = v);
-              _emit();
-            },
+          // —— 第一块：日期 ——
+          SizedBox(
+            height: kWheelHeight,
+            child: Row(
+              children: [
+                Expanded(
+                  child: WheelColumn(
+                    items: [for (var y = _minYear; y <= _maxYear; y++) y],
+                    initialIndex: _year - _minYear,
+                    unit: '年',
+                    onSelected: (v) {
+                      setState(() => _year = v);
+                      _clampDay();
+                    },
+                  ),
+                ),
+                Expanded(
+                  child: WheelColumn(
+                    items: const [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                    initialIndex: _month - 1,
+                    unit: '月',
+                    onSelected: (v) {
+                      setState(() => _month = v);
+                      _clampDay();
+                    },
+                  ),
+                ),
+                Expanded(
+                  child: WheelColumn(
+                    key: _dayKey,
+                    items: [for (var d = 1; d <= days; d++) d],
+                    initialIndex: (_day - 1).clamp(0, days - 1),
+                    unit: '日',
+                    onSelected: (v) => setState(() => _day = v),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        Expanded(
-          child: WheelColumn(
-            key: _dayKey,
-            items: [for (var d = 1; d <= days; d++) d],
-            initialIndex: (_day - 1).clamp(0, days - 1),
-            unit: '日',
-            onSelected: (v) {
-              setState(() => _day = v);
-              _emit();
-            },
+          // —— 分隔：两块视觉上独立 ——
+          const Divider(height: 1, color: Color(0xFFEEF1F6)),
+          // —— 第二块：时间 ——
+          SizedBox(
+            height: kWheelHeight,
+            child: _InlineTimeWheel(
+              initialHour: _hour,
+              initialMinute: _minute,
+              onChanged: (h, m) {
+                setState(() {
+                  _hour = h;
+                  _minute = m;
+                });
+              },
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: 8),
+        ],
+      ),
     );
   }
 }

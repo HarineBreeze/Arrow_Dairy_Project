@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../utils/rich_text.dart';
 import '../utils/text_format.dart';
+import '../utils/todo_text.dart';
 
 /// 只读富文本：正文中 `@物品` 蓝色且可点击（回调物品名），`#话题` 蓝色不可交互。
 /// 同时支持用户自定义排版（加粗/斜体/下划线/删除线/高亮/字号/居中）。
@@ -31,20 +32,34 @@ class _RichNoteTextState extends State<RichNoteText> {
   void _handleTapUp(TapUpDetails details) {
     final box = context.findRenderObject() as RenderBox?;
     if (box == null || !box.hasSize) return;
-    final span = _buildSpan();
+    // 点击定位基于「渲染文本」（不含被待办卡接管的行），
+    // 命中后再映射回原文偏移，供片段解析使用
+    final infos = _buildRenderLines();
+    final span = TextSpan(
+      style: widget.style,
+      children: [
+        for (final l in infos) ...[
+          ...l.spans,
+          const TextSpan(text: '\n'),
+        ],
+      ],
+    );
     final painter = TextPainter(
       text: span,
       textDirection: TextDirection.ltr,
     )..layout(minWidth: 0, maxWidth: box.size.width);
     final pos = painter.getPositionForOffset(details.localPosition);
 
+    final source = _renderToSource(infos, pos.offset);
+    if (source < 0) return;
+
     int offset = 0;
     for (int i = 0; i < _segments.length; i++) {
       final s = _segments[i];
       final end = offset + s.text.length;
       final isLast = i == _segments.length - 1;
-      final hit =
-          pos.offset >= offset && (pos.offset < end || (isLast && pos.offset <= end));
+      final hit = source >= offset &&
+          (source < end || (isLast && source <= end));
       if (hit) {
         if (s.type == 'mention') {
           widget.onTapMention?.call(s.value);
@@ -53,6 +68,20 @@ class _RichNoteTextState extends State<RichNoteText> {
       }
       offset = end;
     }
+  }
+
+  /// 渲染偏移 → 原文偏移（每行带 sourceStart/renderStart，行内差值恒定）
+  int _renderToSource(List<_RenderLine> infos, int renderOffset) {
+    for (final l in infos) {
+      final lineLen =
+          l.spans.fold<int>(0, (sum, t) => sum + t.text!.length);
+      if (renderOffset >= l.renderStart &&
+          renderOffset <= l.renderStart + lineLen + 1) {
+        return l.sourceStart +
+            (renderOffset - l.renderStart).clamp(0, lineLen);
+      }
+    }
+    return -1;
   }
 
   TextStyle? _styleAt(int pos) {
@@ -88,7 +117,7 @@ class _RichNoteTextState extends State<RichNoteText> {
   }
 
   /// 命中 @物品 / #话题 时返回其高亮色，否则 null。
-  /// _buildLines 逐字符渲染不再走 _buildSpan，需在此单独处理蓝色。
+  /// 逐行渲染（_buildRenderLines）按位置单独处理蓝色。
   Color? _linkColorAt(int pos) {
     int offset = 0;
     for (final s in _segments) {
@@ -104,35 +133,6 @@ class _RichNoteTextState extends State<RichNoteText> {
     return null;
   }
 
-  TextSpan _buildSpan() {
-    final children = <TextSpan>[];
-    int cursor = 0;
-    for (final s in _segments) {
-      final segStart = cursor;
-      cursor += s.text.length;
-      if (s.type == 'mention' || s.type == 'topic') {
-        final base = _styleAt(segStart) ?? const TextStyle();
-        children.add(TextSpan(
-          text: s.text,
-          style: base.copyWith(color: const Color(0xFF3B6FE0)),
-        ));
-        continue;
-      }
-      // 按样式切分普通文本
-      int i = 0;
-      while (i < s.text.length) {
-        final st = _styleAt(segStart + i);
-        int j = i + 1;
-        while (j < s.text.length && _sameStyle(st, _styleAt(segStart + j))) {
-          j++;
-        }
-        children.add(TextSpan(text: s.text.substring(i, j), style: st));
-        i = j;
-      }
-    }
-    return TextSpan(style: widget.style, children: children);
-  }
-
   bool _sameStyle(TextStyle? a, TextStyle? b) =>
       a?.fontWeight == b?.fontWeight &&
       a?.fontStyle == b?.fontStyle &&
@@ -141,39 +141,50 @@ class _RichNoteTextState extends State<RichNoteText> {
       a?.fontSize == b?.fontSize &&
       a?.color == b?.color;
 
-  /// 逐个字符生成样式，按 [换行] 分行。
-  List<List<TextSpan>> _buildLines() {
+  /// 逐行生成渲染用的 TextSpan。
+  ///
+  /// 待办行（☐ / ☑ / [ ] / [x] 开头）**不渲染**——它们由浏览页的
+  /// 待办卡（TodoCard）接管，避免同一件事在正文和卡片里出现两遍。
+  /// 每行记录原文偏移与渲染偏移，供点击命中映射回原文。
+  List<_RenderLine> _buildRenderLines() {
     final text = widget.text;
-    final lines = <List<TextSpan>>[];
-    var line = <TextSpan>[];
-    final buf = StringBuffer();
-    TextStyle? bufStyle;
+    final out = <_RenderLine>[];
+    var sourceStart = 0;
+    var renderStart = 0;
 
-    void flush() {
-      if (buf.isEmpty) return;
-      line.add(TextSpan(text: buf.toString(), style: bufStyle));
-      buf.clear();
-    }
+    for (final line in text.split('\n')) {
+      final todo = TodoText.parseLine(line, sourceStart);
+      if (todo == null) {
+        final spans = <TextSpan>[];
+        final buf = StringBuffer();
+        TextStyle? bufStyle;
 
-    for (int i = 0; i < text.length; i++) {
-      final ch = text[i];
-      if (ch == '\n') {
+        void flush() {
+          if (buf.isEmpty) return;
+          spans.add(TextSpan(text: buf.toString(), style: bufStyle));
+          buf.clear();
+        }
+
+        for (var i = 0; i < line.length; i++) {
+          final st = _styleAt(sourceStart + i);
+          if (!_sameStyle(bufStyle, st)) {
+            flush();
+            bufStyle = st;
+          }
+          buf.write(line[i]);
+        }
         flush();
-        lines.add(line);
-        line = <TextSpan>[];
-        bufStyle = null;
-        continue;
+        out.add(_RenderLine(
+          sourceStart: sourceStart,
+          renderStart: renderStart,
+          spans: spans,
+        ));
+        renderStart += line.length + 1; // +1 是行尾换行
       }
-      final st = _styleAt(i);
-      if (!_sameStyle(bufStyle, st)) {
-        flush();
-        bufStyle = st;
-      }
-      buf.write(ch);
+      // 待办行：不渲染，renderStart 不推进（原文偏移照常累加）
+      sourceStart += line.length + 1;
     }
-    flush();
-    lines.add(line);
-    return lines;
+    return out;
   }
 
   @override
@@ -181,16 +192,16 @@ class _RichNoteTextState extends State<RichNoteText> {
     _segments = RichTextParser.parse(widget.text, widget.itemNames);
     if (widget.text.isEmpty) return const SizedBox.shrink();
 
-    final lines = _buildLines();
-    final widgets = <Widget>[];
-    for (final line in lines) {
-      widgets.add(
+    final lines = _buildRenderLines();
+    final widgets = <Widget>[
+      for (final line in lines)
         Text.rich(
-          TextSpan(style: widget.style, children: line),
+          TextSpan(style: widget.style, children: line.spans),
           textAlign: TextAlign.start,
         ),
-      );
-    }
+    ];
+    // 正文全是待办行时，文本区为空，只留待办卡
+    if (widgets.isEmpty) return const SizedBox.shrink();
 
     return GestureDetector(
       onTapUp: _handleTapUp,
@@ -200,4 +211,16 @@ class _RichNoteTextState extends State<RichNoteText> {
       ),
     );
   }
+}
+
+/// 一条渲染行：spans + 它在原文 / 渲染文本中的起始偏移
+class _RenderLine {
+  final int sourceStart;
+  final int renderStart;
+  final List<TextSpan> spans;
+  const _RenderLine({
+    required this.sourceStart,
+    required this.renderStart,
+    required this.spans,
+  });
 }
