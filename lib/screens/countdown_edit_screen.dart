@@ -5,6 +5,7 @@ import '../services/trash_storage.dart';
 import '../widgets/unsaved_guard.dart';
 import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
+import '../widgets/save_done_button.dart';
 
 /// 新增 / 编辑倒数日。
 class CountdownEditScreen extends StatefulWidget {
@@ -24,6 +25,17 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
   late RepeatRule _repeat;
   late int _remindBeforeDays;
   bool _saving = false;
+
+  /// 完成动画的进度（0 = 常态，1 = 已收缩），用于让「取消」按钮同步淡出。
+  Animation<double> get _doneAnim =>
+      _doneKey.currentState?.collapse ?? const AlwaysStoppedAnimation(1);
+
+  final GlobalKey<SaveDoneButtonState> _doneKey =
+      GlobalKey<SaveDoneButtonState>();
+
+  /// 保存后待返回的事件对象（动画播完才 pop）
+  CountdownEvent? _pending;
+
 
   /// 进入页面时的内容快照，用于判断是否有未保存的修改
   String _initial = '';
@@ -45,23 +57,18 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
   Future<bool> _handleLeave() => confirmLeaveIfDirty(context, dirty: _dirty);
 
   /// 退出前自动保存（不弹保存成功提示，用户是「返回」而非「保存」）
-  Future<bool> _save() async {
-    final name = _nameCtrl.text.trim();
-    if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请填写事件名称')),
-      );
-      return false;
-    }
-    if (_target == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请选择事件日')),
-      );
-      return false;
-    }
-    if (!mounted) return false;
+  /// 同步校验：返回 null 表示可以保存，返回文案则提示并中止。
+  /// 抽出来是为了让「点击 → 收缩动画」立刻开始，不必等异步落盘。
+  String? _validate() {
+    if (_nameCtrl.text.trim().isEmpty) return '请填写事件名称';
+    if (_target == null) return '请选择事件日';
+    return null;
+  }
+
+  Future<void> _save() async {
     setState(() => _saving = true);
     Haptics.light();
+    final name = _nameCtrl.text.trim();
     final e = widget.event ??
         CountdownEvent(
           id: DateTime.now().microsecondsSinceEpoch.toString(),
@@ -80,8 +87,10 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
       ..type = _type
       ..repeat = _repeat
       ..remindBeforeDays = _remindBeforeDays;
-    Navigator.pop(context, e);
-    return true;
+    // 返回交给完成动画播完后执行（见 onDone）
+    _pending = e;
+    if (!mounted) return;
+    _doneKey.currentState?.finish();
   }
 
   static const List<String> _quickIcons = CountdownEvent.quickIcons;
@@ -441,43 +450,9 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
         ),
       ),
       bottomNavigationBar: SafeArea(
-        top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-          child: Row(
-            children: [
-              Expanded(
-                child: Pressable(
-                  enabled: true,
-                  child: OutlinedButton(
-                    onPressed: _saving ? null : () => Navigator.pop(context),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      side: const BorderSide(color: Color(0xFF3B6FE0)),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text('取消', style: TextStyle(fontSize: 16)),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Pressable(
-                  enabled: true,
-                  child: ElevatedButton(
-                    onPressed: _saving ? null : _save,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text('完成', style: TextStyle(fontSize: 16)),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          child: _buildSaveBar(),
         ),
       ),
     ),
@@ -488,6 +463,58 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
   /// 选项文字长度不一（「每年」vs「提前 7 天」），若图标与文字并排，
   /// 窄屏下按钮宽度不足会把文字挤出边框。这里改为「图标在上、文字在下」，
   /// 并让文字按需缩放 + 省略，保证任何机型都不出框。
+
+  /// 保存栏：点完成后取消按钮淡出让出整行，完成按钮收缩成居中圆形，
+  /// 打勾描边 + 粒子迸发，停留片刻再保存返回。
+  Widget _buildSaveBar() {
+    return SizedBox(
+      height: 48,
+      child: Stack(
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: _doneAnim.value >= 1
+                ? const SizedBox.shrink()
+                : FractionallySizedBox(
+                    widthFactor: 0.5,
+                    child: Opacity(
+                      opacity: (1 - _doneAnim.value * 1.6).clamp(0.0, 1.0),
+                      child: IgnorePointer(
+                        ignoring: _saving,
+                        child: Pressable(
+                          enabled: true,
+                          child: OutlinedButton(
+                            onPressed: _saving ? null : () => Navigator.pop(context),
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size.fromHeight(48),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              side: const BorderSide(color: Color(0xFF3B6FE0)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text('取消',
+                                style: TextStyle(fontSize: 16)),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+          ),
+          SaveDoneButton(
+            key: _doneKey,
+            color: Theme.of(context).colorScheme.primary,
+            validate: _validate,
+            onTap: _save,
+            onDone: () {
+              if (mounted) Navigator.pop(context, _pending);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _radioTile({
     required String label,
     required bool selected,

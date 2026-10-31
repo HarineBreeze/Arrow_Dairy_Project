@@ -5,6 +5,7 @@ import '../services/countdown_storage.dart';
 import '../services/countdown_reminder.dart';
 import '../services/trash_storage.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/sticky_header.dart';
 import '../widgets/loading_skeleton.dart';
 import '../utils/menu_gesture_gate.dart';
 import 'countdown_edit_screen.dart';
@@ -420,7 +421,9 @@ class CountdownScreenState extends State<CountdownScreen> {
                             ),
                           ],
                         )
-                      : ListView(
+                      : StickySectionList(
+                          background: const Color(0xFFF3F6FB),
+                          topInset: 14,
                           physics: const AlwaysScrollableScrollPhysics(),
                           padding: const EdgeInsets.fromLTRB(16, 14, 16, 96),
                           children: _buildGroups(),
@@ -431,14 +434,18 @@ class CountdownScreenState extends State<CountdownScreen> {
     );
   }
 
-  List<Widget> _buildGroups() {
+  List<Object> _buildGroups() {
     final g = _grouped;
-    final widgets = <Widget>[];
+    final widgets = <Object>[];
     for (final key in ['置顶', '纪念日', '资产日']) {
       final list = g[key] ?? const <CountdownEvent>[];
       if (list.isEmpty) continue;
       final expanded = !_collapsed.contains(key);
-      widgets.add(_buildSectionHeader(key, list.length, expanded));
+      widgets.add(StickySection(
+        // 内边距 6 + 10 与单行文字（约 21px 行高）之和
+        height: 37,
+        builder: () => _buildSectionHeader(key, list.length, expanded),
+      ));
       if (expanded) {
         widgets.addAll(list.map(_buildCard));
       }

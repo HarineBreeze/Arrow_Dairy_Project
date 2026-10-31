@@ -7,6 +7,7 @@ import '../services/user_storage.dart';
 import '../widgets/avatar.dart';
 import '../widgets/unsaved_guard.dart';
 import '../widgets/pressable.dart';
+import '../widgets/save_done_button.dart';
 
 class ProfileEditScreen extends StatefulWidget {
   final UserProfile profile;
@@ -22,6 +23,14 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   late String _gender;
   late String _avatarPath;
   bool _saving = false;
+
+  /// 完成动画的进度（0 = 常态，1 = 已收缩），用于让「取消」按钮同步淡出。
+  Animation<double> get _doneAnim =>
+      _doneKey.currentState?.collapse ?? const AlwaysStoppedAnimation(1);
+
+  final GlobalKey<SaveDoneButtonState> _doneKey =
+      GlobalKey<SaveDoneButtonState>();
+
 
   /// 进入页面时的内容快照，用于判断是否有未保存的修改
   String _initial = '';
@@ -73,7 +82,10 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     }
   }
 
-  Future<bool> _save() async {
+  /// 资料页没有必填校验，保留接口一致性（返回 null 表示通过）
+  String? _validate() => null;
+
+  Future<void> _save() async {
     setState(() => _saving = true);
     final profile = UserProfile(
       nickname: _nicknameCtrl.text.trim(),
@@ -81,9 +93,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       avatarPath: _avatarPath,
     );
     await UserStorage.save(profile);
-    if (!mounted) return false;
-    Navigator.pop(context, true);
-    return true;
+    if (!mounted) return;
+    // 落盘完成：续播对勾 + 粒子，播完由 onDone 返回
+    _doneKey.currentState?.finish();
   }
 
   @override
@@ -143,29 +155,62 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 8, 24, 12),
-          child: Pressable(
-            enabled: true,
-            child: ElevatedButton(
-              onPressed: _saving ? null : _save,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: _saving
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white),
-                    )
-                  : const Text('保存', style: TextStyle(fontSize: 16)),
-            ),
-          ),
+          child: _buildSaveBar(),
         ),
       ),
     ),
+    );
+  }
+
+
+  /// 保存栏：点完成后取消按钮淡出让出整行，完成按钮收缩成居中圆形，
+  /// 打勾描边 + 粒子迸发，停留片刻再保存返回。
+  Widget _buildSaveBar() {
+    return SizedBox(
+      height: 48,
+      child: Stack(
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: _doneAnim.value >= 1
+                ? const SizedBox.shrink()
+                : FractionallySizedBox(
+                    widthFactor: 0.5,
+                    child: Opacity(
+                      opacity: (1 - _doneAnim.value * 1.6).clamp(0.0, 1.0),
+                      child: IgnorePointer(
+                        ignoring: _saving,
+                        child: Pressable(
+                          enabled: true,
+                          child: OutlinedButton(
+                            onPressed: _saving ? null : () => Navigator.pop(context),
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size.fromHeight(48),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              side: const BorderSide(color: Color(0xFF3B6FE0)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text('取消',
+                                style: TextStyle(fontSize: 16)),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+          ),
+          SaveDoneButton(
+            key: _doneKey,
+            color: Theme.of(context).colorScheme.primary,
+            validate: _validate,
+            onTap: _save,
+            onDone: () {
+              if (mounted) Navigator.pop(context, true);
+            },
+          ),
+        ],
+      ),
     );
   }
 

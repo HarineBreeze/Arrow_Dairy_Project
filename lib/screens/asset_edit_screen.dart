@@ -5,6 +5,7 @@ import '../services/trash_storage.dart';
 import '../widgets/unsaved_guard.dart';
 import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
+import '../widgets/save_done_button.dart';
 
 /// 新增 / 编辑资产卡片。
 class AssetEditScreen extends StatefulWidget {
@@ -21,6 +22,16 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
   late final TextEditingController _iconCtrl;
   late String _type;
   bool _saving = false;
+
+  /// 完成动画的进度（0 = 常态，1 = 已收缩）。
+  Animation<double> get _doneAnim =>
+      _doneKey.currentState?.collapse ?? const AlwaysStoppedAnimation(1);
+
+  final GlobalKey<SaveDoneButtonState> _doneKey =
+      GlobalKey<SaveDoneButtonState>();
+
+  /// 保存后待返回的资产对象（动画播完才 pop）
+  Asset? _pending;
   bool _typeOpen = false; // 资产类型下拉是否展开
 
   /// 进入页面时的内容快照，用于判断是否有未保存的修改
@@ -101,18 +112,18 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
     }
   }
 
-  Future<bool> _save() async {
-    final amount = double.tryParse(_amountCtrl.text.trim());
-    if (amount == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请输入正确的金额')),
-      );
-      return false;
-    }
-    if (!mounted) return false;
+  /// 同步校验：返回 null 表示可以保存，返回文案则提示并中止。
+  String? _validate() {
+    if (double.tryParse(_amountCtrl.text.trim()) == null) return '请输入正确的金额';
+    return null;
+  }
+
+  Future<void> _save() async {
+    final amount = double.tryParse(_amountCtrl.text.trim()) ?? 0;
     setState(() => _saving = true);
     Haptics.light();
-    final a = widget.asset ?? Asset(id: DateTime.now().microsecondsSinceEpoch.toString());
+    final a = widget.asset ??
+        Asset(id: DateTime.now().microsecondsSinceEpoch.toString());
     a.icon = _iconCtrl.text.trim().isEmpty
         ? Asset.defaultIconFor(_type)
         : _iconCtrl.text.trim().characters.first;
@@ -120,8 +131,10 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
     a.type = _type;
     // 负债类型强制为负数展示语义：存正数，由类型决定正负
     a.amount = amount.abs() * (_isLiability ? -1 : 1);
-    Navigator.pop(context, a);
-    return true;
+    // 返回交给完成动画播完后执行（见 onDone），这里只暂存结果
+    _pending = a;
+    if (!mounted) return;
+    _doneKey.currentState?.finish();
   }
 
   @override
@@ -325,24 +338,14 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
               ),
             const SizedBox(height: 28),
 
-            // 保存
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: Pressable(
-                enabled: true,
-                child: ElevatedButton(
-                  onPressed: _saving ? null : _save,
-                  style: ElevatedButton.styleFrom(
-                    primary: const Color(0xFF3B6FE0),
-                    onPrimary: Colors.white,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: Text(widget.asset == null ? '添加' : '保存',
-                      style: const TextStyle(fontSize: 16)),
-                ),
-              ),
+            // 保存：点击后收缩成圆形 + 打勾 + 粒子，播完再返回
+            SaveDoneButton(
+              key: _doneKey,
+              color: const Color(0xFF3B6FE0),
+              onTap: _save,
+              onDone: () {
+                if (mounted) Navigator.pop(context, _pending);
+              },
             ),
           ],
         ),

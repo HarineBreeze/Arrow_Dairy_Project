@@ -27,6 +27,7 @@ import '../services/countdown_banner_log.dart';
 import '../widgets/countdown_banner.dart';
 import '../widgets/loading_skeleton.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/sticky_header.dart';
 import '../utils/menu_gesture_gate.dart';
 
 const Color kPrimaryBlue = Color(0xFF3B6FE0);
@@ -1049,48 +1050,40 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             );
                           },
                         )
-                      : ListView.builder(
+                      : StickySectionList(
+                          background: const Color(0xFFF3F6FB),
                           padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
-                          itemCount: groups.length + (pinned.isEmpty ? 0 : 1),
-                          itemBuilder: (context, i) {
-                            // 首项：置顶横滑卡带（P3）
-                            if (pinned.isNotEmpty) {
-                              if (i == 0) return _buildPinnedRail(pinned);
-                              i -= 1;
-                            }
-                            final group = groups[i];
-                            final expanded = _isGroupExpanded(group.key);
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildGroupHeader(group, expanded),
-                                if (expanded)
-                                  ...group.entries.map((e) => Padding(
-                                        padding: const EdgeInsets.only(top: 8),
-                                        child: Listener(
-                                          // 按住卡片 500ms 不动，弹出操作菜单
-                                          onPointerDown: (ev) =>
-                                              _onCardPointerDown(
-                                                  e, ev.position),
-                                          onPointerMove: (ev) =>
-                                              _onCardPointerMove(ev.position),
-                                          onPointerUp: (_) =>
-                                              _cancelPressTracking(),
-                                          onPointerCancel: (_) =>
-                                              _cancelPressTracking(),
-                                          child: _DiaryCard(
-                                            entry: e,
-                                            isPinned: e.pinned,
-                                            onTap: () => _openNote(e),
-                                            onDelete: () => _delete(e),
-                                          ),
-                                        ),
-                                      )),
-                                if (i == groups.length - 1)
-                                  const SizedBox(height: 12),
-                              ],
-                            );
-                          },
+                          children: [
+                            // 首项：置顶横滑卡带（P3），不参与吸顶
+                            if (pinned.isNotEmpty) _buildPinnedRail(pinned),
+                            for (var gi = 0; gi < groups.length; gi++) ...[
+                              _buildStickySection(groups[gi]),
+                              for (final e in groups[gi].entries)
+                                if (_isGroupExpanded(groups[gi].key))
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 8),
+                                    child: Listener(
+                                      // 按住卡片 500ms 不动，弹出操作菜单
+                                      onPointerDown: (ev) =>
+                                          _onCardPointerDown(e, ev.position),
+                                      onPointerMove: (ev) =>
+                                          _onCardPointerMove(ev.position),
+                                      onPointerUp: (_) =>
+                                          _cancelPressTracking(),
+                                      onPointerCancel: (_) =>
+                                          _cancelPressTracking(),
+                                      child: _DiaryCard(
+                                        entry: e,
+                                        isPinned: e.pinned,
+                                        onTap: () => _openNote(e),
+                                        onDelete: () => _delete(e),
+                                      ),
+                                    ),
+                                  ),
+                              if (gi == groups.length - 1)
+                                const SizedBox(height: 12),
+                            ],
+                          ],
                         ),
                 ),
         ),
@@ -1232,6 +1225,21 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   /// 时间分组头（T1）：无底块的浅灰小字行；今天用蓝色高亮日期
+  /// 吸顶分组头：在列表内与吸附层复用同一套视觉，
+  /// 但吸附层需要自己承接点击（列表内那份被滚出了视口）。
+  StickySection _buildStickySection(_NoteGroup group) {
+    final expanded = _isGroupExpanded(group.key);
+    return StickySection(
+      // 内边距 12 + 7 与单行文字（约 16px 行高）之和
+      height: 35,
+      builder: () => GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => _toggleGroup(group.key),
+        child: _buildGroupHeader(group, expanded),
+      ),
+    );
+  }
+
   Widget _buildGroupHeader(_NoteGroup group, bool expanded) {
     final isToday = _sameDay(group.date, DateTime.now());
     final isWeekView = _viewMode == 'all';

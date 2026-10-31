@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import '../widgets/unsaved_guard.dart';
 import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
+import '../widgets/save_done_button.dart';
 
 const List<String> kCategories = ['数码设备', '衣物', '配饰', '家具'];
 const Map<String, List<String>> kCategoryIcons = {
@@ -38,6 +39,14 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
   late double _savePerTime;
   late double _savedAmount;
   bool _saving = false;
+
+  /// 完成动画的进度（0 = 常态，1 = 已收缩），用于让「取消」按钮同步淡出。
+  Animation<double> get _doneAnim =>
+      _doneKey.currentState?.collapse ?? const AlwaysStoppedAnimation(1);
+
+  final GlobalKey<SaveDoneButtonState> _doneKey =
+      GlobalKey<SaveDoneButtonState>();
+
 
   bool get _isNew => widget.item == null;
 
@@ -100,19 +109,18 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
     super.dispose();
   }
 
-  Future<bool> _save() async {
+  // 校验阶段算出的值，_save 落盘时复用
+  String? _vName;
+  double? _vPrice;
+  DateTime? _vAcquired;
+
+  /// 同步校验：返回 null 表示可以保存，返回文案则提示并中止。
+  /// 抽出来是为了让「点击 → 收缩动画」立刻开始，不必等异步落盘。
+  String? _validate() {
     final name = _nameCtrl.text.trim();
     final price = double.tryParse(_priceCtrl.text.trim()) ?? 0;
-    if (name.isEmpty) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('请填写物品名')));
-      return false;
-    }
-    if (price <= 0) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('请填写物品价格')));
-      return false;
-    }
+    if (name.isEmpty) return '请填写物品名';
+    if (price <= 0) return '请填写物品价格';
 
     // 已拥有物品必须选择拥有日
     final wasWishlist = widget.item?.wishlist ?? false;
@@ -125,16 +133,21 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
       _calcMethod = 0;
       _lostDate = null;
     } else {
-      if (_acquiredDate == null) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('请选择拥有日')));
-        return false;
-      }
+      if (_acquiredDate == null) return '请选择拥有日';
       acquired = _acquiredDate!;
     }
+    _vName = name;
+    _vPrice = price;
+    _vAcquired = acquired;
+    return null;
+  }
 
+  Future<void> _save() async {
     setState(() => _saving = true);
 
+    final name = _vName ?? '';
+    final price = _vPrice ?? 0;
+    final acquired = _vAcquired ?? DateTime.now();
     final extra = double.tryParse(_extraCtrl.text.trim()) ?? 0;
     final list = await ItemStorage.load();
     final usage = int.tryParse(_usageCtrl.text.trim()) ?? 0;
@@ -173,9 +186,9 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
     }
     await ItemStorage.save(list);
 
-    if (!mounted) return false;
-    Navigator.pop(context, true);
-    return true;
+    if (!mounted) return;
+    // 落盘完成：续播对勾 + 粒子，播完由 onDone 返回
+    _doneKey.currentState?.finish();
   }
 
   Future<void> _delete() async {
@@ -380,54 +393,62 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-          child: Row(
-            children: [
-              Expanded(
-                child: Pressable(
-                  enabled: true,
-                  child: OutlinedButton(
-                    onPressed:
-                        _saving ? null : () => Navigator.pop(context),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      side: const BorderSide(color: Color(0xFF3B6FE0)),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text('取消', style: TextStyle(fontSize: 16)),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Pressable(
-                  enabled: true,
-                  child: ElevatedButton(
-                    onPressed: _saving ? null : _save,
-                    style: ElevatedButton.styleFrom(
-                      primary: _accent,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: _saving
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white),
-                          )
-                        : const Text('完成', style: TextStyle(fontSize: 16)),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          child: _buildSaveBar(),
         ),
       ),
     ),
+    );
+  }
+
+
+  /// 保存栏：点完成后取消按钮淡出让出整行，完成按钮收缩成居中圆形，
+  /// 打勾描边 + 粒子迸发，停留片刻再保存返回。
+  Widget _buildSaveBar() {
+    return SizedBox(
+      height: 48,
+      child: Stack(
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: _doneAnim.value >= 1
+                ? const SizedBox.shrink()
+                : FractionallySizedBox(
+                    widthFactor: 0.5,
+                    child: Opacity(
+                      opacity: (1 - _doneAnim.value * 1.6).clamp(0.0, 1.0),
+                      child: IgnorePointer(
+                        ignoring: _saving,
+                        child: Pressable(
+                          enabled: true,
+                          child: OutlinedButton(
+                            onPressed: _saving ? null : () => Navigator.pop(context),
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size.fromHeight(48),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              side: const BorderSide(color: Color(0xFF3B6FE0)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text('取消',
+                                style: TextStyle(fontSize: 16)),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+          ),
+          SaveDoneButton(
+            key: _doneKey,
+            color: _accent,
+            validate: _validate,
+            onTap: _save,
+            onDone: () {
+              if (mounted) Navigator.pop(context, true);
+            },
+          ),
+        ],
+      ),
     );
   }
 

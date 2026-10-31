@@ -12,6 +12,7 @@ import '../utils/writing_prompts.dart';
 import '../widgets/unsaved_guard.dart';
 import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
+import '../widgets/save_done_button.dart';
 
 class EditScreen extends StatefulWidget {
   final DiaryEntry? entry;
@@ -37,6 +38,13 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
   String _passwordHint = '';
   String _passwordAnswer = '';
   bool _saving = false;
+
+  /// 完成动画的进度（0 = 常态，1 = 已收缩）。用于让「取消」按钮同步淡出。
+  Animation<double> get _doneAnim =>
+      _doneKey.currentState?.collapse ?? const AlwaysStoppedAnimation(1);
+
+  final GlobalKey<SaveDoneButtonState> _doneKey =
+      GlobalKey<SaveDoneButtonState>();
   List<TextFormat> _formats = [];
   bool _showToolbar = false;
   late final FocusNode _contentFocus;
@@ -504,25 +512,31 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     super.dispose();
   }
 
-  Future<bool> _save() async {
+  // 校验阶段算出的值，_save 落盘时复用
+  String _vTitle = '';
+  String _vContent = '';
+  String _vSubtitle = '';
+
+  /// 同步校验：返回 null 表示可以保存，返回文案则提示并中止。
+  /// 抽出来是为了让「点击 → 收缩动画」立刻开始，不必等异步落盘。
+  String? _validate() {
     final title = _titleCtrl.text.trim();
     final content = _contentCtrl.text.trim();
     final subtitle = _encrypted ? _subtitleCtrl.text.trim() : '';
-    if (title.isEmpty && content.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('写点什么再保存吧～')),
-      );
-      return false;
-    }
-    if (_encrypted && subtitle.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请填写副标题～')),
-      );
-      return false;
-    }
+    if (title.isEmpty && content.isEmpty) return '写点什么再保存吧～';
+    if (_encrypted && subtitle.isEmpty) return '请填写副标题～';
+    _vTitle = title;
+    _vContent = content;
+    _vSubtitle = subtitle;
+    return null;
+  }
 
+  Future<void> _save() async {
     setState(() => _saving = true);
 
+    final title = _vTitle;
+    final content = _vContent;
+    final subtitle = _vSubtitle;
     final list = await DiaryStorage.load();
     if (_isNew) {
       final now = DateTime.now();
@@ -566,9 +580,9 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     }
     await DiaryStorage.save(list);
 
-    if (!mounted) return false;
-    Navigator.pop(context, true);
-    return true;
+    if (!mounted) return;
+    // 落盘完成：续播对勾 + 粒子，播完由 onDone 返回
+    _doneKey.currentState?.finish();
   }
 
   /// 底部「取消」：走统一的未保存拦截
@@ -1165,56 +1179,67 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
             top: false,
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-              child: Row(
-            children: [
-              Expanded(
-                child: Pressable(
-                  enabled: true,
-                  child: OutlinedButton(
-                    onPressed: _saving ? null : _cancel,
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      side: const BorderSide(color: Color(0xFF3B6FE0)),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text('取消', style: TextStyle(fontSize: 16)),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Pressable(
-                  enabled: true,
-                  child: ElevatedButton(
-                    onPressed: _saving ? null : _save,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: _saving
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text('完成', style: TextStyle(fontSize: 16)),
-                  ),
-                ),
-              ),
-            ],
-          ),
+              child: _buildSaveBar(),
             ),
           ),
         ],
       ),
     ),
+    );
+  }
+
+  /// 保存栏：默认「取消 + 完成」并排；点完成后取消按钮淡出让出整行，
+  /// 完成按钮在自己的槽位里收缩成居中圆形，打勾 + 粒子，停留片刻保存返回。
+  ///
+  /// 用 Stack 而非 Row：取消按钮淡出后若用 Row 收缩宽度，完成按钮会从
+  /// 「右半格」跳到「整行中心」，两个动画叠加容易显得抖。Stack 里完成按钮
+  /// 始终占满整行、只在自身内部收窄居中，位移只有一次、方向单一。
+  Widget _buildSaveBar() {
+    return SizedBox(
+      height: 48,
+      child: Stack(
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: _doneAnim.value >= 1
+                ? const SizedBox.shrink()
+                : FractionallySizedBox(
+                    widthFactor: 0.5,
+                    child: Opacity(
+                      opacity: (1 - _doneAnim.value * 1.6).clamp(0.0, 1.0),
+                      child: IgnorePointer(
+                        ignoring: _saving,
+                        child: Pressable(
+                          enabled: true,
+                          child: OutlinedButton(
+                            onPressed: _saving ? null : _cancel,
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size.fromHeight(48),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              side: const BorderSide(color: Color(0xFF3B6FE0)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text('取消',
+                                style: TextStyle(fontSize: 16)),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+          ),
+          SaveDoneButton(
+            key: _doneKey,
+            color: const Color(0xFF3B6FE0),
+            validate: _validate,
+            onTap: _save,
+            onDone: () {
+              if (mounted) Navigator.pop(context, true);
+            },
+          ),
+        ],
+      ),
     );
   }
 
