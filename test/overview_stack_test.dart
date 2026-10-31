@@ -318,6 +318,59 @@ void main() {
       expect(_visible(tester, 'pie'), isTrue);
     });
 
+    testWidgets('切换卡片时看板占位高度恒定，下方内容不会跟着上下跳', (tester) async {
+      // 高矮刻意拉开差距：饼图卡（几张切片 + 图例）明显比固定的 190 高，
+      // 若高度跟着「当前顶层卡」走，这里一定会跳动。
+      final slices = buildSlices([
+        _a('银行储蓄', 2000),
+        _a('货币基金', 3000),
+        _a('基金', 5000),
+        _a('股票', 4000),
+        _a('黄金', 1000),
+      ]);
+      await tester.pumpWidget(_host(OverviewStack(
+        card1: _card1(),
+        card2: _card2(slices),
+      )));
+      await tester.pumpAndSettle();
+
+      final before = tester.getSize(find.byType(OverviewStack)).height;
+      final beforeBottom = tester.getRect(find.byType(OverviewStack)).bottom;
+      expect(before, closeTo(190, 1),
+          reason: '看板高度应贴合 card1 的内容高度，实际 $before');
+
+      // 整个翻页过程中逐帧检查：高度与下边界一刻都不能变
+      await tester.drag(find.byKey(const ValueKey('card1')),
+          const Offset(-260, 0));
+      for (var i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 16));
+        expect(tester.getSize(find.byType(OverviewStack)).height,
+            closeTo(before, 0.5),
+            reason: '翻页第 ${i + 1} 帧看板高度发生了变化（下方卡片会被推走）');
+        expect(tester.getRect(find.byType(OverviewStack)).bottom,
+            closeTo(beforeBottom, 0.5),
+            reason: '翻页第 ${i + 1} 帧看板下边界发生了位移');
+      }
+      await tester.pumpAndSettle();
+
+      // 稳定停在饼图页之后，占位依旧不变
+      expect(_visible(tester, 'pie'), isTrue);
+      expect(tester.getSize(find.byType(OverviewStack)).height,
+          closeTo(before, 0.5),
+          reason: '切到饼图后看板高度不能改变');
+      expect(tester.getRect(find.byType(OverviewStack)).bottom,
+          closeTo(beforeBottom, 0.5),
+          reason: '切到饼图后看板下边界不能位移');
+
+      // 再切回来也一样
+      await tester.drag(find.byKey(const ValueKey('pie')),
+          const Offset(260, 0));
+      await tester.pumpAndSettle();
+      expect(tester.getSize(find.byType(OverviewStack)).height,
+          closeTo(before, 0.5),
+          reason: '切回看板后高度仍不能变');
+    });
+
     testWidgets('没有正资产时不显示第二张卡', (tester) async {
       await tester.pumpWidget(_host(OverviewStack(
         hasSecond: false,

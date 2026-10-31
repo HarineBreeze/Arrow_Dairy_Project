@@ -86,9 +86,11 @@ class OverviewStackState extends State<OverviewStack>
   final ValueNotifier<double> _levelA = ValueNotifier<double>(1);
   final ValueNotifier<double> _levelB = ValueNotifier<double>(0);
 
-  /// 两张卡各自实测的内容高度（Stack 的高度取它，卡片本身不拉伸）
-  double _hA = 0;
-  double _hB = 0;
+  /// 轮盘高度锁：一旦量到就固定，翻页、切卡、转场都不再变（见 [_stackHeight]）
+  double? _heightLocked;
+
+  /// 上一次参与定高的可用宽度 —— 宽度变了（旋转屏 / 分屏）才允许重新定高
+  double _lockedAtWidth = 0;
 
   late final AnimationController _anim = AnimationController(
     vsync: this,
@@ -131,17 +133,47 @@ class OverviewStackState extends State<OverviewStack>
   /// 翻页终点的位移：不必滑满一整卡宽
   double get _exitDistance => _maxDrag * OverviewStack.kExitFraction;
 
-  /// 轮盘高度 = **当前顶层卡**的高度。
+  /// 轮盘高度 = **固定的一块专属区域**，一旦量到就锁死，与「当前停在哪张卡」无关。
   ///
-  /// 用顶层卡而不是 max：另一张卡（比如饼图）更高时，也不会在下方
-  /// 留出一大片空白，整叠卡片始终紧贴下方内容。
-  /// 背面卡超出部分的绘制靠 `clipBehavior: Clip.none` 允许，露边只在缝隙里。
-  double get _stackHeight {
-    if (!widget.hasSecond) return _hA > 0 ? _hA : _fallbackHeight;
-    final top = _topIsSecond ? _hB : _hA;
-    if (top > 0) return top;
-    final other = _topIsSecond ? _hA : _hB;
-    return other > 0 ? other : _fallbackHeight;
+  /// 这里是「切换卡片时下方资产卡跟着一上一下」的修复点。
+  ///
+  /// 旧实现的定高跟着「当前顶层卡」走：切到饼图的那一帧 `_index` 变了，
+  /// 高度跟着从净资产卡的高度跳到饼图卡的高度，[SizedBox] 尺寸一变，
+  /// 紧跟在看板后面的资产卡片就被整体推下 / 推上一截 —— 即「跟随移动」。
+  ///
+  /// 现在：
+  /// - 高度只由**占位卡（card1）**的实测内容高度决定，跟 `_index` 完全无关；
+  /// - 量到一次后写进 [_heightLocked] 并保持不动，翻页动画期间也一样；
+  /// - 另一张卡（饼图）即使更高，超出部分由 `clipBehavior: Clip.none`
+  ///   溢出绘制（会被下方的卡盖住），不参与布局，不会撑开高度。
+  ///
+  /// 于是顶部数据栏有了稳定、专属的位置，下方列表里的卡片 y 坐标永远不变。
+  double get _stackHeight => _heightLocked ?? _fallbackHeight;
+
+  /// 每张卡的内容高度变化时调用（在布局完成后回传）。
+  ///
+  /// 只有占位卡（role 0）参与定高；另一张卡怎么长都不影响布局。
+  void _onMeasure(int role, double h) {
+    if (role != 0) return; // 只有占位卡定高
+    if (h <= 0) return;
+    final locked = _heightLocked;
+    if (locked != null && (locked - h).abs() < 0.5) return;
+    _heightLocked = h;
+    // 高度在布局后才拿到，推到帧后重建一次
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  /// 只允许在「布局口径变了」时重新定高：可用宽度变化（旋转屏 / 分屏 / 字号）。
+  /// 卡片自己切换、翻页、动效都不算，因此不会带来跳动。
+  void _onWidthChanged(double w) {
+    if ((_lockedAtWidth - w).abs() < 0.5) return;
+    final firstLayout = _lockedAtWidth == 0;
+    _lockedAtWidth = w;
+    if (firstLayout) return; // 首次布局，正常走测量流程
+    // 宽度变了：旧高度不再适用，放开锁重新量一帧
+    _heightLocked = null;
   }
 
   /// 首帧还没有测量结果时的保底高度（净资产卡大约就这么高）
@@ -242,6 +274,7 @@ class OverviewStackState extends State<OverviewStack>
     return LayoutBuilder(
       builder: (context, c) {
         _width = c.maxWidth;
+        _onWidthChanged(c.maxWidth);
         return GestureDetector(
           // 只接管水平拖动：纵向仍交给外层列表滚动
           onHorizontalDragStart: allowed ? _onDragStart : null,
@@ -249,8 +282,9 @@ class OverviewStackState extends State<OverviewStack>
           onHorizontalDragEnd: allowed ? _onDragEnd : null,
           behavior: HitTestBehavior.deferToChild,
           child: SizedBox(
-            // 高度由两张卡的实测内容高度算出来（不是取较大值）：
-            // 顶层卡实际多高，轮盘就多高，背面只多露一条边
+            // 高度是**锁定的常数**：只在首次量到 card1 时定一次，
+            // 之后无论怎么翻页、切卡、转场都保持不动，
+            // 下方列表里的卡片因此不会被推上推下。
             height: _stackHeight,
             child: ValueListenableBuilder<int?>(
               valueListenable: _peekRole,
@@ -298,21 +332,6 @@ class OverviewStackState extends State<OverviewStack>
         );
       },
     );
-  }
-
-  void _onMeasure(int role, double h) {
-    if (h <= 0) return;
-    if (role == 0) {
-      if ((_hA - h).abs() < 0.5) return;
-      _hA = h;
-    } else {
-      if ((_hB - h).abs() < 0.5) return;
-      _hB = h;
-    }
-    // 高度在布局后才拿到，推到帧后重建一次
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) setState(() {});
-    });
   }
 
   /// 更靠后的一圈底色：只为了「一叠」的层次感。
