@@ -1,5 +1,6 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../models/asset.dart';
 import '../services/asset_storage.dart';
 import '../services/trash_storage.dart';
@@ -450,10 +451,83 @@ class AssetScreenState extends State<AssetScreen> {
     }
   }
 
+  // ---------- 拖拽排序 ----------
+
+  /// 当前被手指压住、正等待「原地松手 / 拖走」判定的卡片
+  String? _pendingId;
+
+  /// 长按按住的那一刻：先只做视觉提示，不立刻弹菜单。
+  /// 之后的走向由松手时的位移决定（见 [_CardShell]）：
+  /// · 原地松手 → 弹出编辑/删除菜单（等价于原来的长按菜单）；
+  /// · 拖走 → 进入排序，不弹菜单。
+  void _onCardHold(Asset a) {
+    Haptics.mediumNow();
+    setState(() => _pendingId = a.id);
+  }
+
+  void _onCardRelease(Asset a, {required bool moved}) {
+    if (_pendingId != a.id) return;
+    setState(() => _pendingId = null);
+    if (!moved) _showCardMenu(a);
+  }
+
+  /// 拖拽时浮起的卡片：轻度放大 + 投影，避免和底下让位的卡片混在一起
+  Widget _buildDragProxy(Widget child, int index, Animation<double> animation) {
+    return Material(
+      color: Colors.transparent,
+      child: Transform.scale(
+        scale: 1.03,
+        child: PhysicalModel(
+          color: Colors.transparent,
+          elevation: 8,
+          shadowColor: const Color(0x553B6FE0),
+          borderRadius: BorderRadius.circular(14),
+          clipBehavior: Clip.antiAlias,
+          child: child,
+        ),
+      ),
+    );
+  }
+
+  /// ReorderableListView 回调：下标以「含看板」的完整列表为准（看板固定在第 0 位）。
+  /// 这里把列表下标换算成业务列表下标，再落到 _assets 的真实位置，
+  /// 因此即使正处于筛选状态，拖拽也只会在可见卡片所在的真实位置之间移动。
+  void _onReorder(int oldIndex, int newIndex) {
+    // 看板（第 0 项）不参与排序
+    if (oldIndex == 0) return;
+    if (newIndex == 0) return; // 不允许拖到看板之前
+
+    final list = _filtered;
+    final from = oldIndex - 1;
+    // Flutter 的约定：newIndex 是「移除前」的目标下标，向下移动时需要减 1
+    var to = newIndex - 1;
+    if (to > from) to -= 1;
+    if (from < 0 || from >= list.length) return;
+    to = to.clamp(0, list.length - 1);
+    if (to == from) return;
+
+    // 在可见列表里换位，再把结果按顺序回写到 _assets 中这些卡片原本占据的下标
+    final moved = list.removeAt(from);
+    list.insert(to, moved);
+
+    final visibleIds = list.map((e) => e.id).toSet();
+    final slots = <int>[];
+    for (var i = 0; i < _assets.length; i++) {
+      if (visibleIds.contains(_assets[i].id)) slots.add(i);
+    }
+    for (var i = 0; i < slots.length; i++) {
+      _assets[slots[i]] = list[i];
+    }
+
+    Haptics.mediumNow(); // 落位震动：拖拽结束给出「已放好」的确认感
+    setState(() {});
+    // 落盘：把排序结果写回 assets.json（不 await，避免阻塞拖拽收尾）
+    AssetStorage.saveOrder(List<Asset>.from(_assets));
+  }
+
   /// 长按（500ms 系统默认）弹出编辑/删除选框
   void _showCardMenu(Asset a) {
     Haptics.mediumNow(); // 长按菜单：同步触发，避免异步等待导致振动被丢弃
-    Haptics.medium();
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -571,14 +645,42 @@ class AssetScreenState extends State<AssetScreen> {
                                 ),
                               ],
                             )
-                          : ListView(
+                          : ReorderableListView.builder(
                               physics: const AlwaysScrollableScrollPhysics(),
                               padding: const EdgeInsets.fromLTRB(16, 14, 16, 96),
-                              children: [
-                                _buildOverview(),
-                                const SizedBox(height: 14),
-                                ..._filtered.map(_buildCard),
-                              ],
+                              // 去掉右侧默认拖拽把手：本页改用「长按卡片任意处」拖拽
+                              buildDefaultDragHandles: false,
+                              // 拖拽时卡片浮起 + 轻微放大，给出「拿起来了」的明确反馈
+                              proxyDecorator: _buildDragProxy,
+                              itemCount: _filtered.length + 1,
+                              onReorder: _onReorder,
+                              itemBuilder: (context, i) {
+                                if (i == 0) {
+                                  // 第 0 项是数据看板：key 用非整数的 ValueKey('overview')，
+                                  // 它排在全部下标 x.5 之前，因此与排序计算天然不冲突
+                                  return Column(
+                                    key: const ValueKey('asset-overview'),
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      _buildOverview(),
+                                      const SizedBox(height: 14),
+                                    ],
+                                  );
+                                }
+                                final a = _filtered[i - 1];
+                                // key 必须挂在 ListView 的直接子项上。
+                                // 长按语义由 _CardShell 统一裁决：按住 → 松手判定菜单/排序
+                                return _CardShell(
+                                  key: ValueKey('asset-${a.id}'),
+                                  index: i,
+                                  held: _pendingId == a.id,
+                                  onHold: () => _onCardHold(a),
+                                  onRelease: (moved) =>
+                                      _onCardRelease(a, moved: moved),
+                                  builder: (held, moved) =>
+                                      _buildCard(a, held: held, moved: moved),
+                                );
+                              },
                             ),
                     ),
         ),
@@ -756,7 +858,9 @@ class AssetScreenState extends State<AssetScreen> {
   /// 理财类资产：理财 / 黄金 / 股票
   static const List<String> _investTypes = ['基金', '黄金', '股票'];
 
-  Widget _buildCard(Asset a) {
+  /// 资产卡片本体。长按语义由外层 [_CardShell] 提供（按住 → 松手判定）。
+  Widget _buildCard(Asset a,
+      {bool held = false, bool moved = false}) {
     final negative = a.amount < 0;
     final invest = _investTypes.contains(a.type);
     // 左侧色条代表资产性质：负资产红 / 理财蓝 / 其它绿
@@ -765,10 +869,47 @@ class AssetScreenState extends State<AssetScreen> {
         : (invest ? const Color(0xFF3B6FE0) : const Color(0xFF2A9D5C));
     return GestureDetector(
       onTap: () => _openEditor(a),
-      onLongPress: () => _showCardMenu(a),
-      // 左侧色条（B 方案）：底层铺性质色、上层白色卡体，整体按圆角裁切，
-      // 色条两端随卡片圆角自然收弧（Border 左边线是硬直角，观感太方正）
-      child: Container(
+      child: Stack(
+        children: [
+          Opacity(opacity: held ? 0.55 : 1, child: _cardBody(a, barColor)),
+          // 按住时的提示层：告诉用户「松手是菜单、拖动是排序」
+          if (held && !moved) _holdHint(),
+        ],
+      ),
+    );
+  }
+
+  /// 长按按住时的浮层提示
+  Widget _holdHint() {
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0x1A3B6FE0),
+            borderRadius: const BorderRadius.horizontal(
+              left: Radius.circular(6),
+              right: Radius.circular(14),
+            ),
+          ),
+          alignment: Alignment.center,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: const Color(0xE63B6FE0),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Text('拖动排序 · 松手取消',
+                style: TextStyle(fontSize: 12, color: Colors.white)),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 卡片主体（左侧色条 + 白卡）
+  Widget _cardBody(Asset a, Color barColor) {
+    final negative = a.amount < 0;
+    return Container(
         margin: const EdgeInsets.only(bottom: 10),
         child: ClipRRect(
           borderRadius: const BorderRadius.horizontal(
@@ -838,7 +979,135 @@ class AssetScreenState extends State<AssetScreen> {
           ),
         ),
       ),
-    ),
+    );
+  }
+}
+
+/// 一张可「长按拖拽排序」的资产卡片外壳。
+///
+/// 为什么要自己判定，而不直接把 onLongPress + 拖拽监听器叠在一起：
+/// 卡片上的 [GestureDetector.onLongPress] 会先赢下手势竞技场，
+/// 导致列表的延迟拖拽永远拿不到手势（实测拖拽完全不启动）。
+/// 因此这里只保留拖拽监听器，用「按住后的位移」自己区分两种意图：
+/// · 按住 500ms 后原地松手（位移 < 8px）→ 视为长按菜单；
+/// · 按住后发生位移 → 视为拖拽排序，交还给 ReorderableListView。
+class _CardShell extends StatefulWidget {
+  final int index;
+  final bool held;
+  final VoidCallback onHold;
+  final ValueChanged<bool> onRelease;
+  final Widget Function(bool held, bool moved) builder;
+
+  const _CardShell({
+    Key? key,
+    required this.index,
+    required this.held,
+    required this.onHold,
+    required this.onRelease,
+    required this.builder,
+  }) : super(key: key);
+
+  @override
+  State<_CardShell> createState() => _CardShellState();
+}
+
+class _CardShellState extends State<_CardShell> {
+  /// 按住起点；非空表示正处于「已长按、等待松手判定」状态
+  Offset? _downAt;
+  bool _moved = false;
+  bool _fired = false;
+
+  /// 判定为「拖动」的最小位移（逻辑像素）
+  static const double _slop = 8;
+
+  void _onDown(PointerDownEvent e) {
+    _downAt = e.position;
+    _moved = false;
+    _fired = false;
+  }
+
+  void _onMove(PointerMoveEvent e) {
+    final start = _downAt;
+    if (start == null) return;
+    if (!_moved && (e.position - start).distance > _slop) {
+      _moved = true;
+      if (mounted) setState(() {});
+    }
+  }
+
+  void _onUp(PointerUpEvent e) {
+    final start = _downAt;
+    _downAt = null;
+    if (start == null) return;
+    widget.onRelease(_moved);
+    if (mounted) setState(() => _moved = false);
+  }
+
+  void _onCancel(PointerCancelEvent e) {
+    _downAt = null;
+    if (mounted) setState(() => _moved = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ReorderableDelayedDragStartListener(
+      index: widget.index,
+      child: Listener(
+        onPointerDown: _onDown,
+        onPointerMove: _onMove,
+        onPointerUp: _onUp,
+        onPointerCancel: _onCancel,
+        // 延迟拖拽在 500ms 后触发，与 Listener 的按压周期一致
+        child: _HoldDetector(
+          onHold: () {
+            if (_fired) return;
+            _fired = true;
+            widget.onHold();
+          },
+          child: widget.builder(widget.held, _moved),
+        ),
+      ),
+    );
+  }
+}
+
+/// 指针按住 500ms 后回调一次 [onHold]（与延迟拖拽的阈值保持一致）
+class _HoldDetector extends StatefulWidget {
+  final VoidCallback onHold;
+  final Widget child;
+
+  const _HoldDetector({required this.onHold, required this.child});
+
+  @override
+  State<_HoldDetector> createState() => _HoldDetectorState();
+}
+
+class _HoldDetectorState extends State<_HoldDetector> {
+  Timer? _timer;
+
+  void _start() {
+    _timer?.cancel();
+    _timer = Timer(const Duration(milliseconds: 500), widget.onHold);
+  }
+
+  void _stop() {
+    _timer?.cancel();
+    _timer = null;
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Listener(
+      onPointerDown: (_) => _start(),
+      onPointerUp: (_) => _stop(),
+      onPointerCancel: (_) => _stop(),
+      child: widget.child,
     );
   }
 }

@@ -24,21 +24,39 @@ class AssetStorage {
       final file = await _assetsFile();
       if (!await file.exists()) return [];
       final list = jsonDecode(await file.readAsString()) as List<dynamic>;
-      return list.map((e) {
+      final assets = list.map((e) {
         final a = Asset.fromJson(Map<String, dynamic>.from(e));
         // 旧版本「理财」类型统一迁移为「基金」
         if (a.type == '理财') a.type = '基金';
         return a;
       }).toList();
+      // 排序：有 order 的按 order 升序；无 order 的（旧数据）保持文件原顺序，
+      // 且排在已排序项之后 —— 这样老用户升级后看到的顺序与升级前完全一致。
+      final n = assets.length;
+      for (var i = 0; i < n; i++) {
+        if (assets[i].order < 0) assets[i].order = n + i;
+      }
+      assets.sort((a, b) => a.order.compareTo(b.order));
+      for (var i = 0; i < n; i++) {
+        assets[i].order = i;
+      }
+      return assets;
     } catch (_) {
       return [];
     }
   }
 
+  /// 保存并按当前列表顺序归一化 order（0..n-1）
   static Future<void> save(List<Asset> assets) async {
+    for (var i = 0; i < assets.length; i++) {
+      assets[i].order = i;
+    }
     final file = await _assetsFile();
     await file.writeAsString(jsonEncode(assets.map((e) => e.toJson()).toList()));
   }
+
+  /// 拖拽排序结果写盘：list 为排序后的完整列表
+  static Future<void> saveOrder(List<Asset> ordered) => save(ordered);
 
   // ---------- 密码 ----------
 

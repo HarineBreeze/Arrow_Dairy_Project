@@ -6,12 +6,17 @@ class Asset {
   String type; // 银行储蓄 / 货币基金 / 基金 / 黄金 / 股票 / 信用卡 / 欠款 / 账单
   double amount;
 
+  /// 用户拖拽排序后的展示位置（越小越靠前）。每次拖拽结束由存储层归一化为 0..n-1。
+  /// 旧数据（无该字段）由 [AssetStorage.load] 按文件原顺序补齐。
+  int order;
+
   Asset({
     required this.id,
     this.icon = '💰',
     this.note = '',
     this.type = '银行储蓄',
     this.amount = 0,
+    this.order = 0,
   });
 
   Map<String, dynamic> toJson() => {
@@ -20,6 +25,7 @@ class Asset {
         'note': note,
         'type': type,
         'amount': amount,
+        'order': order,
       };
 
   factory Asset.fromJson(Map<String, dynamic> j) => Asset(
@@ -28,6 +34,7 @@ class Asset {
         note: (j['note'] as String?) ?? '',
         type: (j['type'] as String?) ?? '银行储蓄',
         amount: (j['amount'] as num?)?.toDouble() ?? 0,
+        order: (j['order'] as num?)?.toInt() ?? -1,
       );
 
   /// 资产类型清单（单选项）
