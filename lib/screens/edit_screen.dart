@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
+import '../utils/app_toast.dart';
 import '../models/diary_entry.dart';
 import '../services/diary_storage.dart';
 import '../services/item_storage.dart';
@@ -426,17 +427,13 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     final s = _savedStart;
     final e = _savedEnd;
     if (e <= s) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请先框选一段文字')),
-      );
+      AppToast.show(context, '请先框选一段文字');
       return;
     }
     final text = _contentCtrl.text;
     final word = text.substring(s, e).trim();
     if (word.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请先框选一段文字')),
-      );
+      AppToast.show(context, '请先框选一段文字');
       return;
     }
 
@@ -450,12 +447,9 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
         // 尝试忽略空白的宽松匹配（选区可能带上首尾空格）
         final loose = _itemNames.where((n) => n.trim() == word).toList();
         if (loose.isEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('物资清单里没有「$word」，无法 @ 该物品'),
-              duration: const Duration(milliseconds: 1800),
-            ),
-          );
+          // 每次 @ 的是不同物品 → key 带上词，避免被上一条同类提示吞掉
+          AppToast.show(context, '物资清单里没有「$word」，无法 @ 该物品',
+              key: 'noItem:$word');
           return;
         }
       }
@@ -488,12 +482,8 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
       _showToolbar = true;
       _toolbarKey = GlobalKey<FormatToolbarState>();
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(isTopic ? '已生成为话题 #$word' : '已引用物品 @$word'),
-        duration: const Duration(milliseconds: 1300),
-      ),
-    );
+    AppToast.show(
+        context, isTopic ? '已生成为话题 #$word' : '已引用物品 @$word');
   }
 
   Future<void> _loadItems() async {
@@ -1243,12 +1233,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     _contentCtrl.setFormats(_formats);
     _lastContent = newText;
     Haptics.light();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('已插入待办 ☐，输入事项内容即可'),
-        duration: Duration(milliseconds: 1500),
-      ),
-    );
+    AppToast.show(context, '已插入待办 ☐，输入事项内容即可');
     // 工具栏换新 key：上一把区间锁（可能是整行）会立刻作用到新插入的空待办上
     _toolbarKey.currentState?.resetRange();
     setState(() {

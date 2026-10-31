@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart' show DragStartBehavior;
 import 'package:flutter/services.dart' show SystemUiOverlayStyle;
+import '../utils/app_toast.dart';
 import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
 import '../models/diary_entry.dart';
@@ -230,12 +231,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         await DiaryStorage.save(list);
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(list.firstWhere((e) => e.id == entry.id).pinned
-                ? '已置顶该笔记 📌'
-                : '已取消置顶')),
-      );
+      AppToast.show(
+          context,
+          list.firstWhere((e) => e.id == entry.id).pinned
+              ? '已置顶该笔记 📌'
+              : '已取消置顶');
       _load();
     } else if (action == 'edit') {
       _openEditor(entry);
@@ -652,12 +652,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     if (_lastBackAt == null ||
         now.difference(_lastBackAt!) > const Duration(seconds: 2)) {
       _lastBackAt = now;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('再返回一次退出应用'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+      // 连按返回键时只提示一次（去重窗口 2s 内不再重复）
+      AppToast.show(context, '再返回一次退出应用',
+          duration: const Duration(seconds: 2));
       return false;
     }
     return true;

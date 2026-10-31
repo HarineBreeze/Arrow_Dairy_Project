@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../utils/app_toast.dart';
 import '../utils/haptics.dart';
 import 'pressable.dart';
 
@@ -144,10 +145,13 @@ class SaveDoneButtonState extends State<SaveDoneButton>
     if (mounted) setState(() {});
   }
 
-  /// 校验失败提示：用当前 context 找最近 ScaffoldMessenger
+  /// 校验失败提示：走 [AppToast] 去重。
+  ///
+  /// 之前直接 `showSnackBar`，用户连点「完成」会一条接一条地弹
+  /// （同一句「请填写事件名称」反复刷屏）。现在同一句提示在展示期内
+  /// 只弹一次，只有提示内容变了才会立刻换成新的那条。
   void _toast(String msg) {
-    final m = ScaffoldMessenger.maybeOf(context);
-    m?.showSnackBar(SnackBar(content: Text(msg)));
+    AppToast.show(context, msg);
   }
 
   /// 落盘完成：续播「对勾 → 粒子 → 停留 → onDone」

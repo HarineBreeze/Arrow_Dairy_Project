@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import '../utils/app_toast.dart';
 import '../models/asset.dart';
 import '../services/asset_storage.dart';
 import '../services/trash_storage.dart';
@@ -209,9 +210,7 @@ class AssetScreenState extends State<AssetScreen> {
       _hasPin = true;
       _unlocked = true; // 刚设置完密码，本次访问无需再解锁
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('已开启加密访问')),
-    );
+    AppToast.show(context, '已开启加密访问');
   }
 
   /// 取消加密访问：需验证当前密码或密保答案
@@ -226,9 +225,7 @@ class AssetScreenState extends State<AssetScreen> {
       _hasPin = false;
       _unlocked = true;
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('已取消加密访问')),
-    );
+    AppToast.show(context, '已取消加密访问');
   }
 
   Future<void> _openChangePin() async {
@@ -238,9 +235,7 @@ class AssetScreenState extends State<AssetScreen> {
       builder: (ctx) => const _ChangePinDialog(),
     );
     if (ok == true && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('资产密码已更新')),
-      );
+      AppToast.show(context, '资产密码已更新');
     }
   }
 
@@ -1511,9 +1506,7 @@ class _PinUnlockDialogState extends State<_PinUnlockDialog> {
       },
     );
     if (newPin != null && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('密码已重置，请使用新密码进入')),
-      );
+      AppToast.show(context, '密码已重置，请使用新密码进入');
       setState(() {
         _forgot = false;
         _error = null;

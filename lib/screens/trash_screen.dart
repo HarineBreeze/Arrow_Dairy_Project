@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../utils/app_toast.dart';
 import '../services/trash_storage.dart';
 import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
@@ -180,14 +181,8 @@ class TrashScreenState extends State<TrashScreen> {
     _toast('已清空');
   }
 
-  void _toast(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-          content: Text(msg),
-          duration: const Duration(seconds: 2),
-          behavior: SnackBarBehavior.floating),
-    );
-  }
+  /// 回收站操作反馈：走全局去重提示（连点「清空 / 还原」不会刷一屏）
+  void _toast(String msg) => AppToast.show(context, msg);
 
   // ---------- 构建 ----------
 

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import '../utils/app_toast.dart';
 import '../models/user_profile.dart';
 import '../services/user_storage.dart';
 import '../widgets/avatar.dart';
@@ -74,9 +75,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       setState(() => _avatarPath = newPath);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('选择头像失败，请重试')),
-      );
+      AppToast.show(context, '选择头像失败，请重试');
     }
   }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/app_toast.dart';
 import '../services/app_settings.dart';
 
 /// 字体选择页：预览文字直接以对应字体渲染（字体均打包在 APK 内）。
@@ -39,12 +40,10 @@ class _FontPickerScreenState extends State<FontPickerScreen> {
                   await AppSettings.setFontFamily(id);
                   if (!mounted) return;
                   setState(() {});
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text(id.isEmpty
-                        ? '已恢复默认字体'
-                        : '已切换为「${f['name']}」'),
-                    duration: const Duration(milliseconds: 1200),
-                  ));
+                  // 连点字体卡片时只提示最后选中的那一个
+                  AppToast.show(
+                      context,
+                      id.isEmpty ? '已恢复默认字体' : '已切换为「${f['name']}」');
                 },
                 child: Container(
                   padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),

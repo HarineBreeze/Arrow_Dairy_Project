@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../utils/app_toast.dart';
 import '../models/asset.dart';
 import '../models/countdown_event.dart';
 import '../models/diary_entry.dart';
@@ -504,11 +505,8 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
   /// 打开笔记：加密笔记引导回主页打开（搜索结果不展示内容，避免绕过验证）
   void _openNote(DiaryEntry e) {
     if (e.encrypted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('加密笔记请在笔记主页中打开，以验证密码'),
-            duration: Duration(seconds: 2)),
-      );
+      // 连点加密笔记时不应反复弹同一句
+      AppToast.show(context, '加密笔记请在笔记主页中打开，以验证密码');
       return;
     }
     _push(NoteViewScreen(entry: e));

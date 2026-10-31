@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../utils/app_toast.dart';
 import '../models/item.dart';
 import '../services/item_storage.dart';
 import '../services/trash_storage.dart';
@@ -186,9 +187,7 @@ class ItemListScreenState extends State<ItemListScreen> {
       it.acquiredDate = DateTime.now();
       await ItemStorage.save(list);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('🎉 攒钱完成，「${it.name}」已加入拥有中！')),
-      );
+      AppToast.show(context, '🎉 攒钱完成，「${it.name}」已加入拥有中！');
       _load();
       return;
     }

@@ -1,6 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
+import '../utils/app_toast.dart';
 import '../services/app_settings.dart';
 import '../services/backup_service.dart';
 import '../utils/app_version.dart';
@@ -53,9 +54,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _exporting = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('导出失败，请重试')),
-      );
+      AppToast.show(context, '导出失败，请重试');
     }
   }
 
@@ -74,9 +73,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         data = await BackupService.parseBackupFile(path);
       } catch (e) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e is String ? e : '备份文件无效')),
-        );
+        // 不同错误原因视为不同提示，各自可弹一次
+        AppToast.show(context, e is String ? e : '备份文件无效');
         return;
       }
       if (!mounted) return;
@@ -123,11 +121,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         await _loadStats();
         if (!mounted) return;
         setState(() => _importing = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(
-                  '导入成功：${data.entries.length} 条笔记、${data.items.length} 件物资、${data.assets.length} 笔资产、${data.countdowns.length} 个事件')),
-        );
+        AppToast.show(
+            context,
+            '导入成功：${data.entries.length} 条笔记、${data.items.length} 件物品、'
+            '${data.assets.length} 笔资产、${data.countdowns.length} 个事件');
         Navigator.pop(context, true);
         return;
       }
@@ -138,20 +135,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await _loadStats();
       if (!mounted) return;
       setState(() => _importing = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(merged.isEmpty
+      AppToast.show(
+          context,
+          merged.isEmpty
               ? '合并完成：没有可合并的新内容'
-              : '合并完成：新增 ${merged.added} 条，更新 ${merged.updated} 条'),
-        ),
-      );
+              : '合并完成：新增 ${merged.added} 条，更新 ${merged.updated} 条');
       Navigator.pop(context, true);
     } catch (_) {
       if (!mounted) return;
       setState(() => _importing = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('导入失败，请重试')),
-      );
+      AppToast.show(context, '导入失败，请重试');
     }
   }
 

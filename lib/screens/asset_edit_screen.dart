@@ -109,8 +109,16 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
   }
 
   /// 同步校验：返回 null 表示可以保存，返回文案则提示并中止。
+  ///
+  /// 金额是**必填项**：空着点完成不再静默存成 0，而是明确提示去填。
+  /// 空值与填了乱码分成两句提示，「没填」和「填错了」用户的下一步动作不同，
+  /// 混成一句「请输入正确的金额」会让没填的人以为自己填错了。
   String? _validate() {
-    if (double.tryParse(_amountCtrl.text.trim()) == null) return '请输入正确的金额';
+    final raw = _amountCtrl.text.trim();
+    if (raw.isEmpty) return _isLiability ? '请输入欠款金额' : '请输入资产金额';
+    final v = double.tryParse(raw);
+    if (v == null) return '请输入正确的金额';
+    if (v == 0) return '金额不能为 0';
     return null;
   }
 
@@ -293,8 +301,8 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
             ),
             const SizedBox(height: 16),
 
-            // 资产金额
-            _sectionLabel('资产金额'),
+            // 资产金额（必填）
+            _sectionLabel('资产金额', required: true),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14),
               decoration: _box(),
@@ -338,6 +346,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
             SaveDoneButton(
               key: _doneKey,
               color: const Color(0xFF3B6FE0),
+              validate: _validate,
               onTap: _save,
               onDone: () {
                 if (mounted) Navigator.pop(context, _pending);
@@ -350,14 +359,27 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
     );
   }
 
-  Widget _sectionLabel(String text) {
+  /// 分区小标题。[required] 为 true 时追加红色星号，让「必填」在填写前
+  /// 就能看见，而不是点完成被弹提示才知道。
+  Widget _sectionLabel(String text, {bool required = false}) {
     return Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 8),
-      child: Text(text,
-          style: const TextStyle(
-              fontSize: 13,
-              color: Color(0xFF9AA8BF),
-              fontWeight: FontWeight.w600)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(text,
+              style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF9AA8BF),
+                  fontWeight: FontWeight.w600)),
+          if (required)
+            const Text(' *',
+                style: TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFFE06A6A),
+                    fontWeight: FontWeight.w700)),
+        ],
+      ),
     );
   }
 
