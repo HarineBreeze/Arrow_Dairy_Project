@@ -535,26 +535,8 @@ class CountdownScreenState extends State<CountdownScreen> {
                           color: grey
                               ? const Color(0xFF9AA8BF)
                               : const Color(0xFF2A3B52))),
-                  // 重复规则铭牌：仅重复事件显示（每年 / 每月 / 每周）
-                  if (e.repeat != RepeatRule.none) ...[
-                    const SizedBox(height: 3),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 5, vertical: 1),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE8F0FE),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        '${e.repeatLabel}重复',
-                        style: const TextStyle(
-                            fontSize: 9.5,
-                            height: 1.3,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF3B6FE0)),
-                      ),
-                    ),
-                  ],
+                  // 重复规则不在卡片上外显：仅作为内部行为（
+                  // 提醒与倒计时推进），避免卡片信息过载
                   // 卡片上不展示事件类型，该位置显示事件备注；无备注则留空
                   if (e.note.isNotEmpty) ...[
                     const SizedBox(height: 2),

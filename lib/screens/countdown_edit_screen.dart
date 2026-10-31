@@ -471,6 +471,10 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
     );
   }
 
+  /// 单选项：四等分排列。
+  /// 选项文字长度不一（「每年」vs「提前 7 天」），若图标与文字并排，
+  /// 窄屏下按钮宽度不足会把文字挤出边框。这里改为「图标在上、文字在下」，
+  /// 并让文字按需缩放 + 省略，保证任何机型都不出框。
   Widget _radioTile({
     required String label,
     required bool selected,
@@ -479,10 +483,11 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
+        behavior: HitTestBehavior.opaque,
         child: Container(
-          height: 42,
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          alignment: Alignment.center,
+          height: 56,
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
           decoration: BoxDecoration(
             color: selected ? const Color(0xFFDCE7FF) : const Color(0xFFF5F7FB),
             borderRadius: BorderRadius.circular(10),
@@ -491,26 +496,38 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
               width: 1.5,
             ),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
                 selected
                     ? Icons.radio_button_checked
                     : Icons.radio_button_unchecked,
-                size: 16,
-                color:
-                    selected ? const Color(0xFF3B6FE0) : const Color(0xFF9AA8BF),
+                size: 15,
+                color: selected
+                    ? const Color(0xFF3B6FE0)
+                    : const Color(0xFF9AA8BF),
               ),
-              const SizedBox(width: 6),
-              Text(label,
-                  style: TextStyle(
-                      fontSize: 14,
+              const SizedBox(height: 3),
+              // 文字宽度不超过胶囊内宽，超长时整体缩小（不会撑破边框）
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    softWrap: false,
+                    style: TextStyle(
+                      fontSize: 13,
                       fontWeight:
                           selected ? FontWeight.w600 : FontWeight.normal,
                       color: selected
                           ? const Color(0xFF3B6FE0)
-                          : const Color(0xFF2A3B52))),
+                          : const Color(0xFF2A3B52),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
