@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// 按压回弹（Press & Bounce）动效。
 ///
-/// 手势：按下缩到 96%，松手用弹簧动画先冲到约 102%，再回落 100%。
+/// 手势：按下缩到 90%，松手用弹簧动画先冲到约 102%，再回落 100%。
 ///
 /// 实现要点：
 /// · 只用 [Transform.scale] 做纯绘制变换，不参与布局与命中测试，
@@ -44,7 +44,7 @@ class Pressable extends StatefulWidget {
   }) : super(key: key);
 
   /// 默认按压缩放比例
-  static const double kDefaultPressedScale = 0.96;
+  static const double kDefaultPressedScale = 0.90;
 
   /// 按下收缩时长（要干脆）
   static const Duration kPressIn = Duration(milliseconds: 90);

@@ -19,22 +19,22 @@ double currentScale(WidgetTester tester) {
 void main() {
   group('Pressable 缩放曲线', () {
     test('落定时为 1.0', () {
-      expect(Pressable.scaleFor(0, 0.96), 1.0);
+      expect(Pressable.scaleFor(0, 0.90), 1.0);
     });
 
-    test('按到底时为 pressedScale（96%）', () {
-      expect(Pressable.scaleFor(-1, 0.96), closeTo(0.96, 1e-9));
+    test('按到底时为 pressedScale（90%）', () {
+      expect(Pressable.scaleFor(-1, 0.90), closeTo(0.90, 1e-9));
     });
 
-    test('按压中段线性从 96% 回到 100%', () {
-      expect(Pressable.scaleFor(-0.5, 0.96), closeTo(0.98, 1e-9));
+    test('按压中段从 90% 线性回升到 100%', () {
+      expect(Pressable.scaleFor(-0.5, 0.90), closeTo(0.95, 1e-9));
     });
 
     test('过冲区放大且不超过 102%', () {
-      final peak = Pressable.scaleFor(Pressable.kCurveOvershoot, 0.96);
+      final peak = Pressable.scaleFor(Pressable.kCurveOvershoot, 0.90);
       expect(peak, closeTo(1.0 + Pressable.kOvershoot, 1e-9));
       // 超出归一化基准也不会超过 kOvershoot
-      expect(Pressable.scaleFor(1.0, 0.96),
+      expect(Pressable.scaleFor(1.0, 0.90),
           closeTo(1.0 + Pressable.kOvershoot, 1e-9));
     });
 
@@ -55,7 +55,7 @@ void main() {
   });
 
   group('Pressable 交互', () {
-    testWidgets('按下缩到 96%，松手回到 100%', (tester) async {
+    testWidgets('按下缩到 90%，松手回到 100%', (tester) async {
       await tester.pumpWidget(const MaterialApp(
         home: Scaffold(
           body: Center(
@@ -69,8 +69,8 @@ void main() {
       final g = await tester.startGesture(tester.getCenter(find.byType(SizedBox)));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 120));
-      expect(currentScale(tester), closeTo(0.96, 1e-3),
-          reason: '按下后应缩到 96%');
+      expect(currentScale(tester), closeTo(0.90, 1e-3),
+          reason: '按下后应缩到 90%');
 
       await g.up();
       await tester.pump();
@@ -151,7 +151,7 @@ void main() {
       handle.press();
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 120));
-      expect(currentScale(tester), closeTo(0.96, 1e-3),
+      expect(currentScale(tester), closeTo(0.90, 1e-3),
           reason: 'handle.press() 应触发收缩');
 
       handle.release();
