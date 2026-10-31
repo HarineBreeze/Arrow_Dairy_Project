@@ -139,6 +139,54 @@ void main() {
           reason: '升到顶层的卡不应残留缩放，实际 $scales');
     });
 
+    testWidgets('两个方向都能拖：右滑能在饼图页切回数据看板', (tester) async {
+      final slices = buildSlices([_a('银行储蓄', 1), _a('货币基金', 1)]);
+      await tester.pumpWidget(_host(OverviewStack(
+        card1: _card1(),
+        card2: _card2(slices),
+      )));
+      await tester.pumpAndSettle();
+
+      // 左滑 → 饼图
+      await tester.drag(
+          find.byKey(const ValueKey('card1')), const Offset(-260, 0));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('pie')), findsOneWidget);
+
+      // 右滑 → 回到数据看板（轮换，两个方向都生效）
+      await tester.drag(
+          find.byKey(const ValueKey('pie')), const Offset(260, 0));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('card1')), findsOneWidget,
+          reason: '在饼图页右滑应切回数据看板');
+      expect(find.byKey(const ValueKey('pie')), findsNothing);
+    });
+
+    testWidgets('轮换可来回切换多次，状态不会错乱', (tester) async {
+      final slices = buildSlices([_a('银行储蓄', 1)]);
+      await tester.pumpWidget(_host(OverviewStack(
+        card1: _card1(),
+        card2: _card2(slices),
+      )));
+      await tester.pumpAndSettle();
+
+      for (var i = 0; i < 3; i++) {
+        // 左滑
+        await tester.drag(find.byKey(const ValueKey('card1')),
+            const Offset(-260, 0));
+        await tester.pumpAndSettle();
+        expect(find.byKey(const ValueKey('pie')), findsOneWidget,
+            reason: '第 ${i + 1} 轮左滑后应显示饼图');
+
+        // 右滑
+        await tester.drag(
+            find.byKey(const ValueKey('pie')), const Offset(260, 0));
+        await tester.pumpAndSettle();
+        expect(find.byKey(const ValueKey('card1')), findsOneWidget,
+            reason: '第 ${i + 1} 轮右滑后应显示数据看板');
+      }
+    });
+
     testWidgets('滑动距离不够时弹回原位', (tester) async {
       final slices = buildSlices([_a('银行储蓄', 1), _a('货币基金', 1)]);
       await tester.pumpWidget(_host(OverviewStack(

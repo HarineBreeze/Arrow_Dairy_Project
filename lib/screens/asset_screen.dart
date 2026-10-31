@@ -719,7 +719,11 @@ class AssetScreenState extends State<AssetScreen> {
                                   // 「Every item of ReorderableListView must have a key」。
                                   return Padding(
                                     key: const ValueKey('__overview__'),
-                                    padding: const EdgeInsets.only(bottom: 2),
+                                    // 底部留出与资产卡片一致的间距（列表卡间距 10 + 额外呼吸感）：
+                                    // 叠在下面的第二张卡还有 16~32px 的错位，
+                                    // 间距太小会让「露边」和下方卡片挤在一起
+                                    padding:
+                                        const EdgeInsets.only(bottom: 18),
                                     child: _buildOverview(),
                                   );
                                 }
