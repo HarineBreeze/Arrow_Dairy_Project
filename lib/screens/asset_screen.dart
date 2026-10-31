@@ -440,10 +440,14 @@ class AssetScreenState extends State<AssetScreen> {
   // ---------- 操作 ----------
 
   Future<void> _openEditor([Asset? asset]) async {
+    // 点击会立刻 push 新页面，原页面的 PointerUp 多半收不到，
+    // 卡片会永久停在按压缩放态。跳转前主动复位。
+    _resetPressStates();
     final r = await Navigator.push<dynamic>(
       context,
       _slideRoute(AssetEditScreen(asset: asset)),
     );
+    _resetPressStates();
     if (r == 'deleted') {
       // 编辑页右上角删除
       _assets.removeWhere((e) => e.id == asset!.id);
@@ -463,6 +467,9 @@ class AssetScreenState extends State<AssetScreen> {
   /// 当前被手指压住、正等待「原地松手 / 拖走」判定的卡片
   String? _pendingId;
 
+  /// 所有卡片当前在用的按压句柄（用于页面跳转时统一复位）
+  final Set<PressableHandle> _pressHandles = {};
+
   /// 长按按住的那一刻：先只做视觉提示，不立刻弹菜单。
   /// 之后的走向由松手时的位移决定（见 [_CardShell]）：
   /// · 原地松手 → 弹出编辑/删除菜单（等价于原来的长按菜单）；
@@ -476,6 +483,16 @@ class AssetScreenState extends State<AssetScreen> {
     if (_pendingId != a.id) return;
     setState(() => _pendingId = null);
     if (!moved) _showCardMenu(a);
+  }
+
+  /// 让所有卡片立刻回到 100%（用于页面跳转、返回本页等场景）。
+  ///
+  /// 这些场景不会走 PointerUp，卡片会卡在按压缩放态；
+  /// 更糟的是该实例的 `_down` 一直为 true，导致这一页后续的按压不再有动画。
+  void _resetPressStates() {
+    for (final h in _pressHandles) {
+      h.reset();
+    }
   }
 
   /// 拖拽时浮起的卡片：轻度放大 + 投影，避免和底下让位的卡片混在一起
@@ -705,6 +722,7 @@ class AssetScreenState extends State<AssetScreen> {
                                 // key 必须挂在 ListView 的直接子项上。
                                 // 长按语义由 _CardShell 统一裁决：按住 → 松手判定菜单/排序
                                 final handle = PressableHandle();
+                                _pressHandles.add(handle);
                                 // 卡片间距放在列表项外层（而非卡片内部 margin）：
                                 // 拖拽浮层的投影要紧贴卡片本体，透明的 margin
                                 // 区域会让阴影透出来形成一块灰色「背板」
@@ -1064,10 +1082,17 @@ class _CardShell extends StatefulWidget {
 }
 
 class _CardShellState extends State<_CardShell> {
-  /// 按住起点；非空表示正处于「已长按、等待松手判定」状态
+  /// 按住起点；非空表示正处于「已按下、等待松手判定」状态
   Offset? _downAt;
+
+  /// 是否已越过 [_slop]（拖动 / 点击判定用）
   bool _moved = false;
+
+  /// 长按提示是否已触发过（每轮按压只触发一次）
   bool _fired = false;
+
+  /// 已开始拖拽（由 [ReorderableListView] 的代理接管显示）
+  bool _dragging = false;
 
   /// 判定为「拖动」的最小位移（逻辑像素）
   static const double _slop = 8;
@@ -1076,7 +1101,18 @@ class _CardShellState extends State<_CardShell> {
     _downAt = e.position;
     _moved = false;
     _fired = false;
+    _dragging = false;
+    // 按下即缩到 90%，并保持到这个手指抬起
     widget.pressHandle.press();
+  }
+
+  @override
+  void dispose() {
+    // 兜底：页面被 push 覆盖/销毁时收不到 PointerUp，
+    // 必须主动释放，否则卡片会永久停在 90%，且该实例 _down 卡死
+    // 会让这一页后续的按压全部失效。
+    if (_downAt != null) widget.pressHandle.reset();
+    super.dispose();
   }
 
   void _onMove(PointerMoveEvent e) {
@@ -1091,7 +1127,10 @@ class _CardShellState extends State<_CardShell> {
   void _onUp(PointerUpEvent e) {
     final start = _downAt;
     _downAt = null;
-    widget.pressHandle.release();
+    // 先释放：让弹簧动画立即起跑。
+    // 之后 onRelease 可能弹菜单 / setState 重建卡片，那时再释放会更晚，
+    // 卡片会先保持 90% 一段时间才开始回弹。
+    _settle();
     if (start == null) return;
     widget.onRelease(_moved);
     if (mounted) setState(() => _moved = false);
@@ -1099,8 +1138,23 @@ class _CardShellState extends State<_CardShell> {
 
   void _onCancel(PointerCancelEvent e) {
     _downAt = null;
-    widget.pressHandle.release();
+    _dragging = false;
+    _settle();
     if (mounted) setState(() => _moved = false);
+  }
+
+  /// 松手统一出口：从 90% 走弹簧动画回到 100%
+  void _settle() {
+    final wasDragging = _dragging;
+    _dragging = false;
+    widget.pressHandle.release();
+    if (wasDragging && mounted) setState(() {});
+  }
+
+  /// 延迟拖拽真正开始（卡片被提到 Overlay 里跟着手指走）
+  void _onDragStart() {
+    if (!mounted) return;
+    setState(() => _dragging = true);
   }
 
   @override

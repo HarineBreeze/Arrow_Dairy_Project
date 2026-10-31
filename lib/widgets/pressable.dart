@@ -85,12 +85,36 @@ class Pressable extends StatefulWidget {
   State<Pressable> createState() => _PressableState();
 }
 
-/// 外部驱动 [Pressable] 的句柄
+/// 外部驱动 [Pressable] 的句柄。
+///
+/// 允许被多个 [Pressable] 绑定（同一张卡片在拖拽时会同时存在
+/// 列表项里的实例与 Overlay 里的浮层实例），但**只有最后绑定的那个**
+/// 响应命令；实例销毁时若绑定的正是自己，就把控制权交还给仍然存活的
+/// 前一个实例，避免「绑定方被销毁 → 句柄变成空指针 → 卡片永久停在按压态」。
 class PressableHandle {
-  _PressableState? _state;
+  final List<_PressableState> _stack = [];
 
-  void press() => _state?.press();
-  void release() => _state?.release();
+  _PressableState? get _target => _stack.isEmpty ? null : _stack.last;
+
+  void _bind(_PressableState s) {
+    _stack.remove(s);
+    _stack.add(s);
+  }
+
+  void _unbind(_PressableState s) {
+    _stack.remove(s);
+  }
+
+  void press() => _target?.press();
+  void release() => _target?.release();
+
+  /// 强制复位：无论当前是否处于按下态，都让所有绑定实例回到 100%。
+  /// 用于页面切换等「永远等不到 PointerUp」的场景。
+  void reset() {
+    for (final s in List<_PressableState>.from(_stack)) {
+      s.reset();
+    }
+  }
 }
 
 class _PressableState extends State<Pressable>
@@ -110,26 +134,45 @@ class _PressableState extends State<Pressable>
   @override
   void initState() {
     super.initState();
-    if (widget.external) widget.handle?._state = this;
+    if (widget.external) widget.handle?._bind(this);
+  }
+
+  @override
+  void didUpdateWidget(Pressable old) {
+    super.didUpdateWidget(old);
+    if (old.external && old.handle != widget.handle) {
+      old.handle?._unbind(this);
+    }
+    if (widget.external) {
+      // 幂等：重复 bind 会去重
+      widget.handle?._bind(this);
+    }
   }
 
   @override
   void dispose() {
-    if (widget.external && identical(widget.handle?._state, this)) {
-      widget.handle?._state = null;
-    }
+    if (widget.external) widget.handle?._unbind(this);
     _ctrl.dispose();
     super.dispose();
   }
 
+  /// 无条件回到 100%（不带动画），用于兜底复位
+  void reset() {
+    if (!_down && _ctrl.value == 0) return;
+    _down = false;
+    _ctrl.value = 0;
+  }
+
   void press() {
-    if (!widget.enabled || _down) return;
+    if (!widget.enabled) return;
+    // 不从「已按下」提前 return：拖拽时同一张卡片的浮层实例会重复收到
+    // press()，直接忽略会让它的 _down 与控制器状态脱节
     _down = true;
     _ctrl.animateTo(-1, duration: Pressable.kPressIn, curve: Curves.easeOut);
   }
 
   void release() {
-    if (!_down) return;
+    if (!_down && _ctrl.value == 0) return;
     _down = false;
     // 从 -1 回到 0：曲线中段超过 1，x = -1 + curve(t) 会短暂 > 0，
     // 即越过原尺寸一点点，形成回弹
