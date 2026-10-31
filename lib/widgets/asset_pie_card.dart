@@ -56,7 +56,12 @@ class OverviewStack extends StatefulWidget {
   static const double kDragThreshold = 80;
 
   /// 翻页动画时长
-  static const Duration kSettle = Duration(milliseconds: 380);
+  static const Duration kSettle = Duration(milliseconds: 320);
+
+  /// 翻页时顶层卡滑出的距离（相对卡宽的倍数）。
+  /// 不必滑到整屏 —— 配合淡出，滑出 78% 时已经「看不见了」，
+  /// 位移越短、动画越短，观感越干脆。
+  static const double kExitFraction = 0.78;
 
   /// 未达门槛时回弹的时长（比翻页短，避免「慢吞吞弹回去」）
   static const Duration kSnapBack = Duration(milliseconds: 240);
@@ -123,15 +128,20 @@ class OverviewStackState extends State<OverviewStack>
 
   double get _maxDrag => _width <= 0 ? 320 : _width.clamp(200.0, 900.0);
 
-  /// 轮盘高度 = 两张卡里较高的那张。
+  /// 翻页终点的位移：不必滑满一整卡宽
+  double get _exitDistance => _maxDrag * OverviewStack.kExitFraction;
+
+  /// 轮盘高度 = **当前顶层卡**的高度。
   ///
-  /// 卡片本身**不拉伸**（各自按内容高度绘制），所以高度切换时不会出现
-  /// 大片被撑开的空白；背面卡只在下面露出一条边。
-  /// 取 max 而不是「顶层卡高」是为了避免环形依赖：
-  /// 高度要先定下来，卡片才能被测量。
+  /// 用顶层卡而不是 max：另一张卡（比如饼图）更高时，也不会在下方
+  /// 留出一大片空白，整叠卡片始终紧贴下方内容。
+  /// 背面卡超出部分的绘制靠 `clipBehavior: Clip.none` 允许，露边只在缝隙里。
   double get _stackHeight {
     if (!widget.hasSecond) return _hA > 0 ? _hA : _fallbackHeight;
-    return math.max(_hA, _hB) > 0 ? math.max(_hA, _hB) : _fallbackHeight;
+    final top = _topIsSecond ? _hB : _hA;
+    if (top > 0) return top;
+    final other = _topIsSecond ? _hA : _hB;
+    return other > 0 ? other : _fallbackHeight;
   }
 
   /// 首帧还没有测量结果时的保底高度（净资产卡大约就这么高）
@@ -186,9 +196,11 @@ class OverviewStackState extends State<OverviewStack>
     }
   }
 
-  /// 翻页：位移推到整卡宽（滑出去），到终点再一次性换层并归零。
+  /// 翻页：位移推到 [_exitDistance]（配合淡出，已足够「滑出去」），
+  /// 到终点再一次性换层并归零。
   void _pageTo(int index) {
-    final target = _dx.value < 0 ? -_maxDrag : _maxDrag;
+    final target =
+        _dx.value < 0 ? -_exitDistance : _exitDistance;
     _animateTo(target, OverviewStack.kSettle, Curves.easeInOutCubic, () {
       // 终点：位移先归零，再在同一帧里固化新层级并换 index
       _dx.value = 0;
@@ -367,9 +379,20 @@ class _CardRole extends StatelessWidget {
       builder: (context, lv, card) {
         // 平时只画顶层那张；一旦开始拖动，背面那张也要上屏参与接位动画，
         // 否则会看到「一张空卡」升上来（上一版切不过去就是这个原因）。
+        //
+        // 用 Visibility 而不是 Offstage —— 这是「切换时闪白」的根因修复：
+        // · Offstage 会把整棵子树从布局/绘制里摘掉，再次上屏时要做一次
+        //   完整的布局 + 首次绘制（饼图的圆环、文字都要重新栅格化），
+        //   那一帧就是一道白；而且它同时会冻住饼图自己的渐显动画。
+        // · Visibility 只把绘制跳过（maintainSize 保留布局与测量），
+        //   子树、动画、图层都在，上屏时直接拿现成的缓存，不会闪。
         final visible = lv > 0.001 || peeking;
-        return Offstage(
-          offstage: !visible,
+        return Visibility(
+          visible: visible,
+          maintainState: true,
+          maintainAnimation: true,
+          maintainSize: true,
+          maintainSemantics: false,
           child: RepaintBoundary(
             child: ValueListenableBuilder<double>(
               valueListenable: dx,
@@ -392,14 +415,21 @@ class _CardRole extends StatelessWidget {
     final scale = onTop
         ? 1 - 0.04 * p
         : OverviewStack.kStackScale + (1 - OverviewStack.kStackScale) * p;
+    // 滑出去的那张同步淡出：拖到一半就开始变淡，收尾时早已「看不见」，
+    // 于是换层的瞬间不会出现「卡片突然消失 / 白底露出一块」的观感。
+    final fade = onTop ? (1 - 0.85 * p).clamp(0.15, 1.0) : 1.0;
+
     return Transform.translate(
       offset: Offset(shift, dy),
       child: _Measure(
         onHeight: onHeight,
-        child: Transform.scale(
-          scale: scale,
-          alignment: onTop ? Alignment.center : Alignment.topCenter,
-          child: card,
+        child: Opacity(
+          opacity: fade,
+          child: Transform.scale(
+            scale: scale,
+            alignment: onTop ? Alignment.center : Alignment.topCenter,
+            child: card,
+          ),
         ),
       ),
     );

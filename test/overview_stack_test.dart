@@ -39,6 +39,16 @@ Widget _card2(List<AssetSlice> slices) => AssetPieCard(
 /// 堆叠只在卡片外套了 `Transform.translate > Transform.scale`，
 /// 而 `Transform.scale` 只影响绘制、不改布局尺寸（[WidgetTester.getRect]
 /// 拿到的永远是未缩放的尺寸），所以缩放只能从变换矩阵里读。
+/// 某个 key 的卡片当前是否真的会被绘制（Visibility 可见性）
+bool _visible(WidgetTester tester, String key) {
+  final f = find.ancestor(
+    of: find.byKey(ValueKey(key), skipOffstage: false),
+    matching: find.byType(Visibility),
+  );
+  if (f.evaluate().isEmpty) return true;
+  return tester.widget<Visibility>(f.first).visible;
+}
+
 List<double> _ancestorScales(WidgetTester tester, String key) => tester
     .widgetList<Transform>(find.ancestor(
       of: find.byKey(ValueKey(key)),
@@ -85,11 +95,11 @@ void main() {
       )));
       await tester.pumpAndSettle();
 
-      // 第二张卡此刻被 Offstage 收起（不布局不绘制），只靠装饰露边表示存在：
-      // 必须在 onstage 判定里找不到它，否则等于白画一层昂贵的饼图
-      expect(find.byKey(const ValueKey('pie')), findsNothing,
-          reason: '非顶层卡片应离屏，不能参与布局与绘制');
-      expect(find.byKey(const ValueKey('card1')), findsOneWidget);
+      // 第二张卡此刻不可见（只靠装饰露边表示存在）。
+      // 注意：它仍在树上（maintainSize 保留布局），因此用可见性判定而不是 findsNothing
+      expect(_visible(tester, 'pie'), isFalse,
+          reason: '非顶层卡片不应被绘制');
+      expect(_visible(tester, 'card1'), isTrue);
 
       // 露边的确存在，且位置在顶层卡下方（错开 kStackOffset*2）
       final c1 = tester.getRect(find.byKey(const ValueKey('card1')));
@@ -125,10 +135,9 @@ void main() {
       await tester.pumpAndSettle();
 
       // 翻页后：卡 2 变成顶层（上屏、完整显示），卡 1 收起
-      expect(find.byKey(const ValueKey('pie')), findsOneWidget,
-          reason: '卡 2 应升到顶层');
-      expect(find.byKey(const ValueKey('card1')), findsNothing,
-          reason: '卡 1 应滑到最底部并离屏');
+      expect(_visible(tester, 'pie'), isTrue, reason: '卡 2 应升到顶层');
+      expect(_visible(tester, 'card1'), isFalse,
+          reason: '卡 1 应滑到最底部并隐藏');
 
       final c2 = tester.getRect(find.byKey(const ValueKey('pie')));
       expect(c2.left, closeTo(before.left, 1));
@@ -157,9 +166,9 @@ void main() {
       await tester.drag(
           find.byKey(const ValueKey('pie')), const Offset(260, 0));
       await tester.pumpAndSettle();
-      expect(find.byKey(const ValueKey('card1')), findsOneWidget,
+      expect(_visible(tester, 'card1'), isTrue,
           reason: '在饼图页右滑应切回数据看板');
-      expect(find.byKey(const ValueKey('pie')), findsNothing);
+      expect(_visible(tester, 'pie'), isFalse);
     });
 
     testWidgets('轮换可来回切换多次，状态不会错乱', (tester) async {
@@ -268,7 +277,45 @@ void main() {
       await tester.pumpAndSettle();
 
       // 翻页完成后，第二张卡在顶层
-      expect(find.byKey(const ValueKey('pie')), findsOneWidget);
+      expect(_visible(tester, 'pie'), isTrue);
+    });
+
+    testWidgets('翻页过程中背面卡始终铺满内容（不闪白）', (tester) async {
+      final slices = buildSlices([_a('银行储蓄', 1)]);
+      await tester.pumpWidget(_host(OverviewStack(
+        card1: _card1(),
+        card2: _card2(slices),
+      )));
+      await tester.pumpAndSettle();
+
+      // 一开始饼图不可见
+      expect(_visible(tester, 'pie'), isFalse);
+
+      final g = await tester.startGesture(
+          tester.getCenter(find.byKey(const ValueKey('card1'))));
+      var checked = 0;
+      for (var i = 0; i < 16; i++) {
+        await g.moveBy(const Offset(-14, 0));
+        await tester.pump(const Duration(milliseconds: 16));
+        // 手指一动，背面卡就必须整卡可见（内容随位移一起上浮），
+        // 不能是「空的卡升上来、换完层才画出内容」——那就是闪白
+        expect(_visible(tester, 'pie'), isTrue,
+            reason: '第 ${i + 1} 帧：拖动中背面卡应立即可见');
+        expect(find.text('资产细分'), findsOneWidget,
+            reason: '第 ${i + 1} 帧：背面卡内容必须已经铺好');
+        checked++;
+      }
+      expect(checked, 16);
+
+      // 松手后翻页，动画途中内容也不能消失
+      await g.up();
+      for (var i = 0; i < 25; i++) {
+        await tester.pump(const Duration(milliseconds: 16));
+        expect(find.text('资产细分'), findsOneWidget,
+            reason: '翻页动画第 ${i + 1} 帧内容不应消失');
+      }
+      await tester.pumpAndSettle();
+      expect(_visible(tester, 'pie'), isTrue);
     });
 
     testWidgets('没有正资产时不显示第二张卡', (tester) async {
@@ -278,8 +325,9 @@ void main() {
         card2: _card2(const []),
       )));
       await tester.pumpAndSettle();
-      expect(find.byKey(const ValueKey('pie')), findsNothing);
-      expect(find.byKey(const ValueKey('card1')), findsOneWidget);
+      // hasSecond=false 时不挂载第二张卡
+      expect(find.byKey(const ValueKey('pie'), skipOffstage: false), findsNothing);
+      expect(_visible(tester, 'card1'), isTrue);
     });
 
     testWidgets('饼图卡渲染各类型的占比文字', (tester) async {
