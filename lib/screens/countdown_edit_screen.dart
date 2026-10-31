@@ -307,92 +307,123 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
             ),
             const SizedBox(height: 16),
 
-            // —— 事件日：拆成「日期」与「具体时间」两个独立模块 ——
-            // 之前一行里塞了日期、时分和「正数/倒数」标记，信息太密；
-            // 现在分成三行：日期行 / 时间行 / 倒数性质标记，各自独立可点。
+            // —— 事件日：一行三块 ——
+            // 事件日期 : 具体时间 : 正数/倒数 = 2 : 2 : 1（= 五分之二 / 五分之二 / 五分之一）。
+            // 三块各自独立：前两块分别点开「日期滚轮」「时间滚轮」，
+            // 第三块只是状态提示（未来=倒数、过去=正数），不可点。
             _sectionLabel('事件日期'),
-            GestureDetector(
-              onTap: _pickDate,
-              behavior: HitTestBehavior.opaque,
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
-                decoration: _box(),
-                child: Row(
-                  children: [
-                    Icon(Icons.event_outlined,
-                        size: 18,
-                        color: _target == null
-                            ? const Color(0xFF9AA8BF)
-                            : const Color(0xFF3B6FE0)),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        _target == null ? '选择事件日期' : _dateLabel,
-                        style: TextStyle(
-                          fontSize: _target == null ? 13 : 15,
-                          color: _target == null
-                              ? const Color(0xFF9AA8BF)
-                              : const Color(0xFF2A3B52),
-                        ),
+            Row(
+              children: [
+                // 第 1 块：日期
+                Expanded(
+                  flex: 2,
+                  child: GestureDetector(
+                    onTap: _pickDate,
+                    behavior: HitTestBehavior.opaque,
+                    child: Container(
+                      height: 52,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: _box(),
+                      child: Row(
+                        children: [
+                          Icon(Icons.event_outlined,
+                              size: 17,
+                              color: _target == null
+                                  ? const Color(0xFF9AA8BF)
+                                  : const Color(0xFF3B6FE0)),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            // 列宽只有五分之二，日期文字必须压缩显示，
+                            // 否则「2030年5月1日」在窄屏会把图标挤出去
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                _target == null ? '选择日期' : _dateLabel,
+                                maxLines: 1,
+                                style: TextStyle(
+                                  fontSize: _target == null ? 13 : 14,
+                                  color: _target == null
+                                      ? const Color(0xFF9AA8BF)
+                                      : const Color(0xFF2A3B52),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const Icon(Icons.chevron_right,
-                        size: 18, color: Color(0xFFB4C0D2)),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 12),
+                const SizedBox(width: 8),
 
-            // 具体时间（单独一行，与日期互不影响）
-            _sectionLabel('具体时间'),
-            GestureDetector(
-              onTap: _pickTime,
-              behavior: HitTestBehavior.opaque,
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
-                decoration: _box(),
-                child: Row(
-                  children: [
-                    Icon(Icons.schedule_outlined,
-                        size: 18,
-                        color: _target == null
-                            ? const Color(0xFF9AA8BF)
-                            : const Color(0xFF3B6FE0)),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        _target == null ? '选择提醒时间' : _timeLabel,
-                        style: TextStyle(
-                          fontSize: _target == null ? 13 : 15,
-                          fontWeight: _target == null
-                              ? FontWeight.normal
-                              : FontWeight.w600,
-                          color: _target == null
-                              ? const Color(0xFF9AA8BF)
-                              : const Color(0xFF2A3B52),
-                        ),
+                // 第 2 块：具体时间
+                Expanded(
+                  flex: 2,
+                  child: GestureDetector(
+                    onTap: _pickTime,
+                    behavior: HitTestBehavior.opaque,
+                    child: Container(
+                      height: 52,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: _box(),
+                      child: Row(
+                        children: [
+                          Icon(Icons.schedule_outlined,
+                              size: 17,
+                              color: _target == null
+                                  ? const Color(0xFF9AA8BF)
+                                  : const Color(0xFF3B6FE0)),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                _target == null ? '选择时间' : _timeLabel,
+                                maxLines: 1,
+                                style: TextStyle(
+                                  fontSize: _target == null ? 13 : 14,
+                                  fontWeight: _target == null
+                                      ? FontWeight.normal
+                                      : FontWeight.w600,
+                                  color: _target == null
+                                      ? const Color(0xFF9AA8BF)
+                                      : const Color(0xFF2A3B52),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    // 独立的「正数 / 倒数」标记（仅作为状态提示，不可点）
-                    Container(
-                      width: 52,
-                      height: 26,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: _target == null
-                            ? const Color(0xFFF5F7FB)
-                            : (_isCountdown
-                                ? const Color(0xFFDCE7FF)
-                                : const Color(0xFFFDEEF3)),
-                        borderRadius: BorderRadius.circular(13),
-                      ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+
+                // 第 3 块：正数 / 倒数（状态提示，不可点）
+                Expanded(
+                  flex: 1,
+                  child: Container(
+                    height: 52,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: _target == null
+                          ? const Color(0xFFF5F7FB)
+                          : (_isCountdown
+                              ? const Color(0xFFDCE7FF)
+                              : const Color(0xFFFDEEF3)),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
                       child: Text(
                         _target == null
                             ? '--'
                             : (_isCountdown ? '倒数' : '正数'),
+                        maxLines: 1,
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: _target == null
                               ? const Color(0xFFB4C0D2)
@@ -402,17 +433,9 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                         ),
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Padding(
-              padding: EdgeInsets.only(left: 4),
-              child: Text(
-                '未来日期为倒数，过去日期为正数',
-                style: TextStyle(fontSize: 12, color: Color(0xFF9AA8BF)),
-              ),
+              ],
             ),
             const SizedBox(height: 16),
 

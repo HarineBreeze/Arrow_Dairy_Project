@@ -33,6 +33,14 @@ Directory _seed() {
 
 Widget _wrap(Widget child) => MaterialApp(home: child);
 
+/// 找到某个文本所在的那一块（三块布局里各自是一层 Container）
+Rect _rowBlock(WidgetTester tester, String text) {
+  final box = find
+      .ancestor(of: find.text(text), matching: find.byType(Container))
+      .first;
+  return tester.getRect(box);
+}
+
 /// 编辑页内容较长：把测试画布调高，保证「日期 / 时间」两行都在首屏内
 /// （默认 800x600 会让下面几行落在滚动区外）
 Future<void> _tall(WidgetTester tester) =>
@@ -70,8 +78,8 @@ void main() {
     });
   });
 
-  group('编辑页日期 / 时间拆成两个模块', () {
-    testWidgets('日期与时间各占一行、各自独立的弹层', (tester) async {
+  group('编辑页日期 / 时间 / 正数倒数：一行三块', () {
+    testWidgets('三块同高同行，宽度按 2 : 2 : 1 分配', (tester) async {
       _seed();
       final e = CountdownEvent(
         id: 'e2',
@@ -84,34 +92,64 @@ void main() {
       await tester.pumpWidget(_wrap(CountdownEditScreen(event: e)));
       await tester.pumpAndSettle();
 
-      // 两个独立分区标题
-      expect(find.text('事件日期'), findsOneWidget);
-      expect(find.text('具体时间'), findsOneWidget);
+      // 日期块 / 时间块 / 状态块都能在首屏找到
+      final dateR = _rowBlock(tester, '2030年5月1日');
+      final timeR = _rowBlock(tester, '09:30');
+      final tagR = _rowBlock(tester, '倒数');
 
-      // 日期行只显示年月日（不含时分），时间行单独显示时分
-      expect(find.textContaining('2030年5月1日'), findsOneWidget);
-      expect(find.text('09:30'), findsOneWidget);
+      // 1) 同一行：垂直中心一致、高度一致
+      expect((dateR.center.dy - timeR.center.dy).abs(), lessThan(1),
+          reason: '日期与时间必须在同一行');
+      expect((dateR.center.dy - tagR.center.dy).abs(), lessThan(1),
+          reason: '状态块必须与它们同行');
+      expect((dateR.height - tagR.height).abs(), lessThan(1),
+          reason: '三块应等高');
 
-      // 点日期 → 只弹三列日期滚轮
-      await tester.tap(find.textContaining('2030年5月1日'));
+      // 2) 从左到右排列
+      expect(dateR.right, lessThanOrEqualTo(timeR.left + 0.5));
+      expect(timeR.right, lessThanOrEqualTo(tagR.left + 0.5));
+
+      // 3) 宽度 2 : 2 : 1（允许 8px 间距带来的少量误差）
+      expect(dateR.width / tagR.width, closeTo(2.0, 0.08),
+          reason: '日期块应约为状态块的 2 倍宽，实际 ${dateR.width} vs ${tagR.width}');
+      expect(timeR.width / tagR.width, closeTo(2.0, 0.08),
+          reason: '时间块应约为状态块的 2 倍宽，实际 ${timeR.width} vs ${tagR.width}');
+      expect((dateR.width - timeR.width).abs(), lessThan(1),
+          reason: '日期块与时间块应等宽');
+
+      // 4) 两块加起来约占整行的五分之四
+      final total = dateR.width + timeR.width + tagR.width;
+      expect((dateR.width + timeR.width) / total, closeTo(0.8, 0.06));
+    });
+
+    testWidgets('点日期只弹三列、点时间只弹两列，各自独立', (tester) async {
+      _seed();
+      final e = CountdownEvent(
+        id: 'e4',
+        icon: '🎂',
+        name: '生日',
+        target: DateTime(2030, 5, 1, 9, 30),
+        type: '生日',
+      );
+      await _tall(tester);
+      await tester.pumpWidget(_wrap(CountdownEditScreen(event: e)));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('2030年5月1日'));
       await tester.pumpAndSettle();
       expect(find.text('选择日期'), findsOneWidget);
       expect(find.byType(CupertinoPicker), findsNWidgets(3));
       // 页面底部保存栏也有「取消」，这里要点弹层里的那个（最后一个）
       await tester.tap(find.text('取消').last);
       await tester.pumpAndSettle();
+      expect(find.text('09:30'), findsOneWidget, reason: '取消日期不应改动时间');
 
-      // 点时间 → 只弹两列时分滚轮
-      await tester.ensureVisible(find.text('09:30'));
-      await tester.pumpAndSettle();
       await tester.tap(find.text('09:30'));
       await tester.pumpAndSettle();
       expect(find.text('选择时间'), findsOneWidget);
       expect(find.byType(CupertinoPicker), findsNWidgets(2));
       await tester.tap(find.text('取消').last);
       await tester.pumpAndSettle();
-
-      // 取消不会改动原值
       expect(find.text('09:30'), findsOneWidget);
     });
 
@@ -133,13 +171,15 @@ void main() {
       expect(find.text('00:00'), findsNothing);
     });
 
-    testWidgets('没选过日期时两行都是占位文案', (tester) async {
+    testWidgets('没选过日期时三块都是占位文案', (tester) async {
       _seed();
       await _tall(tester);
       await tester.pumpWidget(_wrap(const CountdownEditScreen()));
       await tester.pumpAndSettle();
-      expect(find.text('选择事件日期'), findsOneWidget);
-      expect(find.text('选择提醒时间'), findsOneWidget);
+      // 三块都回到占位态
+      expect(find.text('选择日期'), findsOneWidget);
+      expect(find.text('选择时间'), findsOneWidget);
+      expect(find.text('--'), findsOneWidget);
     });
   });
 
