@@ -185,6 +185,16 @@ class OverviewStackState extends State<OverviewStack>
           child: Stack(
             clipBehavior: Clip.none,
             children: [
+              // —— 第三层：更小的一圈，增强「一叠卡」的层次 ——
+              // 必须最先绘制（Stack 越靠前越在底下），
+              // 否则这条灰边会盖在净资产卡上面
+              if (widget.hasSecond)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  top: 0,
+                  child: IgnorePointer(child: _buildGhost()),
+                ),
               // —— 背面（第二层）：默认只露出一条边 ——
               if (widget.hasSecond)
                 Positioned(
@@ -206,14 +216,6 @@ class OverviewStackState extends State<OverviewStack>
                 builder: (_, __) => _buildTop(topIsSecond),
                 child: topIsSecond ? widget.card2 : widget.card1,
               ),
-              // —— 第三层：更小的一圈，增强「一叠卡」的层次 ——
-              if (widget.hasSecond)
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  top: 0,
-                  child: IgnorePointer(child: _buildGhost()),
-                ),
             ],
           ),
         );

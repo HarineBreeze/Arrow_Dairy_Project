@@ -146,6 +146,29 @@ void main() {
       expect(after.top, closeTo(before.top, 1));
     });
 
+    testWidgets('第三层灰边必须画在顶层卡下面，不能盖住净资产卡', (tester) async {
+      final slices = buildSlices([_a('银行储蓄', 1)]);
+      await tester.pumpWidget(_host(OverviewStack(
+        card1: _card1(),
+        card2: _card2(slices),
+      )));
+      await tester.pumpAndSettle();
+
+      // Stack 越靠前的 child 越先绘制（越在底下）。
+      // 灰边是 Stack 的第一个 child；顶层卡（card1）必须在它之后绘制。
+      final stack = tester.widget<Stack>(find.byType(Stack).first);
+      expect(stack.children.first, isA<Positioned>(),
+          reason: '第三层灰边应排在 Stack 最前面（最先绘制，位于最底层）');
+      final ghostChild =
+          ((stack.children.first as Positioned).child as IgnorePointer).child!;
+      // 灰边内容是固定底色的装饰 Container，不含任何真实卡片
+      final comp = find.descendant(
+        of: find.byWidget(ghostChild),
+        matching: find.byKey(const ValueKey('card1')),
+      );
+      expect(comp, findsNothing, reason: '灰边层不应包含真实卡片内容');
+    });
+
     testWidgets('没有正资产时不显示第二张卡', (tester) async {
       await tester.pumpWidget(_host(OverviewStack(
         hasSecond: false,
