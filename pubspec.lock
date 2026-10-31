@@ -248,7 +248,7 @@ packages:
     source: hosted
     version: "2.1.10"
   path_provider_platform_interface:
-    dependency: transitive
+    dependency: "direct dev"
     description:
       name: path_provider_platform_interface
       url: "https://pub.dartlang.org"

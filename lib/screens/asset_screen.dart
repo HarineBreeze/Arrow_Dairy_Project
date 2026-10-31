@@ -479,18 +479,39 @@ class AssetScreenState extends State<AssetScreen> {
   }
 
   /// 拖拽时浮起的卡片：轻度放大 + 投影，避免和底下让位的卡片混在一起
+  /// 拖拽时浮起的卡片：轻微放大 + 紧凑投影，避免和底下让位的卡片混在一起。
+  ///
+  /// 注意阴影不能用大面积的彩色软晕（elevation 大 + 高透明度彩色）：
+  /// 浅色背景上会形成一个宽大的圆角「光晕框」，叠加正在位移的邻卡后，
+  /// 视觉上像「一张卡片嵌套着另一张卡片」（bug 反馈截图的来源）。
+  /// 这里改用范围克制的深色投影，让浮层明确读作「就是那张卡被拿起来了」。
   Widget _buildDragProxy(Widget child, int index, Animation<double> animation) {
+    // 列表项 = Padding(间距) + 卡片本体。投影必须只包卡片本体：
+    // 若连同透明间距一起投影，会透出一块灰色「背板」，
+    // 叠在位移中的邻卡上就像「一张卡嵌着另一张卡」。
+    final inner = child is Padding ? child.child! : child;
     return Material(
       color: Colors.transparent,
-      child: Transform.scale(
-        scale: 1.03,
-        child: PhysicalModel(
-          color: Colors.transparent,
-          elevation: 8,
-          shadowColor: const Color(0x553B6FE0),
-          borderRadius: BorderRadius.circular(14),
-          clipBehavior: Clip.antiAlias,
-          child: child,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Transform.scale(
+          scale: 1.03,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              // 细描边让浮层在被拖到白色邻卡上方时仍有一条清晰轮廓，
+              // 避免两张白卡叠在一起被误读为「嵌套」
+              border: Border.all(color: const Color(0x1F2A3B52)),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x262A3B52),
+                  blurRadius: 10,
+                  offset: Offset(0, 4),
+                ),
+              ],
+            ),
+            child: inner,
+          ),
         ),
       ),
     );
@@ -684,18 +705,25 @@ class AssetScreenState extends State<AssetScreen> {
                                 // key 必须挂在 ListView 的直接子项上。
                                 // 长按语义由 _CardShell 统一裁决：按住 → 松手判定菜单/排序
                                 final handle = PressableHandle();
-                                return _CardShell(
+                                // 卡片间距放在列表项外层（而非卡片内部 margin）：
+                                // 拖拽浮层的投影要紧贴卡片本体，透明的 margin
+                                // 区域会让阴影透出来形成一块灰色「背板」
+                                return Padding(
                                   key: ValueKey('asset-${a.id}'),
-                                  index: i,
-                                  held: _pendingId == a.id,
-                                  pressHandle: handle,
-                                  onHold: () => _onCardHold(a),
-                                  onRelease: (moved) =>
-                                      _onCardRelease(a, moved: moved),
-                                  builder: (held, moved) => _buildCard(a,
-                                      held: held,
-                                      moved: moved,
-                                      pressHandle: handle),
+                                  padding:
+                                      const EdgeInsets.only(bottom: 10),
+                                  child: _CardShell(
+                                    index: i,
+                                    held: _pendingId == a.id,
+                                    pressHandle: handle,
+                                    onHold: () => _onCardHold(a),
+                                    onRelease: (moved) =>
+                                        _onCardRelease(a, moved: moved),
+                                    builder: (held, moved) => _buildCard(a,
+                                        held: held,
+                                        moved: moved,
+                                        pressHandle: handle),
+                                  ),
                                 );
                               },
                             ),
@@ -933,9 +961,7 @@ class AssetScreenState extends State<AssetScreen> {
   /// 卡片主体（左侧色条 + 白卡）
   Widget _cardBody(Asset a, Color barColor) {
     final negative = a.amount < 0;
-    return Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        child: ClipRRect(
+    return ClipRRect(
           borderRadius: const BorderRadius.horizontal(
             left: Radius.circular(6),
             right: Radius.circular(14),
@@ -1002,7 +1028,6 @@ class AssetScreenState extends State<AssetScreen> {
             ),
           ),
         ),
-      ),
     );
   }
 }
