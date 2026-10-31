@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -27,10 +29,21 @@ class TrashScreenState extends State<TrashScreen> {
   /// 当前排序：删除时间倒序（新删的在上）
   bool _newestFirst = true;
 
+  /// 每分钟刷新一次：剩余天数跨天实时递减，到期项也会当场消失
+  /// （TrashStorage.load 会顺带清理过期项）
+  Timer? _ticker;
+
   @override
   void initState() {
     super.initState();
     _load();
+    _ticker = Timer.periodic(const Duration(minutes: 1), (_) => _load());
+  }
+
+  @override
+  void dispose() {
+    _ticker?.cancel();
+    super.dispose();
   }
 
   Future<void> _load() async {

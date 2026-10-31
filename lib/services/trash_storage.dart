@@ -119,9 +119,21 @@ class TrashStorage {
     try {
       final file = await _file();
       if (!await file.exists()) return [];
+      // 旧版本记录可能没有 deletedAt 字段：用文件修改时间兜底并回写固化。
+      // 否则 fromJson 里 tryParse 失败会回退成 DateTime.now()，
+      // 倒计时每次启动都重置回 7 天，永远不会递减。
+      final fallback = (await file.stat()).modified;
       final list = jsonDecode(await file.readAsString()) as List<dynamic>;
-      final entries =
-          list.map((e) => TrashEntry.fromJson(e as Map<String, dynamic>)).toList();
+      var changed = false;
+      final entries = list.map((e) {
+        final m = Map<String, dynamic>.from(e as Map);
+        if ((m['deletedAt'] as String?) == null) {
+          m['deletedAt'] = fallback.toIso8601String();
+          changed = true;
+        }
+        return TrashEntry.fromJson(m);
+      }).toList();
+      if (changed) await _write(entries);
       // 读取时顺带清理过期项（7 天到期即彻底消失）
       final alive = entries.where((e) => e.daysLeft > 0).toList();
       if (alive.length != entries.length) {
