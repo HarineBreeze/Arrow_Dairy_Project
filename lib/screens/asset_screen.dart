@@ -516,14 +516,13 @@ class AssetScreenState extends State<AssetScreen> {
           child: DecoratedBox(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14),
-              // 细描边让浮层在被拖到白色邻卡上方时仍有一条清晰轮廓，
-              // 避免两张白卡叠在一起被误读为「嵌套」
-              border: Border.all(color: const Color(0x1F2A3B52)),
+              // 不加描边：仅靠少量阴影给出「浮起」层次，
+              // 避免深色边框在浅色背景上被读成「黑框」
               boxShadow: const [
                 BoxShadow(
-                  color: Color(0x262A3B52),
-                  blurRadius: 10,
-                  offset: Offset(0, 4),
+                  color: Color(0x1A2A3B52),
+                  blurRadius: 6,
+                  offset: Offset(0, 2),
                 ),
               ],
             ),
