@@ -9,6 +9,7 @@ import '../widgets/loading_skeleton.dart';
 import 'asset_edit_screen.dart';
 import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
+import '../widgets/asset_pie_card.dart';
 
 /// 资产全景主页。默认无需密码即可查看；
 /// 开启「加密访问」后，进入本页需先输入密码解锁。
@@ -539,7 +540,7 @@ class AssetScreenState extends State<AssetScreen> {
   void _onReorder(int oldIndex, int newIndex) {
     // 看板（第 0 项）不参与排序
     if (oldIndex == 0) return;
-    if (newIndex == 0) return; // 不允许拖到看板之前
+    if (newIndex <= 1) return; // 不允许把卡片拖到看板之前
 
     final list = _filtered;
     final from = oldIndex - 1;
@@ -706,15 +707,15 @@ class AssetScreenState extends State<AssetScreen> {
                               onReorder: _onReorder,
                               itemBuilder: (context, i) {
                                 if (i == 0) {
-                                  // 第 0 项是数据看板：key 用非整数的 ValueKey('overview')，
-                                  // 它排在全部下标 x.5 之前，因此与排序计算天然不冲突
-                                  return Column(
-                                    key: const ValueKey('asset-overview'),
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      _buildOverview(),
-                                      const SizedBox(height: 14),
-                                    ],
+                                  // 第 0 项是数据看板。
+                                  // 必须自带 key：看板内部（饼图卡）可能会改变自身高度，
+                                  // 若让 ReorderableListView 自动包一层 KeyedSubtree，
+                                  // 高度一变父级就重建、key 重算，会触发
+                                  // 「Every item of ReorderableListView must have a key」。
+                                  return Padding(
+                                    key: const ValueKey('__overview__'),
+                                    padding: const EdgeInsets.only(bottom: 2),
+                                    child: _buildOverview(),
                                   );
                                 }
                                 final a = _filtered[i - 1];
@@ -788,6 +789,23 @@ class AssetScreenState extends State<AssetScreen> {
   // ---------- 总览卡片 ----------
 
   Widget _buildOverview() {
+    final slices = buildSlices(_assets);
+    return OverviewStack(
+      hasSecond: slices.isNotEmpty,
+      card1: _buildNetWorthCard(),
+      card2: AssetPieCard(
+        slices: slices,
+        hideNumbers: _hideNumbers,
+        money: _money,
+        onTapType: (type) {
+          // 点图例 = 按该类型筛列表
+          setState(() => _typeFilter = type);
+        },
+      ),
+    );
+  }
+
+  Widget _buildNetWorthCard() {
     final net = _netWorth;
     return Container(
       padding: const EdgeInsets.all(18),
