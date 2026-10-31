@@ -151,6 +151,7 @@ Future<DateTime?> showWheelDatePicker(
   required DateTime initial,
   DateTime? minimum,
   DateTime? maximum,
+  String title = '选择日期',
 }) {
   return showModalBottomSheet<DateTime>(
     context: context,
@@ -162,6 +163,7 @@ Future<DateTime?> showWheelDatePicker(
       initial: initial,
       minimum: minimum ?? DateTime(2000),
       maximum: maximum ?? DateTime(2100),
+      title: title,
     ),
   );
 }
@@ -170,11 +172,13 @@ class _DateWheelSheet extends StatefulWidget {
   final DateTime initial;
   final DateTime minimum;
   final DateTime maximum;
+  final String title;
 
   const _DateWheelSheet({
     required this.initial,
     required this.minimum,
     required this.maximum,
+    this.title = '选择日期',
   });
 
   @override
@@ -229,7 +233,7 @@ class _DateWheelSheetState extends State<_DateWheelSheet> {
         mainAxisSize: MainAxisSize.min,
         children: [
           _SheetHeader(
-            title: '选择日期',
+            title: widget.title,
             onConfirm: () {
               if (_outOfRange(_year, _month, _day)) return;
               Navigator.pop(context, DateTime(_year, _month, _day));
@@ -334,6 +338,7 @@ class _InlineTimeWheelState extends State<_InlineTimeWheel> {
 Future<TimeOfDay?> showWheelTimePicker(
   BuildContext context, {
   required TimeOfDay initial,
+  String title = '选择时间',
 }) {
   var hour = initial.hour;
   var minute = initial.minute;
@@ -344,7 +349,7 @@ Future<TimeOfDay?> showWheelTimePicker(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
     builder: (ctx) => _WheelSheet(
-      title: '选择时间',
+      title: title,
       child: SizedBox(
         height: kWheelHeight,
         child: _InlineTimeWheel(
@@ -361,141 +366,39 @@ Future<TimeOfDay?> showWheelTimePicker(
   );
 }
 
-/// 滚轮日期 + 时间选择器（用于倒数日等需要精确到分钟的场景）。
+/// 滚轮日期 + 时间选择器（用于事件等需要精确到分钟的场景）。
 ///
-/// 上下两段：上段「年 / 月 / 日」，下段「时 / 分」，两段都是同一套
-/// [WheelColumn] 样式，不再混用 CupertinoTimerPicker 的大字转盘。
+/// **分两步**：先弹出「选择日期」（年 / 月 / 日），确定后再弹出「选择时间」
+/// （时 / 分）。之前把两段滚轮塞在同一个弹层里，四列加两块内容挤在一起
+/// 显得很杂，也容易误触到另一段；拆开之后每次只专注一件事，
+/// 而且中途取消时间选择也不会丢掉已经选好的日期。
+///
+/// 返回：两步都确认 → 完整日期时间；日期那一步取消 → null。
 Future<DateTime?> showWheelDateTimePicker(
   BuildContext context, {
   required DateTime initial,
+  String dateTitle = '选择日期',
+  String timeTitle = '选择时间',
   DateTime? minimum,
   DateTime? maximum,
-}) {
-  return showModalBottomSheet<DateTime>(
-    context: context,
-    backgroundColor: Colors.white,
-    isScrollControlled: true,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
-    builder: (ctx) => _DateTimeSheet(
-      initial: initial,
-      minimum: minimum,
-      maximum: maximum,
-    ),
+}) async {
+  final date = await showWheelDatePicker(
+    context,
+    initial: initial,
+    minimum: minimum,
+    maximum: maximum,
+    title: dateTitle,
   );
-}
+  if (date == null) return null;
 
-class _DateTimeSheet extends StatefulWidget {
-  final DateTime initial;
-  final DateTime? minimum;
-  final DateTime? maximum;
-
-  const _DateTimeSheet({
-    required this.initial,
-    required this.minimum,
-    required this.maximum,
-  });
-
-  @override
-  State<_DateTimeSheet> createState() => _DateTimeSheetState();
-}
-
-class _DateTimeSheetState extends State<_DateTimeSheet> {
-  final GlobalKey<WheelColumnState> _dayKey = GlobalKey();
-
-  late int _year = widget.initial.year;
-  late int _month = widget.initial.month;
-  late int _day = widget.initial.day;
-  late int _hour = widget.initial.hour;
-  late int _minute = widget.initial.minute;
-
-  static int _daysIn(int y, int m) => DateTime(y, m + 1, 0).day;
-
-  int get _minYear => (widget.minimum ?? DateTime(2000)).year;
-  int get _maxYear => (widget.maximum ?? DateTime(2100)).year;
-
-  void _clampDay() {
-    final maxDay = _daysIn(_year, _month);
-    if (_day > maxDay) {
-      _day = maxDay;
-      _dayKey.currentState?.jumpTo(_day - 1);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final days = _daysIn(_year, _month);
-    return SafeArea(
-      top: false,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _SheetHeader(
-            title: '选择事件日',
-            onConfirm: () =>
-                Navigator.pop(context, DateTime(_year, _month, _day, _hour, _minute)),
-          ),
-          // —— 第一块：日期 ——
-          SizedBox(
-            height: kWheelHeight,
-            child: Row(
-              children: [
-                Expanded(
-                  child: WheelColumn(
-                    items: [for (var y = _minYear; y <= _maxYear; y++) y],
-                    initialIndex: _year - _minYear,
-                    unit: '年',
-                    onSelected: (v) {
-                      setState(() => _year = v);
-                      _clampDay();
-                    },
-                  ),
-                ),
-                Expanded(
-                  child: WheelColumn(
-                    items: const [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-                    initialIndex: _month - 1,
-                    unit: '月',
-                    onSelected: (v) {
-                      setState(() => _month = v);
-                      _clampDay();
-                    },
-                  ),
-                ),
-                Expanded(
-                  child: WheelColumn(
-                    key: _dayKey,
-                    items: [for (var d = 1; d <= days; d++) d],
-                    initialIndex: (_day - 1).clamp(0, days - 1),
-                    unit: '日',
-                    onSelected: (v) => setState(() => _day = v),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // —— 分隔：两块视觉上独立 ——
-          const Divider(height: 1, color: Color(0xFFEEF1F6)),
-          // —— 第二块：时间 ——
-          SizedBox(
-            height: kWheelHeight,
-            child: _InlineTimeWheel(
-              initialHour: _hour,
-              initialMinute: _minute,
-              onChanged: (h, m) {
-                setState(() {
-                  _hour = h;
-                  _minute = m;
-                });
-              },
-            ),
-          ),
-          const SizedBox(height: 8),
-        ],
-      ),
-    );
-  }
+  final time = await showWheelTimePicker(
+    context,
+    initial: TimeOfDay(hour: initial.hour, minute: initial.minute),
+    title: timeTitle,
+  );
+  // 时间那一步取消 = 默认沿用原来的时分，日期仍然保留（不白选一次）
+  final km = time ?? TimeOfDay(hour: initial.hour, minute: initial.minute);
+  return DateTime(date.year, date.month, date.day, km.hour, km.minute);
 }
 
 /// 底部弹层骨架：标题 + 滚轮 + 取消/确定。

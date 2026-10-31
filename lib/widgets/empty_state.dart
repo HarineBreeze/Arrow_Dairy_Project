@@ -3,7 +3,7 @@ import '../widgets/pressable.dart';
 
 /// 全局统一的空状态引导组件。
 ///
-/// 所有主页（写日记 / 物资清单 / 倒数日 / 资产全景）在「一条数据都没有」或
+/// 所有主页（写日记 / 物品清单 / 事件 / 资产全景）在「一条数据都没有」或
 /// 「筛选后无结果」时都用 [EmptyState]，后续新增主页直接复用，无需再各写一套。
 ///
 /// 视觉规范：
@@ -18,7 +18,7 @@ class EmptyState extends StatelessWidget {
   /// 图标（emoji 或字符）
   final String icon;
 
-  /// 主文案，如「还没有倒数日」
+  /// 主文案，如「还没有事件」
   final String title;
 
   /// 副文案，如「点右下角 + 添加第一个」

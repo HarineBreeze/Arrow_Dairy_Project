@@ -455,6 +455,16 @@ class ItemListScreenState extends State<ItemListScreen> {
             icon: const Icon(Icons.menu, color: Colors.white),
             onPressed: widget.onOpenMenu,
           ),
+          // 页面标题：与资产全景主页顶栏一致（菜单键右侧、白色 17 号加粗）
+          if (!_searching)
+            const Padding(
+              padding: EdgeInsets.only(right: 8),
+              child: Text('物品清单',
+                  style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white)),
+            ),
           Expanded(
             child: _searching
                 ? Container(

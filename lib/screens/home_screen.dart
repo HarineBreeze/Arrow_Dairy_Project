@@ -86,7 +86,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _initCountdown();
   }
 
-  /// 倒数日：同步系统提醒 + 当天到期则弹出一次 App 内横幅
+  /// 事件：同步系统提醒 + 当天到期则弹出一次 App 内横幅
   /// 同一事件同一天只弹一次（打开多少次 App 都不重复），记录见 CountdownBannerLog
   Future<void> _initCountdown() async {
     final list = await CountdownStorage.load();
@@ -636,7 +636,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       }
     }
     if (_currentTab == 'countdown') {
-      // 倒数日子页：日历展开/搜索激活时，返回先收起日历/退出搜索
+      // 事件子页：日历展开/搜索激活时，返回先收起日历/退出搜索
       final cd = _countdownKey.currentState;
       if (cd != null && cd.handleBack()) return false;
     }
@@ -983,7 +983,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  /// 横幅点击 → 切到倒数日主页并打开对应事件编辑页
+  /// 横幅点击 → 切到事件主页并打开对应事件编辑页
   Future<void> _openCountdownById(String id) async {
     if (_currentTab != 'countdown') _switchTab('countdown');
     await Future.delayed(const Duration(milliseconds: 320));

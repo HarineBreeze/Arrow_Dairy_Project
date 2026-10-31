@@ -11,7 +11,7 @@ import 'countdown_edit_screen.dart';
 import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
 
-/// 倒数日主页：顶栏（年月 + 搜索 + 筛选）、日历视图、
+/// 事件主页：顶栏（年月 + 搜索 + 筛选）、日历视图、
 /// 置顶组 / 纪念日 / 资产日 三个可折叠分组的长条卡片列表。
 class CountdownScreen extends StatefulWidget {
   final VoidCallback? onOpenMenu;
@@ -225,7 +225,7 @@ class CountdownScreenState extends State<CountdownScreen> {
                   builder: (c) => AlertDialog(
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16)),
-                    title: const Text('删除这个倒数日?'),
+                    title: const Text('删除这个事件?'),
                     content: const Text('删除后可在「回收站」保留 7 天，期间可还原'),
                     actions: [
                       Pressable(
@@ -415,7 +415,7 @@ class CountdownScreenState extends State<CountdownScreen> {
                           children: [
                             EmptyState(
                               icon: '⏳',
-                              title: _searching ? '没有匹配的倒数日' : '还没有倒数日',
+                              title: _searching ? '没有匹配的事件' : '还没有事件',
                               subtitle: _searching ? '换个关键词试试' : '点右下角 + 添加第一个',
                             ),
                           ],
@@ -647,7 +647,7 @@ class CountdownScreenState extends State<CountdownScreen> {
               style: const TextStyle(fontSize: 15, color: Color(0xFF2A3B52)),
               textAlignVertical: TextAlignVertical.center,
               decoration: InputDecoration(
-                hintText: '搜索倒数日名称…',
+                hintText: '搜索事件名称…',
                 hintStyle: const TextStyle(color: Color(0xFF9AA8BF)),
                 prefixIcon: const Icon(Icons.search,
                     size: 18, color: Color(0xFF9AA8BF)),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/countdown_event.dart';
 
-/// 当天有倒数日到期时，在任意主页顶部滑出的一次性横幅。
+/// 当天有事件到期时，在任意主页顶部滑出的一次性横幅。
 /// 动画：从屏幕上方平滑滑出，停在距顶部约 1/10 屏高处。
 /// 交互：上滑关闭、点击进入该事件编辑页。
 class CountdownBannerHost extends StatefulWidget {

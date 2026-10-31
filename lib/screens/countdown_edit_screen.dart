@@ -9,7 +9,7 @@ import '../widgets/save_done_button.dart';
 import '../widgets/save_bar.dart';
 import '../widgets/wheel_picker.dart';
 
-/// 新增 / 编辑倒数日。
+/// 新增 / 编辑事件。
 class CountdownEditScreen extends StatefulWidget {
   final CountdownEvent? event; // null = 新增
   const CountdownEditScreen({Key? key, this.event}) : super(key: key);
@@ -120,7 +120,9 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
     final e = widget.event;
     _nameCtrl = TextEditingController(text: e?.name ?? '');
     _noteCtrl = TextEditingController(text: e?.note ?? '');
-    _target = e?.target == null ? null : CountdownEvent.dateOnly(e!.target);
+    // 保留已有的时分：日期与时间现在是两个独立模块，
+    // 若这里只用 dateOnly 会把已设的提醒时间清零（时间行永远显示 00:00）
+    _target = e?.target;
     _type = e?.type ?? '纪念日';
     _repeat = e?.repeat ?? RepeatRule.none;
     _remindBeforeDays = e?.remindBeforeDays ?? 0;
@@ -147,7 +149,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('删除这个倒数日?'),
+        title: const Text('删除这个事件?'),
         content: const Text('删除后可在「回收站」保留 7 天，期间可还原'),
         actions: [
           Pressable(
@@ -174,20 +176,49 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
     }
   }
 
-  /// 日历选日：支持左右滑动翻页
+  /// 选日期：只弹「年 / 月 / 日」滚轮
   Future<void> _pickDate() async {
     Haptics.light();
-    final picked = await showWheelDateTimePicker(
-        context, initial: _target ?? DateTime.now());
-    if (picked != null && mounted) setState(() => _target = picked);
+    final base = _target ?? DateTime.now();
+    final picked = await showWheelDatePicker(
+      context,
+      initial: base,
+      title: '选择日期',
+    );
+    if (picked == null || !mounted) return;
+    // 只改年月日，时分沿用已选值（没选过就补当前时间）
+    setState(() => _target = DateTime(picked.year, picked.month, picked.day,
+        base.hour, base.minute));
   }
 
-  String get _dateTimeLabel {
+  /// 选具体时间：只弹「时 / 分」滚轮
+  Future<void> _pickTime() async {
+    Haptics.light();
+    final base = _target ?? DateTime.now();
+    final picked = await showWheelTimePicker(
+      context,
+      initial: TimeOfDay(hour: base.hour, minute: base.minute),
+      title: '选择时间',
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _target = DateTime(
+        base.year, base.month, base.day, picked.hour, picked.minute));
+  }
+
+  /// 日期部分的展示文案（不含时分）
+  String get _dateLabel {
+    if (_target == null) return '';
+    final t = _target!;
+    return '${t.year}年${t.month}月${t.day}日';
+  }
+
+  /// 时间部分的展示文案（24 小时制补零）
+  String get _timeLabel {
     if (_target == null) return '';
     final t = _target!;
     final hh = t.hour.toString().padLeft(2, '0');
     final mm = t.minute.toString().padLeft(2, '0');
-    return '${t.year}年${t.month}月${t.day}日  $hh:$mm';
+    return '$hh:$mm';
   }
 
   /// 事件日在未来 → 倒数；在过去 → 正数
@@ -205,7 +236,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        title: Text(widget.event == null ? '新增倒数日' : '编辑倒数日'),
+        title: Text(widget.event == null ? '新增事件' : '编辑事件'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           tooltip: '返回',
@@ -223,7 +254,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 图标：一排 7 个 + 「...」
-            _sectionLabel('倒数日图标'),
+            _sectionLabel('事件图标'),
             Container(
               padding: const EdgeInsets.all(14),
               decoration: _box(),
@@ -276,71 +307,111 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
             ),
             const SizedBox(height: 16),
 
-            // 事件日：左侧日期输入框 + 右侧「正数/倒数」标记框（同一行、各自独立）
-            _sectionLabel('事件日'),
-            // IntrinsicHeight：让两框等高，又不受滚动视图无界高度影响
-            IntrinsicHeight(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: _pickDate,
-                      child: Container(
-                        padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
-                        decoration: _box(),
-                        child: Row(
-                          children: [
-                            Icon(Icons.event_outlined,
-                                size: 18,
-                                color: _target == null
-                                    ? const Color(0xFF9AA8BF)
-                                    : const Color(0xFF3B6FE0)),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                _target == null
-                                    ? '选择未来日倒数，过去日正数'
-                                    : _dateTimeLabel,
-                                style: TextStyle(
-                                  fontSize: _target == null ? 13 : 15,
-                                  color: _target == null
-                                      ? const Color(0xFF9AA8BF)
-                                      : const Color(0xFF2A3B52),
-                                ),
-                              ),
-                            ),
-                          ],
+            // —— 事件日：拆成「日期」与「具体时间」两个独立模块 ——
+            // 之前一行里塞了日期、时分和「正数/倒数」标记，信息太密；
+            // 现在分成三行：日期行 / 时间行 / 倒数性质标记，各自独立可点。
+            _sectionLabel('事件日期'),
+            GestureDetector(
+              onTap: _pickDate,
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
+                decoration: _box(),
+                child: Row(
+                  children: [
+                    Icon(Icons.event_outlined,
+                        size: 18,
+                        color: _target == null
+                            ? const Color(0xFF9AA8BF)
+                            : const Color(0xFF3B6FE0)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _target == null ? '选择事件日期' : _dateLabel,
+                        style: TextStyle(
+                          fontSize: _target == null ? 13 : 15,
+                          color: _target == null
+                              ? const Color(0xFF9AA8BF)
+                              : const Color(0xFF2A3B52),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  // 独立的「正数 / 倒数」标记框（两字宽）
-                  Container(
-                    width: 52,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: _target == null
-                          ? const Color(0xFFF5F7FB)
-                          : (_isCountdown
-                              ? const Color(0xFFDCE7FF)
-                              : const Color(0xFFFDEEF3)),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      _target == null ? '--' : (_isCountdown ? '倒数' : '正数'),
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
+                    const Icon(Icons.chevron_right,
+                        size: 18, color: Color(0xFFB4C0D2)),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // 具体时间（单独一行，与日期互不影响）
+            _sectionLabel('具体时间'),
+            GestureDetector(
+              onTap: _pickTime,
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
+                decoration: _box(),
+                child: Row(
+                  children: [
+                    Icon(Icons.schedule_outlined,
+                        size: 18,
                         color: _target == null
-                            ? const Color(0xFFB4C0D2)
-                            : (_isCountdown
-                                ? const Color(0xFF3B6FE0)
-                                : const Color(0xFFD9738F)),
+                            ? const Color(0xFF9AA8BF)
+                            : const Color(0xFF3B6FE0)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _target == null ? '选择提醒时间' : _timeLabel,
+                        style: TextStyle(
+                          fontSize: _target == null ? 13 : 15,
+                          fontWeight: _target == null
+                              ? FontWeight.normal
+                              : FontWeight.w600,
+                          color: _target == null
+                              ? const Color(0xFF9AA8BF)
+                              : const Color(0xFF2A3B52),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                    // 独立的「正数 / 倒数」标记（仅作为状态提示，不可点）
+                    Container(
+                      width: 52,
+                      height: 26,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: _target == null
+                            ? const Color(0xFFF5F7FB)
+                            : (_isCountdown
+                                ? const Color(0xFFDCE7FF)
+                                : const Color(0xFFFDEEF3)),
+                        borderRadius: BorderRadius.circular(13),
+                      ),
+                      child: Text(
+                        _target == null
+                            ? '--'
+                            : (_isCountdown ? '倒数' : '正数'),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: _target == null
+                              ? const Color(0xFFB4C0D2)
+                              : (_isCountdown
+                                  ? const Color(0xFF3B6FE0)
+                                  : const Color(0xFFD9738F)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Padding(
+              padding: EdgeInsets.only(left: 4),
+              child: Text(
+                '未来日期为倒数，过去日期为正数',
+                style: TextStyle(fontSize: 12, color: Color(0xFF9AA8BF)),
               ),
             ),
             const SizedBox(height: 16),

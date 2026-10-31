@@ -114,7 +114,8 @@ void main() {
     expect(result!.minute, 30);
   });
 
-  testWidgets('滚轮日期+时间：上段日期、下段时间，均为中文滚轮', (tester) async {
+  testWidgets('滚轮日期+时间：拆成「先日期、后时间」两步，不在同一页堆五列',
+      (tester) async {
     DateTime? result;
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -135,16 +136,94 @@ void main() {
     await tester.tap(find.text('打开'));
     await tester.pumpAndSettle();
 
-    // 五列：年月日 + 时分；两段滚轮样式一致
-    expect(find.byType(CupertinoPicker), findsNWidgets(5));
+    // —— 第一步：只有日期三列，时分不出现在同一页 ——
+    expect(find.text('选择日期'), findsOneWidget);
+    expect(find.byType(CupertinoPicker), findsNWidgets(3));
+    expect(find.text('时', skipOffstage: false), findsNothing);
+    expect(find.text('分', skipOffstage: false), findsNothing);
     expect(find.byType(CupertinoDatePicker), findsNothing);
     expect(find.byType(CupertinoTimerPicker), findsNothing);
-    for (final unit in ['年', '月', '日', '时', '分']) {
-      expect(find.text(unit, skipOffstage: false), findsWidgets);
-    }
 
     await tester.tap(find.text('确定'));
     await tester.pumpAndSettle();
+
+    // —— 第二步：只剩时间两列 ——
+    expect(find.text('选择时间'), findsOneWidget);
+    expect(find.byType(CupertinoPicker), findsNWidgets(2));
+    expect(find.text('时', skipOffstage: false), findsWidgets);
+    expect(find.text('分', skipOffstage: false), findsWidgets);
+
+    await tester.tap(find.text('确定'));
+    await tester.pumpAndSettle();
+
+    expect(result, isNotNull);
+    expect(result!.year, 2025);
+    expect(result!.month, 1);
+    expect(result!.day, 8);
+    expect(result!.hour, 14);
+    expect(result!.minute, 30);
+  });
+
+  testWidgets('日期那一步取消：整体返回 null，不进入时间选择', (tester) async {
+    DateTime? result;
+    var called = false;
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: Builder(
+          builder: (context) => Center(
+            child: ElevatedButton(
+              onPressed: () async {
+                called = true;
+                result = await showWheelDateTimePicker(context,
+                    initial: DateTime(2025, 1, 8, 14, 30));
+              },
+              child: const Text('打开'),
+            ),
+          ),
+        ),
+      ),
+    ));
+
+    await tester.tap(find.text('打开'));
+    await tester.pumpAndSettle();
+    expect(find.text('选择日期'), findsOneWidget);
+
+    await tester.tap(find.text('取消'));
+    await tester.pumpAndSettle();
+
+    expect(called, isTrue);
+    expect(result, isNull);
+    // 时间那一步没有被弹出
+    expect(find.text('选择时间'), findsNothing);
+  });
+
+  testWidgets('时间那一步取消：保留已选日期，时分沿用原值', (tester) async {
+    DateTime? result;
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: Builder(
+          builder: (context) => Center(
+            child: ElevatedButton(
+              onPressed: () async {
+                result = await showWheelDateTimePicker(context,
+                    initial: DateTime(2025, 1, 8, 14, 30));
+              },
+              child: const Text('打开'),
+            ),
+          ),
+        ),
+      ),
+    ));
+
+    await tester.tap(find.text('打开'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('确定')); // 确认日期
+    await tester.pumpAndSettle();
+    expect(find.text('选择时间'), findsOneWidget);
+
+    await tester.tap(find.text('取消')); // 取消时间
+    await tester.pumpAndSettle();
+
     expect(result, isNotNull);
     expect(result!.year, 2025);
     expect(result!.month, 1);

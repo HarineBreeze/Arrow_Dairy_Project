@@ -19,7 +19,7 @@ class BackupData {
   final List<Item> items;
   final UserProfile profile;
   final List<Asset> assets; // 资产全景（v2 备份起包含）
-  final List<CountdownEvent> countdowns; // 倒数日（v3 备份起包含）
+  final List<CountdownEvent> countdowns; // 事件（v3 备份起包含）
   final String? fontFamilyId; // 笔记字体设置（v2 备份起包含）
 
   BackupData({
@@ -133,7 +133,7 @@ class BackupService {
         } catch (_) {}
       }
     }
-    // 倒数日（v3 备份起包含；旧备份为空）
+    // 事件（v3 备份起包含；旧备份为空）
     final countdowns = <CountdownEvent>[];
     if (decoded['countdowns'] is List) {
       for (final e in decoded['countdowns'] as List) {
@@ -182,7 +182,7 @@ class BackupService {
   }
 
   /// 把备份数据「增添合并」进本地存储（保留本地已有内容）：
-  /// - id 相同：日记有 updatedAt，取更新的一方；物品 / 资产 / 倒数日没有
+  /// - id 相同：日记有 updatedAt，取更新的一方；物品 / 资产 / 事件没有
   ///   时间戳，一律保留本地（本地才是用户正在维护的数据）；
   /// - id 不同：直接追加；
   /// - 个人信息、字体设置：保留本地，合并不改变当前使用中的外观。
@@ -230,7 +230,7 @@ class BackupService {
     }
     await AssetStorage.save(localAssets);
 
-    // 倒数日：无时间戳，同 id 保留本地
+    // 事件：无时间戳，同 id 保留本地
     final localCountdowns = await CountdownStorage.load();
     final countdownIds = localCountdowns.map((e) => e.id).toSet();
     for (final e in incoming.countdowns) {

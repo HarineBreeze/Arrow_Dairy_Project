@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import '../models/countdown_event.dart';
 
-/// 倒数日存储（纯本地 JSON）。
+/// 事件存储（纯本地 JSON）。
 class CountdownStorage {
   static Future<File> _file() async {
     final dir = await getApplicationDocumentsDirectory();

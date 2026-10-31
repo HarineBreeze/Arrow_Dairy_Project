@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import '../models/countdown_event.dart';
 
-/// 倒数日提醒：注册系统精确闹钟（Android 原生通道）。
+/// 事件提醒：注册系统精确闹钟（Android 原生通道）。
 /// 到目的日当天上午 9:00 弹通知；循环事件同时注册明年同日。
 class CountdownReminder {
   static const MethodChannel _ch = MethodChannel('vector_diary/countdown');
