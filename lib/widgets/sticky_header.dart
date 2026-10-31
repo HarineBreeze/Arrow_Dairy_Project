@@ -2,14 +2,21 @@ import 'package:flutter/material.dart';
 
 /// 列表中的一次「段头」声明：吸附时显示 [builder]，列表内正常位置也显示它。
 class StickySection {
-  /// 段头视觉高度（含内边距）。吸附层与列表里都用同一个高度，
-  /// 否则顶替瞬间会跳动。
+  /// 段头视觉高度（含内边距）。吸附层优先用实测高度，此值仅作兜底。
   final double height;
 
   /// 构造段头。列表内与吸附层共用，保证视觉一致。
   final Widget Function() builder;
 
-  const StickySection({required this.height, required this.builder});
+  /// 吸附层是否需要接收手势（如置顶横滑卡带要能左右滑动、点卡片）。
+  /// 默认 false：吸附层套 [IgnorePointer]，点击/折叠手势穿透到列表里的真实标题。
+  final bool interactive;
+
+  const StickySection({
+    required this.height,
+    required this.builder,
+    this.interactive = false,
+  });
 }
 
 /// 可滚动列表 + 吸顶分段标题。
@@ -116,13 +123,15 @@ class _StickySectionListState extends State<StickySectionList> {
     final inset = widget.topInset;
 
     var hit = -1;
+    var hitHeight = 0.0;
     var nextTop = double.infinity;
     for (var i = 0; i < _keys.length; i++) {
       final box = _keys[i].currentContext?.findRenderObject() as RenderBox?;
-      if (box == null) continue;
+      if (box == null || !box.hasSize) continue;
       final top = box.localToGlobal(Offset.zero).dy - origin;
       if (top <= inset + 0.5) {
         hit = i;
+        hitHeight = box.size.height;
       } else {
         nextTop = top;
         break;
@@ -131,8 +140,8 @@ class _StickySectionListState extends State<StickySectionList> {
     if (hit < 0) return null;
     final push = nextTop == double.infinity
         ? 0.0
-        : (nextTop - inset - _sections[hit].height);
-    return _Stuck(hit, push < 0 ? 0.0 : push);
+        : (nextTop - inset - hitHeight);
+    return _Stuck(hit, push < 0 ? 0.0 : push, hitHeight);
   }
 
   @override
@@ -165,24 +174,32 @@ class _StickySectionListState extends State<StickySectionList> {
             left: 0,
             right: 0,
             top: widget.topInset - stuck.push,
-            child: IgnorePointer(
-              // 吸附层不吃点击：折叠手势要落到列表里那个真实标题上
-              child: Container(
-                color: widget.background,
-                height: _sections[stuck.index].height,
-                alignment: Alignment.centerLeft,
-                child: _sections[stuck.index].builder(),
-              ),
-            ),
+            child: _sections[stuck.index].interactive
+                ? Container(
+                    color: widget.background,
+                    height: stuck.height,
+                    alignment: Alignment.centerLeft,
+                    child: _sections[stuck.index].builder(),
+                  )
+                : IgnorePointer(
+                    // 吸附层不吃点击：折叠手势要落到列表里那个真实标题上
+                    child: Container(
+                      color: widget.background,
+                      height: stuck.height,
+                      alignment: Alignment.centerLeft,
+                      child: _sections[stuck.index].builder(),
+                    ),
+                  ),
           ),
       ],
     );
   }
 }
 
-/// 吸附中的段头：index + 被下一段顶走的像素数
+/// 吸附中的段头：index + 被下一段顶走的像素数 + 实测高度
 class _Stuck {
   final int index;
   final double push;
-  const _Stuck(this.index, this.push);
+  final double height;
+  const _Stuck(this.index, this.push, this.height);
 }

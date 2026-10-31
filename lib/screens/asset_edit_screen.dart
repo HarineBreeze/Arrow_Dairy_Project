@@ -23,10 +23,6 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
   late String _type;
   bool _saving = false;
 
-  /// 完成动画的进度（0 = 常态，1 = 已收缩）。
-  Animation<double> get _doneAnim =>
-      _doneKey.currentState?.collapse ?? const AlwaysStoppedAnimation(1);
-
   final GlobalKey<SaveDoneButtonState> _doneKey =
       GlobalKey<SaveDoneButtonState>();
 

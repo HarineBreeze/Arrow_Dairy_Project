@@ -6,6 +6,8 @@ import '../widgets/unsaved_guard.dart';
 import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
 import '../widgets/save_done_button.dart';
+import '../widgets/save_bar.dart';
+import '../widgets/wheel_picker.dart';
 
 /// 新增 / 编辑倒数日。
 class CountdownEditScreen extends StatefulWidget {
@@ -26,9 +28,6 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
   late int _remindBeforeDays;
   bool _saving = false;
 
-  /// 完成动画的进度（0 = 常态，1 = 已收缩），用于让「取消」按钮同步淡出。
-  Animation<double> get _doneAnim =>
-      _doneKey.currentState?.collapse ?? const AlwaysStoppedAnimation(1);
 
   final GlobalKey<SaveDoneButtonState> _doneKey =
       GlobalKey<SaveDoneButtonState>();
@@ -178,12 +177,8 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
   /// 日历选日：支持左右滑动翻页
   Future<void> _pickDate() async {
     Haptics.light();
-    final picked = await Navigator.push<DateTime>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => _DatePickerPage(initial: _target ?? DateTime.now()),
-      ),
-    );
+    final picked = await showWheelDateTimePicker(
+        context, initial: _target ?? DateTime.now());
     if (picked != null && mounted) setState(() => _target = picked);
   }
 
@@ -467,53 +462,18 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
   /// 保存栏：点完成后取消按钮淡出让出整行，完成按钮收缩成居中圆形，
   /// 打勾描边 + 粒子迸发，停留片刻再保存返回。
   Widget _buildSaveBar() {
-    return SizedBox(
-      height: 48,
-      child: Stack(
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: _doneAnim.value >= 1
-                ? const SizedBox.shrink()
-                : FractionallySizedBox(
-                    widthFactor: 0.5,
-                    child: Opacity(
-                      opacity: (1 - _doneAnim.value * 1.6).clamp(0.0, 1.0),
-                      child: IgnorePointer(
-                        ignoring: _saving,
-                        child: Pressable(
-                          enabled: true,
-                          child: OutlinedButton(
-                            onPressed: _saving ? null : () => Navigator.pop(context),
-                            style: OutlinedButton.styleFrom(
-                              minimumSize: const Size.fromHeight(48),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              side: const BorderSide(color: Color(0xFF3B6FE0)),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: const Text('取消',
-                                style: TextStyle(fontSize: 16)),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-          ),
-          SaveDoneButton(
-            key: _doneKey,
-            color: Theme.of(context).colorScheme.primary,
-            validate: _validate,
-            onTap: _save,
-            onDone: () {
-              if (mounted) Navigator.pop(context, _pending);
-            },
-          ),
-        ],
-      ),
+    return SaveBar(
+      saveKey: _doneKey,
+      color: Theme.of(context).colorScheme.primary,
+      onCancel: _saving ? null : () => Navigator.pop(context),
+      validate: _validate,
+      onSave: _save,
+      onDone: () {
+        if (mounted) Navigator.pop(context, _pending);
+      },
     );
   }
+
 
   Widget _radioTile({
     required String label,
@@ -721,261 +681,6 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-// ==================== 日历选日页（支持左右滑动翻页） ====================
-
-class _DatePickerPage extends StatefulWidget {
-  final DateTime initial;
-  const _DatePickerPage({required this.initial});
-
-  @override
-  State<_DatePickerPage> createState() => _DatePickerPageState();
-}
-
-class _DatePickerPageState extends State<_DatePickerPage> {
-  late DateTime _month; // 每月 1 日
-  late DateTime _selected; // 仅日期
-  late TimeOfDay _time;
-
-  @override
-  void initState() {
-    super.initState();
-    _selected = CountdownEvent.dateOnly(widget.initial);
-    _month = DateTime(_selected.year, _selected.month, 1);
-    _time = TimeOfDay(
-        hour: widget.initial.hour, minute: widget.initial.minute);
-  }
-
-  /// 合并日期与时分
-  DateTime get _result => DateTime(_selected.year, _selected.month,
-      _selected.day, _time.hour, _time.minute);
-
-  Future<void> _pickTime() async {
-    Haptics.light();
-    final t = await showTimePicker(
-      context: context,
-      initialTime: _time,
-      builder: (ctx, child) => MediaQuery(
-        data: MediaQuery.of(ctx).copyWith(alwaysUse24HourFormat: true),
-        child: child!,
-      ),
-    );
-    if (t != null && mounted) setState(() => _time = t);
-  }
-
-  void _shift(int delta) {
-    setState(() => _month = DateTime(_month.year, _month.month + delta, 1));
-  }
-
-  /// 按年翻页（保持当前月份）
-  void _shiftYear(int delta) {
-    Haptics.light();
-    setState(() => _month = DateTime(
-        _month.year + delta, _month.month, 1));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final year = _month.year;
-    final month = _month.month;
-    final firstWeekday = DateTime(year, month, 1).weekday;
-    final daysInMonth = DateTime(year, month + 1, 0).day;
-    final today = DateTime.now();
-
-    final cells = <Widget>[];
-    for (int i = 1; i < firstWeekday; i++) {
-      cells.add(const SizedBox());
-    }
-    for (int day = 1; day <= daysInMonth; day++) {
-      final date = DateTime(year, month, day);
-      final isSel = date.year == _selected.year &&
-          date.month == _selected.month &&
-          date.day == _selected.day;
-      final isToday = date.year == today.year &&
-          date.month == today.month &&
-          date.day == today.day;
-      cells.add(GestureDetector(
-        onTap: () {
-          Haptics.light();
-          setState(() => _selected = date);
-        },
-        child: Center(
-          child: Container(
-            width: 36,
-            height: 36,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: isSel
-                  ? const Color(0xFF3B6FE0)
-                  : (isToday ? const Color(0xFFDCE7FF) : Colors.transparent),
-              shape: BoxShape.circle,
-            ),
-            child: Text('$day',
-                style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: isSel || isToday
-                        ? FontWeight.w700
-                        : FontWeight.normal,
-                    color: isSel ? Colors.white : const Color(0xFF2A3B52))),
-          ),
-        ),
-      ));
-    }
-
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF3B6FE0),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        title: const Text('选择事件日'),
-      ),
-      body: Column(
-        children: [
-          // 月份切换（◀◀ / ▶▶ 按年翻页，◀ / ▶ 按月翻页）
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.keyboard_double_arrow_left,
-                      size: 18, color: Color(0xFF8A99B3)),
-                  tooltip: '上一年',
-                  visualDensity: VisualDensity.compact,
-                  padding: EdgeInsets.zero,
-                  constraints:
-                      const BoxConstraints(minWidth: 34, minHeight: 36),
-                  onPressed: () => _shiftYear(-1),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.chevron_left, color: Color(0xFF5A6B82)),
-                  tooltip: '上一月',
-                  visualDensity: VisualDensity.compact,
-                  padding: EdgeInsets.zero,
-                  constraints:
-                      const BoxConstraints(minWidth: 34, minHeight: 36),
-                  onPressed: () => _shift(-1),
-                ),
-                Expanded(
-                  child: Center(
-                    child: Text('${_month.year}年${_month.month}月',
-                        style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF2A3B52))),
-                  ),
-                ),
-                IconButton(
-                  icon:
-                      const Icon(Icons.chevron_right, color: Color(0xFF5A6B82)),
-                  tooltip: '下一月',
-                  visualDensity: VisualDensity.compact,
-                  padding: EdgeInsets.zero,
-                  constraints:
-                      const BoxConstraints(minWidth: 34, minHeight: 36),
-                  onPressed: () => _shift(1),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.keyboard_double_arrow_right,
-                      size: 18, color: Color(0xFF8A99B3)),
-                  tooltip: '下一年',
-                  visualDensity: VisualDensity.compact,
-                  padding: EdgeInsets.zero,
-                  constraints:
-                      const BoxConstraints(minWidth: 34, minHeight: 36),
-                  onPressed: () => _shiftYear(1),
-                ),
-              ],
-            ),
-          ),
-          // 时间选择（小时:分钟）
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-            child: Row(
-              children: [
-                const Icon(Icons.access_time,
-                    size: 18, color: Color(0xFF9AA8BF)),
-                const SizedBox(width: 8),
-                const Text('时间',
-                    style: TextStyle(fontSize: 14, color: Color(0xFF5A6B82))),
-                const Spacer(),
-                GestureDetector(
-                  onTap: _pickTime,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF0F4FB),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      '${_time.hour.toString().padLeft(2, '0')}:${_time.minute.toString().padLeft(2, '0')}',
-                      style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF3B6FE0)),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Row(
-            children: const ['一', '二', '三', '四', '五', '六', '日']
-                .map((w) => Expanded(
-                      child: Center(
-                        child: Text(w,
-                            style: TextStyle(
-                                fontSize: 12, color: Color(0xFF9AA8BF))),
-                      ),
-                    ))
-                .toList(),
-          ),
-          const SizedBox(height: 4),
-          // 左右滑动翻页
-          GestureDetector(
-            onHorizontalDragEnd: (d) {
-              final v = d.primaryVelocity ?? 0;
-              if (v < -200) _shift(1);
-              if (v > 200) _shift(-1);
-            },
-            child: GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              crossAxisCount: 7,
-              childAspectRatio: 1.1,
-              children: cells,
-            ),
-          ),
-          const Spacer(),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-            child: SizedBox(
-              width: double.infinity,
-              child: Pressable(
-                enabled: true,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context, _result),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: Text(
-                      '确定 ${_selected.year}-${_selected.month.toString().padLeft(2, '0')}-${_selected.day.toString().padLeft(2, '0')} '
-                      '${_time.hour.toString().padLeft(2, '0')}:${_time.minute.toString().padLeft(2, '0')}',
-                      style: const TextStyle(fontSize: 16)),
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

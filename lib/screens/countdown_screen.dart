@@ -441,11 +441,16 @@ class CountdownScreenState extends State<CountdownScreen> {
       final list = g[key] ?? const <CountdownEvent>[];
       if (list.isEmpty) continue;
       final expanded = !_collapsed.contains(key);
-      widgets.add(StickySection(
-        // 内边距 6 + 10 与单行文字（约 21px 行高）之和
-        height: 37,
-        builder: () => _buildSectionHeader(key, list.length, expanded),
-      ));
+      // 仅「置顶」组吸顶，且仅在展开状态下吸顶；其余分组标题随内容滚动
+      if (key == '置顶' && expanded) {
+        widgets.add(StickySection(
+          // 内边距 6 + 10 与单行文字（约 21px 行高）之和
+          height: 37,
+          builder: () => _buildSectionHeader(key, list.length, expanded),
+        ));
+      } else {
+        widgets.add(_buildSectionHeader(key, list.length, expanded));
+      }
       if (expanded) {
         widgets.addAll(list.map(_buildCard));
       }

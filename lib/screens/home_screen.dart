@@ -1054,10 +1054,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           background: const Color(0xFFF3F6FB),
                           padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
                           children: [
-                            // 首项：置顶横滑卡带（P3），不参与吸顶
-                            if (pinned.isNotEmpty) _buildPinnedRail(pinned),
+                            // 置顶横滑卡带：仅此段吸顶（吸附层可交互，支持横滑/点击）
+                            if (pinned.isNotEmpty)
+                              StickySection(
+                                // 高度仅作兜底，实际按渲染后高度吸附
+                                height: 100,
+                                interactive: true,
+                                builder: () => _buildPinnedRail(pinned),
+                              ),
                             for (var gi = 0; gi < groups.length; gi++) ...[
-                              _buildStickySection(groups[gi]),
+                              _buildGroupHeader(
+                                  groups[gi], _isGroupExpanded(groups[gi].key)),
                               for (final e in groups[gi].entries)
                                 if (_isGroupExpanded(groups[gi].key))
                                   Padding(
@@ -1225,21 +1232,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   /// 时间分组头（T1）：无底块的浅灰小字行；今天用蓝色高亮日期
-  /// 吸顶分组头：在列表内与吸附层复用同一套视觉，
-  /// 但吸附层需要自己承接点击（列表内那份被滚出了视口）。
-  StickySection _buildStickySection(_NoteGroup group) {
-    final expanded = _isGroupExpanded(group.key);
-    return StickySection(
-      // 内边距 12 + 7 与单行文字（约 16px 行高）之和
-      height: 35,
-      builder: () => GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () => _toggleGroup(group.key),
-        child: _buildGroupHeader(group, expanded),
-      ),
-    );
-  }
-
   Widget _buildGroupHeader(_NoteGroup group, bool expanded) {
     final isToday = _sameDay(group.date, DateTime.now());
     final isWeekView = _viewMode == 'all';

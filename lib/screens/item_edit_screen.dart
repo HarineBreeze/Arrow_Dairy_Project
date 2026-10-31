@@ -7,6 +7,8 @@ import '../widgets/unsaved_guard.dart';
 import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
 import '../widgets/save_done_button.dart';
+import '../widgets/save_bar.dart';
+import '../widgets/wheel_picker.dart';
 
 const List<String> kCategories = ['数码设备', '衣物', '配饰', '家具'];
 const Map<String, List<String>> kCategoryIcons = {
@@ -40,9 +42,6 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
   late double _savedAmount;
   bool _saving = false;
 
-  /// 完成动画的进度（0 = 常态，1 = 已收缩），用于让「取消」按钮同步淡出。
-  Animation<double> get _doneAnim =>
-      _doneKey.currentState?.collapse ?? const AlwaysStoppedAnimation(1);
 
   final GlobalKey<SaveDoneButtonState> _doneKey =
       GlobalKey<SaveDoneButtonState>();
@@ -230,22 +229,14 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
   }
 
   Future<void> _pickAcquired() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _acquiredDate ?? DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-    );
+    final picked = await showWheelDatePicker(
+        context, initial: _acquiredDate ?? DateTime.now());
     if (picked != null) setState(() => _acquiredDate = picked);
   }
 
   Future<void> _pickLost() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _lostDate ?? DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-    );
+    final picked = await showWheelDatePicker(
+        context, initial: _lostDate ?? DateTime.now());
     if (picked != null) setState(() => _lostDate = picked);
   }
 
@@ -404,53 +395,18 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
   /// 保存栏：点完成后取消按钮淡出让出整行，完成按钮收缩成居中圆形，
   /// 打勾描边 + 粒子迸发，停留片刻再保存返回。
   Widget _buildSaveBar() {
-    return SizedBox(
-      height: 48,
-      child: Stack(
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: _doneAnim.value >= 1
-                ? const SizedBox.shrink()
-                : FractionallySizedBox(
-                    widthFactor: 0.5,
-                    child: Opacity(
-                      opacity: (1 - _doneAnim.value * 1.6).clamp(0.0, 1.0),
-                      child: IgnorePointer(
-                        ignoring: _saving,
-                        child: Pressable(
-                          enabled: true,
-                          child: OutlinedButton(
-                            onPressed: _saving ? null : () => Navigator.pop(context),
-                            style: OutlinedButton.styleFrom(
-                              minimumSize: const Size.fromHeight(48),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              side: const BorderSide(color: Color(0xFF3B6FE0)),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: const Text('取消',
-                                style: TextStyle(fontSize: 16)),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-          ),
-          SaveDoneButton(
-            key: _doneKey,
-            color: _accent,
-            validate: _validate,
-            onTap: _save,
-            onDone: () {
-              if (mounted) Navigator.pop(context, true);
-            },
-          ),
-        ],
-      ),
+    return SaveBar(
+      saveKey: _doneKey,
+      color: _accent,
+      onCancel: _saving ? null : () => Navigator.pop(context),
+      validate: _validate,
+      onSave: _save,
+      onDone: () {
+        if (mounted) Navigator.pop(context, true);
+      },
     );
   }
+
 
   Widget _buildStatusRow() {
     return Row(
