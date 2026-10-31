@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 
 import '../models/asset.dart';
 import '../utils/haptics.dart';
@@ -10,17 +9,21 @@ import '../utils/haptics.dart';
 ///
 /// ## 交互
 /// - **堆叠**：顶层卡片完整显示，第二张整体向下平移 [kStackOffset] 并等比缩小
-///   [kStackScale]，只从下面露出一条边（第三张继续往下缩，形成层次）；
-/// - **左右滑动**：拖动进行两张卡片之间的切换。向右滑 = 下一张（[card2] 升到顶层，
-///   原 [card1] 会依次滑到最底部）；向左滑 = 上一张；
-/// - **吸附 / 回弹**：松手后按拖动距离与速度决定「翻页」还是「弹回」，
-///   用弹簧曲线回弹，和列表卡片的按压回弹手感一致。
+///   [kStackScale]，只从下面露出一条边（第三层再往下缩，形成层次）；
+/// - **左右滑动**：在卡片上左右滑动切换。左滑 = 翻到下一张（[card2] 升到顶层，
+///   原 [card1] 滑到最底部），右滑 = 回到上一张；
+/// - **吸附 / 回弹**：松手后按拖动距离与速度决定「翻页」还是「弹回」。
 ///
-/// ## 为什么不直接堆三张卡
-/// 第二张（饼图）高度是动态的（图例条目多就高）。若把三张都做在 Stack 里，
-/// 必须给一个固定高度，内容一多就被裁掉。这里用「顶层卡 + 背后一层假边」
-/// 的方案：假边的高度只是 `卡1高 - offset`，第二张卡在翻页时才真正参与布局，
-/// 于是不需要任何固定高度。
+/// ## 性能设计（这是「切换卡顿」的修复点）
+/// 滑动与翻页涉及的**所有**变化（位移、缩放、层级、哪张卡在上层）都只存在于
+/// 几个 [ValueNotifier] / [AnimationController] 里，逐帧重建的只有
+/// [ValueListenableBuilder] 内层的 [Transform] 与 [Offstage]：
+///
+/// - 本组件与父级（列表）**全程不 setState**，卡片子树一次也不重建；
+/// - 「换层」不是换 Stack 的 children 顺序，而是把两张卡按**固定顺序**
+///   挂载，用 `_level` 决定谁在上、谁归位 —— 挂载点稳定，子树不会丢；
+/// - 层级是两态量，靠 [Offstage] 切可见性，离屏那张不布局也不绘制；
+/// - 背面的「露边」用固定底色的装饰盒，不再把整张饼图卡挂在底下。
 class OverviewStack extends StatefulWidget {
   /// 第一张：净资产看板
   final Widget card1;
@@ -54,168 +57,180 @@ class OverviewStack extends StatefulWidget {
   /// 翻页动画时长
   static const Duration kSettle = Duration(milliseconds: 380);
 
+  /// 未达门槛时回弹的时长（比翻页短，避免「慢吞吞弹回去」）
+  static const Duration kSnapBack = Duration(milliseconds: 240);
+
   @override
   State<OverviewStack> createState() => OverviewStackState();
 }
 
 class OverviewStackState extends State<OverviewStack>
-    with SingleTickerProviderStateMixin {
-  /// 0 = 顶层是 card1；1 = 顶层是 card2
+    with TickerProviderStateMixin {
+  /// 顶层是谁：0 = card1，1 = card2
   int _index = 0;
 
-  /// 当前水平拖动位移（像素，未吸附）
-  double _drag = 0;
+  /// 卡片所在宽度（拖动范围与背面卡尺寸都按它算）
+  double _width = 0;
 
-  bool _dragging = false;
+  /// 水平位移（正 = 往右拖）
+  final ValueNotifier<double> _dx = ValueNotifier<double>(0);
 
-  /// 第一张卡的实测高度，用于给背后那层「露边」定高度
-  double _card1Height = 0;
+  /// 两张卡各自的「瞬时层级」：0 = 被压在下面（露边），1 = 完全在顶层。
+  /// 拖动/翻页途中连续变化，因此不会出现「瞬移换层」。
+  final ValueNotifier<double> _levelA = ValueNotifier<double>(1);
+  final ValueNotifier<double> _levelB = ValueNotifier<double>(0);
 
-  late final AnimationController _settle = AnimationController.unbounded(
+  late final AnimationController _anim = AnimationController(
     vsync: this,
     duration: OverviewStack.kSettle,
   );
-  double _settleTo = 0;
-  VoidCallback? _onSettleDone;
-
-  double get currentIndex => _index.toDouble();
+  double _fromDx = 0;
+  double _toDx = 0;
+  Curve _curve = Curves.easeOutCubic;
+  VoidCallback? _animDone;
 
   @override
-  void dispose() {
-    _settle.dispose();
-    super.dispose();
-  }
-
-  void _animateTo(double target, Curve curve, [VoidCallback? done]) {
-    _settleTo = target;
-    _onSettleDone = done;
-    _settle.value = 0;
-    // 动画本身只负责「通知重绘」，位移仍在 _drag 里算，
-    // 因此每帧只重跑 build 里的 Transform，不重建卡片子树。
-    _settle.animateTo(1, duration: OverviewStack.kSettle, curve: curve)
-        .whenComplete(() {
-      _drag = _settleTo;
-      final cb = _onSettleDone;
-      _onSettleDone = null;
-      if (!mounted) return;
-      _settle.value = 0;
-      setState(() {}); // 落定：一次性把 _drag 归位并重建
+  void initState() {
+    super.initState();
+    _anim.addListener(() {
+      final t = _curve.transform(_anim.value);
+      _dx.value = _fromDx + (_toDx - _fromDx) * t;
+      _syncLevels();
+    });
+    _anim.addStatusListener((s) {
+      if (s != AnimationStatus.completed) return;
+      final cb = _animDone;
+      _animDone = null;
       cb?.call();
     });
   }
 
+  @override
+  void dispose() {
+    _anim.dispose();
+    _dx.dispose();
+    _levelA.dispose();
+    _levelB.dispose();
+    super.dispose();
+  }
+
+  bool get _topIsSecond => widget.hasSecond && _index == 1;
+
+  double get _maxDrag => _width <= 0 ? 320 : _width.clamp(200.0, 900.0);
+
+  void _animateTo(double target, Duration duration, Curve curve, [VoidCallback? done]) {
+    _fromDx = _dx.value;
+    _toDx = target;
+    _curve = curve;
+    _animDone = done;
+    _anim.duration = duration;
+    _anim.forward(from: 0);
+  }
+
+  // ---------- 拖动 ----------
+
   void _onDragStart(DragStartDetails d) {
-    _settle.stop();
-    _drag = 0;
-    _dragging = true;
-    setState(() {});
+    _anim.stop();
+    _dx.value = 0;
+    _syncLevels(progress: 0);
   }
 
   void _onDragUpdate(DragUpdateDetails d) {
-    if (!_dragging) {
-      _dragging = true;
-    }
-    // 顶层是卡 1：只能往左拉（负位移）把卡 2 拉上来；
-    // 顶层是卡 2：只能往右拉（正位移）回到卡 1。
-    final dx = d.delta.dx;
-    if (_index == 0) {
-      _drag = (_drag + dx).clamp(-400.0, 40.0);
-    } else {
-      _drag = (_drag + dx).clamp(-40.0, 400.0);
-    }
-    setState(() {});
+    final raw = _dx.value + d.delta.dx;
+    // 顶层是 card1 时只能左拉（负），顶层是 card2 时只能右拉（正）；
+    // 反方向留一点点「橡皮筋」余量，避免手指一抖就整卡偏移。
+    _dx.value = _index == 0
+        ? raw.clamp(-_maxDrag, 40.0)
+        : raw.clamp(-40.0, _maxDrag);
+    _syncLevels();
   }
 
   void _onDragEnd(DragEndDetails d) {
-    _dragging = false;
     final v = d.velocity.pixelsPerSecond.dx;
-    if (_index == 0) {
-      // 右滑距离/速度够 → 翻到卡 2
-      if (_drag.abs() > OverviewStack.kDragThreshold || v > 600) {
-        Haptics.light();
-        _flipTo(1);
-      } else {
-        _animateTo(0, Curves.easeOutCubic, () => setState(() {}));
-      }
+    final far = _dx.value.abs() > OverviewStack.kDragThreshold;
+    final fling = _index == 0 ? v < -600 : v > 600;
+
+    if (far || fling) {
+      Haptics.light();
+      _pageTo(_index == 0 ? 1 : 0);
     } else {
-      if (_drag.abs() > OverviewStack.kDragThreshold || v < -600) {
-        Haptics.light();
-        _flipTo(0);
-      } else {
-        _animateTo(0, Curves.easeOutCubic, () => setState(() {}));
-      }
+      _animateTo(0, OverviewStack.kSnapBack, Curves.easeOutCubic, () {
+        _syncLevels(progress: 0);
+      });
     }
   }
 
-  /// 完成一次翻页：用弹簧曲线把位移推到「整屏宽」再瞬间归零换层，
-  /// 这样观感是「滑出去了」，而不是「弹回去」。
-  void _flipTo(int index) {
-    final w = MediaQuery.of(context).size.width;
-    final target = index == 1 ? -w : w;
-    _animateTo(target, Curves.easeInOutCubic, () {
+  /// 翻页：位移推到整卡宽（滑出去），到终点再一次性换层并归零。
+  void _pageTo(int index) {
+    final target = index == 1 ? -_maxDrag : _maxDrag;
+    _animateTo(target, OverviewStack.kSettle, Curves.easeInOutCubic, () {
+      // 终点：位移先归零，再在同一帧里固化新层级并换 index
+      _dx.value = 0;
       setState(() {
         _index = index;
-        _drag = 0;
+        _syncLevels(progress: 0);
+        widget.onPageChanged?.call(index);
       });
-      widget.onPageChanged?.call(index);
     });
   }
 
-  /// 程序化切换（点击指示点）
+  /// 程序化切换（外部按钮等）
   void jumpTo(int index) {
-    if (index == _index) return;
-    _flipTo(index);
+    if (index == _index || !widget.hasSecond) return;
+    _pageTo(index);
+  }
+
+  /// 把「位移进度」同步成两张卡的层级：
+  /// 拖动时目标卡的层级随进度从 0 升到 1（连续、无跳变）；
+  /// 松手后由翻页动画继续把进度推到满格，到达终点后才真正换 [_index]。
+  void _syncLevels({double? progress}) {
+    final p = progress ?? (_dx.value.abs() / _maxDrag).clamp(0.0, 1.0);
+    if (_topIsSecond) {
+      _levelB.value = 1;
+      _levelA.value = p;
+    } else {
+      _levelA.value = 1;
+      _levelB.value = p;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // 注意：拖动过程只更新 _drag 并重建**本组件内部**的 Transform，
-    // 不通过父级 setState —— 否则父级每帧重建会毁掉卡片的子树
-    // （饼图卡的动画控制器随之重建，尺寸也要重新测量）。
-    final topIsSecond = widget.hasSecond && _index == 1;
-
+    final allowed = widget.hasSecond;
     return LayoutBuilder(
-      builder: (context, constraints) {
+      builder: (context, c) {
+        _width = c.maxWidth;
         return GestureDetector(
-          // 只接管水平拖动：纵向仍然让给外层列表滚动
-          onHorizontalDragStart: widget.hasSecond ? _onDragStart : null,
-          onHorizontalDragUpdate: widget.hasSecond ? _onDragUpdate : null,
-          onHorizontalDragEnd: widget.hasSecond ? _onDragEnd : null,
+          // 只接管水平拖动：纵向仍交给外层列表滚动
+          onHorizontalDragStart: allowed ? _onDragStart : null,
+          onHorizontalDragUpdate: allowed ? _onDragUpdate : null,
+          onHorizontalDragEnd: allowed ? _onDragEnd : null,
           behavior: HitTestBehavior.deferToChild,
+          // 用 Stack 的默认「按最大非定位子节点定高」行为：
+          // 当前在顶层的那张卡最高，Stack 高度就跟着它 ——
+          // 第二张（饼图）比看板高时列表项自动长高，不会被裁掉。
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              // —— 第三层：更小的一圈，增强「一叠卡」的层次 ——
-              // 必须最先绘制（Stack 越靠前越在底下），
-              // 否则这条灰边会盖在净资产卡上面
-              if (widget.hasSecond)
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  top: 0,
-                  child: IgnorePointer(child: _buildGhost()),
-                ),
-              // —— 背面（第二层）：默认只露出一条边 ——
-              if (widget.hasSecond)
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  top: 0,
-                  child: IgnorePointer(
-                    // 没翻页时它只露边，不该吃点击
-                    ignoring: !topIsSecond,
-                    child: AnimatedBuilder(
-                      animation: _settle,
-                      builder: (_, __) => _buildBack(),
-                    ),
-                  ),
-                ),
-              // —— 顶层：完整卡片，跟手位移 ——
-              AnimatedBuilder(
-                animation: _settle,
-                builder: (_, __) => _buildTop(topIsSecond),
-                child: topIsSecond ? widget.card2 : widget.card1,
+              // —— 第三层：更小的一圈浅色边（纯装饰，最先绘制在最底下）——
+              if (allowed) _buildGhost(),
+              _CardRole(
+                role: 0,
+                level: _levelA,
+                dx: _dx,
+                maxDrag: _maxDrag,
+                stack: this,
+                child: widget.card1,
               ),
+              if (allowed)
+                _CardRole(
+                  role: 1,
+                  level: _levelB,
+                  dx: _dx,
+                  maxDrag: _maxDrag,
+                  stack: this,
+                  child: widget.card2,
+                ),
             ],
           ),
         );
@@ -223,72 +238,98 @@ class OverviewStackState extends State<OverviewStack>
     );
   }
 
-  /// 顶层卡片（child 由外部传入并保持稳定，这里只做位移与缩放）
-  Widget _buildTop(bool topIsSecond) {
-    final maxDrag = (MediaQuery.of(context).size.width * 0.9).clamp(200.0, 520.0);
-    final progress = (_drag.abs() / maxDrag).clamp(0.0, 1.0);
-    return Transform.translate(
-      offset: Offset(_drag, 0),
-      child: Transform.scale(
-        // 往外拉时顶层略缩，像被抽走
-        scale: 1 - 0.04 * progress,
-        alignment: Alignment.center,
-        child: topIsSecond ? widget.card2 : widget.card1,
-      ),
-    );
-  }
-
-  /// 背面卡：按「卡1 高 - 露边」定高，底边从顶层下方露出来；
-  /// 拖动过程中它上浮、放大、反向平移，翻页瞬间成为新的顶层。
-  Widget _buildBack() {
-    final topIsSecond = widget.hasSecond && _index == 1;
-    final maxDrag = (MediaQuery.of(context).size.width * 0.9).clamp(200.0, 520.0);
-    final progress = (_drag.abs() / maxDrag).clamp(0.0, 1.0);
-    final behind = topIsSecond ? widget.card1 : widget.card2;
-
-    return Transform.translate(
-      offset: Offset(
-        // 反向跟随：翻页时把即将上位的卡从屏幕外拉回来
-        topIsSecond ? -_drag * 0.35 : _drag * 0.55,
-        OverviewStack.kStackOffset * (1 - progress),
-      ),
-      child: Transform.scale(
-        scale: OverviewStack.kStackScale +
-            (1 - OverviewStack.kStackScale) * progress,
-        alignment: Alignment.topCenter,
-        child: SizedBox(
-          width: double.infinity,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            // 只露出上面一部分：高度 = 顶层卡高 - 露边
-            child: _StackHeightProbe(
-              onHeight: (h) {
-                if ((h - _card1Height).abs() > 0.5) {
-                  _card1Height = h;
-                }
-              },
-              child: behind,
+  /// 更靠后的一圈底色：只为了「一叠」的层次感。
+  ///
+  /// 它同时是 Stack 的「撑高者」：真卡用 [Positioned.fill] 铺满，
+  /// 尺寸由外层决定，所以必须有一个非定位子节点告诉 Stack 自己多高 ——
+  /// 这里取「露边位置 + 底边」，不会被那 8~16px 的错位裁掉。
+  Widget _buildGhost() {
+    // 高度定死在「错位量 + 一小截」，既不会顶高 Stack，也不会被裁掉
+    return IgnorePointer(
+      child: SizedBox(
+        height: OverviewStack.kStackOffset * 2 + 20,
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: Transform.translate(
+            offset: const Offset(0, OverviewStack.kStackOffset * 2),
+            child: Transform.scale(
+              scale: OverviewStack.kStackScale * 0.985,
+              alignment: Alignment.topCenter,
+              child: SizedBox(
+                height: 20,
+                width: double.infinity,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDCE5F5),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
             ),
           ),
         ),
       ),
     );
   }
+}
 
-  /// 更靠后的那圈阴影/底色：只为了「一叠」的层次感
-  Widget _buildGhost() {
-    return Transform.translate(
-      offset: const Offset(0, OverviewStack.kStackOffset * 2),
-      child: Transform.scale(
-        scale: OverviewStack.kStackScale * 0.985,
-        alignment: Alignment.topCenter,
-        child: Container(
-          height: 46,
-          decoration: BoxDecoration(
-            color: const Color(0xFFDCE5F5),
-            borderRadius: BorderRadius.circular(16),
+/// 一张卡在堆叠中的「角色」：把层级与位移翻译成 Transform。
+///
+/// 逐帧重建的只有这里最内层的 [Transform]；[child]（真实卡片）
+/// 作为 `child` 参数缓存透传，element 与 render 对象都不会重建。
+class _CardRole extends StatelessWidget {
+  final int role; // 0 = card1，1 = card2
+  final ValueNotifier<double> level;
+  final ValueNotifier<double> dx;
+  final double maxDrag;
+  final OverviewStackState stack;
+  final Widget child;
+
+  const _CardRole({
+    required this.role,
+    required this.level,
+    required this.dx,
+    required this.maxDrag,
+    required this.stack,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<double>(
+      valueListenable: level,
+      child: child,
+      builder: (context, lv, card) {
+        // 完全压在底层 → 整卡离屏（不布局、不绘制），只留装饰露边
+        if (lv < 0.001) {
+          return const Offstage(offstage: true, child: SizedBox.shrink());
+        }
+        return RepaintBoundary(
+          child: ValueListenableBuilder<double>(
+            valueListenable: dx,
+            child: card,
+            builder: (context, d, childCard) => _body(lv, d, childCard!),
           ),
-        ),
+        );
+      },
+    );
+  }
+
+  Widget _body(double lv, double d, Widget card) {
+    final p = (d.abs() / maxDrag).clamp(0.0, 1.0);
+    final onTop = lv > 0.999;
+    // 顶层跟手 1:1；背面反向跟随 + 随进度上浮放大
+    final shift = onTop ? d : d * 0.55;
+    final scale = onTop
+        ? 1 - 0.04 * p
+        : OverviewStack.kStackScale +
+            (1 - OverviewStack.kStackScale) * p * lv.clamp(0.0, 1.0);
+    return Transform.translate(
+      offset: Offset(shift, onTop ? 0 : OverviewStack.kStackOffset * (1 - p)),
+      child: Transform.scale(
+        scale: scale,
+        alignment: onTop ? Alignment.center : Alignment.topCenter,
+        child: card,
       ),
     );
   }
@@ -420,8 +461,7 @@ class _AssetPieCardState extends State<AssetPieCard>
         children: [
           Row(
             children: const [
-              Icon(Icons.pie_chart_outline,
-                  size: 16, color: Color(0xFF3B6FE0)),
+              Icon(Icons.pie_chart_outline, size: 16, color: Color(0xFF3B6FE0)),
               SizedBox(width: 6),
               Text('资产细分',
                   style: TextStyle(
@@ -439,8 +479,7 @@ class _AssetPieCardState extends State<AssetPieCard>
               padding: EdgeInsets.symmetric(vertical: 26),
               child: Center(
                 child: Text('还没有金额为正的资产',
-                    style:
-                        TextStyle(fontSize: 13, color: Color(0xFF9AA8BF))),
+                    style: TextStyle(fontSize: 13, color: Color(0xFF9AA8BF))),
               ),
             )
           else
@@ -450,31 +489,32 @@ class _AssetPieCardState extends State<AssetPieCard>
                 SizedBox(
                   width: 108,
                   height: 108,
-                  child: AnimatedBuilder(
-                    animation: _c,
-                    builder: (_, __) => CustomPaint(
-                      painter: _PiePainter(
-                        slices: widget.slices,
-                        progress: Curves.easeOutCubic.transform(_c.value),
-                        active: _active,
-                      ),
-                      child: Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text('正资产',
-                                style: TextStyle(
-                                    fontSize: 9.5,
-                                    color: Color(0xFF9AA8BF))),
-                            const SizedBox(height: 1),
-                            Text(
-                              widget.hideNumbers ? '****' : _short(total),
-                              style: const TextStyle(
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF2A3B52)),
-                            ),
-                          ],
+                  child: RepaintBoundary(
+                    child: AnimatedBuilder(
+                      animation: _c,
+                      builder: (_, __) => CustomPaint(
+                        painter: _PiePainter(
+                          slices: widget.slices,
+                          progress: Curves.easeOutCubic.transform(_c.value),
+                          active: _active,
+                        ),
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text('正资产',
+                                  style: TextStyle(
+                                      fontSize: 9.5, color: Color(0xFF9AA8BF))),
+                              const SizedBox(height: 1),
+                              Text(
+                                widget.hideNumbers ? '****' : _short(total),
+                                style: const TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF2A3B52)),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -525,8 +565,8 @@ class _AssetPieCardState extends State<AssetPieCard>
                   s.type,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                      fontSize: 12, color: Color(0xFF2A3B52)),
+                  style:
+                      const TextStyle(fontSize: 12, color: Color(0xFF2A3B52)),
                 ),
               ),
               Text(
@@ -544,8 +584,8 @@ class _AssetPieCardState extends State<AssetPieCard>
                   textAlign: TextAlign.right,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                      fontSize: 11, color: Color(0xFF9AA8BF)),
+                  style:
+                      const TextStyle(fontSize: 11, color: Color(0xFF9AA8BF)),
                 ),
               ),
             ],
@@ -619,42 +659,4 @@ class _PiePainter extends CustomPainter {
       old.progress != progress ||
       old.active != active ||
       old.slices.length != slices.length;
-}
-
-/// 高度探针：把子树的实测高度回传给外层（用于背面卡的定高）。
-class _StackHeightProbe extends SingleChildRenderObjectWidget {
-  final ValueChanged<double> onHeight;
-
-  const _StackHeightProbe({required this.onHeight, Widget? child})
-      : super(child: child);
-
-  @override
-  RenderObject createRenderObject(BuildContext context) =>
-      _RenderHeightProbe(onHeight);
-
-  @override
-  void updateRenderObject(
-      BuildContext context, _RenderHeightProbe renderObject) {
-    renderObject.onHeight = onHeight;
-  }
-}
-
-class _RenderHeightProbe extends RenderProxyBox {
-  ValueChanged<double> onHeight;
-
-  _RenderHeightProbe(this.onHeight);
-
-  Size? _last;
-
-  @override
-  void performLayout() {
-    super.performLayout();
-    final h = size.height;
-    if (_last == null || (_last!.height - h).abs() > 0.5) {
-      _last = size;
-      // 布局阶段不能直接 setState，推到帧后
-      final cb = onHeight;
-      WidgetsBinding.instance.addPostFrameCallback((_) => cb(size.height));
-    }
-  }
 }

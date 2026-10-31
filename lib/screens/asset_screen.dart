@@ -468,8 +468,10 @@ class AssetScreenState extends State<AssetScreen> {
   /// 当前被手指压住、正等待「原地松手 / 拖走」判定的卡片
   String? _pendingId;
 
-  /// 所有卡片当前在用的按压句柄（用于页面跳转时统一复位）
-  final Set<PressableHandle> _pressHandles = {};
+  /// 每张资产卡片各自的按压句柄（按资产 id 缓存，用于页面跳转时统一复位）。
+  /// 必须在 build 之外创建并复用：若在 itemBuilder 里每次现建，
+  /// 列表任何一次重建都会让正在跑动画的句柄失去引用。
+  final Map<String, PressableHandle> _pressHandles = {};
 
   /// 长按按住的那一刻：先只做视觉提示，不立刻弹菜单。
   /// 之后的走向由松手时的位移决定（见 [_CardShell]）：
@@ -491,7 +493,7 @@ class AssetScreenState extends State<AssetScreen> {
   /// 这些场景不会走 PointerUp，卡片会卡在按压缩放态；
   /// 更糟的是该实例的 `_down` 一直为 true，导致这一页后续的按压不再有动画。
   void _resetPressStates() {
-    for (final h in _pressHandles) {
+    for (final h in _pressHandles.values) {
       h.reset();
     }
   }
@@ -705,6 +707,9 @@ class AssetScreenState extends State<AssetScreen> {
                               proxyDecorator: _buildDragProxy,
                               itemCount: _filtered.length + 1,
                               onReorder: _onReorder,
+                              // 句柄只建一次并按 key 缓存：
+                              // 若在 itemBuilder 里现建，任何一次重建（含滑动
+                              // 看板引起的重排）都会让旧句柄丢失，按压动画卡死
                               itemBuilder: (context, i) {
                                 if (i == 0) {
                                   // 第 0 项是数据看板。
@@ -721,8 +726,8 @@ class AssetScreenState extends State<AssetScreen> {
                                 final a = _filtered[i - 1];
                                 // key 必须挂在 ListView 的直接子项上。
                                 // 长按语义由 _CardShell 统一裁决：按住 → 松手判定菜单/排序
-                                final handle = PressableHandle();
-                                _pressHandles.add(handle);
+                                final handle = _pressHandles.putIfAbsent(
+                                    a.id, () => PressableHandle());
                                 // 卡片间距放在列表项外层（而非卡片内部 margin）：
                                 // 拖拽浮层的投影要紧贴卡片本体，透明的 margin
                                 // 区域会让阴影透出来形成一块灰色「背板」
