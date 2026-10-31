@@ -15,6 +15,7 @@ import '../widgets/pressable.dart';
 import '../widgets/save_done_button.dart';
 import '../widgets/save_bar.dart';
 import '../widgets/wheel_picker.dart';
+import '../utils/todo_text.dart';
 
 class EditScreen extends StatefulWidget {
   final DiaryEntry? entry;
@@ -49,11 +50,18 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
   late final FocusNode _contentFocus;
   bool _hadSelection = false;
   bool _tapStartedWithSelection = false;
+
+  /// 最近一次观察到的内容是否聚焦。
+  ///
+  /// `_onFocusChange` 里同步读 `hasFocus` 拿到的是**上一帧**的值，
+  /// 布局阶段据此判断「工具栏该不该让位给键盘」会拿到反的结论。
+  /// 这里在回调里先落一份，build 时读它才是准的。
+  bool _contentFocused = false;
   bool _selecting = false; // 框选模式：正文只读，不弹键盘
   int _savedStart = 0; // 切换只读前保存的选区，供工具栏使用
   int _savedEnd = 0;
   // 选区变更时重建工具栏，避免它沿用过一次的区间锁定/展开面板
-  Key _toolbarKey = UniqueKey();
+  GlobalKey<FormatToolbarState> _toolbarKey = GlobalKey<FormatToolbarState>();
   String _lastContent = '';
 
   static const List<String> _moods = ['😊', '😌', '😢', '😡', '😴', '🥰'];
@@ -132,7 +140,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
       _savedEnd = 0;
       _hadSelection = false;
       _selecting = false;
-      _toolbarKey = UniqueKey();
+      _toolbarKey = GlobalKey<FormatToolbarState>();
     });
     // 等 onChanged 链路走完再解除保护
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -263,6 +271,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
 
   void _onFocusChange() {
     if (!mounted) return;
+    _contentFocused = _contentFocus.hasFocus;
     // 键盘弹出（非框选模式的聚焦）→ 平滑收起头部信息区，给正文腾出空间
     final kb = _contentFocus.hasFocus && !_selecting;
     // 正文失焦（如点了标题/副标题）：头部立即展开——键盘高度不变时
@@ -318,7 +327,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
         setState(() {
           _savedStart = sel.start;
           _savedEnd = sel.end;
-          _toolbarKey = UniqueKey(); // 重建工具栏，清掉旧区间锁定与展开面板
+          _toolbarKey = GlobalKey<FormatToolbarState>(); // 重建工具栏，清掉旧区间锁定与展开面板
         });
       }
     } else if (!hasSelection && _hadSelection) {
@@ -477,7 +486,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
       _hadSelection = false;
       _selecting = false;
       _showToolbar = true;
-      _toolbarKey = UniqueKey();
+      _toolbarKey = GlobalKey<FormatToolbarState>();
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -1072,6 +1081,9 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
             ),
           ),
           Expanded(
+            child: Column(
+              children: [
+          Expanded(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
               child: Container(
@@ -1145,41 +1157,101 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
               ),
             ),
           ),
-        ],
-      ),
-      bottomNavigationBar: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (_showToolbar)
-            FormatToolbar(
-              key: _toolbarKey,
-              controller: _contentCtrl,
-              formats: _formats,
-              rangeStart: _savedStart,
-              rangeEnd: _savedEnd,
-              onInsertTag: _insertTag,
-              onChanged: (v) {
-                // 记录改变前的状态，再应用新格式
-                _pushUndo(_lastContent, _formats);
-                setState(() => _formats = v);
-                _contentCtrl.setFormats(v);
-              },
-              onClose: () {
-                setState(() => _showToolbar = false);
-                _contentFocus.unfocus();
-              },
-            ),
-          SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-              child: _buildSaveBar(),
+                // 排版栏占正文区的一块（不是浮层）：键盘顶起页面时它自然
+                // 停在键盘上方；不弹键盘时则贴在保存栏上方，不会盖住内容。
+                _buildInlineToolbar(),
+              ],
             ),
           ),
         ],
       ),
-    ),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+          child: _buildSaveBar(),
+        ),
+      ),
+      ),
     );
+  }
+
+  /// 正文排版栏（吸附在输入法上方）。
+  ///
+  /// 键盘可见时才显示：此时它是「正文编辑态」的辅助工具。
+  /// 键盘收起后若仍留着，会白占正文高度；用户想看格式，再点一下正文即可。
+  /// 框选模式（[_selecting]）键盘是收起的，但工具栏必须留着 —— 这是用户
+  /// 主动长按拉出来的排版入口。
+  Widget _buildInlineToolbar() {
+    final visible = _showToolbar && (_selecting || _kbVisible || _contentFocused);
+    final bar = FormatToolbar(
+      key: _toolbarKey,
+      controller: _contentCtrl,
+      formats: _formats,
+      rangeStart: _savedStart,
+      rangeEnd: _savedEnd,
+      onInsertTag: _insertTag,
+      onInsertTodo: _insertTodo,
+      onChanged: (v) {
+        // 记录改变前的状态，再应用新格式
+        _pushUndo(_lastContent, _formats);
+        setState(() => _formats = v);
+        _contentCtrl.setFormats(v);
+      },
+      onClose: () {
+        setState(() => _showToolbar = false);
+        _contentFocus.unfocus();
+      },
+    );
+    // AnimatedSize 让出现/消失有过渡，也顺带把「键盘动画中被挤掉」的抖动吸收掉
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOutCubic,
+      alignment: Alignment.topCenter,
+      child: visible ? bar : const SizedBox(width: double.infinity),
+    );
+  }
+
+  /// 在光标处插入一条待办：`[ ] `，并把光标放到文字位置。
+  ///
+  /// 若光标不在行首，先补一个换行再插入，避免把前一句话切成待办。
+  void _insertTodo() {
+    final text = _contentCtrl.text;
+    final sel = _contentCtrl.selection;
+    var pos = sel.isValid ? sel.start : text.length;
+    pos = pos.clamp(0, text.length);
+
+    final lineStart = pos == 0 ? -1 : text.lastIndexOf('\n', pos - 1);
+    final atLineStart = lineStart + 1 == pos ||
+        text.substring(lineStart + 1, pos).trim().isEmpty;
+    final prefix = atLineStart
+        ? (pos == 0 ? '' : '\n')
+        : '\n';
+    final insert = '$prefix${TodoText.uncheckedPrefix}';
+
+    _pushUndo(text, _formats);
+    final newText = text.substring(0, pos) + insert + text.substring(pos);
+    // 插入的是纯文本（无格式），只需把其后的格式区间整体右移
+    _formats = FormatStore.adjustRange(_formats, pos, 0, insert.length);
+    _contentCtrl.value = TextEditingValue(
+      text: newText,
+      selection: TextSelection(
+        baseOffset: pos + insert.length,
+        extentOffset: pos + insert.length,
+      ),
+    );
+    _contentCtrl.setFormats(_formats);
+    _lastContent = newText;
+    Haptics.light();
+    // 工具栏换新 key：上一把区间锁（可能是整行）会立刻作用到新插入的空待办上
+    _toolbarKey.currentState?.resetRange();
+    setState(() {
+      _savedStart = 0;
+      _savedEnd = 0;
+      _hadSelection = false;
+      _selecting = false;
+      _showToolbar = true;
+    });
   }
 
   /// 保存栏：默认「取消 + 完成」左右分布；点完成后取消按钮淡出让位，

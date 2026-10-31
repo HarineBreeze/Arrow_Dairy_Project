@@ -7,10 +7,12 @@ import '../services/item_storage.dart';
 import '../services/trash_storage.dart';
 import 'package:flutter/services.dart';
 import '../widgets/rich_note_text.dart';
+import '../widgets/todo_card.dart';
 import '../utils/text_format.dart';
 import 'edit_screen.dart';
 import 'item_edit_screen.dart';
 import '../utils/haptics.dart';
+import '../utils/todo_text.dart';
 import '../widgets/pressable.dart';
 
 class NoteViewScreen extends StatefulWidget {
@@ -97,6 +99,27 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
         Navigator.pop(context, true);
       }
     }
+  }
+
+  bool get _hasTodos => TodoText.parseAll(_entry.content).isNotEmpty;
+
+  /// 勾选/取消一条待办：只改正文里的 `[ ]` ↔ `[x]`，其余内容与排版不动。
+  ///
+  /// 先更新界面再落盘（乐观更新）：勾选是高频小操作，等 IO 回包再刷新
+  /// 会有明显的延迟感；写盘失败的概率极低，且下一步编辑会覆盖回正确值。
+  Future<void> _applyToggledContent(String newContent) async {
+    if (newContent == _entry.content) return;
+    setState(() {
+      _entry.content = newContent;
+      _entry.updatedAt = DateTime.now();
+    });
+    final list = await DiaryStorage.load();
+    final idx = list.indexWhere((e) => e.id == _entry.id);
+    if (idx < 0) return;
+    final saved = list[idx];
+    saved.content = newContent;
+    saved.updatedAt = _entry.updatedAt;
+    await DiaryStorage.save(list);
   }
 
   Future<void> _delete() async {
@@ -223,6 +246,24 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                           fontFamily: fontFamily,
                         ),
                       ),
+                    ),
+                  ],
+                  // 正文里的 [ ] / [x] 行 → 可勾选的待办清单
+                  if (_hasTodos) ...[
+                    const SizedBox(height: 12),
+                    TodoCard(
+                      content: _entry.content,
+                      itemNames:
+                          _items.map((e) => e.name).where((n) => n.isNotEmpty).toSet(),
+                      style: TextStyle(
+                        fontSize: 16,
+                        height: 1.5,
+                        color: const Color(0xFF2A3B52),
+                        fontFamily: fontFamily,
+                      ),
+                      // 传回的是切换后的整篇正文，行号在卡片内部已算好，
+                      // 这里用「新旧文本对齐」反推是哪一行被切换
+                      onToggle: _applyToggledContent,
                     ),
                   ],
                 ],

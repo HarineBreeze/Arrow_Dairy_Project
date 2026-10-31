@@ -27,7 +27,6 @@ import '../services/countdown_banner_log.dart';
 import '../widgets/countdown_banner.dart';
 import '../widgets/loading_skeleton.dart';
 import '../widgets/empty_state.dart';
-import '../widgets/sticky_header.dart';
 import '../utils/menu_gesture_gate.dart';
 
 const Color kPrimaryBlue = Color(0xFF3B6FE0);
@@ -1050,18 +1049,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             );
                           },
                         )
-                      : StickySectionList(
-                          background: const Color(0xFFF3F6FB),
+                      : SingleChildScrollView(
                           padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
-                          children: [
-                            // 置顶横滑卡带：仅此段吸顶（吸附层可交互，支持横滑/点击）
-                            if (pinned.isNotEmpty)
-                              StickySection(
-                                // 高度仅作兜底，实际按渲染后高度吸附
-                                height: 100,
-                                interactive: true,
-                                builder: () => _buildPinnedRail(pinned),
-                              ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                            // 置顶横滑卡带：随内容滚动，不吸顶
+                            if (pinned.isNotEmpty) _buildPinnedRail(pinned),
                             for (var gi = 0; gi < groups.length; gi++) ...[
                               _buildGroupHeader(
                                   groups[gi], _isGroupExpanded(groups[gi].key)),
@@ -1090,7 +1084,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               if (gi == groups.length - 1)
                                 const SizedBox(height: 12),
                             ],
-                          ],
+                            ],
+                          ),
                         ),
                 ),
         ),

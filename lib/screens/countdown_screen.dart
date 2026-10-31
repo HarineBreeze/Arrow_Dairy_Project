@@ -5,7 +5,6 @@ import '../services/countdown_storage.dart';
 import '../services/countdown_reminder.dart';
 import '../services/trash_storage.dart';
 import '../widgets/empty_state.dart';
-import '../widgets/sticky_header.dart';
 import '../widgets/loading_skeleton.dart';
 import '../utils/menu_gesture_gate.dart';
 import 'countdown_edit_screen.dart';
@@ -421,12 +420,15 @@ class CountdownScreenState extends State<CountdownScreen> {
                             ),
                           ],
                         )
-                      : StickySectionList(
-                          background: const Color(0xFFF3F6FB),
-                          topInset: 14,
+                      : SingleChildScrollView(
                           physics: const AlwaysScrollableScrollPhysics(),
                           padding: const EdgeInsets.fromLTRB(16, 14, 16, 96),
-                          children: _buildGroups(),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              for (final w in _buildGroups()) w as Widget,
+                            ],
+                          ),
                         ),
                 ),
         ),
@@ -441,16 +443,8 @@ class CountdownScreenState extends State<CountdownScreen> {
       final list = g[key] ?? const <CountdownEvent>[];
       if (list.isEmpty) continue;
       final expanded = !_collapsed.contains(key);
-      // 仅「置顶」组吸顶，且仅在展开状态下吸顶；其余分组标题随内容滚动
-      if (key == '置顶' && expanded) {
-        widgets.add(StickySection(
-          // 内边距 6 + 10 与单行文字（约 21px 行高）之和
-          height: 37,
-          builder: () => _buildSectionHeader(key, list.length, expanded),
-        ));
-      } else {
-        widgets.add(_buildSectionHeader(key, list.length, expanded));
-      }
+      // 所有分组标题都随内容滚动，不做吸顶
+      widgets.add(_buildSectionHeader(key, list.length, expanded));
       if (expanded) {
         widgets.addAll(list.map(_buildCard));
       }

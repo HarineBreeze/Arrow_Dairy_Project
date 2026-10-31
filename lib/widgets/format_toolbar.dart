@@ -19,6 +19,9 @@ class FormatToolbar extends StatefulWidget {
   /// 点击 # / @ 时回调，参数为 true 表示 #（话题），false 表示 @（物品）。
   final void Function(bool isTopic)? onInsertTag;
 
+  /// 点击 ➕ 时回调：在当前光标/选区处插入待办清单。
+  final VoidCallback? onInsertTodo;
+
   const FormatToolbar({
     Key? key,
     required this.controller,
@@ -28,13 +31,14 @@ class FormatToolbar extends StatefulWidget {
     this.rangeStart,
     this.rangeEnd,
     this.onInsertTag,
+    this.onInsertTodo,
   }) : super(key: key);
 
   @override
-  State<FormatToolbar> createState() => _FormatToolbarState();
+  State<FormatToolbar> createState() => FormatToolbarState();
 }
 
-class _FormatToolbarState extends State<FormatToolbar> {
+class FormatToolbarState extends State<FormatToolbar> {
   static const List<String> _highlights = [
     '#FFE58A',
     '#B9F5C7',
@@ -158,6 +162,15 @@ class _FormatToolbarState extends State<FormatToolbar> {
     }
   }
 
+  /// 外部改动了正文（如插入待办）：清掉区间锁与展开面板，
+  /// 否则锁着的旧区间会被下一次点按用到新内容上。
+  void resetRange() {
+    _unlock();
+    if (_panel != 0) {
+      setState(() => _panel = 0);
+    }
+  }
+
   void _togglePanel(int which) {
     Haptics.light();
     if (_panel == which) {
@@ -187,8 +200,8 @@ class _FormatToolbarState extends State<FormatToolbar> {
       borderRadius: BorderRadius.circular(8),
       child: Container(
         height: 36,
-        constraints: const BoxConstraints(minWidth: 38),
-        padding: const EdgeInsets.symmetric(horizontal: 8),
+        constraints: const BoxConstraints(minWidth: 34),
+        padding: const EdgeInsets.symmetric(horizontal: 6),
         margin: const EdgeInsets.symmetric(horizontal: 1),
         alignment: Alignment.center,
         decoration: BoxDecoration(
@@ -253,14 +266,10 @@ class _FormatToolbarState extends State<FormatToolbar> {
   }
 
   Widget _buildMainRow() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      child: Row(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
+    // 收拢一档按钮间距（38 → 34）：多出「待办」入口后，
+    // 小屏横向滚动区不至于把高亮/字号挤出可点范围。
+    final row = Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   _textBtn(
                     label: 'B',
@@ -305,6 +314,32 @@ class _FormatToolbarState extends State<FormatToolbar> {
                     onTap: () => widget.onInsertTag?.call(false),
                     style: const TextStyle(
                         fontSize: 18, fontWeight: FontWeight.w600),
+                  ),
+                  _divider(),
+                  // 待办清单：在该行插入「[ ] 」，浏览页可勾选
+                  InkWell(
+                    onTap: () {
+                      Haptics.light();
+                      _lock();
+                      widget.onInsertTodo?.call();
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      height: 36,
+                      constraints: const BoxConstraints(minWidth: 38),
+                      margin: const EdgeInsets.symmetric(horizontal: 1),
+                      alignment: Alignment.center,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(Icons.add,
+                              size: 15, color: Color(0xFF2A3B52)),
+                          SizedBox(width: 2),
+                          Icon(Icons.check_box_outlined,
+                              size: 16, color: Color(0xFF2A3B52)),
+                        ],
+                      ),
+                    ),
                   ),
                   _divider(),
                   // 高亮入口
@@ -364,7 +399,15 @@ class _FormatToolbarState extends State<FormatToolbar> {
                     ),
                   ),
                 ],
-              ),
+              );
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      child: Row(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: row,
             ),
           ),
           InkWell(

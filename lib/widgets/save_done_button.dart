@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../utils/haptics.dart';
+import 'pressable.dart';
 
 /// 编辑页底部「完成」按钮：点击后收缩成圆形、对勾描边绘出、粒子迸发，
 /// 停留片刻再回调 [onDone]（由调用方负责 pop / 保存）。
@@ -101,11 +102,26 @@ class SaveDoneButtonState extends State<SaveDoneButton>
   /// 是否已经播完并回调过 onDone（防止重复返回）
   bool _finished = false;
 
+  /// 按压缩放：与列表卡片、单选按钮同一套参数（按下 90%，松手弹簧回弹）。
+  ///
+  /// 用 [PressableHandle] 由本组件自己驱动：按钮的点击已经挂在
+  /// [GestureDetector] 上，再套一层 Listener 只会多一份冗余监听；
+  /// 交给句柄在 onTapDown / onTapCancel 里通知最省事，也最准确。
+  final PressableHandle _press = PressableHandle();
+
+  void _toPress() {
+    if (!canTap) return;
+    _press.press();
+  }
+
+  void _toRelease() => _press.release();
+
   /// 点击：同步校验 → 收缩 → 交给外部落盘
   void _onTap() {
     if (_busy || _finished) return;
     final err = widget.validate?.call();
     if (err != null) {
+      _press.release();
       Haptics.lightNow();
       _toast(err);
       return;
@@ -123,6 +139,7 @@ class SaveDoneButtonState extends State<SaveDoneButton>
   void reset() {
     _busy = false;
     _finished = false;
+    _press.reset();
     _c.value = 0;
     if (mounted) setState(() {});
   }
@@ -177,7 +194,15 @@ class SaveDoneButtonState extends State<SaveDoneButton>
                     // 父级 InkWell 会吃掉子级的点击，导致 onTap 永不触发
                     behavior: HitTestBehavior.opaque,
                     onTap: canTap ? _onTap : null,
-                    child: Material(
+                    // 按压回弹：按下缩到 90%，松手弹簧回弹（参数与其它按钮一致）
+                    onTapDown: canTap ? (_) => _toPress() : null,
+                    onTapUp: (_) => _toRelease(),
+                    onTapCancel: _toRelease,
+                    child: Pressable(
+                      enabled: canTap,
+                      external: true,
+                      handle: _press,
+                      child: Material(
                       color: widget.color,
                       borderRadius: BorderRadius.circular(r),
                       clipBehavior: Clip.antiAlias,
@@ -215,6 +240,7 @@ class SaveDoneButtonState extends State<SaveDoneButton>
                             ),
                         ],
                       ),
+                    ),
                     ),
                   ),
                 ),

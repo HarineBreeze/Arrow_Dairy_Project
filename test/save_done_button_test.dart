@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:diary_app/widgets/pressable.dart';
 import 'package:diary_app/widgets/save_done_button.dart';
 
 Widget _host({
@@ -31,6 +32,19 @@ double _materialWidth(WidgetTester tester) {
     matching: find.byType(Material),
   );
   return tester.getSize(m.first).width;
+}
+
+/// 取内层 [Pressable] 的缩放值（按压缩放用的是 Transform.scale）
+double _pressScale(WidgetTester tester) {
+  final transform = tester.widget<Transform>(
+    find
+        .descendant(
+          of: find.byType(Pressable),
+          matching: find.byType(Transform),
+        )
+        .first,
+  );
+  return transform.transform.storage[0];
 }
 
 void main() {
@@ -91,6 +105,31 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 1200));
       expect(done, 1);
+    });
+
+    testWidgets('按下缩到 90%，松手回弹超过 100% 再回落', (tester) async {
+      await tester.pumpWidget(_host(onTap: () {}, onDone: () {}));
+      expect(_pressScale(tester), closeTo(1.0, 0.001));
+
+      final gesture =
+          await tester.startGesture(tester.getCenter(find.byType(SaveDoneButton)));
+      await tester.pump();
+      await tester.pump(Pressable.kPressIn);
+      expect(_pressScale(tester), closeTo(0.90, 0.01));
+
+      await gesture.up();
+      await tester.pump();
+      // 弹簧过冲：中途某帧一定超过 100%
+      var maxScale = 0.0;
+      for (var i = 0; i < 30; i++) {
+        await tester.pump(const Duration(milliseconds: 16));
+        final s = _pressScale(tester);
+        if (s > maxScale) maxScale = s;
+      }
+      expect(maxScale, greaterThan(1.0));
+      // 最终落定回 100%
+      await tester.pump(const Duration(milliseconds: 600));
+      expect(_pressScale(tester), closeTo(1.0, 0.01));
     });
 
     testWidgets('onTap 为 null 时点击不报错也不播放', (tester) async {
