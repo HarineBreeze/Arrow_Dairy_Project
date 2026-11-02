@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart' show DragStartBehavior;
 import 'package:flutter/services.dart' show SystemUiOverlayStyle;
 import '../utils/app_toast.dart';
+import '../utils/diary_group_defaults.dart';
 import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
 import '../models/diary_entry.dart';
@@ -571,12 +572,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     });
   }
 
-  /// 默认展开的分组：日视图下为「今天 + 昨天」，其余视图为当前月/年
+  /// 默认展开的分组：日视图下为「最近 7 天」，其余视图为当前月/年
+  ///
+  /// 「最近 7 天」按自然日往前数（含今天），中间没写的日子本来就不会
+  /// 生成分组，所以多算几天也不会有空分组，只是保证不会漏掉刚好
+  /// 落在第 7 天写的那篇。规则细节见 [DiaryGroupDefaults]。
   List<String> _defaultExpandedKeys() {
     if (_viewMode != 'all') return [_defaultGroupKey()];
-    final now = DateTime.now();
-    final yesterday = now.subtract(const Duration(days: 1));
-    return [_dateKey(now), _dateKey(yesterday)];
+    return DiaryGroupDefaults.expandedKeys();
   }
 
   String _defaultGroupKey() {
@@ -696,8 +699,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   bool _sameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 
-  String _dateKey(DateTime d) =>
-      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+  /// 日期分组 key，统一走 [DiaryGroupDefaults.dateKey]，
+  /// 避免默认展开的 key 与实际分组的 key 格式不一致而导致展不开
+  String _dateKey(DateTime d) => DiaryGroupDefaults.dateKey(d);
 
   Set<String> get _markedDates =>
       _entries.map((e) => _dateKey(e.publishDate)).toSet();

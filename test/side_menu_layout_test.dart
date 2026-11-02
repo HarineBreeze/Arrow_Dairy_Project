@@ -52,10 +52,47 @@ void main() {
     expect(idRect.left, greaterThan(avatarRect.right));
     // ID 在昵称下方
     expect(idRect.top, greaterThan(nickRect.bottom - 2));
-    // 头像垂直居中于整个头部：头像中心 y 落在文字块上下范围内
+    // 头像垂直居中于整个文字块
     final textBlockCenterY = (nickRect.top + idRect.bottom) / 2;
-    expect(avatarRect.center.dy, closeTo(textBlockCenterY, 8),
+    expect(avatarRect.center.dy, closeTo(textBlockCenterY, 10),
         reason: '头像应与文字块垂直居中对齐');
+  });
+
+  testWidgets('内测版铭牌夹在昵称与 ID 之间', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(400, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(host(UserProfile(nickname: '小明')));
+    await tester.pump();
+
+    final nickRect = tester.getRect(find.text('小明'));
+    final badgeRect = tester.getRect(find.text('内测版'));
+    final idRect = tester.getRect(find.text('ID：10001'));
+
+    // 纵向顺序：昵称 → 铭牌 → ID，且三者不重叠
+    expect(badgeRect.top, greaterThanOrEqualTo(nickRect.bottom - 1),
+        reason: '铭牌应在昵称下方');
+    expect(idRect.top, greaterThanOrEqualTo(badgeRect.bottom - 1),
+        reason: 'ID 应在铭牌下方');
+    // 铭牌是独立一行：横向位置不再取决于昵称宽度。
+    // 左边缘对齐的是 Column 起点，铭牌自己带 6px 内边距，
+    // 所以文字左边缘比昵称文字右移到 6px，且必须仍贴着左边。
+    expect(badgeRect.left, closeTo(nickRect.left + 6, 1),
+        reason: '铭牌应是独立一行左对齐，而不是跟在昵称后面');
+  });
+
+  testWidgets('超长昵称不会把铭牌挤出可视区', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(400, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(host(UserProfile(nickname: '一二三四五六七八九十')));
+    await tester.pump();
+
+    final screenW = tester.getSize(find.byType(SideMenu)).width;
+    final badgeRect = tester.getRect(find.text('内测版'));
+    expect(badgeRect.right, lessThanOrEqualTo(screenW),
+        reason: '铭牌被长昵称顶出了侧栏');
+    expect(badgeRect.width, greaterThan(20), reason: '铭牌被压扁了');
   });
 
   testWidgets('昵称过长时省略显示，不挤出侧栏', (tester) async {

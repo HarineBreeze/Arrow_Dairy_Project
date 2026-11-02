@@ -61,13 +61,16 @@ class SideMenu extends StatelessWidget {
     );
   }
 
-  /// 头像在左、昵称（含内测版铭牌）与 ID 在右，整行垂直居中。
+  /// 头像在左；昵称 / 内测版铭牌 / ID 在右，三行垂直居中。
   ///
   /// 左右排版比上下排版省出约 1/3 高度，把纵向空间留给导航；
   /// 同时头像与文字在同一视觉基线上，扫视路径更短。
+  ///
+  /// 铭牌单独占一行、夹在昵称与 ID 之间：昵称再长也只挤占自己那一行，
+  /// 不会把铭牌挤出去（铭牌跟着昵称同行时，长昵称会把它顶到边缘）。
   Widget _buildHeader(String nickname) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 24, 20, 20),
+      padding: const EdgeInsets.fromLTRB(24, 22, 20, 20),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -77,50 +80,44 @@ class SideMenu extends StatelessWidget {
             child: buildAppAvatar(profile, radius: 32),
           ),
           const SizedBox(width: 14),
-          // 昵称 + 铭牌 / ID，占据头像右侧剩余宽度
+          // 昵称 / 铭牌 / ID，占据头像右侧剩余宽度
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        nickname,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.left,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF2A3B52),
-                        ),
+                Text(
+                  nickname,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.left,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF2A3B52),
+                  ),
+                ),
+                if (AppVersion.isBeta) ...[
+                  const SizedBox(height: 5),
+                  // 内测版铭牌：橙色底纹 + 白字
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF08C3A),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text(
+                      '内测版',
+                      style: TextStyle(
+                        fontSize: 10,
+                        height: 1.2,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
                       ),
                     ),
-                    if (AppVersion.isBeta) ...[
-                      const SizedBox(width: 6),
-                      // 内测版铭牌：橙色底纹 + 白字，紧跟昵称之后
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 1.5),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF08C3A),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Text(
-                          '内测版',
-                          style: TextStyle(
-                            fontSize: 10,
-                            height: 1.2,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
+                  ),
+                ],
                 const SizedBox(height: 5),
                 // 用户 ID：暂用固定值，后续接入服务器后再按规则生成
                 const Text(
