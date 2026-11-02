@@ -5,6 +5,7 @@ import '../utils/app_toast.dart';
 import '../services/app_settings.dart';
 import '../services/backup_service.dart';
 import '../utils/app_version.dart';
+import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
 import 'font_picker_screen.dart';
 
@@ -391,6 +392,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
+                const Padding(
+                  padding: EdgeInsets.only(left: 4, bottom: 8),
+                  child: Text('反馈',
+                      style: TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF9AA8BF),
+                          fontWeight: FontWeight.w600)),
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE8EDF5)),
+                  ),
+                  child: _buildItem(
+                    icon: Icons.vibration,
+                    iconColor: const Color(0xFFF08C3A),
+                    title: '振动测试',
+                    subtitle: '点击触发一次震动，并检测设备振动状态',
+                    busy: false,
+                    onTap: _testHaptics,
+                  ),
+                ),
+                const SizedBox(height: 16),
               ],
             ),
           ),
@@ -478,6 +503,87 @@ class _SettingsScreenState extends State<SettingsScreen> {
             '（选择器里可点左上角菜单浏览全部文件夹）。',
             style: TextStyle(fontSize: 13, height: 1.6),
           ),
+        ),
+        actions: [
+          Pressable(
+            enabled: true,
+            child: TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('知道了'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 振动自检：触发一次震动，并把设备振动状态读出来展示。
+  ///
+  /// 震动在真机上「感觉不到」时，靠原生侧回报的真实状态能立刻区分
+  /// 是代码问题还是设备/系统设置问题——省电模式、静音、无振动马达
+  /// 这些是代码修不了的，继续盲改代码只会让问题永远定位不到。
+  Future<void> _testHaptics() async {
+    // 先触发一次中等震动，让用户当场感受
+    await Haptics.medium();
+
+    final info = await Haptics.diagnose();
+    if (!mounted) return;
+
+    if (info == null) {
+      // 原生通道没响应：这是代码/构建问题，不是设备问题
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('振动测试', style: TextStyle(fontSize: 17)),
+          content: const Text(
+            '原生振动通道没有响应。\n\n'
+            '这通常意味着安装包的原生代码未生效，'
+            '请尝试卸载后重新安装最新版本。',
+            style: TextStyle(fontSize: 13, height: 1.6),
+          ),
+          actions: [
+            Pressable(
+              enabled: true,
+              child: TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('知道了'),
+              ),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    final hasVibrator = info['hasVibrator'] == true;
+    final powerSave = info['powerSaveMode'] == true;
+    final ringer = info['ringerMode'] ?? -1;
+
+    final List<String> issues = [];
+    if (!hasVibrator) {
+      issues.add('• 此设备没有振动马达（平板或模拟器），无法产生任何震动');
+    }
+    if (powerSave) {
+      issues.add('• 当前处于省电模式，系统会禁用振动');
+    }
+    if (ringer == 0) {
+      issues.add('• 当前为静音模式');
+    }
+
+    final String verdict = issues.isEmpty
+        ? '设备振动功能正常。\n\n'
+            '如果刚才没有感觉到震动，请检查系统「触感反馈」开关是否打开。'
+        : '${issues.join('\n')}\n\n请关闭相应设置后再试。';
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('振动测试', style: TextStyle(fontSize: 17)),
+        content: Text(
+          '刚才手机震动了一下。\n\n$verdict',
+          style: const TextStyle(fontSize: 13, height: 1.6),
         ),
         actions: [
           Pressable(

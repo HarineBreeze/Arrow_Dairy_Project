@@ -139,4 +139,31 @@ void main() {
       expect(medium, greaterThan(light));
     });
   });
+
+  group('振动自检 diagnose', () {
+    test('原生返回状态 Map 时能正确解析', () async {
+      respondWith = {
+        'hasVibrator': true,
+        'hasAmplitudeControl': true,
+        'sdkInt': 33,
+        'powerSaveMode': false,
+        'ringerMode': 2,
+      };
+      final info = await Haptics.diagnose();
+      expect(info, isNotNull);
+      expect(info!['hasVibrator'], true);
+      expect(info['hasAmplitudeControl'], true);
+      expect(info['powerSaveMode'], false);
+      expect(info['sdkInt'], 33);
+      expect(info['ringerMode'], 2);
+      // 自检只发 diagnose，不触发 vibrate
+      expect(calls.single.method, 'diagnose');
+    });
+
+    test('原生抛异常时返回 null，不崩溃', () async {
+      throwOnCall = true;
+      final info = await Haptics.diagnose();
+      expect(info, isNull);
+    });
+  });
 }

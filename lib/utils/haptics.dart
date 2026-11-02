@@ -127,4 +127,24 @@ class Haptics {
       return false;
     }
   }
+
+  /// 振动自检：读取原生侧报告的设备振动状态。
+  ///
+  /// 返回字段：
+  /// - `hasVibrator` 是否有振动马达（平板/模拟器常为 false）
+  /// - `hasAmplitudeControl` 是否支持振幅控制（仅 Android 8+）
+  /// - `powerSaveMode` 是否处于省电模式（true 时系统禁用振动）
+  /// - `ringerMode` 0=静音 1=振动 2=正常
+  /// - `sdkInt` Android 版本号
+  ///
+  /// 通道未注册 / 调用失败时返回 null。
+  static Future<Map<String, dynamic>?> diagnose() async {
+    if (kIsWeb) return null;
+    try {
+      final raw = await _ch.invokeMethod<Map>('diagnose');
+      return raw?.cast<String, dynamic>();
+    } catch (_) {
+      return null;
+    }
+  }
 }

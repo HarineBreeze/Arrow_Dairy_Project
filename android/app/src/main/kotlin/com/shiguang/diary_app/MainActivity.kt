@@ -12,7 +12,11 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
+import android.media.AudioManager
 import android.os.Build
+import android.os.PowerManager
+import android.os.Vibrator
+import android.os.VibratorManager
 import androidx.core.app.NotificationCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -56,41 +60,48 @@ class MainActivity : FlutterActivity() {
         // （部分 ROM 把 HapticFeedback 弱化或关闭，导致「震动没了」）
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, hapticChannelName)
             .setMethodCallHandler { call, result ->
-                if (call.method != "vibrate") {
-                    result.notImplemented()
-                    return@setMethodCallHandler
+                when (call.method) {
+                    "vibrate" -> {
+                        val ms = (call.argument<Int>("ms") ?: 12).toLong()
+                        val amplitude = call.argument<Int>("amplitude") ?: -1
+                        // 真实回报是否发出去了：此前无论成功失败都返回 true，
+                        // Dart 侧以为成功就不再走 HapticFeedback 兜底，
+                        // 一旦原生这条路静默失败，震动就彻底没了。
+                        val ok = try {
+                            Haptics.vibrate(context, ms, amplitude)
+                        } catch (e: Exception) {
+                            false
+                        }
+                        result.success(ok)
+                    }
+                    // 振动自检：把设备的真实状态回报给设置页，用于定位
+                    // 「为什么这里不震」——省电模式会禁用所有振动、部分
+                    // 平板 / 模拟器根本没有振动马达，代码对此无能为力。
+                    "diagnose" -> result.success(Haptics.diagnose(context))
+                    else -> result.notImplemented()
                 }
-                val ms = (call.argument<Int>("ms") ?: 12).toLong()
-                val amplitude = call.argument<Int>("amplitude") ?: -1
-                // 真实回报是否发出去了：此前无论成功失败都返回 true，
-                // Dart 侧以为成功就不再走 HapticFeedback 兜底，
-                // 一旦原生这条路静默失败，震动就彻底没了。
-                val ok = try {
-                    Haptics.vibrate(context, ms, amplitude)
-                } catch (e: Exception) {
-                    false
-                }
-                result.success(ok)
             }
     }
 }
 
 /** 直接调用系统振动器：不依赖 View 的 hapticFeedbackEnabled。 */
 object Haptics {
+    /** Android 12+ 用 VibratorManager，之前用 Vibrator；取不到返回 null。 */
+    private fun vibrator(context: Context): Vibrator? =
+        if (Build.VERSION.SDK_INT >= 31) {
+            (context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE)
+                    as? VibratorManager)?.defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+        }
+
     /**
      * @return true 表示已把振动请求交给系统；false 表示本机无法振动
      *         （无振动马达 / 系统服务不可用），调用方应退回 HapticFeedback。
      */
     fun vibrate(context: Context, ms: Long, amplitude: Int): Boolean {
-        val vib = if (Build.VERSION.SDK_INT >= 31) {
-            val manager =
-                context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE)
-                        as? android.os.VibratorManager
-            manager?.defaultVibrator
-        } else {
-            @Suppress("DEPRECATION")
-            context.getSystemService(Context.VIBRATOR_SERVICE) as? android.os.Vibrator
-        } ?: return false
+        val vib = vibrator(context) ?: return false
         if (!vib.hasVibrator()) return false
 
         if (Build.VERSION.SDK_INT >= 26) {
@@ -111,6 +122,29 @@ object Haptics {
             vib.vibrate(ms)
         }
         return true
+    }
+
+    /**
+     * 振动自检：返回设备振动相关的真实状态，供设置页「振动测试」展示。
+     * 震动在真机上「感觉不到」时，靠这些字段能立刻区分是代码问题还是
+     * 设备 / 系统设置问题。
+     */
+    fun diagnose(context: Context): Map<String, Any> {
+        val vib = vibrator(context)
+        val pm = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
+        val am = context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+        return mapOf(
+            // 有没有振动马达（平板 / 模拟器通常为 false）
+            "hasVibrator" to (vib?.hasVibrator() ?: false),
+            // 是否支持振幅控制（只有 Android 8+ 才问）
+            "hasAmplitudeControl" to
+                (Build.VERSION.SDK_INT >= 26 && (vib?.hasAmplitudeControl() ?: false)),
+            "sdkInt" to Build.VERSION.SDK_INT,
+            // 省电模式：true 时系统会禁用几乎所有振动，代码无能为力
+            "powerSaveMode" to (pm?.isPowerSaveMode ?: false),
+            // 0=静音 1=振动 2=正常；-1 表示取不到
+            "ringerMode" to (am?.ringerMode ?: -1),
+        )
     }
 }
 
