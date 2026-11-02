@@ -56,21 +56,32 @@ class MainActivity : FlutterActivity() {
         // （部分 ROM 把 HapticFeedback 弱化或关闭，导致「震动没了」）
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, hapticChannelName)
             .setMethodCallHandler { call, result ->
-                val ms = call.argument<Int>("ms") ?: 12
-                val amplitude = call.argument<Int>("amplitude") ?: -1
-                try {
-                    Haptics.vibrate(context, ms.toLong(), amplitude)
-                    result.success(true)
-                } catch (e: Exception) {
-                    result.success(false)
+                if (call.method != "vibrate") {
+                    result.notImplemented()
+                    return@setMethodCallHandler
                 }
+                val ms = (call.argument<Int>("ms") ?: 12).toLong()
+                val amplitude = call.argument<Int>("amplitude") ?: -1
+                // 真实回报是否发出去了：此前无论成功失败都返回 true，
+                // Dart 侧以为成功就不再走 HapticFeedback 兜底，
+                // 一旦原生这条路静默失败，震动就彻底没了。
+                val ok = try {
+                    Haptics.vibrate(context, ms, amplitude)
+                } catch (e: Exception) {
+                    false
+                }
+                result.success(ok)
             }
     }
 }
 
 /** 直接调用系统振动器：不依赖 View 的 hapticFeedbackEnabled。 */
 object Haptics {
-    fun vibrate(context: Context, ms: Long, amplitude: Int) {
+    /**
+     * @return true 表示已把振动请求交给系统；false 表示本机无法振动
+     *         （无振动马达 / 系统服务不可用），调用方应退回 HapticFeedback。
+     */
+    fun vibrate(context: Context, ms: Long, amplitude: Int): Boolean {
         val vib = if (Build.VERSION.SDK_INT >= 31) {
             val manager =
                 context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE)
@@ -79,31 +90,27 @@ object Haptics {
         } else {
             @Suppress("DEPRECATION")
             context.getSystemService(Context.VIBRATOR_SERVICE) as? android.os.Vibrator
-        } ?: return
-        if (!vib.hasVibrator()) return
+        } ?: return false
+        if (!vib.hasVibrator()) return false
 
         if (Build.VERSION.SDK_INT >= 26) {
-            val attrs = android.media.AudioAttributes.Builder()
-                .setUsage(android.media.AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
-                .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                .build()
-            if (amplitude >= 1 && amplitude <= 255 && vib.hasAmplitudeControl()) {
-                vib.vibrate(
-                    android.os.VibrationEffect.createOneShot(
-                        ms, amplitude
-                    ), attrs
-                )
+            val effect = if (amplitude in 1..255 && vib.hasAmplitudeControl()) {
+                android.os.VibrationEffect.createOneShot(ms, amplitude)
             } else {
-                vib.vibrate(
-                    android.os.VibrationEffect.createOneShot(
-                        ms, android.os.VibrationEffect.DEFAULT_AMPLITUDE
-                    ), attrs
+                android.os.VibrationEffect.createOneShot(
+                    ms, android.os.VibrationEffect.DEFAULT_AMPLITUDE
                 )
             }
+            // 不传 AudioAttributes：带 USAGE_ASSISTANCE_SONIFICATION 的重载
+            // 会把振动归到「触摸提示音」通道，系统静音 / 勿扰 / 部分 ROM 的
+            // 静音模式下会连振动一起屏蔽 —— 这是「突然不震了」的常见原因，
+            // 而且从代码上看不出来（调用成功、无异常）。
+            vib.vibrate(effect)
         } else {
             @Suppress("DEPRECATION")
             vib.vibrate(ms)
         }
+        return true
     }
 }
 
