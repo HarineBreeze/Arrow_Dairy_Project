@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/user_profile.dart';
 import '../utils/app_version.dart';
+import '../widgets/app_icons.dart';
 import '../widgets/avatar.dart';
 
 class SideMenu extends StatelessWidget {
@@ -60,75 +61,82 @@ class SideMenu extends StatelessWidget {
     );
   }
 
-  /// 头像 / 昵称（含内测版铭牌）/ UID，统一左对齐
+  /// 头像在左、昵称（含内测版铭牌）与 ID 在右，整行垂直居中。
+  ///
+  /// 左右排版比上下排版省出约 1/3 高度，把纵向空间留给导航；
+  /// 同时头像与文字在同一视觉基线上，扫视路径更短。
   Widget _buildHeader(String nickname) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 28),
-        GestureDetector(
-          onTap: onOpenProfile,
-          child: Padding(
-            padding: const EdgeInsets.only(left: 28),
-            child: buildAppAvatar(profile, radius: 42),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 24, 20, 20),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // 头像：进侧栏即可点头像去个人资料
+          GestureDetector(
+            onTap: onOpenProfile,
+            child: buildAppAvatar(profile, radius: 32),
           ),
-        ),
-        const SizedBox(height: 12),
-        Padding(
-          padding: const EdgeInsets.only(left: 28, right: 20),
-          child: Row(
-            children: [
-              Flexible(
-                child: Text(
-                  nickname,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.left,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF2A3B52),
-                  ),
-                ),
-              ),
-              if (AppVersion.isBeta) ...[
-                const SizedBox(width: 6),
-                // 内测版铭牌：橙色底纹 + 白字，紧跟昵称之后
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF08C3A),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: const Text(
-                    '内测版',
-                    style: TextStyle(
-                      fontSize: 10,
-                      height: 1.2,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
+          const SizedBox(width: 14),
+          // 昵称 + 铭牌 / ID，占据头像右侧剩余宽度
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        nickname,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.left,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF2A3B52),
+                        ),
+                      ),
                     ),
+                    if (AppVersion.isBeta) ...[
+                      const SizedBox(width: 6),
+                      // 内测版铭牌：橙色底纹 + 白字，紧跟昵称之后
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF08C3A),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          '内测版',
+                          style: TextStyle(
+                            fontSize: 10,
+                            height: 1.2,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 5),
+                // 用户 ID：暂用固定值，后续接入服务器后再按规则生成
+                const Text(
+                  'ID：10001',
+                  textAlign: TextAlign.left,
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF9AA8BF),
                   ),
                 ),
               ],
-            ],
-          ),
-        ),
-        const SizedBox(height: 4),
-        // 用户 ID：暂用固定值，后续接入服务器后再按规则生成
-        const Padding(
-          padding: EdgeInsets.only(left: 28, right: 20),
-          child: Text(
-            'ID：10001',
-            textAlign: TextAlign.left,
-            style: TextStyle(
-              fontSize: 12,
-              color: Color(0xFF9AA8BF),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -139,14 +147,12 @@ class SideMenu extends StatelessWidget {
     const tabHeight = 52.0;
     const gap = 8.0;
     final items = <_NavItem>[
-      _NavItem(Icons.search_rounded, '全局搜索', 'search', onOpenGlobalSearch),
-      _NavItem(Icons.book_outlined, '写日记', 'diary', onOpenDiary),
-      _NavItem(Icons.inventory_2_outlined, '物品清单', 'items', onOpenItems),
-      _NavItem(Icons.event_available_outlined, '重要事件', 'countdown',
-          onOpenCountdown),
-      _NavItem(Icons.account_balance_outlined, '资产全景', 'assets',
-          onOpenAssets),
-      _NavItem(Icons.delete_outline, '回收站', 'trash', onOpenTrash),
+      _NavItem(AppIcons.search, '全局搜索', 'search', onOpenGlobalSearch),
+      _NavItem(AppIcons.diary, '写日记', 'diary', onOpenDiary),
+      _NavItem(AppIcons.items, '物品清单', 'items', onOpenItems),
+      _NavItem(AppIcons.event, '重要事件', 'countdown', onOpenCountdown),
+      _NavItem(AppIcons.asset, '资产全景', 'assets', onOpenAssets),
+      _NavItem(AppIcons.trash, '回收站', 'trash', onOpenTrash),
     ];
     final selectedIndex =
         items.indexWhere((n) => n.key == currentTab).clamp(0, items.length - 1);
@@ -191,7 +197,7 @@ class SideMenu extends StatelessWidget {
   }
 
   Widget _buildNavItem({
-    required IconData icon,
+    required String icon,
     required String label,
     required bool selected,
     required VoidCallback onTap,
@@ -214,7 +220,7 @@ class SideMenu extends StatelessWidget {
               child: Row(
                 children: [
                   const SizedBox(width: 16),
-                  Icon(icon, color: iconColor, size: 22),
+                  AppIcon(icon, color: iconColor, size: 22),
                   const SizedBox(width: 12),
                   Text(
                     label,
@@ -242,22 +248,20 @@ class SideMenu extends StatelessWidget {
         child: SizedBox(
           height: 52,
           child: Row(
-            children: [
-              const SizedBox(width: 16),
-              const Icon(Icons.settings_outlined,
-                  size: 22, color: Color(0xFF5A6B82)),
-              const SizedBox(width: 12),
-              const Text(
+            children: const [
+              SizedBox(width: 16),
+              AppIcon(AppIcons.settings, size: 22, color: Color(0xFF5A6B82)),
+              SizedBox(width: 12),
+              Text(
                 '设置',
                 style: TextStyle(
                   fontSize: 15,
                   color: Color(0xFF2A3B52),
                 ),
               ),
-              const Spacer(),
-              const Icon(Icons.chevron_right,
-                  size: 20, color: Color(0xFFC4CEDD)),
-              const SizedBox(width: 12),
+              Spacer(),
+              AppIcon(AppIcons.chevR, size: 20, color: Color(0xFFC4CEDD)),
+              SizedBox(width: 12),
             ],
           ),
         ),
@@ -268,7 +272,8 @@ class SideMenu extends StatelessWidget {
 
 /// 侧栏导航项数据（全局搜索 + 主页 + 回收站统一结构）
 class _NavItem {
-  final IconData icon;
+  /// 图标路径（见 [AppIcons]）
+  final String icon;
   final String label;
   final String key;
   final VoidCallback onTap;
