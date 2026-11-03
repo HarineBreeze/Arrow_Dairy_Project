@@ -237,29 +237,34 @@ class SideMenu extends StatelessWidget {
   }
 
   Widget _buildSettingsButton() {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onOpenSettings,
-        borderRadius: BorderRadius.circular(10),
-        child: SizedBox(
-          height: 52,
-          child: Row(
-            children: const [
-              SizedBox(width: 16),
-              AppIcon(AppIcons.settings, size: 22, color: Color(0xFF5A6B82)),
-              SizedBox(width: 12),
-              Text(
-                '设置',
-                style: TextStyle(
-                  fontSize: 15,
-                  color: Color(0xFF2A3B52),
+    // 与 _buildNavStack 相同的 horizontal:12 外边距：
+    // 让设置项的图标 / 文字 / 右箭头与上方导航项逐像素对齐。
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onOpenSettings,
+          borderRadius: BorderRadius.circular(10),
+          child: SizedBox(
+            height: 52,
+            child: Row(
+              children: const [
+                SizedBox(width: 16),
+                AppIcon(AppIcons.settings, size: 22, color: Color(0xFF5A6B82)),
+                SizedBox(width: 12),
+                Text(
+                  '设置',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Color(0xFF2A3B52),
+                  ),
                 ),
-              ),
-              Spacer(),
-              AppIcon(AppIcons.chevR, size: 20, color: Color(0xFFC4CEDD)),
-              SizedBox(width: 12),
-            ],
+                Spacer(),
+                AppIcon(AppIcons.chevR, size: 20, color: Color(0xFFC4CEDD)),
+                SizedBox(width: 12),
+              ],
+            ),
           ),
         ),
       ),

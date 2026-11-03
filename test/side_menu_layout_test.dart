@@ -135,4 +135,22 @@ void main() {
       expect(tester.takeException(), isNull, reason: 'tab=$tab 渲染异常');
     }
   });
+  testWidgets('设置项图标与文字和上方导航项左对齐', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(400, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(host(UserProfile(nickname: '小明')));
+    await tester.pump();
+
+    // 导航项与设置项内部结构一致（16 + 图标22 + 12 + 文字）；
+    // 若外层 padding 不同，文字左缘就会出现 12px 的差值
+    final trashTextRect = tester.getRect(find.text('回收站'));
+    final settingsTextRect = tester.getRect(find.text('设置'));
+
+    expect(settingsTextRect.left, closeTo(trashTextRect.left, 0.5),
+        reason: '设置项文字应与导航项文字左对齐');
+    expect(settingsTextRect.height, closeTo(trashTextRect.height, 0.5),
+        reason: '字号应一致（同为 15）');
+  });
+
 }
