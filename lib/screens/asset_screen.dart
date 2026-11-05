@@ -860,6 +860,13 @@ class AssetScreenState extends State<AssetScreen> {
     );
   }
 
+  /// 标题行统一高度（18px）。
+  ///
+  /// 13px 文字的实际行盒约 18px，之前锁 16px 会让文字溢出、压到下方数字上。
+  /// 18px 既容得下行盒，又让左右两栏高度严格一致 —— 两栏标题后面挂的
+  /// 图标高度不同（15px 眼睛 / 16px 圈叹号），不锁高会差 3px，数字就错行。
+  static const double _kCardTitleRowHeight = 18;
+
   /// 左栏：净资产。
   ///
   /// 第一行「净资产」+ 眼睛，第二行金额 —— 两栏的标题在同一行、
@@ -869,11 +876,12 @@ class AssetScreenState extends State<AssetScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // 标题行固定 16px 高：右栏标题行里有 16px 的圈叹号位，
-        // 两边不锁高的话标题行会差几个像素，第二行数字就跟着错开。
+        // 标题行锁 18px：既容得下 13px 文字的行盒（约 18px）不溢出，
+        // 又让两栏高度严格一致，第二行的数字才能齐平。
         SizedBox(
-          height: 16,
+          height: _kCardTitleRowHeight,
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const Text('净资产',
                   style: TextStyle(fontSize: 13, color: Colors.white70)),
@@ -886,21 +894,24 @@ class AssetScreenState extends State<AssetScreen> {
                   setState(() => _hideNumbers = !_hideNumbers);
                 },
                 behavior: HitTestBehavior.opaque,
-                child: Padding(
-                  padding: const EdgeInsets.all(2),
-                  child: Icon(
-                    _hideNumbers
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined,
-                    size: 15,
-                    color: Colors.white70,
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: Center(
+                    child: Icon(
+                      _hideNumbers
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                      size: 15,
+                      color: Colors.white70,
+                    ),
                   ),
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 1),
+        const SizedBox(height: 4),
         FittedBox(
           fit: BoxFit.scaleDown,
           alignment: Alignment.centerLeft,
@@ -937,10 +948,11 @@ class AssetScreenState extends State<AssetScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // 与左栏一致锁 16px 高，保证第二行数字严格齐平
+        // 与左栏一致锁 18px 高，保证第二行数字严格齐平
         SizedBox(
-          height: 16,
+          height: _kCardTitleRowHeight,
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const Text('可使用',
                   style: TextStyle(fontSize: 13, color: Colors.white70)),
@@ -948,12 +960,11 @@ class AssetScreenState extends State<AssetScreen> {
               // 圈叹号：进入参数设置。始终显示，否则算不出数时用户
               // 找不到入口，只会看到一块空白。
               //
-              // 点触区 36×36、视觉圆点 12px。这里不在 baseline Row 里，
-              // 标题行已用 16px 固定行高锁住，所以用 SizedBox + OverflowBox
-              // 把大点触区溢出出去，既不会撑高标题行，手指也点得中。
+              // 点触区 36×36、视觉圆点 12px。外面套 18px 的 SizedBox +
+              // OverflowBox，把大点触区溢出出去，不撑高标题行。
               SizedBox(
-                width: 16,
-                height: 16,
+                width: 18,
+                height: 18,
                 child: OverflowBox(
                   maxWidth: 36,
                   maxHeight: 36,
@@ -998,7 +1009,7 @@ class AssetScreenState extends State<AssetScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 1),
+        const SizedBox(height: 4),        const SizedBox(height: 1),
         FittedBox(
           fit: BoxFit.scaleDown,
           alignment: Alignment.centerLeft,

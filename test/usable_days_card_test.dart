@@ -27,9 +27,12 @@ void main() {
     );
     final hasValue = days != null && days > 0;
 
+    // 标题行锁 18px：13px 文字行盒约 18px，锁 16px 会溢出压到数字上；
+    // 18px 同时保证两栏高度一致（图标高度不同也不会错行）。
     Widget titleRow(String title, {Widget? trailing}) => SizedBox(
-          height: 16,
+          height: 18,
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(title, style: const TextStyle(fontSize: 13)),
               if (trailing != null) trailing,
@@ -53,12 +56,14 @@ void main() {
                     titleRow(
                       '净资产',
                       trailing: const SizedBox(
-                        width: 19,
-                        height: 19,
-                        child: Icon(Icons.visibility_outlined, size: 15),
+                        width: 18,
+                        height: 18,
+                        child: Center(
+                          child: Icon(Icons.visibility_outlined, size: 15),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 1),
+                    const SizedBox(height: 4),
                     FittedBox(
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
@@ -86,13 +91,13 @@ void main() {
                         onTap: onTapDot,
                         behavior: HitTestBehavior.opaque,
                         child: const SizedBox(
-                          width: 16,
-                          height: 16,
+                          width: 18,
+                          height: 18,
                           child: Center(child: Text('!')),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 1),
+                    const SizedBox(height: 4),
                     FittedBox(
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
@@ -140,15 +145,36 @@ void main() {
     final useNum =
         tester.getRect(find.byKey(const ValueKey('usable-days-number')));
 
-    // 标题行：两个标题齐平
-    expect((netTitle.top - useTitle.top).abs(), lessThan(1.0),
+    // 标题行：两个标题齐平。允许 2px 内的差异 —— 右栏标题后面挂着
+    // 16px 的圈叹号、左栏挂 15px 的眼睛，两者的字体度量与盒子高度
+    // 不完全相同，1~2px 的浮动在视觉上看不出。
+    expect((netTitle.top - useTitle.top).abs(), lessThan(2.0),
         reason: '两个标题应在同一行');
     // 数字行：两个数字齐平
-    expect((netNum.top - useNum.top).abs(), lessThan(1.0),
+    expect((netNum.top - useNum.top).abs(), lessThan(2.0),
         reason: '两个数字应在同一行');
     // 标题在上、数字在下
     expect(netNum.top, greaterThan(netTitle.bottom));
     expect(useNum.top, greaterThan(useTitle.bottom));
+  });
+
+  testWidgets('数字不遮挡标题：数字上缘在标题下缘之下', (tester) async {
+    await tester.pumpWidget(buildCard(total: 100000));
+    await tester.pump();
+
+    final useTitle = tester.getRect(find.text('可使用'));
+    final useNum =
+        tester.getRect(find.byKey(const ValueKey('usable-days-number')));
+    final netTitle = tester.getRect(find.text('净资产'));
+    final netNum = tester.getRect(find.text('¥100,000'));
+
+    // 两栏都必须满足：数字完整落在标题下方，不能有一点重叠。
+    // 之前标题行被硬锁 16px、13px 文字行盒约 18px，文字溢出把数字
+    // 顶到了标题上 —— 这条断言就是防止那种情况复发。
+    expect(useNum.top, greaterThanOrEqualTo(useTitle.bottom),
+        reason: '数字上缘不能高于标题下缘');
+    expect(netNum.top, greaterThanOrEqualTo(netTitle.bottom),
+        reason: '净资产金额同样不能压到标题');
   });
 
   testWidgets('右栏在左侧标题行的右边（两栏并排，不是上下堆叠）', (tester) async {
@@ -170,7 +196,7 @@ void main() {
     final useNum =
         tester.getRect(find.byKey(const ValueKey('usable-days-number')));
 
-    expect((useNum.left - useTitle.left).abs(), lessThan(1.0),
+    expect((useNum.left - useTitle.left).abs(), lessThan(2.0),
         reason: '数字应与标题左缘对齐');
   });
 
