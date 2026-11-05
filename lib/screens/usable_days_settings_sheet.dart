@@ -62,6 +62,10 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
     for (final c in [_total, _cost, _days, _rate, _infl]) {
       c.addListener(_recalc);
     }
+    // 初值是在上面直接赋给 controller 的，赋值时 listener 还没挂上，
+    // 不会触发 _recalc —— 不在这里主动算一次，首帧 _previewDays 会是 null，
+    // 参数明明填满也会误报「参数不完整，无法计算」。
+    _computePreviewNow();
   }
 
   @override
@@ -87,6 +91,22 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
   double? _previewDays;
   bool _recalcScheduled = false;
 
+  /// 按当前输入立刻算一次预览。
+  ///
+  /// 初始化时直接调用（赋值阶段不触发 listener）；运行期由 [_recalc]
+  /// 合并到下一帧调用，避免每敲一个字符都 setState。
+  void _computePreviewNow() {
+    final totalText = _total.text.trim();
+    final days = UsableDays.compute(
+      total: totalText.isEmpty ? null : double.tryParse(totalText),
+      monthlyCost: _parse(_cost),
+      daysPerMonth: _parse(_days),
+      annualRate: _parse(_rate),
+      inflationRate: _parse(_infl),
+    );
+    _previewDays = days;
+  }
+
   void _recalc() {
     // 输入时每敲一个字符都会触发，合并到一帧内算一次
     if (_recalcScheduled) return;
@@ -94,15 +114,7 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _recalcScheduled = false;
       if (!mounted) return;
-      final totalText = _total.text.trim();
-      final days = UsableDays.compute(
-        total: totalText.isEmpty ? null : double.tryParse(totalText),
-        monthlyCost: _parse(_cost),
-        daysPerMonth: _parse(_days),
-        annualRate: _parse(_rate),
-        inflationRate: _parse(_infl),
-      );
-      setState(() => _previewDays = days);
+      setState(_computePreviewNow);
     });
   }
 
@@ -276,8 +288,9 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
           : '参数不完整，无法计算';
       color = const Color(0xFFF08C3A);
     } else if (rateDiff <= 0) {
+      // 差值原本是百分数（5 - 2 = 3），提示里带上 %，用户才知道是 3 个百分点
       body = '年化利率需大于通胀率，否则可使用天数不会增加'
-          '（当前差值 ${_trimNum(rateDiff)}）';
+          '（当前差值 ${_trimNum(rateDiff)}%）';
       color = const Color(0xFFF08C3A);
     } else if (UsableDays.isSuspicious(d)) {
       body = '数值异常偏大，请检查总资产与月消费';

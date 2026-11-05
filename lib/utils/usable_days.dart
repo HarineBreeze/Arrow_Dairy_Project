@@ -9,15 +9,15 @@ import 'dart:math' as math;
 /// 可使用天数 = x + y × (年化利率 - 通胀率)
 /// ```
 ///
-/// 注意两点，写错任何一个都会让结果明显偏离预期：
+/// 注意三点，写错任何一个都会让结果明显偏离预期：
 /// 1. 只有 **y** 乘利率差，x 不乘。利率差为 0 时结果应等于 x
 ///    （本金能支撑的天数），而不是 0。
 /// 2. y 的分母是 **(24 × 每月天数)**，不是 24。写成 24 会让 y 大约
 ///    大出「每月天数」倍。
-///
-/// 年化利率与通胀率以**百分比数值**参与运算（3 表示 3%，即 3 - 2 = 1），
-/// 不是小数。这是产品明确定义的口径，不要「修正」成 0.01 —— 那会让结果
-/// 差 100 倍。
+/// 3. 年化利率与通胀率以**百分比数值**传入（3 表示 3%），但参与运算时
+///    必须换算成小数（÷100）。界面标着 `%` 就意味着 5% = 0.05 ——
+///    直接拿 5 去乘，等于按 500% 的收益率放大，结果会差 100 倍。
+///    换算在 [compute] 内部完成，调用方仍只需传界面上的数字。
 ///
 /// ## 为什么单独抽出来
 /// 这是纯数值计算，抽成纯函数后可以精确覆盖边界：总资产为空、
@@ -40,7 +40,9 @@ class UsableDays {
 
   /// 核心计算。返回 null 表示无法计算（参数缺失或非法）。
   ///
-  /// [annualRate] / [inflationRate] 是百分比数值（3 = 3%）。
+  /// [annualRate] / [inflationRate] 传**百分比数值**（3 = 3%），
+  /// 内部会 ÷100 换算成小数再参与运算。
+  /// [daysPerMonth] 传 0 或负数视为参数非法。
   static double? compute({
     required double? total,
     required double monthlyCost,
@@ -54,8 +56,10 @@ class UsableDays {
     final t = total!;
     final x = (t / monthlyCost) * daysPerMonth;
     final y = (x * x) / (24 * daysPerMonth);
-    // 只让 y 乘利率差：x 是本金的直接支撑天数，不受利率影响
-    final days = x + y * (annualRate - inflationRate);
+    // 百分数换算成小数：5% - 2% = 0.03，而不是 3。
+    // 只让 y 乘利率差：x 是本金的直接支撑天数，不受利率影响。
+    final rateDiff = (annualRate - inflationRate) / 100;
+    final days = x + y * rateDiff;
 
     if (!days.isFinite) return null;
     return days;
@@ -92,7 +96,7 @@ class UsableDays {
     return '${years.toStringAsFixed(1)} 年';
   }
 
-  /// 自检用：返回 x、y、利率差、结果四个中间量
+  /// 自检用：返回 x、y、利率差（已换算成小数）、结果四个中间量
   static Map<String, double>? steps({
     required double? total,
     required double monthlyCost,
@@ -113,7 +117,8 @@ class UsableDays {
     return {
       'x': x,
       'y': y,
-      'rateDiff': annualRate - inflationRate,
+      // 与 compute 同口径：小数，不是百分数
+      'rateDiff': (annualRate - inflationRate) / 100,
       'days': d,
     };
   }

@@ -10,18 +10,21 @@ import 'package:diary_app/utils/usable_days.dart';
 /// 公式是产品明确定义的口径，这里逐项钉死：
 /// x = (总资产/月消费)×每月天数
 /// y = x² / (24 × 每月天数)
-/// 天数 = x + y×(年化利率−通胀率)，利率按百分比数值参与（3 表示 3%）
+/// 天数 = x + y×(年化利率−通胀率)，利率传百分数但**按小数参与运算**
 ///
 /// 手算基准（总资产 100000、月消费 5000、30 天、3%、2%）：
 /// x = 20 × 30 = 600
 /// y = 600² / (24 × 30) = 360000 / 720 = 500
-/// 天数 = 600 + 500 × 1 = 1100
+/// 利率差 = (3 − 2) ÷ 100 = 0.01
+/// 天数 = 600 + 500 × 0.01 = 605
 ///
-/// 关键区别（相对上一版的 (x+y)×利率差）：**只有 y 乘利率差，x 不乘**。
-/// 所以利率差为 0 时结果是 x（600）而不是 0，这就是最容易写错的地方。
+/// 关键点：
+/// 1. **只有 y 乘利率差，x 不乘**。利率差为 0 时结果是 x（600）而不是 0。
+/// 2. **利率必须 ÷100**。界面标着 %，5% 就是 0.05；直接拿 5 去乘会差
+///    100 倍，这正是 v4.8.2 之前的问题。
 void main() {
   group('公式严格按字面实现', () {
-    test('10万资产 / 月消费5000 → 1100 天', () {
+    test('10万资产 / 月消费5000 → 605 天', () {
       final d = UsableDays.compute(
         total: 100000,
         monthlyCost: 5000,
@@ -29,7 +32,7 @@ void main() {
         annualRate: 3,
         inflationRate: 2,
       );
-      expect(d, closeTo(1100, 0.01));
+      expect(d, closeTo(605, 0.01));
     });
 
     test('x / y / 利率差三个中间量都对', () {
@@ -42,8 +45,9 @@ void main() {
       )!;
       expect(s['x'], closeTo(600, 1e-9));
       expect(s['y'], closeTo(500, 1e-9));
-      expect(s['rateDiff'], closeTo(1, 1e-9));
-      expect(s['days'], closeTo(1100, 0.01));
+      // 小数，不是 1
+      expect(s['rateDiff'], closeTo(0.01, 1e-12));
+      expect(s['days'], closeTo(605, 0.01));
     });
 
     test('利率差为 0 时结果等于 x（不是 0）', () {
@@ -67,14 +71,15 @@ void main() {
             annualRate: rate,
             inflationRate: 2,
           )!;
-      // 利率差 0 / 1 / 3 → 600 / 1100 / 2100（y = 500）
+      // 利率差 0 / 1% / 3% → 600 / 605 / 615（y = 500）
       expect(at(2), closeTo(600, 1e-9));
-      expect(at(3), closeTo(1100, 1e-9));
-      expect(at(5), closeTo(2100, 1e-9));
+      expect(at(3), closeTo(605, 1e-9));
+      expect(at(5), closeTo(615, 1e-9));
     });
 
     test('利率差为负时结果小于 x（扣减，但本金部分仍在）', () {
-      // x = 600、y = 500、利率差 = -2 → 600 + 500 × (-2) = -400
+      // x = 600、y = 500、利率差 = (1 − 3) ÷ 100 = -0.02
+      // → 600 + 500 × (-0.02) = 590
       final d = UsableDays.compute(
         total: 100000,
         monthlyCost: 5000,
@@ -83,7 +88,21 @@ void main() {
         inflationRate: 3,
       );
       expect(d, lessThan(600));
-      expect(d, closeTo(-400, 1e-9));
+      expect(d, closeTo(590, 1e-9));
+    });
+
+    test('利率按小数参与：5% 是 0.05，不是 5', () {
+      // x = 30000、y = 1250000、利率差 = (5 − 2) ÷ 100 = 0.03
+      // → 30000 + 1250000 × 0.03 = 67500
+      // 若漏掉 ÷100 会得到 3,780,000，差 56 倍
+      final d = UsableDays.compute(
+        total: 3000000,
+        monthlyCost: 3000,
+        daysPerMonth: 30,
+        annualRate: 5,
+        inflationRate: 2,
+      );
+      expect(d, closeTo(67500, 0.5));
     });
 
     test('每月天数在 x 的分子、y 的分母中各出现一次', () {
