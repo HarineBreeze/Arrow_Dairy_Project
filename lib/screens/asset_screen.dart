@@ -3,11 +3,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../utils/app_toast.dart';
 import '../models/asset.dart';
+import '../services/app_settings.dart';
 import '../services/asset_storage.dart';
 import '../services/trash_storage.dart';
+import '../utils/usable_days.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/loading_skeleton.dart';
 import 'asset_edit_screen.dart';
+import 'usable_days_settings_sheet.dart';
 import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
 import '../widgets/asset_pie_card.dart';
@@ -848,6 +851,9 @@ class AssetScreenState extends State<AssetScreen> {
                   ),
                 ),
               ),
+              // 「净资产」右侧的空白区：可使用 x 天 + 参数入口
+              const Spacer(),
+              _buildUsableDays(),
             ],
           ),
           const SizedBox(height: 4),
@@ -873,6 +879,69 @@ class AssetScreenState extends State<AssetScreen> {
           _buildStructureBar(),
         ],
       ),
+    );
+  }
+
+  /// 看板「净资产」右侧的「可使用 x 天」+ 参数入口。
+  ///
+  /// 计算口径见 [UsableDays]：总资产取自设置（默认为空），
+  /// 为空 / 月消费为 0 时不显示天数，只保留圈叹号入口，
+  /// 让用户能发现这个功能并去设置。
+  Widget _buildUsableDays() {
+    final days = UsableDays.compute(
+      total: AppSettings.usableTotal,
+      monthlyCost: AppSettings.usableMonthlyCost,
+      daysPerMonth: AppSettings.usableDaysPerMonth,
+      annualRate: AppSettings.annualRate,
+      inflationRate: AppSettings.inflationRate,
+    );
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (days != null && days > 0) ...[
+          // 数字与「净资产」同字号，保证行内视觉重量一致；
+          // 隐藏金额时同步隐藏，避免只藏一半
+          Text(
+            _hideNumbers ? '可使用 ****天' : '可使用 ${UsableDays.format(days)}',
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(width: 2),
+        ],
+        // 圈叹号：进入参数设置
+        GestureDetector(
+          key: const ValueKey('usable-days-settings'),
+          onTap: () async {
+            Haptics.lightNow();
+            final changed = await UsableDaysSettingsSheet.show(context);
+            if (changed == true && mounted) setState(() {});
+          },
+          behavior: HitTestBehavior.opaque,
+          child: Container(
+            width: 18,
+            height: 18,
+            margin: const EdgeInsets.only(left: 2),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white70, width: 1.2),
+            ),
+            alignment: Alignment.center,
+            child: const Text(
+              '!',
+              style: TextStyle(
+                fontSize: 11,
+                height: 1,
+                fontWeight: FontWeight.w700,
+                color: Colors.white70,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
