@@ -58,23 +58,28 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
   }
 
-  /// 沿「理财资产」文本向上找到看板 Column，再取最后一个子树（结构条）
+  /// 沿「理财资产」文本向上找到看板卡片的主 Column，再取结构条（最后一个 ClipRRect）。
+  ///
+  /// 这里不按 children.length 匹配 —— 卡片布局会随功能增加而变化
+  /// （例如加了「可使用 x 天」两栏后子节点数从 7 变 8），
+  /// 按数量匹配会让一次纯 UI 调整把结构条测试拖挂。
+  /// 改为：找**包含 ClipRRect 子节点的那个 Column**，取第一个 ClipRRect。
   Element? findBarElement(WidgetTester tester) {
     if (find.text('理财资产').evaluate().isEmpty) return null;
     final statEl = tester.element(find.text('理财资产'));
-    Element? overviewCol;
+    Element? barEl;
     statEl.visitAncestorElements((anc) {
-      if (anc.widget is Column &&
-          (anc.widget as Column).children.length == 7) {
-        overviewCol = anc;
-        return false;
+      if (anc.widget is Column) {
+        Element? found;
+        anc.visitChildren((child) {
+          if (found == null && child.widget is ClipRRect) found = child;
+        });
+        if (found != null) {
+          barEl = found;
+          return false;
+        }
       }
       return true;
-    });
-    if (overviewCol == null) return null;
-    Element? barEl;
-    overviewCol!.visitChildren((child) {
-      if (child.widget is ClipRRect) barEl = child;
     });
     return barEl;
   }

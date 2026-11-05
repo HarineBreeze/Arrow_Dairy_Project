@@ -30,6 +30,10 @@ class AssetScreen extends StatefulWidget {
 }
 
 class AssetScreenState extends State<AssetScreen> {
+  /// 看板两栏标题行的统一高度：右栏带 16px 圈叹号按钮，会把行撑到 20px；
+  /// 左栏没有按钮只有 13px 文字。锁成同一高度，两栏的数字才能对齐同一行。
+  static const double _kCardTitleRowHeight = 20;
+
   List<Asset> _assets = [];
   bool _loading = true;
   bool _unlocked = true; // 未加密时默认已解锁
@@ -827,42 +831,19 @@ class AssetScreenState extends State<AssetScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 左：净资产　右：可使用 x 天 —— 两栏同版式（上标题、下数字）。
+          //
+          // 刻意不用 IntrinsicHeight：里面的数字行用了 baseline 对齐，
+          // 而 IntrinsicHeight 要求能算出子树的固有高度，baseline 对齐的
+          // Row 不支持固有高度计算，会直接抛断言。两栏高度由内容自然撑开，
+          // 数字行统一 32px 字号 + 固定行高，天然等高，不需要额外约束。
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('净资产',
-                  style: TextStyle(fontSize: 13, color: Colors.white70)),
-              const SizedBox(width: 4),
-              // 隐藏/显示看板数字（默认显示）
-              GestureDetector(
-                onTap: () {
-                  // 小眼睛：同步触发中震动，切换金额可见性给予明确触感
-                  Haptics.mediumNow();
-                  setState(() => _hideNumbers = !_hideNumbers);
-                },
-                behavior: HitTestBehavior.opaque,
-                child: Padding(
-                  padding: const EdgeInsets.all(2),
-                  child: Icon(
-                    _hideNumbers
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined,
-                    size: 16,
-                    color: Colors.white70,
-                  ),
-                ),
-              ),
-              // 「净资产」右侧的空白区：可使用 x 天 + 参数入口
-              const Spacer(),
-              _buildUsableDays(),
+              Expanded(child: _buildNetWorthBlock(net)),
+              const SizedBox(width: 12),
+              Expanded(child: _buildUsableDaysBlock()),
             ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            _hideNumbers ? '****' : _money(net),
-            style: const TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.w700,
-                color: Colors.white),
           ),
           const SizedBox(height: 14),
           Row(
@@ -882,64 +863,161 @@ class AssetScreenState extends State<AssetScreen> {
     );
   }
 
-  /// 看板「净资产」右侧的「可使用 x 天」+ 参数入口。
+  /// 左栏：净资产（标题行 + 大数字），与右栏「可使用」同版式
+  Widget _buildNetWorthBlock(double net) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          // 与右栏标题行锁成同一高度：右栏有一个 16px 的圈叹号按钮，
+          // 会把该行撑高；不锁的话左栏标题会高出 3px，两栏数字就差行了
+          height: _kCardTitleRowHeight,
+          child: Row(
+            children: [
+              const Text('净资产',
+                  style: TextStyle(fontSize: 13, color: Colors.white70)),
+              const SizedBox(width: 4),
+              // 隐藏/显示看板数字（默认显示）
+              GestureDetector(
+                onTap: () {
+                  // 小眼睛：同步触发中震动，切换金额可见性给予明确触感
+                  Haptics.mediumNow();
+                  setState(() => _hideNumbers = !_hideNumbers);
+                },
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.all(2),
+                  child: Icon(
+                    _hideNumbers
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                    size: 15,
+                    color: Colors.white70,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 4),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            _hideNumbers ? '****' : _money(net),
+            style: const TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+                height: 1.15),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 右栏：可使用 x 天（标题行 + 大数字），与净资产同版式。
   ///
-  /// 计算口径见 [UsableDays]：总资产取自设置（默认为空），
-  /// 为空 / 月消费为 0 时不显示天数，只保留圈叹号入口，
-  /// 让用户能发现这个功能并去设置。
-  Widget _buildUsableDays() {
+  /// 标题行 = 「可使用」+ 圈叹号（参数入口）；数字行 = x + 小号「天」。
+  /// 计算口径见 [UsableDays]；总资产未手填时自动取当前净资产。
+  Widget _buildUsableDaysBlock() {
     final days = UsableDays.compute(
-      total: AppSettings.usableTotal,
+      total: AppSettings.resolveTotal(netWorthFallback: _netWorth),
       monthlyCost: AppSettings.usableMonthlyCost,
       daysPerMonth: AppSettings.usableDaysPerMonth,
       annualRate: AppSettings.annualRate,
       inflationRate: AppSettings.inflationRate,
     );
+    final hasValue = days != null && days > 0;
 
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (days != null && days > 0) ...[
-          // 数字与「净资产」同字号，保证行内视觉重量一致；
-          // 隐藏金额时同步隐藏，避免只藏一半
-          Text(
-            _hideNumbers ? '可使用 ****天' : '可使用 ${UsableDays.format(days)}',
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(width: 2),
-        ],
-        // 圈叹号：进入参数设置
-        GestureDetector(
-          key: const ValueKey('usable-days-settings'),
-          onTap: () async {
-            Haptics.lightNow();
-            final changed = await UsableDaysSettingsSheet.show(context);
-            if (changed == true && mounted) setState(() {});
-          },
-          behavior: HitTestBehavior.opaque,
-          child: Container(
-            width: 18,
-            height: 18,
-            margin: const EdgeInsets.only(left: 2),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white70, width: 1.2),
-            ),
-            alignment: Alignment.center,
-            child: const Text(
-              '!',
-              style: TextStyle(
-                fontSize: 11,
-                height: 1,
-                fontWeight: FontWeight.w700,
-                color: Colors.white70,
+        SizedBox(
+          height: _kCardTitleRowHeight,
+          child: Row(
+          children: [
+            const Text('可使用',
+                style: TextStyle(fontSize: 13, color: Colors.white70)),
+            const SizedBox(width: 4),
+            // 圈叹号：进入参数设置。始终显示，否则算不出数时用户
+            // 找不到入口，只会看到一块空白。
+            GestureDetector(
+              key: const ValueKey('usable-days-settings'),
+              onTap: () async {
+                Haptics.lightNow();
+                final changed = await UsableDaysSettingsSheet.show(
+                  context,
+                  netWorth: _netWorth,
+                );
+                if (changed == true && mounted) setState(() {});
+              },
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                width: 16,
+                height: 16,
+                margin: const EdgeInsets.all(1),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white70, width: 1.2),
+                ),
+                alignment: Alignment.center,
+                child: const Text(
+                  '!',
+                  style: TextStyle(
+                    fontSize: 10,
+                    height: 1,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white70,
+                  ),
+                ),
               ),
             ),
+          ],
           ),
+        ),
+        const SizedBox(height: 4),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: hasValue
+              ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      _hideNumbers ? '****' : UsableDays.format(days),
+                      style: const TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          height: 1.15),
+                    ),
+                    if (!_hideNumbers)
+                      const Padding(
+                        padding: EdgeInsets.only(left: 2),
+                        child: Text(
+                          '天',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white70,
+                          ),
+                        ),
+                      ),
+                  ],
+                )
+              // 算不出来时留一个占位：保持两栏等高，净资产不会因此偏移
+              : const Text(
+                  '—',
+                  style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white54,
+                      height: 1.15),
+                ),
         ),
       ],
     );

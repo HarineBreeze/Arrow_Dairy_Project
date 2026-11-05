@@ -2,22 +2,23 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:diary_app/services/app_settings.dart';
 import 'package:diary_app/utils/usable_days.dart';
 
 /// 「可使用 x 天」公式的回归测试。
 ///
 /// 公式是产品明确定义的口径，这里逐项钉死：
 /// x = (总资产/月消费)×每月天数
-/// y = (x²/24)×每月天数
+/// y = x² / (24 × 每月天数)
 /// 天数 = (x+y)×(年化利率−通胀率)，利率按百分比数值参与（3 表示 3%）
 ///
 /// 手算基准（总资产 100000、月消费 5000、30 天、3%、2%）：
 /// x = 20 × 30 = 600
-/// y = 600²/24 × 30 = 15000 × 30 = 450000
-/// 天数 = (600 + 450000) × 1 = 450600
+/// y = 600² / (24 × 30) = 360000 / 720 = 500
+/// 天数 = (600 + 500) × 1 = 1100
 void main() {
   group('公式严格按字面实现', () {
-    test('10万资产 / 月消费5000 → 450600 天', () {
+    test('10万资产 / 月消费5000 → 1100 天', () {
       final d = UsableDays.compute(
         total: 100000,
         monthlyCost: 5000,
@@ -25,7 +26,7 @@ void main() {
         annualRate: 3,
         inflationRate: 2,
       );
-      expect(d, closeTo(450600, 0.01));
+      expect(d, closeTo(1100, 0.01));
     });
 
     test('x / y / 利率差三个中间量都对', () {
@@ -37,9 +38,9 @@ void main() {
         inflationRate: 2,
       )!;
       expect(s['x'], closeTo(600, 1e-9));
-      expect(s['y'], closeTo(450000, 1e-6));
+      expect(s['y'], closeTo(500, 1e-9));
       expect(s['rateDiff'], closeTo(1, 1e-9));
-      expect(s['days'], closeTo(450600, 0.01));
+      expect(s['days'], closeTo(1100, 0.01));
     });
 
     test('利率差为 0 时结果为 0（不增加也不减少）', () {
@@ -64,7 +65,7 @@ void main() {
       expect(d, lessThan(0));
     });
 
-    test('每月天数参与两次计算（x 一次、y 一次）', () {
+    test('每月天数在 x 的分子、y 的分母中各出现一次', () {
       final d30 = UsableDays.compute(
         total: 60000,
         monthlyCost: 6000,
@@ -161,17 +162,20 @@ void main() {
   });
 
   group('展示格式', () {
-    test('460 天显示为「460 天」', () {
-      expect(UsableDays.format(460), '460 天');
+    test('数字部分不带单位（看板另有「天」小字）', () {
+      expect(UsableDays.format(460), '460');
+      expect(UsableDays.formatWithUnit(460), '460 天');
     });
 
-    test('超过 1 万天用「万天」压缩，避免长数字挤坏看板', () {
-      expect(UsableDays.format(450600), '45.1 万天');
+    test('超过 1 万天压缩成「万」，避免长数字挤坏看板', () {
+      expect(UsableDays.format(450600), '45.1万');
+      expect(UsableDays.format(12000), '1.2万');
+      expect(UsableDays.format(10000), '1万');
     });
 
-    test('0 或负数显示 0 天', () {
-      expect(UsableDays.format(0), '0 天');
-      expect(UsableDays.format(-5), '0 天');
+    test('0 或负数显示 0', () {
+      expect(UsableDays.format(0), '0');
+      expect(UsableDays.format(-5), '0');
     });
 
     test('年数换算：365 天 = 1.0 年', () {
@@ -181,18 +185,21 @@ void main() {
   });
 
   group('设置默认值', () {
-    test('默认参数与产品定义一致', () {
-      // 这里只校验常量约定，避免实现里被悄悄改成别的默认值
-      const defaults = {
-        'monthlyCost': 0.0,
-        'daysPerMonth': 30.0,
-        'annualRate': 3.0,
-        'inflationRate': 2.0,
-      };
-      expect(defaults['monthlyCost'], 0.0);
-      expect(defaults['daysPerMonth'], 30.0);
-      expect(defaults['annualRate'], 3.0);
-      expect(defaults['inflationRate'], 2.0);
+    test('默认参数与产品定义一致（预算 3000、30 天、3%、2%）', () {
+      // 直接读 AppSettings 的真实默认值，防止实现被悄悄改掉
+      expect(AppSettings.usableMonthlyCost, 3000);
+      expect(AppSettings.usableDaysPerMonth, 30);
+      expect(AppSettings.annualRate, 3);
+      expect(AppSettings.inflationRate, 2);
+      // 没手填过 → 总资产为空，但会自动回落到净资产
+      expect(AppSettings.usableTotal, isNull);
+      expect(AppSettings.resolveTotal(netWorthFallback: 88888), 88888);
+    });
+
+    test('净资产为负或为 0 时不作为默认总资产', () {
+      expect(AppSettings.resolveTotal(netWorthFallback: -1000), isNull);
+      expect(AppSettings.resolveTotal(netWorthFallback: 0), isNull);
+      expect(AppSettings.resolveTotal(netWorthFallback: null), isNull);
     });
   });
 

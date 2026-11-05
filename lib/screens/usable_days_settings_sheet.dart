@@ -11,23 +11,26 @@ import '../widgets/pressable.dart';
 /// 「可使用天数」参数设置弹窗。
 ///
 /// 由看板卡片「净资产」旁的圈叹号按钮打开。五个参数：
-/// - 总资产：默认为空（留空 = 不显示「可使用 x 天」）
-/// - 月消费：默认 0
+/// - 总资产：默认取当前净资产（可手动改成别的数）
+/// - 月消费（每月预算）：默认 3000
 /// - 每月天数：默认 30
 /// - 年化利率：默认 3（百分比数值）
 /// - 通胀率：默认 2（百分比数值）
 ///
 /// 保存后返回 true，调用方据此刷新卡片。
 class UsableDaysSettingsSheet extends StatefulWidget {
-  const UsableDaysSettingsSheet({Key? key}) : super(key: key);
+  /// 当前净资产：总资产输入框的默认值与占位提示都用它。
+  final double? netWorth;
+
+  const UsableDaysSettingsSheet({Key? key, this.netWorth}) : super(key: key);
 
   /// 以底部弹窗形式呈现
-  static Future<bool?> show(BuildContext context) {
+  static Future<bool?> show(BuildContext context, {double? netWorth}) {
     return showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => const UsableDaysSettingsSheet(),
+      builder: (_) => UsableDaysSettingsSheet(netWorth: netWorth),
     );
   }
 
@@ -46,7 +49,8 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
   @override
   void initState() {
     super.initState();
-    final t = AppSettings.usableTotal;
+    // 没手填过 → 直接带入当前净资产，省得用户还要自己抄一遍
+    final t = AppSettings.resolveTotal(netWorthFallback: widget.netWorth);
     _total = TextEditingController(
       text: t == null ? '' : _trimNum(t),
     );
@@ -185,13 +189,13 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
                     children: [
                       _field(
                         label: '总资产',
-                        hint: '留空则不显示「可使用 x 天」',
+                        hint: '默认取当前净资产',
                         controller: _total,
                         allowDecimal: true,
                       ),
                       _field(
-                        label: '月消费',
-                        hint: '0',
+                        label: '每月预算',
+                        hint: '3000',
                         controller: _cost,
                         allowDecimal: true,
                       ),
@@ -273,7 +277,7 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
       color = const Color(0xFF9AA8BF);
     } else if (d == null) {
       body = _parse(_cost) <= 0
-          ? '月消费需大于 0 才能计算'
+          ? '每月预算需大于 0 才能计算'
           : '参数不完整，无法计算';
       color = const Color(0xFFF08C3A);
     } else if (rateDiff <= 0) {
@@ -338,7 +342,7 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
           const SizedBox(height: 8),
           const Text(
             '（总资产 / 月消费 × 每月天数）＝ x\n'
-            '（x² / 24 × 每月天数）＝ y\n'
+            'x² ÷（24 × 每月天数）＝ y\n'
             '（x + y）×（年化利率 − 通胀率）＝ 可使用天数',
             style: TextStyle(
                 fontSize: 10.5, color: Color(0xFFB4BECD), height: 1.7),

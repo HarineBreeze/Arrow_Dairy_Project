@@ -31,15 +31,26 @@ class AppSettings {
 
   // ---------------- 「可使用天数」参数 ----------------
 
-  /// 总资产（用户手填，null 表示未设置 → 不显示「可使用 x 天」）
+  /// 总资产。null 表示用户没手动设过 —— 此时自动取看板的净资产。
   ///
-  /// 刻意不跟随看板的净资产：一是用户可能想按「可用现金」而非「净资产」
-  /// 来估算；二是净资产为负时公式无意义。留空就是明确的不显示。
+  /// 只在用户**主动填写并保存**后才落成固定值；这样净资产变化时
+  /// 看板上的天数会跟着变，不会停留在某次手填的旧数上。
   static double? _usableTotal;
   static double? get usableTotal => _usableTotal;
 
-  /// 月消费，默认 0（为 0 时无法计算，等同未设置）
-  static double _usableMonthlyCost = 0;
+  /// 实际参与计算的总资产：手填值优先，否则回落到 [netWorthFallback]。
+  ///
+  /// [netWorthFallback] 由调用方（资产页）传入当前净资产；
+  /// 为空或为负时返回 null —— 净资产为负，公式算出来没有意义。
+  static double? resolveTotal({double? netWorthFallback}) {
+    if (_usableTotal != null) return _usableTotal;
+    if (netWorthFallback == null) return null;
+    if (!netWorthFallback.isFinite || netWorthFallback <= 0) return null;
+    return netWorthFallback;
+  }
+
+  /// 月消费，默认 3000
+  static double _usableMonthlyCost = 3000;
   static double get usableMonthlyCost => _usableMonthlyCost;
 
   /// 每月天数，默认 30
