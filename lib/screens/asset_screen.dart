@@ -30,9 +30,6 @@ class AssetScreen extends StatefulWidget {
 }
 
 class AssetScreenState extends State<AssetScreen> {
-  /// 看板两栏标题行的统一高度：右栏带 16px 圈叹号按钮，会把行撑到 20px；
-  /// 左栏没有按钮只有 13px 文字。锁成同一高度，两栏的数字才能对齐同一行。
-  static const double _kCardTitleRowHeight = 20;
 
   List<Asset> _assets = [];
   bool _loading = true;
@@ -869,11 +866,7 @@ class AssetScreenState extends State<AssetScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        SizedBox(
-          // 与右栏标题行锁成同一高度：右栏有一个 16px 的圈叹号按钮，
-          // 会把该行撑高；不锁的话左栏标题会高出 3px，两栏数字就差行了
-          height: _kCardTitleRowHeight,
-          child: Row(
+        Row(
             children: [
               const Text('净资产',
                   style: TextStyle(fontSize: 13, color: Colors.white70)),
@@ -899,8 +892,7 @@ class AssetScreenState extends State<AssetScreen> {
               ),
             ],
           ),
-        ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 1),
         FittedBox(
           fit: BoxFit.scaleDown,
           alignment: Alignment.centerLeft,
@@ -935,13 +927,11 @@ class AssetScreenState extends State<AssetScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        SizedBox(
-          height: _kCardTitleRowHeight,
-          child: Row(
+        Row(
           children: [
             const Text('可使用',
                 style: TextStyle(fontSize: 13, color: Colors.white70)),
-            const SizedBox(width: 4),
+            const SizedBox(width: 2),
             // 圈叹号：进入参数设置。始终显示，否则算不出数时用户
             // 找不到入口，只会看到一块空白。
             GestureDetector(
@@ -954,31 +944,39 @@ class AssetScreenState extends State<AssetScreen> {
                 );
                 if (changed == true && mounted) setState(() {});
               },
+              // 图标缩小，但点触范围保持 36×36（略大于视觉尺寸）：
+              // 用负 margin 把可点的区域往外扩，视觉变小、手指照样点得中。
+              // 直接缩小 GestureDetector 会让这个小按钮在手机上几乎点不到。
               behavior: HitTestBehavior.opaque,
               child: Container(
-                width: 16,
-                height: 16,
-                margin: const EdgeInsets.all(1),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white70, width: 1.2),
-                ),
+                width: 36,
+                height: 36,
+                color: Colors.transparent,
                 alignment: Alignment.center,
-                child: const Text(
-                  '!',
-                  style: TextStyle(
-                    fontSize: 10,
-                    height: 1,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white70,
+                child: Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white70, width: 1),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Text(
+                    '!',
+                    style: TextStyle(
+                      fontSize: 8,
+                      height: 1,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white70,
+                    ),
                   ),
                 ),
               ),
             ),
           ],
-          ),
         ),
-        const SizedBox(height: 4),
+        // 标题行被 36px 点触区撑高后，数字上方不再需要额外留白
+        const SizedBox(height: 1),
         FittedBox(
           fit: BoxFit.scaleDown,
           alignment: Alignment.centerLeft,

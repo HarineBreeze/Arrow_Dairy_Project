@@ -10,12 +10,15 @@ import 'package:diary_app/utils/usable_days.dart';
 /// 公式是产品明确定义的口径，这里逐项钉死：
 /// x = (总资产/月消费)×每月天数
 /// y = x² / (24 × 每月天数)
-/// 天数 = (x+y)×(年化利率−通胀率)，利率按百分比数值参与（3 表示 3%）
+/// 天数 = x + y×(年化利率−通胀率)，利率按百分比数值参与（3 表示 3%）
 ///
 /// 手算基准（总资产 100000、月消费 5000、30 天、3%、2%）：
 /// x = 20 × 30 = 600
 /// y = 600² / (24 × 30) = 360000 / 720 = 500
-/// 天数 = (600 + 500) × 1 = 1100
+/// 天数 = 600 + 500 × 1 = 1100
+///
+/// 关键区别（相对上一版的 (x+y)×利率差）：**只有 y 乘利率差，x 不乘**。
+/// 所以利率差为 0 时结果是 x（600）而不是 0，这就是最容易写错的地方。
 void main() {
   group('公式严格按字面实现', () {
     test('10万资产 / 月消费5000 → 1100 天', () {
@@ -43,7 +46,9 @@ void main() {
       expect(s['days'], closeTo(1100, 0.01));
     });
 
-    test('利率差为 0 时结果为 0（不增加也不减少）', () {
+    test('利率差为 0 时结果等于 x（不是 0）', () {
+      // 上一版公式 (x+y)×利率差 在这里会得到 0，是错的：
+      // 本金本身就能支撑 x 天，与利率无关
       final d = UsableDays.compute(
         total: 100000,
         monthlyCost: 5000,
@@ -51,10 +56,25 @@ void main() {
         annualRate: 2,
         inflationRate: 2,
       );
-      expect(d, closeTo(0, 1e-9));
+      expect(d, closeTo(600, 1e-9));
     });
 
-    test('利率差为负时结果为负（如实反映，不强行取正）', () {
+    test('利率差越大，结果越大（x 恒定，只有 y 那部分变动）', () {
+      double at(double rate) => UsableDays.compute(
+            total: 100000,
+            monthlyCost: 5000,
+            daysPerMonth: 30,
+            annualRate: rate,
+            inflationRate: 2,
+          )!;
+      // 利率差 0 / 1 / 3 → 600 / 1100 / 2100（y = 500）
+      expect(at(2), closeTo(600, 1e-9));
+      expect(at(3), closeTo(1100, 1e-9));
+      expect(at(5), closeTo(2100, 1e-9));
+    });
+
+    test('利率差为负时结果小于 x（扣减，但本金部分仍在）', () {
+      // x = 600、y = 500、利率差 = -2 → 600 + 500 × (-2) = -400
       final d = UsableDays.compute(
         total: 100000,
         monthlyCost: 5000,
@@ -62,7 +82,8 @@ void main() {
         annualRate: 1,
         inflationRate: 3,
       );
-      expect(d, lessThan(0));
+      expect(d, lessThan(600));
+      expect(d, closeTo(-400, 1e-9));
     });
 
     test('每月天数在 x 的分子、y 的分母中各出现一次', () {

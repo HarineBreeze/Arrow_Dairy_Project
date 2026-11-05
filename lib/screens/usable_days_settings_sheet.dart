@@ -256,17 +256,12 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
     );
   }
 
-  /// 公式预览：把 x / y / 结果都摊开，用户能立刻看出数值是否合理
+  /// 结果预览 + 提示语。
+  ///
+  /// 不展示计算公式与中间量（x / y）——用户要的只是「能用多少天」以及
+  /// 一眼能看懂的异常提示。
   Widget _buildPreview() {
     final totalText = _total.text.trim();
-    final steps = UsableDays.steps(
-      total: totalText.isEmpty ? null : double.tryParse(totalText),
-      monthlyCost: _parse(_cost),
-      daysPerMonth: _parse(_days),
-      annualRate: _parse(_rate),
-      inflationRate: _parse(_infl),
-    );
-
     final rateDiff = _parse(_rate) - _parse(_infl);
     final d = _previewDays;
 
@@ -329,24 +324,7 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
                 ],
               ],
             ),
-            if (steps != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                'x = ${UsableDays.format(steps['x']!)}　'
-                'y = ${UsableDays.format(steps['y']!)}',
-                style: const TextStyle(
-                    fontSize: 11, color: Color(0xFFB4BECD), height: 1.4),
-              ),
-            ],
           ],
-          const SizedBox(height: 8),
-          const Text(
-            '（总资产 / 月消费 × 每月天数）＝ x\n'
-            'x² ÷（24 × 每月天数）＝ y\n'
-            '（x + y）×（年化利率 − 通胀率）＝ 可使用天数',
-            style: TextStyle(
-                fontSize: 10.5, color: Color(0xFFB4BECD), height: 1.7),
-          ),
         ],
       ),
     );
