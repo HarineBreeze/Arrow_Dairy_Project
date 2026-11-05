@@ -302,14 +302,11 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
     // 到这里 d 一定非空（前面 d == null 已单独分支），用局部变量固化提升
     final double dd = d ?? 0;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE8EDF5)),
-      ),
+    // 不套白色卡片：内容直接落在弹窗底色上，与其他字段的留白节奏一致。
+    // 只保留左内边距 2px，让数字与上方输入框的左缘对齐（输入框内文本
+    // 有 12px 内边距，这里没有，所以只补一点点视觉呼吸）。
+    return Padding(
+      padding: const EdgeInsets.only(left: 2, top: 2, bottom: 2),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

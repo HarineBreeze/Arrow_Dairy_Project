@@ -860,59 +860,68 @@ class AssetScreenState extends State<AssetScreen> {
     );
   }
 
-  /// 左栏：净资产（标题 + 金额排在同一行）。
+  /// 左栏：净资产。
   ///
-  /// 标题固定宽度，金额占剩余空间并等比缩放，保证两栏的金额在同一条
-  /// 基线上、右缘都不溢出。
+  /// 第一行「净资产」+ 眼睛，第二行金额 —— 两栏的标题在同一行、
+  /// 数字在下一行，左右对齐。
   Widget _buildNetWorthBlock(double net) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.baseline,
-      textBaseline: TextBaseline.alphabetic,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        const Text('净资产',
-            style: TextStyle(fontSize: 13, color: Colors.white70)),
-        const SizedBox(width: 4),
-        // 隐藏/显示看板数字（默认显示）
-        GestureDetector(
-          onTap: () {
-            // 小眼睛：同步触发中震动，切换金额可见性给予明确触感
-            Haptics.mediumNow();
-            setState(() => _hideNumbers = !_hideNumbers);
-          },
-          behavior: HitTestBehavior.opaque,
-          child: Padding(
-            padding: const EdgeInsets.all(2),
-            child: Icon(
-              _hideNumbers
-                  ? Icons.visibility_off_outlined
-                  : Icons.visibility_outlined,
-              size: 15,
-              color: Colors.white70,
-            ),
+        // 标题行固定 16px 高：右栏标题行里有 16px 的圈叹号位，
+        // 两边不锁高的话标题行会差几个像素，第二行数字就跟着错开。
+        SizedBox(
+          height: 16,
+          child: Row(
+            children: [
+              const Text('净资产',
+                  style: TextStyle(fontSize: 13, color: Colors.white70)),
+              const SizedBox(width: 4),
+              // 隐藏/显示看板数字（默认显示）
+              GestureDetector(
+                onTap: () {
+                  // 小眼睛：同步触发中震动，切换金额可见性给予明确触感
+                  Haptics.mediumNow();
+                  setState(() => _hideNumbers = !_hideNumbers);
+                },
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.all(2),
+                  child: Icon(
+                    _hideNumbers
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                    size: 15,
+                    color: Colors.white70,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(width: 6),
-        Expanded(
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              _hideNumbers ? '****' : _money(net),
-              maxLines: 1,
-              style: const TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                  height: 1.15),
-            ),
+        const SizedBox(height: 1),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            _hideNumbers ? '****' : _money(net),
+            maxLines: 1,
+            style: const TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+                height: 1.15),
           ),
         ),
       ],
     );
   }
 
-  /// 右栏：可使用 x 天（标题 + 天数排在同一行），与净资产同版式。
+  /// 右栏：可使用 x 天。
   ///
+  /// 第一行「可使用」+ 圈叹号，第二行「x 天」—— 与左栏同结构，
+  /// 两栏标题齐平、数字齐平。
   /// 计算口径见 [UsableDays]；总资产未手填时自动取当前净资产。
   Widget _buildUsableDaysBlock() {
     final days = UsableDays.compute(
@@ -924,110 +933,111 @@ class AssetScreenState extends State<AssetScreen> {
     );
     final hasValue = days != null && days > 0;
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.baseline,
-      textBaseline: TextBaseline.alphabetic,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        const Text('可使用',
-            style: TextStyle(fontSize: 13, color: Colors.white70)),
-        const SizedBox(width: 4),
-        Expanded(
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: hasValue
-                ? Row(
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
-                    children: [
-                      Text(
-                        _hideNumbers ? '****' : UsableDays.format(days),
-                        style: const TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                            height: 1.15),
-                      ),
-                      if (!_hideNumbers)
-                        const Padding(
-                          padding: EdgeInsets.only(left: 2),
-                          child: Text(
-                            '天',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white70,
-                            ),
-                          ),
-                        ),
-                    ],
-                  )
-                // 算不出来时留一个占位，两栏基线仍然对齐
-                : const Text(
-                    '—',
-                    style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white54,
-                        height: 1.15),
-                  ),
-          ),
-        ),
-        // 圈叹号：进入参数设置。始终显示，否则算不出数时用户
-        // 找不到入口，只会看到一块空白。
-        //
-        // 36×36 的点触区比 12px 的视觉圆点大得多 —— 直接用 12px 的
-        // GestureDetector，手指基本点不中。这里用负 margin 把多出来的
-        // 空白抵消掉，否则这 36px 会把整行撑高、两栏基线错开。
-        Padding(
-          padding: const EdgeInsets.only(left: 2),
-          child: Transform.translate(
-            offset: const Offset(0, 0),
-            child: SizedBox(
-              width: 16,
-              height: 16,
-              child: OverflowBox(
-                maxWidth: 36,
-                maxHeight: 36,
-                child: GestureDetector(
-                  key: const ValueKey('usable-days-settings'),
-                  onTap: () async {
-                    Haptics.lightNow();
-                    final changed = await UsableDaysSettingsSheet.show(
-                      context,
-                      netWorth: _netWorth,
-                    );
-                    if (changed == true && mounted) setState(() {});
-                  },
-                  behavior: HitTestBehavior.opaque,
-                  child: Container(
-                    width: 36,
-                    height: 36,
-                    color: Colors.transparent,
-                    alignment: Alignment.center,
+        // 与左栏一致锁 16px 高，保证第二行数字严格齐平
+        SizedBox(
+          height: 16,
+          child: Row(
+            children: [
+              const Text('可使用',
+                  style: TextStyle(fontSize: 13, color: Colors.white70)),
+              const SizedBox(width: 2),
+              // 圈叹号：进入参数设置。始终显示，否则算不出数时用户
+              // 找不到入口，只会看到一块空白。
+              //
+              // 点触区 36×36、视觉圆点 12px。这里不在 baseline Row 里，
+              // 标题行已用 16px 固定行高锁住，所以用 SizedBox + OverflowBox
+              // 把大点触区溢出出去，既不会撑高标题行，手指也点得中。
+              SizedBox(
+                width: 16,
+                height: 16,
+                child: OverflowBox(
+                  maxWidth: 36,
+                  maxHeight: 36,
+                  child: GestureDetector(
+                    key: const ValueKey('usable-days-settings'),
+                    onTap: () async {
+                      Haptics.lightNow();
+                      final changed = await UsableDaysSettingsSheet.show(
+                        context,
+                        netWorth: _netWorth,
+                      );
+                      if (changed == true && mounted) setState(() {});
+                    },
+                    behavior: HitTestBehavior.opaque,
                     child: Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white70, width: 1),
-                      ),
+                      width: 36,
+                      height: 36,
+                      color: Colors.transparent,
                       alignment: Alignment.center,
-                      child: const Text(
-                        '!',
-                        style: TextStyle(
-                          fontSize: 8,
-                          height: 1,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white70,
+                      child: Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white70, width: 1),
+                        ),
+                        alignment: Alignment.center,
+                        child: const Text(
+                          '!',
+                          style: TextStyle(
+                            fontSize: 8,
+                            height: 1,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white70,
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
+            ],
           ),
+        ),
+        const SizedBox(height: 1),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: hasValue
+              ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      _hideNumbers ? '****' : UsableDays.format(days),
+                      style: const TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          height: 1.15),
+                    ),
+                    if (!_hideNumbers)
+                      const Padding(
+                        padding: EdgeInsets.only(left: 2),
+                        child: Text(
+                          '天',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white70,
+                          ),
+                        ),
+                      ),
+                  ],
+                )
+              // 算不出来时留一个占位，两栏数字行仍然齐平
+              : const Text(
+                  '—',
+                  style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white54,
+                      height: 1.15),
+                ),
         ),
       ],
     );

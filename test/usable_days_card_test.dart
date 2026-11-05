@@ -6,10 +6,12 @@ import 'package:diary_app/utils/usable_days.dart';
 /// 看板卡片上「净资产 / 可使用 x 天」两栏的展示契约。
 ///
 /// 不启动整个 AssetScreen（依赖存储与加密状态，重且脆弱），
-/// 而是按卡片里同样的两栏结构组装最小 widget，钉住四件事：
-/// 标题与数字**在同一行**、两栏基线对齐、算不出数时显示占位、隐藏时同步隐藏。
+/// 而是按卡片里同样的两栏结构组装最小 widget，钉住这些契约：
+/// - 左右两栏并排，各自「上标题、下数字」
+/// - 两个标题在同一行，两个数字在同一行
+/// - 算不出数时显示占位、隐藏时同步隐藏、点圈叹号能进设置
 void main() {
-  /// 模拟看板的两栏：左净资产、右可使用，规格完全对称
+  /// 模拟看板的两栏：左净资产、右可使用，结构完全对称
   Widget buildCard({
     double? total,
     double monthlyCost = 3000,
@@ -24,6 +26,17 @@ void main() {
       inflationRate: 2,
     );
     final hasValue = days != null && days > 0;
+
+    Widget titleRow(String title, {Widget? trailing}) => SizedBox(
+          height: 16,
+          child: Row(
+            children: [
+              Text(title, style: const TextStyle(fontSize: 13)),
+              if (trailing != null) trailing,
+            ],
+          ),
+        );
+
     return MaterialApp(
       home: Scaffold(
         body: SizedBox(
@@ -31,80 +44,81 @@ void main() {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 左栏：标题 + 金额同一行
+              // 左栏：标题行 + 金额行
               Expanded(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text('净资产', style: TextStyle(fontSize: 13)),
-                    const SizedBox(width: 4),
-                    const SizedBox(width: 19, height: 19),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          hideNumbers ? '****' : '¥100,000',
-                          maxLines: 1,
-                          style: const TextStyle(
-                              fontSize: 32, fontWeight: FontWeight.w700),
-                        ),
+                    titleRow(
+                      '净资产',
+                      trailing: const SizedBox(
+                        width: 19,
+                        height: 19,
+                        child: Icon(Icons.visibility_outlined, size: 15),
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        hideNumbers ? '****' : '¥100,000',
+                        maxLines: 1,
+                        style: const TextStyle(
+                            fontSize: 32, fontWeight: FontWeight.w700),
                       ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 12),
-              // 右栏：「可使用」+「x 天」同一行
+              // 右栏：标题行 + 天数行
               Expanded(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text('可使用', style: TextStyle(fontSize: 13)),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerLeft,
-                        child: hasValue
-                            ? Row(
-                                crossAxisAlignment: CrossAxisAlignment.baseline,
-                                textBaseline: TextBaseline.alphabetic,
-                                children: [
-                                  Text(
-                                    hideNumbers
-                                        ? '****'
-                                        : UsableDays.format(days),
-                                    key: const ValueKey('usable-days-number'),
-                                    style: const TextStyle(
-                                        fontSize: 32,
-                                        fontWeight: FontWeight.w700),
-                                  ),
-                                  if (!hideNumbers)
-                                    const Padding(
-                                      padding: EdgeInsets.only(left: 2),
-                                      child: Text('天',
-                                          style: TextStyle(fontSize: 14)),
-                                    ),
-                                ],
-                              )
-                            : const Text('—',
-                                key: ValueKey('usable-days-placeholder'),
-                                style: TextStyle(fontSize: 32)),
+                    titleRow(
+                      '可使用',
+                      trailing: GestureDetector(
+                        key: const ValueKey('usable-days-settings'),
+                        onTap: onTapDot,
+                        behavior: HitTestBehavior.opaque,
+                        child: const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: Center(child: Text('!')),
+                        ),
                       ),
                     ),
-                    GestureDetector(
-                      key: const ValueKey('usable-days-settings'),
-                      onTap: onTapDot,
-                      behavior: HitTestBehavior.opaque,
-                      child: const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: Center(child: Text('!')),
-                      ),
+                    const SizedBox(height: 1),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: hasValue
+                          ? Row(
+                              crossAxisAlignment: CrossAxisAlignment.baseline,
+                              textBaseline: TextBaseline.alphabetic,
+                              children: [
+                                Text(
+                                  hideNumbers ? '****' : UsableDays.format(days),
+                                  key: const ValueKey('usable-days-number'),
+                                  style: const TextStyle(
+                                      fontSize: 32,
+                                      fontWeight: FontWeight.w700),
+                                ),
+                                if (!hideNumbers)
+                                  const Padding(
+                                    padding: EdgeInsets.only(left: 2),
+                                    child: Text('天',
+                                        style: TextStyle(fontSize: 14)),
+                                  ),
+                              ],
+                            )
+                          : const Text('—',
+                              key: ValueKey('usable-days-placeholder'),
+                              style: TextStyle(fontSize: 32)),
                     ),
                   ],
                 ),
@@ -116,39 +130,51 @@ void main() {
     );
   }
 
-  testWidgets('标题与数字在同一行：数字不在标题下方', (tester) async {
+  testWidgets('两个标题在同一行，两个数字在下一行', (tester) async {
     await tester.pumpWidget(buildCard(total: 100000));
     await tester.pump();
 
-    final titleRect = tester.getRect(find.text('可使用'));
-    final numRect =
+    final netTitle = tester.getRect(find.text('净资产'));
+    final useTitle = tester.getRect(find.text('可使用'));
+    final netNum = tester.getRect(find.text('¥100,000'));
+    final useNum =
         tester.getRect(find.byKey(const ValueKey('usable-days-number')));
 
-    // 关键契约：数字不再位于标题下方，而是同一行的右侧
-    expect(numRect.left, greaterThan(titleRect.right),
-        reason: '数字应在标题右侧，而不是换行到下方');
-    // 垂直方向上两者高度重叠 —— 同一行才可能成立
-    final overlapTop = titleRect.top > numRect.top ? titleRect.top : numRect.top;
-    final overlapBottom = titleRect.bottom < numRect.bottom
-        ? titleRect.bottom
-        : numRect.bottom;
-    expect(overlapBottom - overlapTop, greaterThan(0),
-        reason: '标题与数字应在同一水平带上');
+    // 标题行：两个标题齐平
+    expect((netTitle.top - useTitle.top).abs(), lessThan(1.0),
+        reason: '两个标题应在同一行');
+    // 数字行：两个数字齐平
+    expect((netNum.top - useNum.top).abs(), lessThan(1.0),
+        reason: '两个数字应在同一行');
+    // 标题在上、数字在下
+    expect(netNum.top, greaterThan(netTitle.bottom));
+    expect(useNum.top, greaterThan(useTitle.bottom));
   });
 
-  testWidgets('两栏基线一致：净资产金额与可使用天数在同一条线上', (tester) async {
+  testWidgets('右栏在左侧标题行的右边（两栏并排，不是上下堆叠）', (tester) async {
     await tester.pumpWidget(buildCard(total: 100000));
     await tester.pump();
 
-    final netNumRect = tester.getRect(find.text('¥100,000'));
-    final useNumRect =
-        tester.getRect(find.byKey(const ValueKey('usable-days-number')));
+    final netTitle = tester.getRect(find.text('净资产'));
+    final useTitle = tester.getRect(find.text('可使用'));
 
-    // 两栏都走 baseline 对齐，数字底缘应该几乎重合
-    expect((netNumRect.bottom - useNumRect.bottom).abs(), lessThan(3.0));
+    expect(useTitle.left, greaterThan(netTitle.right),
+        reason: '「可使用」应在「净资产」右侧');
   });
 
-  testWidgets('标题字号一致，且都是小字（不跟数字同字号）', (tester) async {
+  testWidgets('数字与标题左对齐，不缩进', (tester) async {
+    await tester.pumpWidget(buildCard(total: 100000));
+    await tester.pump();
+
+    final useTitle = tester.getRect(find.text('可使用'));
+    final useNum =
+        tester.getRect(find.byKey(const ValueKey('usable-days-number')));
+
+    expect((useNum.left - useTitle.left).abs(), lessThan(1.0),
+        reason: '数字应与标题左缘对齐');
+  });
+
+  testWidgets('标题字号小于数字字号，两栏标题字号一致', (tester) async {
     await tester.pumpWidget(buildCard(total: 100000));
     await tester.pump();
 
@@ -173,19 +199,6 @@ void main() {
 
     expect(numStyle.fontSize, netStyle.fontSize);
     expect(numStyle.fontWeight, netStyle.fontWeight);
-  });
-
-  testWidgets('两栏各占一半：右栏标题在卡片中线右侧', (tester) async {
-    await tester.pumpWidget(buildCard(total: 100000));
-    await tester.pump();
-
-    const cardW = 360.0;
-    final netRect = tester.getRect(find.text('净资产'));
-    final useRect = tester.getRect(find.text('可使用'));
-
-    expect(useRect.left, greaterThan(netRect.right), reason: '右栏应在左栏右侧');
-    expect(useRect.left, greaterThan(cardW / 2 - 60),
-        reason: '右栏应落在卡片右半部分');
   });
 
   testWidgets('算不出时显示占位 —，圈叹号仍在', (tester) async {
