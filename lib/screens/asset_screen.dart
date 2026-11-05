@@ -819,9 +819,9 @@ class AssetScreenState extends State<AssetScreen> {
       // 上下不对称：文字的行盒自带留白，视觉重心比几何中心偏低。
       // - 顶部：标题行 18px 的盒子里，13px 文字上方还空着约 2px，
       //   再补 2px，让「净资产」的字面离顶边看起来就是 18px；
-      // - 底部：结构条是纯色块、没有行盒留白，所以要多留 4px，
-      //   让最下面那行文字的视觉底边与顶边看起来一致。
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 22),
+      // - 底部：结构条是纯色块、没有行盒留白，但统计行已经整体下移，
+      //   底部空白相应收窄，避免「上方紧、下方松」。
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFF3B6FE0), Color(0xFF5B8AF0)],
@@ -847,7 +847,10 @@ class AssetScreenState extends State<AssetScreen> {
               Expanded(child: _buildUsableDaysBlock()),
             ],
           ),
-          const SizedBox(height: 14),
+          // 14 → 20：这一行整体下移，同时把它与结构条之间的 12 收到 8，
+          // 让「下移」不是靠撑大底部空白实现的 —— 内容往下走，底部留白
+          // 反而变小，视觉上上下才平衡。
+          const SizedBox(height: 20),
           Row(
             children: [
               _statItem('总资产', _totalAssets, Colors.white),
@@ -857,8 +860,7 @@ class AssetScreenState extends State<AssetScreen> {
             ],
           ),
           // 正/负资产结构条（绿=正资产，红=负资产），无文字标注
-          // 留白只加在真正出现结构条时，避免无资产时空出 12px
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           _buildStructureBar(),
         ],
       ),
@@ -872,6 +874,23 @@ class AssetScreenState extends State<AssetScreen> {
   /// 图标高度不同（15px 眼睛 / 16px 圈叹号），不锁高会差 3px，数字就错行。
   static const double _kCardTitleRowHeight = 18;
 
+  /// 让图标跟旁边的标题文字**基线对齐**。
+  ///
+  /// baseline Row 的每个子节点都要在 alphabetic 基线上有位置，但图标
+  /// 本身没有基线 —— 直接用会报错。这里包一层 `Baseline(alphabetic)`，
+  /// 把图标的底边落到基线上，于是图标下沿与文字字形底齐平。
+  ///
+  /// 为什么不用 center：中文字体的行盒比字形高得多（13px 字号的行盒
+  /// 约 18px，字形只有 13px 左右），center 会把图标放到行盒中心，
+  /// 而人眼看到的是字形中心偏下，结果就是图标显得往上飘。
+  Widget _baselineIcon(Widget icon) {
+    return Baseline(
+      baseline: 13, // 与标题字号一致，图标下沿贴住字形底
+      baselineType: TextBaseline.alphabetic,
+      child: icon,
+    );
+  }
+
   /// 左栏：净资产。
   ///
   /// 第一行「净资产」+ 眼睛，第二行金额 —— 两栏的标题在同一行、
@@ -881,12 +900,14 @@ class AssetScreenState extends State<AssetScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // 标题行锁 18px：既容得下 13px 文字的行盒（约 18px）不溢出，
-        // 又让两栏高度严格一致，第二行的数字才能齐平。
+        // 标题行高固定 18px 让两栏第二行数字齐平，但行内用 baseline 对齐：
+        // 图标以「文字字形底」为基准，不随字体行的上下面留白浮动 ——
+        // 中文字体的行盒比字形高不少，center 对齐在真机上图标会偏上。
         SizedBox(
           height: _kCardTitleRowHeight,
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
             children: [
               const Text('净资产',
                   style: TextStyle(fontSize: 13, color: Colors.white70)),
@@ -899,17 +920,13 @@ class AssetScreenState extends State<AssetScreen> {
                   setState(() => _hideNumbers = !_hideNumbers);
                 },
                 behavior: HitTestBehavior.opaque,
-                child: SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: Center(
-                    child: Icon(
-                      _hideNumbers
-                          ? Icons.visibility_off_outlined
-                          : Icons.visibility_outlined,
-                      size: 15,
-                      color: Colors.white70,
-                    ),
+                child: _baselineIcon(
+                  Icon(
+                    _hideNumbers
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                    size: 15,
+                    color: Colors.white70,
                   ),
                 ),
               ),
@@ -953,11 +970,12 @@ class AssetScreenState extends State<AssetScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // 与左栏一致锁 18px 高，保证第二行数字严格齐平
+        // 与左栏一致：锁 18px 高 + baseline 对齐图标，两栏数字才能齐平
         SizedBox(
           height: _kCardTitleRowHeight,
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
             children: [
               const Text('可使用',
                   style: TextStyle(fontSize: 13, color: Colors.white70)),
@@ -967,43 +985,45 @@ class AssetScreenState extends State<AssetScreen> {
               //
               // 点触区 36×36、视觉圆点 12px。外面套 18px 的 SizedBox +
               // OverflowBox，把大点触区溢出出去，不撑高标题行。
-              SizedBox(
-                width: 18,
-                height: 18,
-                child: OverflowBox(
-                  maxWidth: 36,
-                  maxHeight: 36,
-                  child: GestureDetector(
-                    key: const ValueKey('usable-days-settings'),
-                    onTap: () async {
-                      Haptics.lightNow();
-                      final changed = await UsableDaysSettingsSheet.show(
-                        context,
-                        netWorth: _netWorth,
-                      );
-                      if (changed == true && mounted) setState(() {});
-                    },
-                    behavior: HitTestBehavior.opaque,
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      color: Colors.transparent,
-                      alignment: Alignment.center,
+              _baselineIcon(
+                SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: OverflowBox(
+                    maxWidth: 36,
+                    maxHeight: 36,
+                    child: GestureDetector(
+                      key: const ValueKey('usable-days-settings'),
+                      onTap: () async {
+                        Haptics.lightNow();
+                        final changed = await UsableDaysSettingsSheet.show(
+                          context,
+                          netWorth: _netWorth,
+                        );
+                        if (changed == true && mounted) setState(() {});
+                      },
+                      behavior: HitTestBehavior.opaque,
                       child: Container(
-                        width: 12,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white70, width: 1),
-                        ),
+                        width: 36,
+                        height: 36,
+                        color: Colors.transparent,
                         alignment: Alignment.center,
-                        child: const Text(
-                          '!',
-                          style: TextStyle(
-                            fontSize: 8,
-                            height: 1,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white70,
+                        child: Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white70, width: 1),
+                          ),
+                          alignment: Alignment.center,
+                          child: const Text(
+                            '!',
+                            style: TextStyle(
+                              fontSize: 8,
+                              height: 1,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white70,
+                            ),
                           ),
                         ),
                       ),
@@ -1014,7 +1034,7 @@ class AssetScreenState extends State<AssetScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 4),        const SizedBox(height: 1),
+        const SizedBox(height: 4),
         FittedBox(
           fit: BoxFit.scaleDown,
           alignment: Alignment.centerLeft,

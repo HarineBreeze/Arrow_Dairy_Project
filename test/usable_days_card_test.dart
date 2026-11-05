@@ -29,13 +29,22 @@ void main() {
 
     // 标题行锁 18px：13px 文字行盒约 18px，锁 16px 会溢出压到数字上；
     // 18px 同时保证两栏高度一致（图标高度不同也不会错行）。
+    //
+    // 行内用 baseline 对齐：图标必须跟着「文字字形底」走，不能用 center ——
+    // 中文字体的行盒比字形高，center 会把图标顶到行盒中心，视觉上偏上。
     Widget titleRow(String title, {Widget? trailing}) => SizedBox(
           height: 18,
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
             children: [
               Text(title, style: const TextStyle(fontSize: 13)),
-              if (trailing != null) trailing,
+              if (trailing != null)
+                Baseline(
+                  baseline: 13,
+                  baselineType: TextBaseline.alphabetic,
+                  child: trailing,
+                ),
             ],
           ),
         );
@@ -175,6 +184,28 @@ void main() {
         reason: '数字上缘不能高于标题下缘');
     expect(netNum.top, greaterThanOrEqualTo(netTitle.bottom),
         reason: '净资产金额同样不能压到标题');
+  });
+
+  testWidgets('图标与左侧标题基线对齐，不往上飘', (tester) async {
+    await tester.pumpWidget(buildCard(total: 100000));
+    await tester.pump();
+
+    final useTitle = tester.getRect(find.text('可使用'));
+    final dot = tester.getRect(find.byKey(const ValueKey('usable-days-settings')));
+    final netTitle = tester.getRect(find.text('净资产'));
+    final eye = tester.getRect(find.byIcon(Icons.visibility_outlined));
+
+    // 图标的垂直中心不能高于标题字形的垂直中心超过 1px。
+    // 用 center 对齐时图标会落到行盒中心，比字形中心高 2~3px ——
+    // 真机上中文字体的行盒留白更多，这个偏移会更明显。
+    expect(dot.center.dy - useTitle.center.dy, greaterThan(-2.0),
+        reason: '圈叹号不应明显高于「可使用」');
+    expect(dot.center.dy - useTitle.center.dy, lessThan(2.0),
+        reason: '圈叹号也不应明显低于「可使用」');
+    expect(eye.center.dy - netTitle.center.dy, greaterThan(-2.0),
+        reason: '小眼睛不应明显高于「净资产」');
+    expect(eye.center.dy - netTitle.center.dy, lessThan(2.0),
+        reason: '小眼睛也不应明显低于「净资产」');
   });
 
   testWidgets('右栏在左侧标题行的右边（两栏并排，不是上下堆叠）', (tester) async {
