@@ -816,12 +816,10 @@ class AssetScreenState extends State<AssetScreen> {
   Widget _buildNetWorthCard() {
     final net = _netWorth;
     return Container(
-      // 上下不对称：文字的行盒自带留白，视觉重心比几何中心偏低。
-      // - 顶部：标题行 18px 的盒子里，13px 文字上方还空着约 2px，
-      //   再补 2px，让「净资产」的字面离顶边看起来就是 18px；
-      // - 底部：结构条是纯色块、没有行盒留白，但统计行已经整体下移，
-      //   底部空白相应收窄，避免「上方紧、下方松」。
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+      // 顶部 16 → 24：红框内容（标题、数字、统计行）整体下移，
+      // 顶部留白与底部（18px）视觉一致 —— 之前内容顶得太靠上。
+      // 底部与内部间距不动，让卡片自然长高。
+      padding: const EdgeInsets.fromLTRB(18, 24, 18, 18),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFF3B6FE0), Color(0xFF5B8AF0)],
@@ -874,18 +872,22 @@ class AssetScreenState extends State<AssetScreen> {
   /// 图标高度不同（15px 眼睛 / 16px 圈叹号），不锁高会差 3px，数字就错行。
   static const double _kCardTitleRowHeight = 18;
 
-  /// 让图标跟旁边的标题文字**基线对齐**。
+  /// 让图标跟旁边的标题文字做基线参照对齐。
   ///
   /// baseline Row 的每个子节点都要在 alphabetic 基线上有位置，但图标
   /// 本身没有基线 —— 直接用会报错。这里包一层 `Baseline(alphabetic)`，
-  /// 把图标的底边落到基线上，于是图标下沿与文字字形底齐平。
+  /// 把「图标盒子顶部」钉在文字基线上方 [baseline] px 处。
   ///
   /// 为什么不用 center：中文字体的行盒比字形高得多（13px 字号的行盒
   /// 约 18px，字形只有 13px 左右），center 会把图标放到行盒中心，
-  /// 而人眼看到的是字形中心偏下，结果就是图标显得往上飘。
-  Widget _baselineIcon(Widget icon) {
+  /// 而人眼看到的是字形中心偏下，结果就是图标位置不对。
+  ///
+  /// [baseline] 越大图标越靠上、越小越靠下。真机中文字体下，15px 的
+  /// 小眼睛需要 11（往下沉），12px 的圈叹号需要 15（往上升），各自
+  /// 单独调 —— 两个图标的字形留白不同，同一个值对不齐。
+  Widget _baselineIcon(Widget icon, {double baseline = 13}) {
     return Baseline(
-      baseline: 13, // 与标题字号一致，图标下沿贴住字形底
+      baseline: baseline,
       baselineType: TextBaseline.alphabetic,
       child: icon,
     );
@@ -921,6 +923,7 @@ class AssetScreenState extends State<AssetScreen> {
                 },
                 behavior: HitTestBehavior.opaque,
                 child: _baselineIcon(
+                  // 眼睛偏上 → baseline 减小让它下沉
                   Icon(
                     _hideNumbers
                         ? Icons.visibility_off_outlined
@@ -928,6 +931,7 @@ class AssetScreenState extends State<AssetScreen> {
                     size: 15,
                     color: Colors.white70,
                   ),
+                  baseline: 11,
                 ),
               ),
             ],
@@ -986,6 +990,7 @@ class AssetScreenState extends State<AssetScreen> {
               // 点触区 36×36、视觉圆点 12px。外面套 18px 的 SizedBox +
               // OverflowBox，把大点触区溢出出去，不撑高标题行。
               _baselineIcon(
+                // 圈叹号偏下 → baseline 加大让它上升
                 SizedBox(
                   width: 18,
                   height: 18,
@@ -1030,6 +1035,7 @@ class AssetScreenState extends State<AssetScreen> {
                     ),
                   ),
                 ),
+                baseline: 15,
               ),
             ],
           ),
