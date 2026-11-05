@@ -816,7 +816,12 @@ class AssetScreenState extends State<AssetScreen> {
   Widget _buildNetWorthCard() {
     final net = _netWorth;
     return Container(
-      padding: const EdgeInsets.all(18),
+      // 上下不对称：文字的行盒自带留白，视觉重心比几何中心偏低。
+      // - 顶部：标题行 18px 的盒子里，13px 文字上方还空着约 2px，
+      //   再补 2px，让「净资产」的字面离顶边看起来就是 18px；
+      // - 底部：结构条是纯色块、没有行盒留白，所以要多留 4px，
+      //   让最下面那行文字的视觉底边与顶边看起来一致。
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 22),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFF3B6FE0), Color(0xFF5B8AF0)],
