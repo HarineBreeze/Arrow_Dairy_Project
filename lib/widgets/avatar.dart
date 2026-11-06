@@ -10,6 +10,9 @@ Widget buildAppAvatar(UserProfile profile, {double radius = 40}) {
   if (profile.avatarPath.isNotEmpty && File(profile.avatarPath).existsSync()) {
     return CircleAvatar(
       radius: radius,
+      // 不设 backgroundColor 时 CircleAvatar 默认用 primaryColorLight，
+      // 头像图加载中/加载失败会露出底色，这里钉成白色避免露蓝
+      backgroundColor: Colors.white,
       backgroundImage: FileImage(File(profile.avatarPath)),
     );
   }
