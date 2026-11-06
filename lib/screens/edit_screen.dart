@@ -699,7 +699,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
               const Align(
                 alignment: Alignment.centerLeft,
                 child: Text('密保问题（选填）',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF9AA8BF))),
+                    style: TextStyle(fontSize: 12, color: Color(0xFF8FA09A))),
               ),
               TextField(
                 controller: hintCtrl,
@@ -713,7 +713,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
               const Align(
                 alignment: Alignment.centerLeft,
                 child: Text('密保问题答案',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF9AA8BF))),
+                    style: TextStyle(fontSize: 12, color: Color(0xFF8FA09A))),
               ),
               TextField(
                 controller: ansCtrl,
@@ -769,29 +769,29 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFDCE7FF)),
+                border: Border.all(color: const Color(0xFFE4F2EB)),
               ),
               child: Row(
                 children: [
                   const Icon(Icons.lock_outline,
-                      size: 16, color: Color(0xFF3B6FE0)),
+                      size: 16, color: Color(0xFF3E8E6D)),
                   const SizedBox(width: 6),
                   const Text(
                     '可见度',
-                    style: TextStyle(fontSize: 13, color: Color(0xFF2A3B52)),
+                    style: TextStyle(fontSize: 13, color: Color(0xFF24382F)),
                   ),
                   const Spacer(),
                   Text(
                     _encrypted ? '加密' : '公开',
                     style: const TextStyle(
                       fontSize: 13,
-                      color: Color(0xFF3B6FE0),
+                      color: Color(0xFF3E8E6D),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(width: 4),
                   const Icon(Icons.chevron_right,
-                      size: 18, color: Color(0xFF9AA8BF)),
+                      size: 18, color: Color(0xFF8FA09A)),
                 ],
               ),
             ),
@@ -812,23 +812,23 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
         decoration: BoxDecoration(
-          color: active ? const Color(0xFFDCE7FF) : Colors.white,
+          color: active ? const Color(0xFFE4F2EB) : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
               color:
-                  active ? const Color(0xFF3B6FE0) : const Color(0xFFDCE7FF)),
+                  active ? const Color(0xFF3E8E6D) : const Color(0xFFE4F2EB)),
         ),
         child: Row(
           children: [
             Icon(Icons.more_horiz,
                 size: 16,
-                color: active ? const Color(0xFF3B6FE0) : Color(0xFF2A3B52)),
+                color: active ? const Color(0xFF3E8E6D) : Color(0xFF24382F)),
             const SizedBox(width: 6),
             Text(
               '更多',
               style: TextStyle(
                 fontSize: 13,
-                color: active ? const Color(0xFF3B6FE0) : Color(0xFF2A3B52),
+                color: active ? const Color(0xFF3E8E6D) : Color(0xFF24382F),
                 fontWeight: active ? FontWeight.w600 : FontWeight.normal,
               ),
             ),
@@ -854,18 +854,18 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                 width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE0E4EA),
+                  color: const Color(0xFFDFEAE5),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
               SwitchListTile(
                 secondary: const Icon(Icons.push_pin_outlined,
-                    size: 20, color: Color(0xFF3B6FE0)),
+                    size: 20, color: Color(0xFF3E8E6D)),
                 title: const Text('置顶',
                     style:
-                        TextStyle(fontSize: 14, color: Color(0xFF2A3B52))),
+                        TextStyle(fontSize: 14, color: Color(0xFF24382F))),
                 value: _pinned,
-                activeColor: const Color(0xFF3B6FE0),
+                activeColor: const Color(0xFF3E8E6D),
                 onChanged: (v) {
                   setState(() => _pinned = v);
                   Navigator.pop(ctx);
@@ -1007,7 +1007,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                           hintStyle: const TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w400,
-                            color: Color(0xFFB4C0D2),
+                            color: Color(0xFFB2C4BA),
                           ),
                           border: InputBorder.none,
                           counterText: '',
@@ -1024,13 +1024,13 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                           padding: EdgeInsets.symmetric(
                               horizontal: 6, vertical: 4),
                           child: Icon(Icons.refresh,
-                              size: 18, color: Color(0xFF9AA8BF)),
+                              size: 18, color: Color(0xFF8FA09A)),
                         ),
                       ),
                     Text(
                       '${_titleCtrl.text.length}/15',
                       style: const TextStyle(
-                          fontSize: 12, color: Color(0xFF9AA8BF)),
+                          fontSize: 12, color: Color(0xFF8FA09A)),
                     ),
                   ],
                 ),
@@ -1044,11 +1044,11 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                           controller: _subtitleCtrl,
                           maxLength: 15,
                           style: const TextStyle(
-                              fontSize: 15, color: Color(0xFF2A3B52)),
+                              fontSize: 15, color: Color(0xFF24382F)),
                           decoration: const InputDecoration(
                             hintText: '此处标题会公开显示哦～',
                             hintStyle: TextStyle(
-                                fontSize: 14, color: Color(0xFF9AA8BF)),
+                                fontSize: 14, color: Color(0xFF8FA09A)),
                             border: InputBorder.none,
                             counterText: '',
                           ),
@@ -1058,7 +1058,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                       Text(
                         '${_subtitleCtrl.text.length}/15',
                         style: const TextStyle(
-                            fontSize: 12, color: Color(0xFF9AA8BF)),
+                            fontSize: 12, color: Color(0xFF8FA09A)),
                       ),
                     ],
                   ),
@@ -1139,7 +1139,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                       child: Text(
                         '${_contentCtrl.text.length}/2000',
                         style: const TextStyle(
-                            fontSize: 12, color: Color(0xFF9AA8BF)),
+                            fontSize: 12, color: Color(0xFF8FA09A)),
                       ),
                     ),
                   ],
@@ -1250,7 +1250,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
   Widget _buildSaveBar() {
     return SaveBar(
       saveKey: _doneKey,
-      color: const Color(0xFF3B6FE0),
+      color: const Color(0xFF3E8E6D),
       onCancel: _saving ? null : _cancel,
       validate: _validate,
       onSave: _save,
@@ -1296,11 +1296,11 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFDCE7FF)),
+          border: Border.all(color: const Color(0xFFE4F2EB)),
         ),
         child: Row(
           children: [
-            Icon(icon, size: 16, color: const Color(0xFF3B6FE0)),
+            Icon(icon, size: 16, color: const Color(0xFF3E8E6D)),
             const SizedBox(width: 6),
             Expanded(
               child: Text(
@@ -1309,7 +1309,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontSize: 13,
-                  color: Color(0xFF2A3B52),
+                  color: Color(0xFF24382F),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -1335,13 +1335,13 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
             color: (isSel && !isMore)
-                ? const Color(0xFF3B6FE0)
+                ? const Color(0xFF3E8E6D)
                 : Colors.white,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
               color: (isSel && !isMore)
-                  ? const Color(0xFF3B6FE0)
-                  : const Color(0xFFDCE7FF),
+                  ? const Color(0xFF3E8E6D)
+                  : const Color(0xFFE4F2EB),
             ),
           ),
           child: Text(o, style: const TextStyle(fontSize: 15)),
@@ -1388,7 +1388,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                   style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF2A3B52))),
+                      color: Color(0xFF24382F))),
               const SizedBox(height: 16),
               Wrap(
                 spacing: 14,

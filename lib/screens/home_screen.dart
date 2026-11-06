@@ -31,11 +31,11 @@ import '../widgets/loading_skeleton.dart';
 import '../widgets/empty_state.dart';
 import '../utils/menu_gesture_gate.dart';
 
-const Color kPrimaryBlue = Color(0xFF3B6FE0);
-const Color kLightBlue = Color(0xFFDCE7FF);
-const Color kTextDark = Color(0xFF2A3B52);
-const Color kTextMid = Color(0xFF5A6B82);
-const Color kTextLight = Color(0xFF9AA8BF);
+const Color kPrimaryBlue = Color(0xFF3E8E6D);
+const Color kLightBlue = Color(0xFFE4F2EB);
+const Color kTextDark = Color(0xFF24382F);
+const Color kTextMid = Color(0xFF647A70);
+const Color kTextLight = Color(0xFF8FA09A);
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -208,7 +208,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             if (!entry.encrypted) ...[
               ListTile(
                 leading:
-                    const Icon(Icons.edit_outlined, color: Color(0xFF3B6FE0)),
+                    const Icon(Icons.edit_outlined, color: Color(0xFF3E8E6D)),
                 title: const Text('编辑', style: TextStyle(fontSize: 15)),
                 onTap: () => Navigator.pop(ctx, 'edit'),
               ),
@@ -320,7 +320,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   onPressed: () => _showAnswerDialog(entry),
                   child: const Text(
                     '忘记密码',
-                    style: TextStyle(fontSize: 13, color: Color(0xFF9AA8BF)),
+                    style: TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
                   ),
                 ),
               ),
@@ -351,13 +351,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 if (entry.passwordHint.isEmpty)
                   const Text(
                     '这条笔记没有设置密保问题哦～',
-                    style: TextStyle(fontSize: 14, color: Color(0xFF5A6B82)),
+                    style: TextStyle(fontSize: 14, color: Color(0xFF647A70)),
                   )
                 else ...[
                   Text(
                     'Q：${entry.passwordHint}',
                     style: const TextStyle(
-                        fontSize: 14, height: 1.5, color: Color(0xFF2A3B52)),
+                        fontSize: 14, height: 1.5, color: Color(0xFF24382F)),
                   ),
                   const SizedBox(height: 10),
                   TextField(
@@ -380,7 +380,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFDCE7FF),
+                        color: const Color(0xFFE4F2EB),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
@@ -388,7 +388,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF3B6FE0),
+                          color: Color(0xFF3E8E6D),
                         ),
                       ),
                     ),
@@ -779,7 +779,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         child: WillPopScope(
           onWillPop: _handleBack,
           child: Scaffold(
-            backgroundColor: const Color(0xFFF3F6FB),
+            backgroundColor: const Color(0xFFF5FAF7),
             // Stack 覆盖整个 body（含状态栏区域）：这样菜单能从屏幕最顶端
             // 贯通到低端（顶部白色与状态栏区连成一体），遮罩也能盖住状态栏
             // 区域跟随变暗。主页内容自行用 SafeArea 避开状态栏。
@@ -796,7 +796,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         offset: Offset(offset, 0),
                         child: SafeArea(
                           child: Container(
-                            color: const Color(0xFFF3F6FB),
+                            color: const Color(0xFFF5FAF7),
                             child: child!,
                           ),
                         ),
@@ -1024,7 +1024,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 )
               : RefreshIndicator(
                   onRefresh: _load,
-                  color: const Color(0xFF3B6FE0),
+                  color: const Color(0xFF3E8E6D),
                   child: flatTopicList
                       ? ListView.builder(
                           padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
@@ -1139,8 +1139,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             fontWeight:
                                 selected ? FontWeight.w600 : FontWeight.w400,
                             color: selected
-                                ? const Color(0xFF3B6FE0)
-                                : const Color(0xFF5A6B82),
+                                ? const Color(0xFF3E8E6D)
+                                : const Color(0xFF647A70),
                           ),
                         ),
                       ),
@@ -1157,7 +1157,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   width: 40,
                   height: 3,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF3B6FE0),
+                    color: const Color(0xFF3E8E6D),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -1245,7 +1245,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               turns: expanded ? 0 : -0.25,
               duration: const Duration(milliseconds: 180),
               child: const Icon(Icons.expand_more,
-                  size: 13, color: Color(0xFFB4BFD0)),
+                  size: 13, color: Color(0xFFB2C4BA)),
             ),
             const SizedBox(width: 3),
             Text(
@@ -1304,13 +1304,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           Expanded(
             child: TextField(
               controller: _searchCtrl,
-              style: const TextStyle(fontSize: 15, color: Color(0xFF2A3B52)),
+              style: const TextStyle(fontSize: 15, color: Color(0xFF24382F)),
               textAlignVertical: TextAlignVertical.center,
               decoration: InputDecoration(
                 hintText: '搜索标题关键词…',
-                hintStyle: const TextStyle(color: Color(0xFF9AA8BF)),
+                hintStyle: const TextStyle(color: Color(0xFF8FA09A)),
                 prefixIcon: const Icon(Icons.search,
-                    size: 18, color: Color(0xFF9AA8BF)),
+                    size: 18, color: Color(0xFF8FA09A)),
                 prefixIconConstraints:
                     const BoxConstraints(minWidth: 32, minHeight: 32),
                 isDense: true,
@@ -1426,7 +1426,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF2A3B52),
+                        color: Color(0xFF24382F),
                       ),
                     ),
                     const Spacer(),
@@ -1439,7 +1439,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         },
                         child: const Text(
                           '取消',
-                          style: TextStyle(color: Color(0xFF9AA8BF)),
+                          style: TextStyle(color: Color(0xFF8FA09A)),
                         ),
                       ),
                     ),
@@ -1454,7 +1454,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         '还没有话题\n在日记正文输入 #话题词 即可创建',
                         textAlign: TextAlign.center,
                         style:
-                            TextStyle(fontSize: 13, color: Color(0xFF9AA8BF)),
+                            TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
                       ),
                     ),
                   )
@@ -1483,12 +1483,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
                             color:
-                                active ? const Color(0xFF3B6FE0) : Colors.white,
+                                active ? const Color(0xFF3E8E6D) : Colors.white,
                             borderRadius: BorderRadius.circular(18),
                             border: Border.all(
                               color: active
-                                  ? const Color(0xFF3B6FE0)
-                                  : const Color(0xFFDCE7FF),
+                                  ? const Color(0xFF3E8E6D)
+                                  : const Color(0xFFE4F2EB),
                             ),
                           ),
                           child: Text(
@@ -1497,7 +1497,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               fontSize: 13,
                               color: active
                                   ? Colors.white
-                                  : const Color(0xFF5A6B82),
+                                  : const Color(0xFF647A70),
                             ),
                           ),
                         ),
@@ -1515,21 +1515,21 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Widget _buildTopicBar() {
     return Container(
       width: double.infinity,
-      color: const Color(0xFFDCE7FF),
+      color: const Color(0xFFE4F2EB),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          const Icon(Icons.tag, size: 14, color: Color(0xFF3B6FE0)),
+          const Icon(Icons.tag, size: 14, color: Color(0xFF3E8E6D)),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
               '正在筛选话题：#${_activeTopic}',
-              style: const TextStyle(fontSize: 13, color: Color(0xFF3B6FE0)),
+              style: const TextStyle(fontSize: 13, color: Color(0xFF3E8E6D)),
             ),
           ),
           GestureDetector(
             onTap: () => setState(() => _activeTopic = null),
-            child: const Icon(Icons.close, size: 16, color: Color(0xFF3B6FE0)),
+            child: const Icon(Icons.close, size: 16, color: Color(0xFF3E8E6D)),
           ),
         ],
       ),
@@ -1793,9 +1793,9 @@ class _GridTexturePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     canvas.drawRect(
-        Offset.zero & size, Paint()..color = const Color(0xFFEFF2F7));
+        Offset.zero & size, Paint()..color = const Color(0xFFEEF4F0));
     final paint = Paint()
-      ..color = const Color(0xFFE7EBF1)
+      ..color = const Color(0xFFE4EDE8)
       ..strokeWidth = 4
       ..style = PaintingStyle.stroke;
     for (double x = -size.height; x < size.width + size.height; x += 16) {
@@ -1947,7 +1947,7 @@ class _DiaryCard extends StatelessWidget {
                           style: const TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF3B6FE0),
+                              color: Color(0xFF3E8E6D),
                               height: 1.1)),
                       const SizedBox(height: 2),
                       // 年月：不换行，超宽时整体缩小适配两位月份
@@ -2079,8 +2079,8 @@ class _DiaryCard extends StatelessWidget {
                                   fontSize: 15,
                                   fontWeight: FontWeight.w500,
                                   color: entry.subtitle.isNotEmpty
-                                      ? const Color(0xFF5A6B82)
-                                      : const Color(0xFF9AA8BF),
+                                      ? const Color(0xFF647A70)
+                                      : const Color(0xFF8FA09A),
                                 ),
                               ),
                             ),
@@ -2155,8 +2155,8 @@ class _DiaryCard extends StatelessWidget {
                               fontSize: 15,
                               fontWeight: FontWeight.w500,
                               color: entry.subtitle.isNotEmpty
-                                  ? const Color(0xFF2A3B52)
-                                  : const Color(0xFF9AA8BF),
+                                  ? const Color(0xFF24382F)
+                                  : const Color(0xFF8FA09A),
                             ),
                           ),
                         ),
@@ -2188,9 +2188,9 @@ class _SealStripePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     canvas.drawRect(
-        Offset.zero & size, Paint()..color = const Color(0xFFEFF2F7));
+        Offset.zero & size, Paint()..color = const Color(0xFFEEF4F0));
     final paint = Paint()
-      ..color = const Color(0xFFE7EBF1)
+      ..color = const Color(0xFFE4EDE8)
       ..strokeWidth = 4
       ..style = PaintingStyle.stroke;
     for (double x = -size.height; x < size.width + size.height; x += 16) {
@@ -2282,9 +2282,9 @@ class _StripeBandPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     canvas.drawRect(
-        Offset.zero & size, Paint()..color = const Color(0xFFEFF2F7));
+        Offset.zero & size, Paint()..color = const Color(0xFFEEF4F0));
     final paint = Paint()
-      ..color = const Color(0xFFE7EBF1)
+      ..color = const Color(0xFFE4EDE8)
       ..strokeWidth = 4
       ..style = PaintingStyle.stroke;
     // 以 16px 为周期画 45° 斜线，覆盖整个矩形

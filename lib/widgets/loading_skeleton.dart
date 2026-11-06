@@ -11,7 +11,7 @@ import 'package:flutter/material.dart';
 /// - 不接收手势，全部为 [NeverScrollableScrollPhysics]，加载态下不可滚动。
 
 /// 骨架块的颜色（随呼吸系数变化）
-const Color _kSkeletonBase = Color(0xFFE4E9F2);
+const Color _kSkeletonBase = Color(0xFFE1ECE6);
 
 /// 呼吸动画驱动的骨架容器：内部所有 [SkeletonBlock] 共享同一个透明度。
 class SkeletonShimmer extends StatefulWidget {

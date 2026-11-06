@@ -11,7 +11,7 @@ import 'package:flutter/material.dart';
 /// flutter_localizations，直接用它会出现「英文月名 + 日/月/年 顺序」。
 /// 这里改为自绘三列（年 / 月 / 日），中文单位直接写在数字后面，
 /// 顺序固定为 年 → 月 → 日。
-const Color _kBlue = Color(0xFF3B6FE0);
+const Color _kBlue = Color(0xFF3E8E6D);
 
 /// 项高：每格滚轮高度。
 const double kWheelItemExtent = 36;
@@ -127,7 +127,7 @@ class _WheelLabel extends StatelessWidget {
             style: const TextStyle(
               fontSize: 19,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF2A3B52),
+              color: Color(0xFF24382F),
             ),
           ),
           if (unit.isNotEmpty)
@@ -136,7 +136,7 @@ class _WheelLabel extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
-                color: Color(0xFF5A6B82),
+                color: Color(0xFF647A70),
               ),
             ),
         ],
@@ -417,7 +417,7 @@ class _SheetHeader extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('取消',
-                style: TextStyle(fontSize: 16, color: Color(0xFF5A6B82))),
+                style: TextStyle(fontSize: 16, color: Color(0xFF647A70))),
           ),
           Expanded(
             child: Center(
@@ -425,7 +425,7 @@ class _SheetHeader extends StatelessWidget {
                   style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF2A3B52))),
+                      color: Color(0xFF24382F))),
             ),
           ),
           TextButton(

@@ -217,7 +217,7 @@ class AppIcon extends StatelessWidget {
     this.path, {
     Key? key,
     this.size = 24,
-    this.color = const Color(0xFF2F4157),
+    this.color = const Color(0xFF273830),
     this.strokeWidth,
   }) : super(key: key);
 

@@ -205,13 +205,13 @@ class FormatToolbarState extends State<FormatToolbar> {
         margin: const EdgeInsets.symmetric(horizontal: 1),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: active ? const Color(0xFF3B6FE0) : Colors.transparent,
+          color: active ? const Color(0xFF3E8E6D) : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
           label,
           style: (style ?? const TextStyle(fontSize: 14)).copyWith(
-            color: active ? Colors.white : const Color(0xFF2A3B52),
+            color: active ? Colors.white : const Color(0xFF24382F),
           ),
         ),
       ),
@@ -333,10 +333,10 @@ class FormatToolbarState extends State<FormatToolbar> {
                         mainAxisSize: MainAxisSize.min,
                         children: const [
                           Icon(Icons.add,
-                              size: 15, color: Color(0xFF2A3B52)),
+                              size: 15, color: Color(0xFF24382F)),
                           SizedBox(width: 2),
                           Icon(Icons.check_box_outlined,
-                              size: 16, color: Color(0xFF2A3B52)),
+                              size: 16, color: Color(0xFF24382F)),
                         ],
                       ),
                     ),
@@ -351,14 +351,14 @@ class FormatToolbarState extends State<FormatToolbar> {
                       padding: const EdgeInsets.symmetric(horizontal: 10),
                       decoration: BoxDecoration(
                         color: _panel == 1
-                            ? const Color(0xFFDCE7FF)
+                            ? const Color(0xFFE4F2EB)
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         children: [
                           const Icon(Icons.border_color_outlined,
-                              size: 18, color: Color(0xFF2A3B52)),
+                              size: 18, color: Color(0xFF24382F)),
                           const SizedBox(width: 3),
                           Container(
                             width: 12,
@@ -367,7 +367,7 @@ class FormatToolbarState extends State<FormatToolbar> {
                               color: _hex(_highlights.first),
                               borderRadius: BorderRadius.circular(3),
                               border:
-                                  Border.all(color: const Color(0xFFD6DCE8)),
+                                  Border.all(color: const Color(0xFFD5E2DB)),
                             ),
                           ),
                         ],
@@ -384,7 +384,7 @@ class FormatToolbarState extends State<FormatToolbar> {
                       padding: const EdgeInsets.symmetric(horizontal: 10),
                       decoration: BoxDecoration(
                         color: _panel == 2
-                            ? const Color(0xFFDCE7FF)
+                            ? const Color(0xFFE4F2EB)
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -393,7 +393,7 @@ class FormatToolbarState extends State<FormatToolbar> {
                           Text('A', style: TextStyle(fontSize: 12)),
                           Text('A', style: TextStyle(fontSize: 17)),
                           Icon(Icons.arrow_drop_down,
-                              size: 16, color: Color(0xFF9AA8BF)),
+                              size: 16, color: Color(0xFF8FA09A)),
                         ],
                       ),
                     ),
@@ -418,7 +418,7 @@ class FormatToolbarState extends State<FormatToolbar> {
               padding: const EdgeInsets.symmetric(horizontal: 10),
               alignment: Alignment.center,
               child: const Icon(Icons.keyboard_hide,
-                  size: 20, color: Color(0xFF9AA8BF)),
+                  size: 20, color: Color(0xFF8FA09A)),
             ),
           ),
         ],
@@ -435,12 +435,12 @@ class FormatToolbarState extends State<FormatToolbar> {
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
       decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: Color(0xFFF0F3F8))),
+        border: Border(top: BorderSide(color: Color(0xFFEFF5F1))),
       ),
       child: Row(
         children: [
           const Text('高亮',
-              style: TextStyle(fontSize: 12, color: Color(0xFF9AA8BF))),
+              style: TextStyle(fontSize: 12, color: Color(0xFF8FA09A))),
           const SizedBox(width: 10),
           ...List.generate(_highlights.length, (i) {
             final c = _highlights[i];
@@ -460,14 +460,14 @@ class FormatToolbarState extends State<FormatToolbar> {
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
                       color: active
-                          ? const Color(0xFF3B6FE0)
-                          : const Color(0xFFE0E4EA),
+                          ? const Color(0xFF3E8E6D)
+                          : const Color(0xFFDFEAE5),
                       width: active ? 2 : 1,
                     ),
                   ),
                   child: active
                       ? const Icon(Icons.check,
-                          size: 16, color: Color(0xFF2A3B52))
+                          size: 16, color: Color(0xFF24382F))
                       : null,
                 ),
               ),
@@ -482,11 +482,11 @@ class FormatToolbarState extends State<FormatToolbar> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                border: Border.all(color: const Color(0xFFE0E4EA)),
+                border: Border.all(color: const Color(0xFFDFEAE5)),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Text('清除',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF5A6B82))),
+                  style: TextStyle(fontSize: 12, color: Color(0xFF647A70))),
             ),
           ),
         ],
@@ -498,12 +498,12 @@ class FormatToolbarState extends State<FormatToolbar> {
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
       decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: Color(0xFFF0F3F8))),
+        border: Border(top: BorderSide(color: Color(0xFFEFF5F1))),
       ),
       child: Row(
         children: [
           const Text('字号',
-              style: TextStyle(fontSize: 12, color: Color(0xFF9AA8BF))),
+              style: TextStyle(fontSize: 12, color: Color(0xFF8FA09A))),
           const SizedBox(width: 10),
           ...List.generate(_sizes.length, (i) {
             final sz = _sizes[i];
@@ -520,15 +520,15 @@ class FormatToolbarState extends State<FormatToolbar> {
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                   decoration: BoxDecoration(
                     color: active
-                        ? const Color(0xFF3B6FE0)
-                        : const Color(0xFFF5F7FB),
+                        ? const Color(0xFF3E8E6D)
+                        : const Color(0xFFF5FAF7),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     _sizeLabels[i],
                     style: TextStyle(
                       fontSize: 12,
-                      color: active ? Colors.white : const Color(0xFF2A3B52),
+                      color: active ? Colors.white : const Color(0xFF24382F),
                       fontWeight: active ? FontWeight.w600 : FontWeight.normal,
                     ),
                   ),

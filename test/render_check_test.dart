@@ -11,7 +11,7 @@ void main() {
     final key = GlobalKey();
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
-        backgroundColor: const Color(0xFFF3F6FB),
+        backgroundColor: const Color(0xFFF5FAF7),
         body: RepaintBoundary(
           key: key,
           child: Column(
@@ -31,7 +31,7 @@ void main() {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                      colors: [Color(0xFF3B6FE0), Color(0xFF5B8AF0)]),
+                      colors: [Color(0xFF3E8E6D), Color(0xFF5CA985)]),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Column(
@@ -80,7 +80,7 @@ class _BarTest extends StatelessWidget {
         borderRadius: BorderRadius.circular(4),
         child: Row(
           children: <Widget>[
-            Expanded(flex: 760, child: Container(color: const Color(0xFF2A9D5C))),
+            Expanded(flex: 760, child: Container(color: const Color(0xFF3E8E6D))),
             Expanded(flex: 240, child: Container(color: const Color(0xFFE0576A))),
           ],
         ),
@@ -97,9 +97,9 @@ class _StripeTest extends CustomPainter {
         Offset.zero & size, const Radius.circular(11));
     c.save();
     c.clipRRect(r);
-    c.drawRect(r.outerRect, Paint()..color = const Color(0xFFEFF2F7));
+    c.drawRect(r.outerRect, Paint()..color = const Color(0xFFEEF4F0));
     final p = Paint()
-      ..color = const Color(0xFFE7EBF1)
+      ..color = const Color(0xFFE4EDE8)
       ..strokeWidth = 4
       ..style = PaintingStyle.stroke;
     for (double x = -size.height; x < size.width + size.height; x += 16) {
@@ -122,7 +122,7 @@ class _StripeTest extends CustomPainter {
     final tp = TextPainter(
       text: const TextSpan(
           text: '🔒 年会流程',
-          style: TextStyle(fontSize: 11.5, color: Color(0xFF2A3B52))),
+          style: TextStyle(fontSize: 11.5, color: Color(0xFF24382F))),
       textDirection: TextDirection.ltr,
     )..layout();
     tp.paint(c, const Offset(8, 20));

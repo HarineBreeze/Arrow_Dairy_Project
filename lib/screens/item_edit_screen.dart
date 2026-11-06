@@ -51,7 +51,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
 
   /// 主题强调色：愿望单=粉色，已拥有=蓝色
   Color get _accent =>
-      _wishlist ? const Color(0xFFE58BA0) : const Color(0xFF3B6FE0);
+      _wishlist ? const Color(0xFFE58BA0) : const Color(0xFF3E8E6D);
 
   @override
   void initState() {
@@ -412,7 +412,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
     return Row(
       children: [
         const Text('物品状态',
-            style: TextStyle(fontSize: 15, color: Color(0xFF2A3B52))),
+            style: TextStyle(fontSize: 15, color: Color(0xFF24382F))),
         const Spacer(),
         _buildStatusChip('已拥有', false),
         const SizedBox(width: 8),
@@ -425,7 +425,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
     final sel = _wishlist == wishlistValue;
     final accent = wishlistValue
         ? const Color(0xFFE58BA0)
-        : const Color(0xFF3B6FE0);
+        : const Color(0xFF3E8E6D);
     return GestureDetector(
       onTap: () => setState(() => _wishlist = wishlistValue),
       child: Container(
@@ -434,14 +434,14 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
           color: sel ? accent : Colors.white,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: sel ? accent : const Color(0xFFDCE7FF),
+            color: sel ? accent : const Color(0xFFE4F2EB),
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: 12,
-            color: sel ? Colors.white : const Color(0xFF5A6B82),
+            color: sel ? Colors.white : const Color(0xFF647A70),
           ),
         ),
       ),
@@ -502,7 +502,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         child: Row(
           children: [
             const Text('每次攒钱',
-                style: TextStyle(fontSize: 15, color: Color(0xFF2A3B52))),
+                style: TextStyle(fontSize: 15, color: Color(0xFF24382F))),
             const Spacer(),
             Text(
               _savePerTime > 0 ? '¥${_fmtAmount(_savePerTime)}' : '点击设置',
@@ -510,13 +510,13 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
                 color: _savePerTime > 0
-                    ? const Color(0xFF34A853)
-                    : const Color(0xFF9AA8BF),
+                    ? const Color(0xFF3E8E6D)
+                    : const Color(0xFF8FA09A),
               ),
             ),
             const SizedBox(width: 4),
             const Icon(Icons.chevron_right,
-                size: 18, color: Color(0xFFC4CEDD)),
+                size: 18, color: Color(0xFFC6D6CD)),
           ],
         ),
       ),
@@ -529,7 +529,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
     return Row(
       children: [
         const Text('已攒金额',
-            style: TextStyle(fontSize: 15, color: Color(0xFF2A3B52))),
+            style: TextStyle(fontSize: 15, color: Color(0xFF24382F))),
         const Spacer(),
         // 加减号并排放置在已攒金额左侧
         _buildStepButton(Icons.remove, () {
@@ -556,12 +556,12 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
             style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF34A853),
+              color: Color(0xFF3E8E6D),
             ),
           ),
         ),
         const SizedBox(width: 4),
-        const Icon(Icons.chevron_right, size: 18, color: Color(0xFFC4CEDD)),
+        const Icon(Icons.chevron_right, size: 18, color: Color(0xFFC6D6CD)),
       ],
     );
   }
@@ -577,7 +577,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
       children: [
         // 与「已攒金额、每次攒钱」同行样式一致（15号、深灰、左对齐）
         const Text('攒钱进度',
-            style: TextStyle(fontSize: 15, color: Color(0xFF2A3B52))),
+            style: TextStyle(fontSize: 15, color: Color(0xFF24382F))),
         const SizedBox(height: 10),
         // 长度进一步缩短
         Padding(
@@ -588,10 +588,10 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
               height: 16,
               child: Stack(
                 children: [
-                  Container(color: const Color(0xFFE0E4EA)),
+                  Container(color: const Color(0xFFDFEAE5)),
                   FractionallySizedBox(
                     widthFactor: ratio,
-                    child: Container(color: const Color(0xFF34A853)),
+                    child: Container(color: const Color(0xFF3E8E6D)),
                   ),
                   Center(
                     child: Text(
@@ -632,7 +632,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         const Text('物品名',
-            style: TextStyle(fontSize: 15, color: Color(0xFF2A3B52))),
+            style: TextStyle(fontSize: 15, color: Color(0xFF24382F))),
         const SizedBox(width: 16),
         Expanded(
           child: TextField(
@@ -669,14 +669,14 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
                 color: sel ? _accent : Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: sel ? _accent : const Color(0xFFDCE7FF),
+                  color: sel ? _accent : const Color(0xFFE4F2EB),
                 ),
               ),
               child: Text(
                 c,
                 style: TextStyle(
                   fontSize: 13,
-                  color: sel ? Colors.white : const Color(0xFF5A6B82),
+                  color: sel ? Colors.white : const Color(0xFF647A70),
                 ),
               ),
             ),
@@ -689,11 +689,11 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFDCE7FF)),
+              border: Border.all(color: const Color(0xFFE4F2EB)),
             ),
             child: const Text(
               '自定义',
-              style: TextStyle(fontSize: 13, color: Color(0xFF5A6B82)),
+              style: TextStyle(fontSize: 13, color: Color(0xFF647A70)),
             ),
           ),
         ),
@@ -733,7 +733,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
           value,
           style: TextStyle(
             fontSize: isCustom ? 18 : 18,
-            color: isCustom ? const Color(0xFF9AA8BF) : null,
+            color: isCustom ? const Color(0xFF8FA09A) : null,
           ),
         ),
       ),
@@ -745,7 +745,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         const Text('物品价格',
-            style: TextStyle(fontSize: 15, color: Color(0xFF2A3B52))),
+            style: TextStyle(fontSize: 15, color: Color(0xFF24382F))),
         const SizedBox(width: 16),
         Expanded(
           child: TextField(
@@ -771,7 +771,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         const Text('附加价格',
-            style: TextStyle(fontSize: 15, color: Color(0xFF2A3B52))),
+            style: TextStyle(fontSize: 15, color: Color(0xFF24382F))),
         const SizedBox(width: 16),
         Expanded(
           child: TextField(
@@ -793,7 +793,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF3B6FE0),
+              color: Color(0xFF3E8E6D),
             ),
           ),
       ],
@@ -839,11 +839,11 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFDCE7FF)),
+          border: Border.all(color: const Color(0xFFE4F2EB)),
         ),
         child: Row(
           children: [
-            const Icon(Icons.event, size: 16, color: Color(0xFF3B6FE0)),
+            const Icon(Icons.event, size: 16, color: Color(0xFF3E8E6D)),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -855,8 +855,8 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
                 style: TextStyle(
                   fontSize: 13,
                   color: d == null
-                      ? const Color(0xFF9AA8BF)
-                      : const Color(0xFF2A3B52),
+                      ? const Color(0xFF8FA09A)
+                      : const Color(0xFF24382F),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -865,7 +865,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
               GestureDetector(
                 onTap: onClear,
                 child: const Icon(Icons.close,
-                    size: 16, color: Color(0xFF9AA8BF)),
+                    size: 16, color: Color(0xFF8FA09A)),
               ),
           ],
         ),
@@ -894,14 +894,14 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
                   color: sel ? _accent : Colors.white,
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(
-                    color: sel ? _accent : const Color(0xFFDCE7FF),
+                    color: sel ? _accent : const Color(0xFFE4F2EB),
                   ),
                 ),
                 child: Text(
                   labels[i],
                   style: TextStyle(
                     fontSize: 14,
-                    color: sel ? Colors.white : const Color(0xFF5A6B82),
+                    color: sel ? Colors.white : const Color(0xFF647A70),
                   ),
                 ),
               ),
@@ -917,7 +917,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         const Text('使用次数',
-            style: TextStyle(fontSize: 15, color: Color(0xFF2A3B52))),
+            style: TextStyle(fontSize: 15, color: Color(0xFF24382F))),
         const Spacer(),
         _buildStepButton(Icons.remove, () => _changeUsage(-1)),
         const SizedBox(width: 8),
@@ -940,7 +940,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         _buildStepButton(Icons.add, () => _changeUsage(1)),
         const SizedBox(width: 6),
         const Text('次',
-            style: TextStyle(fontSize: 14, color: Color(0xFF9AA8BF))),
+            style: TextStyle(fontSize: 14, color: Color(0xFF8FA09A))),
       ],
     );
   }
@@ -961,7 +961,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           shape: BoxShape.circle,
-          border: Border.all(color: const Color(0xFFDCE7FF)),
+          border: Border.all(color: const Color(0xFFE4F2EB)),
         ),
         child: Icon(icon, size: 18, color: _accent),
       ),

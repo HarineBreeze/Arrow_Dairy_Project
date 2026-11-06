@@ -260,14 +260,14 @@ class TrashScreenState extends State<TrashScreen> {
           children: [
             Icon(Icons.delete_outline,
                 size: 54,
-                color: const Color(0xFF9AA8BF).withOpacity(0.55)),
+                color: const Color(0xFF8FA09A).withOpacity(0.55)),
             const SizedBox(height: 14),
             const Text(
               '回收站是空的',
               style: TextStyle(
                   fontSize: 14.5,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF5A6B82)),
+                  color: Color(0xFF647A70)),
             ),
             const SizedBox(height: 8),
             Text(
@@ -276,7 +276,7 @@ class TrashScreenState extends State<TrashScreen> {
               style: TextStyle(
                   fontSize: 12.5,
                   height: 1.7,
-                  color: const Color(0xFF9AA8BF).withOpacity(0.95)),
+                  color: const Color(0xFF8FA09A).withOpacity(0.95)),
             ),
           ],
         ),
@@ -295,7 +295,7 @@ class TrashScreenState extends State<TrashScreen> {
                   child: Text(
                     '${_category?.label ?? ''}没有内容',
                     style: const TextStyle(
-                        fontSize: 13.5, color: Color(0xFF9AA8BF)),
+                        fontSize: 13.5, color: Color(0xFF8FA09A)),
                   ),
                 )
               : ListView(
@@ -312,7 +312,7 @@ class TrashScreenState extends State<TrashScreen> {
                         style: TextStyle(
                             fontSize: 11.5,
                             color:
-                                const Color(0xFF9AA8BF).withOpacity(0.9)),
+                                const Color(0xFF8FA09A).withOpacity(0.9)),
                       ),
                     ),
                   ],
@@ -366,8 +366,8 @@ class TrashScreenState extends State<TrashScreen> {
                       color: selected
                           ? Colors.white
                           : (disabled
-                              ? const Color(0xFFC4CEDD)
-                              : const Color(0xFF3B6FE0))),
+                              ? const Color(0xFFC6D6CD)
+                              : const Color(0xFF3E8E6D))),
                   const SizedBox(width: 5),
                   Text('${c.name} ${c.count}',
                       style: TextStyle(
@@ -376,8 +376,8 @@ class TrashScreenState extends State<TrashScreen> {
                           color: selected
                               ? Colors.white
                               : (disabled
-                                  ? const Color(0xFFC4CEDD)
-                                  : const Color(0xFF2A3B52)))),
+                                  ? const Color(0xFFC6D6CD)
+                                  : const Color(0xFF24382F)))),
                 ],
               ),
             ),
@@ -442,7 +442,7 @@ class TrashScreenState extends State<TrashScreen> {
                               style: const TextStyle(
                                   fontSize: 14.5,
                                   fontWeight: FontWeight.w600,
-                                  color: Color(0xFF2A3B52)),
+                                  color: Color(0xFF24382F)),
                             ),
                           ),
                           const SizedBox(width: 6),
@@ -469,7 +469,7 @@ class TrashScreenState extends State<TrashScreen> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                            fontSize: 11.5, color: Color(0xFF9AA8BF)),
+                            fontSize: 11.5, color: Color(0xFF8FA09A)),
                       ),
                     ],
                   ),
@@ -482,7 +482,7 @@ class TrashScreenState extends State<TrashScreen> {
                   decoration: BoxDecoration(
                     color: urgent
                         ? const Color(0xFFFBEEE9)
-                        : const Color(0xFFF3F6FB),
+                        : const Color(0xFFF5FAF7),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -492,13 +492,13 @@ class TrashScreenState extends State<TrashScreen> {
                         fontWeight: FontWeight.w600,
                         color: urgent
                             ? const Color(0xFFF08C3A)
-                            : const Color(0xFF8A99B3)),
+                            : const Color(0xFF7C8F86)),
                   ),
                 ),
               ],
             ),
           ),
-          const Divider(height: 1, color: Color(0xFFF0F3F8)),
+          const Divider(height: 1, color: Color(0xFFEFF5F1)),
           // 操作区：还原 / 彻底删除
           Row(
             children: [
@@ -506,11 +506,11 @@ class TrashScreenState extends State<TrashScreen> {
                 child: _buildAction(
                   icon: Icons.restore,
                   label: '还原',
-                  color: const Color(0xFF3B6FE0),
+                  color: const Color(0xFF3E8E6D),
                   onTap: () => _restore(e),
                 ),
               ),
-              Container(width: 1, height: 20, color: const Color(0xFFF0F3F8)),
+              Container(width: 1, height: 20, color: const Color(0xFFEFF5F1)),
               Expanded(
                 child: _buildAction(
                   icon: Icons.delete_forever_outlined,
@@ -556,26 +556,26 @@ class TrashScreenState extends State<TrashScreen> {
   Color _bgOf(TrashKind k) {
     switch (k) {
       case TrashKind.diary:
-        return const Color(0xFFE8F0FE);
+        return const Color(0xFFE4F2EB);
       case TrashKind.item:
         return const Color(0xFFE7F3EA);
       case TrashKind.event:
         return const Color(0xFFFBEEE9);
       case TrashKind.asset:
-        return const Color(0xFFEDF0F6);
+        return const Color(0xFFECF2EE);
     }
   }
 
   Color _fgOf(TrashKind k) {
     switch (k) {
       case TrashKind.diary:
-        return const Color(0xFF3B6FE0);
+        return const Color(0xFF3E8E6D);
       case TrashKind.item:
-        return const Color(0xFF34A853);
+        return const Color(0xFF3E8E6D);
       case TrashKind.event:
         return const Color(0xFFF08C3A);
       case TrashKind.asset:
-        return const Color(0xFF5A6B82);
+        return const Color(0xFF647A70);
     }
   }
 }

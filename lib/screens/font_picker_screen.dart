@@ -26,13 +26,13 @@ class _FontPickerScreenState extends State<FontPickerScreen> {
           final previewStyle = TextStyle(
             fontSize: 17,
             height: 1.5,
-            color: const Color(0xFF2A3B52),
+            color: const Color(0xFF24382F),
             fontFamily: id.isEmpty ? null : id,
           );
           return Padding(
             padding: const EdgeInsets.only(bottom: 10),
             child: Material(
-              color: selected ? const Color(0xFFEAF1FF) : Colors.white,
+              color: selected ? const Color(0xFFE4F2EB) : Colors.white,
               borderRadius: BorderRadius.circular(14),
               child: InkWell(
                 borderRadius: BorderRadius.circular(14),
@@ -51,7 +51,7 @@ class _FontPickerScreenState extends State<FontPickerScreen> {
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: selected
-                          ? const Color(0xFF3B6FE0)
+                          ? const Color(0xFF3E8E6D)
                           : const Color(0xFFE8EDF5),
                       width: selected ? 1.5 : 1,
                     ),
@@ -71,7 +71,7 @@ class _FontPickerScreenState extends State<FontPickerScreen> {
                                   ? const TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w600,
-                                      color: Color(0xFF2A3B52))
+                                      color: Color(0xFF24382F))
                                   : previewStyle.copyWith(
                                       fontWeight: FontWeight.w600),
                             ),
@@ -88,10 +88,10 @@ class _FontPickerScreenState extends State<FontPickerScreen> {
                       const SizedBox(width: 8),
                       if (selected)
                         const Icon(Icons.check_circle,
-                            color: Color(0xFF3B6FE0), size: 22)
+                            color: Color(0xFF3E8E6D), size: 22)
                       else
                         const Icon(Icons.radio_button_unchecked,
-                            color: Color(0xFFC4CEDD), size: 22),
+                            color: Color(0xFFC6D6CD), size: 22),
                     ],
                   ),
                 ),

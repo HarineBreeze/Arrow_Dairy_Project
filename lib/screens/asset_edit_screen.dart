@@ -146,7 +146,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
     return WillPopScope(
       onWillPop: _handleLeave,
       child: Scaffold(
-      backgroundColor: const Color(0xFFF3F6FB),
+      backgroundColor: const Color(0xFFF5FAF7),
       appBar: AppBar(
         backgroundColor: const Color(0xCC3B6FE0),
         foregroundColor: Colors.white,
@@ -202,13 +202,13 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                     Expanded(
                       child: Text(_type,
                           style: const TextStyle(
-                              fontSize: 15, color: Color(0xFF2A3B52))),
+                              fontSize: 15, color: Color(0xFF24382F))),
                     ),
                     AnimatedRotation(
                       turns: _typeOpen ? 0.5 : 0,
                       duration: const Duration(milliseconds: 200),
                       child: const Icon(Icons.keyboard_arrow_down,
-                          color: Color(0xFF5A6B82)),
+                          color: Color(0xFF647A70)),
                     ),
                   ],
                 ),
@@ -249,7 +249,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                                 decoration: BoxDecoration(
                                   // 选中项底纹强调
                                   color: t == _type
-                                      ? const Color(0xFFDCE7FF)
+                                      ? const Color(0xFFE4F2EB)
                                       : Colors.transparent,
                                   borderRadius: BorderRadius.circular(10),
                                 ),
@@ -263,13 +263,13 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                                                   ? FontWeight.w600
                                                   : FontWeight.normal,
                                               color: t == _type
-                                                  ? const Color(0xFF3B6FE0)
-                                                  : const Color(0xFF2A3B52))),
+                                                  ? const Color(0xFF3E8E6D)
+                                                  : const Color(0xFF24382F))),
                                     ),
                                     if (t == _type)
                                       const Icon(Icons.check,
                                           size: 16,
-                                          color: Color(0xFF3B6FE0)),
+                                          color: Color(0xFF3E8E6D)),
                                   ],
                                 ),
                               ),
@@ -292,7 +292,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                 style: const TextStyle(fontSize: 15),
                 decoration: const InputDecoration(
                   hintText: '如：工资卡、应急金、基金账户',
-                  hintStyle: TextStyle(fontSize: 13, color: Color(0xFF9AA8BF)),
+                  hintStyle: TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
                   counterText: '',
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(vertical: 14),
@@ -312,7 +312,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                       style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF2A3B52))),
+                          color: Color(0xFF24382F))),
                   const SizedBox(width: 6),
                   Expanded(
                     child: TextField(
@@ -324,7 +324,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                       decoration: InputDecoration(
                         hintText: _isLiability ? '输入欠款金额' : '输入资产金额',
                         hintStyle: const TextStyle(
-                            fontSize: 14, color: Color(0xFF9AA8BF)),
+                            fontSize: 14, color: Color(0xFF8FA09A)),
                         border: InputBorder.none,
                         contentPadding:
                             const EdgeInsets.symmetric(vertical: 14),
@@ -345,7 +345,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
             // 保存：点击后收缩成圆形 + 打勾 + 粒子，播完再返回
             SaveDoneButton(
               key: _doneKey,
-              color: const Color(0xFF3B6FE0),
+              color: const Color(0xFF3E8E6D),
               validate: _validate,
               onTap: _save,
               onDone: () {
@@ -370,7 +370,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
           Text(text,
               style: const TextStyle(
                   fontSize: 13,
-                  color: Color(0xFF9AA8BF),
+                  color: Color(0xFF8FA09A),
                   fontWeight: FontWeight.w600)),
           if (required)
             const Text(' *',
@@ -406,17 +406,17 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: sel
-                ? const Color(0xFFDCE7FF)
-                : (isMore ? const Color(0xFFF0F4FB) : const Color(0xFFF5F7FB)),
+                ? const Color(0xFFE4F2EB)
+                : (isMore ? const Color(0xFFEFF5F1) : const Color(0xFFF5FAF7)),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: sel ? const Color(0xFF3B6FE0) : Colors.transparent,
+              color: sel ? const Color(0xFF3E8E6D) : Colors.transparent,
               width: 1.5,
             ),
           ),
           child: isMore
               ? const Icon(Icons.more_horiz,
-                  size: 22, color: Color(0xFF5A6B82))
+                  size: 22, color: Color(0xFF647A70))
               : Text(icon!, style: const TextStyle(fontSize: 22)),
         ),
       ),
@@ -462,12 +462,12 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                             alignment: Alignment.center,
                             decoration: BoxDecoration(
                               color: sel
-                                  ? const Color(0xFFDCE7FF)
-                                  : const Color(0xFFF5F7FB),
+                                  ? const Color(0xFFE4F2EB)
+                                  : const Color(0xFFF5FAF7),
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
                                 color: sel
-                                    ? const Color(0xFF3B6FE0)
+                                    ? const Color(0xFF3E8E6D)
                                     : Colors.transparent,
                                 width: 1.5,
                               ),
@@ -487,7 +487,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                         labelText: '自定义 emoji',
                         hintText: '如 🐷、🚀',
                         hintStyle:
-                            TextStyle(fontSize: 13, color: Color(0xFF9AA8BF)),
+                            TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
                         counterText: '',
                         isDense: true,
                         border: OutlineInputBorder(),
@@ -502,7 +502,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                         enabled: true,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            primary: const Color(0xFF3B6FE0),
+                            primary: const Color(0xFF3E8E6D),
                             onPrimary: Colors.white,
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12)),

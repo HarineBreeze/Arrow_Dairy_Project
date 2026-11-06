@@ -94,7 +94,7 @@ class SideMenu extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF2A3B52),
+                    color: Color(0xFF24382F),
                   ),
                 ),
                 if (AppVersion.isBeta) ...[
@@ -126,7 +126,7 @@ class SideMenu extends StatelessWidget {
                   maxLines: 1,
                   style: TextStyle(
                     fontSize: 12,
-                    color: Color(0xFF9AA8BF),
+                    color: Color(0xFF8FA09A),
                   ),
                 ),
               ],
@@ -205,8 +205,8 @@ class SideMenu extends StatelessWidget {
       duration: const Duration(milliseconds: 280),
       curve: Curves.easeOutCubic,
       builder: (context, t, child) {
-        final iconColor = Color.lerp(const Color(0xFF3B6FE0), Colors.white, t)!;
-        final textColor = Color.lerp(const Color(0xFF2A3B52), Colors.white, t)!;
+        final iconColor = Color.lerp(const Color(0xFF3E8E6D), Colors.white, t)!;
+        final textColor = Color.lerp(const Color(0xFF24382F), Colors.white, t)!;
         return SizedBox(
           height: height,
           child: Material(
@@ -251,17 +251,17 @@ class SideMenu extends StatelessWidget {
             child: Row(
               children: const [
                 SizedBox(width: 16),
-                AppIcon(AppIcons.settings, size: 22, color: Color(0xFF5A6B82)),
+                AppIcon(AppIcons.settings, size: 22, color: Color(0xFF647A70)),
                 SizedBox(width: 12),
                 Text(
                   '设置',
                   style: TextStyle(
                     fontSize: 15,
-                    color: Color(0xFF2A3B52),
+                    color: Color(0xFF24382F),
                   ),
                 ),
                 Spacer(),
-                AppIcon(AppIcons.chevR, size: 20, color: Color(0xFFC4CEDD)),
+                AppIcon(AppIcons.chevR, size: 20, color: Color(0xFFC6D6CD)),
                 SizedBox(width: 12),
               ],
             ),

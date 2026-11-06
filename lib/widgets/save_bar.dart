@@ -97,7 +97,7 @@ class _SaveBarState extends State<SaveBar> {
                         style: OutlinedButton.styleFrom(
                           minimumSize: const Size.fromHeight(48),
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          side: const BorderSide(color: Color(0xFF3B6FE0)),
+                          side: const BorderSide(color: Color(0xFF3E8E6D)),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),

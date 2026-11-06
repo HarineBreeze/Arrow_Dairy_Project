@@ -86,7 +86,7 @@ class ItemListScreenState extends State<ItemListScreen> {
             const SizedBox(height: 10),
             ListTile(
               leading:
-                  const Icon(Icons.edit_outlined, color: Color(0xFF3B6FE0)),
+                  const Icon(Icons.edit_outlined, color: Color(0xFF3E8E6D)),
               title: const Text('编辑'),
               onTap: () => Navigator.pop(ctx, 'edit'),
             ),
@@ -315,7 +315,7 @@ class ItemListScreenState extends State<ItemListScreen> {
                         style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF2A3B52))),
+                            color: Color(0xFF24382F))),
                     const SizedBox(height: 10),
                     Wrap(
                       spacing: 8,
@@ -329,12 +329,12 @@ class ItemListScreenState extends State<ItemListScreen> {
                                 horizontal: 14, vertical: 8),
                             decoration: BoxDecoration(
                               color:
-                                  sel ? const Color(0xFF3B6FE0) : Colors.white,
+                                  sel ? const Color(0xFF3E8E6D) : Colors.white,
                               borderRadius: BorderRadius.circular(18),
                               border: Border.all(
                                 color: sel
-                                    ? const Color(0xFF3B6FE0)
-                                    : const Color(0xFFDCE7FF),
+                                    ? const Color(0xFF3E8E6D)
+                                    : const Color(0xFFE4F2EB),
                               ),
                             ),
                             child: Text(
@@ -343,7 +343,7 @@ class ItemListScreenState extends State<ItemListScreen> {
                                 fontSize: 13,
                                 color: sel
                                     ? Colors.white
-                                    : const Color(0xFF5A6B82),
+                                    : const Color(0xFF647A70),
                               ),
                             ),
                           ),
@@ -399,7 +399,7 @@ class ItemListScreenState extends State<ItemListScreen> {
           const Divider(height: 1, color: Color(0xFFE8EDF5)),
           Expanded(
             child: RefreshIndicator(
-              color: const Color(0xFF3B6FE0),
+              color: const Color(0xFF3E8E6D),
               onRefresh: _load,
               child: _filtered.isEmpty
                   ? ListView(
@@ -477,11 +477,11 @@ class ItemListScreenState extends State<ItemListScreen> {
                       controller: _searchCtrl,
                       autofocus: false,
                       style: const TextStyle(
-                          fontSize: 15, color: Color(0xFF2A3B52)),
+                          fontSize: 15, color: Color(0xFF24382F)),
                       textAlignVertical: TextAlignVertical.center,
                       decoration: const InputDecoration(
                         hintText: '搜索物品…',
-                        hintStyle: TextStyle(color: Color(0xFF9AA8BF)),
+                        hintStyle: TextStyle(color: Color(0xFF8FA09A)),
                         isDense: true,
                         border: InputBorder.none,
                       ),
@@ -526,7 +526,7 @@ class ItemListScreenState extends State<ItemListScreen> {
               style: const TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF3B6FE0),
+                color: Color(0xFF3E8E6D),
               ),
             ),
             const SizedBox(height: 4),
@@ -536,10 +536,10 @@ class ItemListScreenState extends State<ItemListScreen> {
                 Text(
                   label,
                   style:
-                      const TextStyle(fontSize: 12, color: Color(0xFF9AA8BF)),
+                      const TextStyle(fontSize: 12, color: Color(0xFF8FA09A)),
                 ),
                 const SizedBox(width: 2),
-                const Icon(Icons.swap_vert, size: 14, color: Color(0xFF9AA8BF)),
+                const Icon(Icons.swap_vert, size: 14, color: Color(0xFF8FA09A)),
               ],
             ),
           ],
@@ -557,13 +557,13 @@ class ItemListScreenState extends State<ItemListScreen> {
             style: const TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF3B6FE0),
+              color: Color(0xFF3E8E6D),
             ),
           ),
           const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(fontSize: 12, color: Color(0xFF9AA8BF)),
+            style: const TextStyle(fontSize: 12, color: Color(0xFF8FA09A)),
           ),
         ],
       ),
@@ -592,7 +592,7 @@ class ItemListScreenState extends State<ItemListScreen> {
               child: Icon(
                 _sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
                 size: 17,
-                color: const Color(0xFF3B6FE0),
+                color: const Color(0xFF3E8E6D),
               ),
             ),
           ),
@@ -602,7 +602,7 @@ class ItemListScreenState extends State<ItemListScreen> {
             borderRadius: BorderRadius.circular(8),
             child: const Padding(
               padding: EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-              child: Icon(Icons.sort, size: 20, color: Color(0xFF3B6FE0)),
+              child: Icon(Icons.sort, size: 20, color: Color(0xFF3E8E6D)),
             ),
           ),
         ],
@@ -620,22 +620,22 @@ class ItemListScreenState extends State<ItemListScreen> {
           color: sel
               ? (filter == _ItemFilter.wishlist
                   ? const Color(0xFFE58BA0)
-                  : const Color(0xFF3B6FE0))
+                  : const Color(0xFF3E8E6D))
               : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: sel
                 ? (filter == _ItemFilter.wishlist
                     ? const Color(0xFFE58BA0)
-                    : const Color(0xFF3B6FE0))
-                : const Color(0xFFDCE7FF),
+                    : const Color(0xFF3E8E6D))
+                : const Color(0xFFE4F2EB),
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: 12,
-            color: sel ? Colors.white : const Color(0xFF5A6B82),
+            color: sel ? Colors.white : const Color(0xFF647A70),
           ),
         ),
       ),
@@ -715,7 +715,7 @@ class _ItemCardState extends State<_ItemCard> {
         decoration: BoxDecoration(
           color: item.wishlist
               ? const Color(0xFFFBE9EC) // 低饱和度淡粉色
-              : (item.lostDate != null ? const Color(0xFFE4E7EC) : Colors.white),
+              : (item.lostDate != null ? const Color(0xFFE1ECE6) : Colors.white),
           borderRadius: BorderRadius.circular(14),
           // 愿望单物品：红色描边
           border: item.wishlist
@@ -764,13 +764,13 @@ class _ItemCardState extends State<_ItemCard> {
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF2A3B52),
+                  color: Color(0xFF24382F),
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 '已攒 ¥${_fmt(item.savedAmount)}',
-                style: const TextStyle(fontSize: 12, color: Color(0xFF34A853)),
+                style: const TextStyle(fontSize: 12, color: Color(0xFF3E8E6D)),
               ),
               const SizedBox(height: 8),
               Padding(
@@ -808,12 +808,12 @@ class _ItemCardState extends State<_ItemCard> {
         child: Stack(
           alignment: Alignment.centerLeft,
           children: [
-            Container(color: const Color(0xFFE0E4EA)),
+            Container(color: const Color(0xFFDFEAE5)),
             // 绿色完成块从左侧往右侧增加（与编辑页进度条一致）
             FractionallySizedBox(
               alignment: Alignment.centerLeft,
               widthFactor: item.progress,
-              child: Container(color: const Color(0xFF34A853)),
+              child: Container(color: const Color(0xFF3E8E6D)),
             ),
             Center(
               child: Text(
@@ -869,7 +869,7 @@ class _ItemCardState extends State<_ItemCard> {
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                   color:
-                      lost ? const Color(0xFF9AA8BF) : const Color(0xFF2A3B52),
+                      lost ? const Color(0xFF8FA09A) : const Color(0xFF24382F),
                 ),
               ),
               const SizedBox(height: 4),
@@ -878,7 +878,7 @@ class _ItemCardState extends State<_ItemCard> {
                 style: TextStyle(
                   fontSize: 13,
                   color:
-                      lost ? const Color(0xFFB0B8C4) : const Color(0xFF3B6FE0),
+                      lost ? const Color(0xFFAFBFB8) : const Color(0xFF3E8E6D),
                 ),
               ),
               const SizedBox(height: 2),
@@ -890,8 +890,8 @@ class _ItemCardState extends State<_ItemCard> {
                   style: TextStyle(
                     fontSize: 12,
                     color: lost
-                        ? const Color(0xFFB0B8C4)
-                        : const Color(0xFF9AA8BF),
+                        ? const Color(0xFFAFBFB8)
+                        : const Color(0xFF8FA09A),
                   ),
                 ),
               ),
@@ -905,7 +905,7 @@ class _ItemCardState extends State<_ItemCard> {
             '¥${item.actualPrice.toStringAsFixed(0)}',
             style: TextStyle(
               fontSize: 10,
-              color: lost ? const Color(0xFFB0B8C4) : const Color(0xFF9AA8BF),
+              color: lost ? const Color(0xFFAFBFB8) : const Color(0xFF8FA09A),
             ),
           ),
         ),

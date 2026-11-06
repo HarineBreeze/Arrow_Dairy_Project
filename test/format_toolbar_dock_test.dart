@@ -28,7 +28,7 @@ class _Host extends StatelessWidget {
             body: Column(
               children: [
                 Expanded(
-                  child: Container(color: const Color(0xFFF3F6FB)),
+                  child: Container(color: const Color(0xFFF5FAF7)),
                 ),
                 FormatToolbar(
                   controller: TextEditingController(),

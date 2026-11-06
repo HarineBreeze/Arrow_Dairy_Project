@@ -186,7 +186,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.search, size: 18, color: Color(0xFF9AA8BF)),
+                  const Icon(Icons.search, size: 18, color: Color(0xFF8FA09A)),
                   const SizedBox(width: 6),
                   Expanded(
                     child: TextField(
@@ -194,11 +194,11 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                       focusNode: _focus,
                       autofocus: false, // 进入页面不默认弹出输入法
                       style: const TextStyle(
-                          fontSize: 15, color: Color(0xFF2A3B52)),
+                          fontSize: 15, color: Color(0xFF24382F)),
                       textAlignVertical: TextAlignVertical.center,
                       decoration: const InputDecoration(
                         hintText: '搜索笔记 / 物品 / 事件 / 资产…',
-                        hintStyle: TextStyle(color: Color(0xFF9AA8BF)),
+                        hintStyle: TextStyle(color: Color(0xFF8FA09A)),
                         border: InputBorder.none,
                         isDense: true,
                       ),
@@ -212,7 +212,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                         setState(() {});
                       },
                       child: const Icon(Icons.close,
-                          size: 16, color: Color(0xFF9AA8BF)),
+                          size: 16, color: Color(0xFF8FA09A)),
                     ),
                 ],
               ),
@@ -232,14 +232,14 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.manage_search,
-                size: 56, color: const Color(0xFF9AA8BF).withOpacity(0.6)),
+                size: 56, color: const Color(0xFF8FA09A).withOpacity(0.6)),
             const SizedBox(height: 14),
             const Text(
               '输入关键词，即可检索对应内容',
               style: TextStyle(
                   fontSize: 14.5,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF5A6B82)),
+                  color: Color(0xFF647A70)),
             ),
             const SizedBox(height: 8),
             Text(
@@ -248,7 +248,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
               style: TextStyle(
                   fontSize: 12.5,
                   height: 1.6,
-                  color: const Color(0xFF9AA8BF).withOpacity(0.9)),
+                  color: const Color(0xFF8FA09A).withOpacity(0.9)),
             ),
           ],
         ),
@@ -269,10 +269,10 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: const [
-            Icon(Icons.search_off, size: 48, color: Color(0xFFC4CEDD)),
+            Icon(Icons.search_off, size: 48, color: Color(0xFFC6D6CD)),
             SizedBox(height: 10),
             Text('没有匹配的内容',
-                style: TextStyle(fontSize: 13.5, color: Color(0xFF9AA8BF))),
+                style: TextStyle(fontSize: 13.5, color: Color(0xFF8FA09A))),
           ],
         ),
       );
@@ -327,8 +327,8 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                           color: selected
                               ? Colors.white
                               : (c.hasHit
-                                  ? const Color(0xFF3B6FE0)
-                                  : const Color(0xFFC4CEDD))),
+                                  ? const Color(0xFF3E8E6D)
+                                  : const Color(0xFFC6D6CD))),
                       const SizedBox(width: 5),
                       Text('${c.name} ${c.count}',
                           style: TextStyle(
@@ -337,8 +337,8 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                               color: selected
                                   ? Colors.white
                                   : (c.hasHit
-                                      ? const Color(0xFF2A3B52)
-                                      : const Color(0xFFC4CEDD)))),
+                                      ? const Color(0xFF24382F)
+                                      : const Color(0xFFC6D6CD)))),
                     ],
                   ),
                 ),
@@ -358,8 +358,8 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                         icon: e.encrypted
                             ? Icons.lock_outline
                             : Icons.book_outlined,
-                        iconBg: const Color(0xFFE8F0FE),
-                        iconColor: const Color(0xFF3B6FE0),
+                        iconBg: const Color(0xFFE4F2EB),
+                        iconColor: const Color(0xFF3E8E6D),
                         title: e.encrypted
                             ? (e.subtitle.isNotEmpty ? e.subtitle : '加密笔记')
                             : (e.title.isNotEmpty ? e.title : '（无标题）'),
@@ -378,7 +378,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                   .map((e) => _ResultRow(
                         icon: Icons.inventory_2_outlined,
                         iconBg: const Color(0xFFE7F3EA),
-                        iconColor: const Color(0xFF34A853),
+                        iconColor: const Color(0xFF3E8E6D),
                         title: e.name,
                         subtitle:
                             '${e.category} · ¥${e.price.toStringAsFixed(e.price.truncateToDouble() == e.price ? 0 : 2)}',
@@ -417,8 +417,8 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
               assets
                   .map((e) => _ResultRow(
                         icon: Icons.account_balance_outlined,
-                        iconBg: const Color(0xFFEDF0F6),
-                        iconColor: const Color(0xFF5A6B82),
+                        iconBg: const Color(0xFFECF2EE),
+                        iconColor: const Color(0xFF647A70),
                         title: e.note.isNotEmpty ? e.note : e.type,
                         subtitle: '${e.type} · ${_assetAmountLabel(e)}',
                         // 资产结果卡默认「关闭小眼睛」：金额打码；
@@ -456,7 +456,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
               ? Icons.visibility_off_outlined
               : Icons.visibility_outlined,
           size: 16,
-          color: const Color(0xFF9AA8BF),
+          color: const Color(0xFF8FA09A),
         ),
       ),
     );
@@ -472,13 +472,13 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
             padding: const EdgeInsets.only(left: 2, bottom: 7),
             child: Row(
               children: [
-                Icon(icon, size: 13, color: const Color(0xFF9AA8BF)),
+                Icon(icon, size: 13, color: const Color(0xFF8FA09A)),
                 const SizedBox(width: 5),
                 Text(title,
                     style: const TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF8A99B3))),
+                        color: Color(0xFF7C8F86))),
               ],
             ),
           ),
@@ -572,18 +572,18 @@ class _ResultRow extends StatelessWidget {
                         style: const TextStyle(
                             fontSize: 14.5,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF2A3B52))),
+                            color: Color(0xFF24382F))),
                     const SizedBox(height: 2),
                     Text(subtitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                            fontSize: 11.5, color: Color(0xFF9AA8BF))),
+                            fontSize: 11.5, color: Color(0xFF8FA09A))),
                   ],
                 ),
               ),
               if (trailing != null) trailing!,
-              const Icon(Icons.chevron_right, size: 18, color: Color(0xFFC4CEDD)),
+              const Icon(Icons.chevron_right, size: 18, color: Color(0xFFC6D6CD)),
             ],
           ),
         ),

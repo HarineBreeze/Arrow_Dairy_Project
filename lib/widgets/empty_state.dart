@@ -8,8 +8,8 @@ import '../widgets/pressable.dart';
 ///
 /// 视觉规范：
 /// - emoji 图标 56px
-/// - 主文案 16px，颜色 0xFF2B3A55
-/// - 副文案 13px，颜色 0xFF9AA8BF，行高 1.7
+/// - 主文案 16px，颜色 0xFF24382F
+/// - 副文案 13px，颜色 0xFF8FA09A，行高 1.7
 /// - 默认居中，顶部留白由 [topGap] 控制（列表里用 SizedBox 撑开时可为 0）
 class EmptyState extends StatelessWidget {
   /// 顶部留白（在列表内单独撑开时用）
@@ -53,7 +53,7 @@ class EmptyState extends StatelessWidget {
           textAlign: TextAlign.center,
           style: const TextStyle(
             fontSize: 16,
-            color: Color(0xFF2B3A55),
+            color: Color(0xFF24382F),
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -63,7 +63,7 @@ class EmptyState extends StatelessWidget {
           textAlign: TextAlign.center,
           style: const TextStyle(
             fontSize: 13,
-            color: Color(0xFF9AA8BF),
+            color: Color(0xFF8FA09A),
             height: 1.7,
           ),
         ),
@@ -74,7 +74,7 @@ class EmptyState extends StatelessWidget {
             child: TextButton(
               onPressed: onAction,
               style: TextButton.styleFrom(
-                primary: const Color(0xFF3B6FE0),
+                primary: const Color(0xFF3E8E6D),
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               ),
               child: Text(actionLabel!,

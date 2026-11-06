@@ -216,7 +216,7 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF2A3B52),
+                          color: const Color(0xFF24382F),
                           fontFamily: fontFamily,
                         ),
                       ),
@@ -242,7 +242,7 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                         style: TextStyle(
                           fontSize: 16,
                           height: 1.8,
-                          color: const Color(0xFF2A3B52),
+                          color: const Color(0xFF24382F),
                           fontFamily: fontFamily,
                         ),
                       ),
@@ -258,7 +258,7 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                       style: TextStyle(
                         fontSize: 16,
                         height: 1.5,
-                        color: const Color(0xFF2A3B52),
+                        color: const Color(0xFF24382F),
                         fontFamily: fontFamily,
                       ),
                       // 传回的是切换后的整篇正文，行号在卡片内部已算好，
@@ -276,19 +276,19 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
               children: [
                 if (_entry.location.isNotEmpty) ...[
                   const Icon(Icons.location_on,
-                      size: 14, color: Color(0xFF9AA8BF)),
+                      size: 14, color: Color(0xFF8FA09A)),
                   const SizedBox(width: 4),
                   Text(
                     _entry.location,
                     style: const TextStyle(
-                        fontSize: 13, color: Color(0xFF9AA8BF)),
+                        fontSize: 13, color: Color(0xFF8FA09A)),
                   ),
                   const SizedBox(width: 10),
                 ],
                 Text(
                   _timeLabel(),
                   style: const TextStyle(
-                      fontSize: 13, color: Color(0xFF9AA8BF)),
+                      fontSize: 13, color: Color(0xFF8FA09A)),
                 ),
               ],
             ),

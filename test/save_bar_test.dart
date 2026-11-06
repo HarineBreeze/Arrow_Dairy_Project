@@ -15,7 +15,7 @@ Widget _host({
         padding: const EdgeInsets.all(16),
         child: SaveBar(
           saveKey: key,
-          color: const Color(0xFF3B6FE0),
+          color: const Color(0xFF3E8E6D),
           onCancel: onCancel,
           validate: () => null,
           onSave: onSave,

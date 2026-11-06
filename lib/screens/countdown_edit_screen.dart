@@ -230,9 +230,9 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
     return WillPopScope(
       onWillPop: _handleLeave,
       child: Scaffold(
-      backgroundColor: const Color(0xFFF3F6FB),
+      backgroundColor: const Color(0xFFF5FAF7),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF3B6FE0),
+        backgroundColor: const Color(0xFF3E8E6D),
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
@@ -278,7 +278,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                 style: const TextStyle(fontSize: 15),
                 decoration: const InputDecoration(
                   hintText: '纪念日/生日/表白日/节日...',
-                  hintStyle: TextStyle(fontSize: 13, color: Color(0xFF9AA8BF)),
+                  hintStyle: TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
                   counterText: '',
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(vertical: 14),
@@ -298,7 +298,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                 style: const TextStyle(fontSize: 15),
                 decoration: const InputDecoration(
                   hintText: '写点什么…（选填）',
-                  hintStyle: TextStyle(fontSize: 13, color: Color(0xFF9AA8BF)),
+                  hintStyle: TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
                   counterText: '',
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(vertical: 14),
@@ -329,8 +329,8 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                           Icon(Icons.event_outlined,
                               size: 17,
                               color: _target == null
-                                  ? const Color(0xFF9AA8BF)
-                                  : const Color(0xFF3B6FE0)),
+                                  ? const Color(0xFF8FA09A)
+                                  : const Color(0xFF3E8E6D)),
                           const SizedBox(width: 6),
                           Expanded(
                             // 列宽只有五分之二，日期文字必须压缩显示，
@@ -344,8 +344,8 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                                 style: TextStyle(
                                   fontSize: _target == null ? 13 : 14,
                                   color: _target == null
-                                      ? const Color(0xFF9AA8BF)
-                                      : const Color(0xFF2A3B52),
+                                      ? const Color(0xFF8FA09A)
+                                      : const Color(0xFF24382F),
                                 ),
                               ),
                             ),
@@ -372,8 +372,8 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                           Icon(Icons.schedule_outlined,
                               size: 17,
                               color: _target == null
-                                  ? const Color(0xFF9AA8BF)
-                                  : const Color(0xFF3B6FE0)),
+                                  ? const Color(0xFF8FA09A)
+                                  : const Color(0xFF3E8E6D)),
                           const SizedBox(width: 6),
                           Expanded(
                             child: FittedBox(
@@ -388,8 +388,8 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                                       ? FontWeight.normal
                                       : FontWeight.w600,
                                   color: _target == null
-                                      ? const Color(0xFF9AA8BF)
-                                      : const Color(0xFF2A3B52),
+                                      ? const Color(0xFF8FA09A)
+                                      : const Color(0xFF24382F),
                                 ),
                               ),
                             ),
@@ -409,9 +409,9 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: _target == null
-                          ? const Color(0xFFF5F7FB)
+                          ? const Color(0xFFF5FAF7)
                           : (_isCountdown
-                              ? const Color(0xFFDCE7FF)
+                              ? const Color(0xFFE4F2EB)
                               : const Color(0xFFFDEEF3)),
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -426,9 +426,9 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: _target == null
-                              ? const Color(0xFFB4C0D2)
+                              ? const Color(0xFFB2C4BA)
                               : (_isCountdown
-                                  ? const Color(0xFF3B6FE0)
+                                  ? const Color(0xFF3E8E6D)
                                   : const Color(0xFFD9738F)),
                         ),
                       ),
@@ -500,7 +500,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
               padding: const EdgeInsets.only(left: 4),
               child: Text(
                 _repeatHint,
-                style: const TextStyle(fontSize: 12, color: Color(0xFF9AA8BF)),
+                style: const TextStyle(fontSize: 12, color: Color(0xFF8FA09A)),
               ),
             ),
             const SizedBox(height: 16),
@@ -532,7 +532,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                 _remindBeforeDays == 0
                     ? '在事件日当天的设定时间提醒'
                     : '在事件日前 $_remindBeforeDays 天的设定时间提醒',
-                style: const TextStyle(fontSize: 12, color: Color(0xFF9AA8BF)),
+                style: const TextStyle(fontSize: 12, color: Color(0xFF8FA09A)),
               ),
             ),
           ],
@@ -583,10 +583,10 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
           margin: const EdgeInsets.symmetric(horizontal: 3),
           padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
           decoration: BoxDecoration(
-            color: selected ? const Color(0xFFDCE7FF) : const Color(0xFFF5F7FB),
+            color: selected ? const Color(0xFFE4F2EB) : const Color(0xFFF5FAF7),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: selected ? const Color(0xFF3B6FE0) : Colors.transparent,
+              color: selected ? const Color(0xFF3E8E6D) : Colors.transparent,
               width: 1.5,
             ),
           ),
@@ -599,8 +599,8 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                     : Icons.radio_button_unchecked,
                 size: 15,
                 color: selected
-                    ? const Color(0xFF3B6FE0)
-                    : const Color(0xFF9AA8BF),
+                    ? const Color(0xFF3E8E6D)
+                    : const Color(0xFF8FA09A),
               ),
               const SizedBox(height: 3),
               // 文字宽度不超过胶囊内宽，超长时整体缩小（不会撑破边框）
@@ -616,8 +616,8 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                       fontWeight:
                           selected ? FontWeight.w600 : FontWeight.normal,
                       color: selected
-                          ? const Color(0xFF3B6FE0)
-                          : const Color(0xFF2A3B52),
+                          ? const Color(0xFF3E8E6D)
+                          : const Color(0xFF24382F),
                     ),
                   ),
                 ),
@@ -634,7 +634,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
         child: Text(text,
             style: const TextStyle(
                 fontSize: 13,
-                color: Color(0xFF9AA8BF),
+                color: Color(0xFF8FA09A),
                 fontWeight: FontWeight.w600)),
       );
 
@@ -666,17 +666,17 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: sel
-                ? const Color(0xFFDCE7FF)
-                : (isMore ? const Color(0xFFF0F4FB) : const Color(0xFFF5F7FB)),
+                ? const Color(0xFFE4F2EB)
+                : (isMore ? const Color(0xFFEFF5F1) : const Color(0xFFF5FAF7)),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: sel ? const Color(0xFF3B6FE0) : Colors.transparent,
+              color: sel ? const Color(0xFF3E8E6D) : Colors.transparent,
               width: 1.5,
             ),
           ),
           child: isMore
               ? const Icon(Icons.more_horiz,
-                  size: 22, color: Color(0xFF5A6B82))
+                  size: 22, color: Color(0xFF647A70))
               : Text(icon!, style: const TextStyle(fontSize: 22)),
         ),
       ),
@@ -719,12 +719,12 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color: sel
-                              ? const Color(0xFFDCE7FF)
-                              : const Color(0xFFF5F7FB),
+                              ? const Color(0xFFE4F2EB)
+                              : const Color(0xFFF5FAF7),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
                             color: sel
-                                ? const Color(0xFF3B6FE0)
+                                ? const Color(0xFF3E8E6D)
                                 : Colors.transparent,
                             width: 1.5,
                           ),

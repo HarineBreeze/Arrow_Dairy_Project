@@ -125,7 +125,7 @@ void main() {
         reason: '绿:红 应为 7500:2500 = 3:1');
     final greenBox = (row.children[0] as Expanded).child as ColoredBox;
     final redBox = (row.children[1] as Expanded).child as ColoredBox;
-    expect(greenBox.color, const Color(0xFF2A9D5C), reason: '正资产=绿色');
+    expect(greenBox.color, const Color(0xFF3E8E6D), reason: '正资产=绿色');
     expect(redBox.color, const Color(0xFFE0576A), reason: '负资产=红色');
   });
 
@@ -147,6 +147,6 @@ void main() {
     final flexes = row.children.whereType<Expanded>().map((e) => e.flex).toList();
     expect(flexes.length, 1, reason: '无负资产时只有绿色一段');
     final greenOnly = (row.children[0] as Expanded).child as ColoredBox;
-    expect(greenOnly.color, const Color(0xFF2A9D5C));
+    expect(greenOnly.color, const Color(0xFF3E8E6D));
   });
 }

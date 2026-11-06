@@ -64,7 +64,7 @@ class HighlightEditingController extends TextEditingController {
         final base = _styleAt(segStart) ?? const TextStyle();
         children.add(TextSpan(
           text: s.text,
-          style: base.copyWith(color: const Color(0xFF3B6FE0)),
+          style: base.copyWith(color: const Color(0xFF3E8E6D)),
         ));
       } else {
         children.add(buildPlain(s.text, segStart));
@@ -88,7 +88,7 @@ class HighlightEditingController extends TextEditingController {
         (text[pos] == TodoText.uncheckedSymbol ||
             text[pos] == TodoText.checkedSymbol)) {
       return const TextStyle(
-          color: Color(0xFF3B6FE0), fontWeight: FontWeight.w700);
+          color: Color(0xFF3E8E6D), fontWeight: FontWeight.w700);
     }
     bool bold = false, italic = false, underline = false, strike = false;
     String? highlight;

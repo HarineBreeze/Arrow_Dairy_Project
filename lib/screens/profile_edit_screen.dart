@@ -128,7 +128,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(4),
                       decoration: const BoxDecoration(
-                        color: Color(0xFF3B6FE0),
+                        color: Color(0xFF3E8E6D),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.camera_alt,
@@ -141,7 +141,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
             const SizedBox(height: 8),
             const Text(
               '点击更换头像',
-              style: TextStyle(fontSize: 12, color: Color(0xFF9AA8BF)),
+              style: TextStyle(fontSize: 12, color: Color(0xFF8FA09A)),
             ),
             const SizedBox(height: 28),
             _buildNicknameField(),
@@ -184,7 +184,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       children: [
         const Text(
           '昵称',
-          style: TextStyle(fontSize: 15, color: Color(0xFF2A3B52)),
+          style: TextStyle(fontSize: 15, color: Color(0xFF24382F)),
         ),
         const SizedBox(width: 20),
         Expanded(
@@ -194,7 +194,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
             style: const TextStyle(fontSize: 16),
             decoration: const InputDecoration(
               hintText: UserProfile.defaultNickname,
-              hintStyle: TextStyle(color: Color(0xFF9AA8BF)),
+              hintStyle: TextStyle(color: Color(0xFF8FA09A)),
               border: InputBorder.none,
               counterText: '',
             ),
@@ -202,7 +202,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         ),
         Text(
           '${_nicknameCtrl.text.length}/10',
-          style: const TextStyle(fontSize: 12, color: Color(0xFF9AA8BF)),
+          style: const TextStyle(fontSize: 12, color: Color(0xFF8FA09A)),
         ),
       ],
     );
@@ -213,7 +213,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       children: [
         const Text(
           '性别',
-          style: TextStyle(fontSize: 15, color: Color(0xFF2A3B52)),
+          style: TextStyle(fontSize: 15, color: Color(0xFF24382F)),
         ),
         const SizedBox(width: 20),
         Expanded(
@@ -236,19 +236,19 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFF3B6FE0) : Colors.white,
+          color: selected ? const Color(0xFF3E8E6D) : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: selected
-                ? const Color(0xFF3B6FE0)
-                : const Color(0xFFDCE7FF),
+                ? const Color(0xFF3E8E6D)
+                : const Color(0xFFE4F2EB),
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: 14,
-            color: selected ? Colors.white : const Color(0xFF5A6B82),
+            color: selected ? Colors.white : const Color(0xFF647A70),
           ),
         ),
       ),

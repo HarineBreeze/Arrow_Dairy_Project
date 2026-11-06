@@ -95,7 +95,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             content: const Text(
               '导入后将覆盖当前手机上的全部数据，原有内容无法恢复。',
               style: TextStyle(
-                  fontSize: 14, color: Color(0xFF5A6B82), height: 1.6),
+                  fontSize: 14, color: Color(0xFF647A70), height: 1.6),
             ),
             actions: [
               Pressable(
@@ -166,7 +166,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Text(
                 '该备份包含 ${data.entries.length} 条笔记、${data.items.length} 件物资、${data.assets.length} 笔资产、${data.countdowns.length} 个事件。',
                 style: const TextStyle(
-                    fontSize: 13, color: Color(0xFF8A99B3), height: 1.6),
+                    fontSize: 13, color: Color(0xFF7C8F86), height: 1.6),
               ),
               const SizedBox(height: 12),
               _modeTile(
@@ -195,7 +195,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: TextButton(
                 onPressed: () => Navigator.pop(ctx),
                 child:
-                    const Text('取消', style: TextStyle(color: Color(0xFF8A99B3))),
+                    const Text('取消', style: TextStyle(color: Color(0xFF7C8F86))),
               ),
             ),
             Pressable(
@@ -204,7 +204,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 onPressed: () => Navigator.pop(ctx, selected),
                 child: const Text('确定',
                     style: TextStyle(
-                        color: Color(0xFF3B6FE0), fontWeight: FontWeight.w600)),
+                        color: Color(0xFF3E8E6D), fontWeight: FontWeight.w600)),
               ),
             ),
           ],
@@ -228,10 +228,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: sel ? const Color(0xFFDCE7FF) : const Color(0xFFF6F8FC),
+          color: sel ? const Color(0xFFE4F2EB) : const Color(0xFFF5FAF7),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-              color: sel ? const Color(0xFF3B6FE0) : const Color(0xFFE8EDF5)),
+              color: sel ? const Color(0xFF3E8E6D) : const Color(0xFFE8EDF5)),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -239,7 +239,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Icon(
               sel ? Icons.radio_button_checked : Icons.radio_button_unchecked,
               size: 18,
-              color: sel ? const Color(0xFF3B6FE0) : const Color(0xFFC4CEDD),
+              color: sel ? const Color(0xFF3E8E6D) : const Color(0xFFC6D6CD),
             ),
             const SizedBox(width: 8),
             Expanded(
@@ -251,12 +251,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: sel
-                              ? const Color(0xFF3B6FE0)
-                              : const Color(0xFF2A3B52))),
+                              ? const Color(0xFF3E8E6D)
+                              : const Color(0xFF24382F))),
                   const SizedBox(height: 2),
                   Text(desc,
                       style: const TextStyle(
-                          fontSize: 12, color: Color(0xFF8A99B3), height: 1.5)),
+                          fontSize: 12, color: Color(0xFF7C8F86), height: 1.5)),
                 ],
               ),
             ),
@@ -284,7 +284,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const Text('数据备份',
                           style: TextStyle(
                               fontSize: 13,
-                              color: Color(0xFF9AA8BF),
+                              color: Color(0xFF8FA09A),
                               fontWeight: FontWeight.w600)),
                       const SizedBox(width: 6),
                       // 教程入口：标题旁的蓝色圈叹号，点击弹出换机/导入说明
@@ -305,20 +305,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         child: Row(
                           children: [
                             const Icon(Icons.inventory_outlined,
-                                size: 16, color: Color(0xFF9AA8BF)),
+                                size: 16, color: Color(0xFF8FA09A)),
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
                                   '当前数据：$_diaryCount 条笔记 · $_itemCount 件物资 · $_assetCount 笔资产 · $_countdownCount 个事件',
                                   style: const TextStyle(
-                                      fontSize: 12, color: Color(0xFF9AA8BF))),
+                                      fontSize: 12, color: Color(0xFF8FA09A))),
                             ),
                           ],
                         ),
                       ),
                       _buildItem(
                         icon: Icons.ios_share,
-                        iconColor: const Color(0xFF3B6FE0),
+                        iconColor: const Color(0xFF3E8E6D),
                         title: '导出数据',
                         subtitle: '生成 .json 备份文件，可分享到微信、网盘、电脑或本地文件夹',
                         busy: _exporting,
@@ -327,7 +327,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const Divider(height: 1, indent: 52),
                       _buildItem(
                         icon: Icons.download,
-                        iconColor: const Color(0xFF34A853),
+                        iconColor: const Color(0xFF3E8E6D),
                         title: '导入数据',
                         subtitle: '可选「增添合并」或「完全覆盖」，会自动校验文件',
                         busy: _importing,
@@ -344,7 +344,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const Text('笔记字体',
                           style: TextStyle(
                               fontSize: 13,
-                              color: Color(0xFF9AA8BF),
+                              color: Color(0xFF8FA09A),
                               fontWeight: FontWeight.w600)),
                       const SizedBox(width: 6),
                       _buildInfoDot(
@@ -361,7 +361,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   child: _buildItem(
                     icon: Icons.font_download_outlined,
-                    iconColor: const Color(0xFF3B6FE0),
+                    iconColor: const Color(0xFF3E8E6D),
                     title: '笔记字体',
                     subtitle:
                         '当前：${FontCatalog.nameOf(AppSettings.fontFamilyId.isEmpty ? null : AppSettings.fontFamilyId) ?? '默认字体'}',
@@ -397,7 +397,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: Text('反馈',
                       style: TextStyle(
                           fontSize: 13,
-                          color: Color(0xFF9AA8BF),
+                          color: Color(0xFF8FA09A),
                           fontWeight: FontWeight.w600)),
                 ),
                 Container(
@@ -427,7 +427,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 AppVersion.displayVersion,
                 style: TextStyle(
                   fontSize: 11.5,
-                  color: Color(0xFFB4BECD),
+                  color: Color(0xFFB2C2BA),
                   letterSpacing: 0.4,
                 ),
               ),
@@ -448,7 +448,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         height: 16,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(color: const Color(0xFF3B6FE0), width: 1.2),
+          border: Border.all(color: const Color(0xFF3E8E6D), width: 1.2),
         ),
         alignment: Alignment.center,
         child: const Text(
@@ -457,7 +457,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             fontSize: 10,
             height: 1,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF3B6FE0),
+            color: Color(0xFF3E8E6D),
           ),
         ),
       ),
@@ -631,11 +631,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF2A3B52))),
+                          color: Color(0xFF24382F))),
                   const SizedBox(height: 2),
                   Text(subtitle,
                       style: const TextStyle(
-                          fontSize: 12, color: Color(0xFF9AA8BF))),
+                          fontSize: 12, color: Color(0xFF8FA09A))),
                 ],
               ),
             ),
@@ -646,7 +646,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
             else
-              const Icon(Icons.chevron_right, color: Color(0xFFC4CEDD)),
+              const Icon(Icons.chevron_right, color: Color(0xFFC6D6CD)),
           ],
         ),
       ),

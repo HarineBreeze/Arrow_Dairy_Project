@@ -59,19 +59,19 @@ class TodoCard extends StatelessWidget {
           Row(
             children: [
               const Icon(Icons.checklist_rounded,
-                  size: 16, color: Color(0xFF3B6FE0)),
+                  size: 16, color: Color(0xFF3E8E6D)),
               const SizedBox(width: 6),
               const Text('待办清单',
                   style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF2A3B52))),
+                      color: Color(0xFF24382F))),
               const Spacer(),
               Text('$done / $total',
                   style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF3B6FE0))),
+                      color: Color(0xFF3E8E6D))),
             ],
           ),
           const SizedBox(height: 8),
@@ -80,9 +80,9 @@ class TodoCard extends StatelessWidget {
             child: LinearProgressIndicator(
               value: total == 0 ? 0 : done / total,
               minHeight: 3,
-              backgroundColor: const Color(0xFFEDF1F8),
+              backgroundColor: const Color(0xFFECF2EE),
               valueColor:
-                  const AlwaysStoppedAnimation(Color(0xFF3B6FE0)),
+                  const AlwaysStoppedAnimation(Color(0xFF3E8E6D)),
             ),
           ),
           const SizedBox(height: 6),
@@ -140,13 +140,13 @@ class _TodoRow extends StatelessWidget {
                   height: 19,
                   decoration: BoxDecoration(
                     color: todo.done
-                        ? const Color(0xFF3B6FE0)
+                        ? const Color(0xFF3E8E6D)
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(6),
                     border: Border.all(
                       color: todo.done
-                          ? const Color(0xFF3B6FE0)
-                          : const Color(0xFFC6D0E0),
+                          ? const Color(0xFF3E8E6D)
+                          : const Color(0xFFC2D4C9),
                       width: 1.6,
                     ),
                   ),
@@ -183,14 +183,14 @@ class _TodoRow extends StatelessWidget {
         text: s.text,
         style: isLink
             ? base.copyWith(
-                color: const Color(0xFF3B6FE0),
+                color: const Color(0xFF3E8E6D),
                 decoration:
                     todo.done ? TextDecoration.lineThrough : null,
               )
             : base.copyWith(
                 decoration:
                     todo.done ? TextDecoration.lineThrough : null,
-                color: todo.done ? const Color(0xFF9AA8BF) : null,
+                color: todo.done ? const Color(0xFF8FA09A) : null,
               ),
       ));
     }

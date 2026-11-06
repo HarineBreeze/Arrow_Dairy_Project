@@ -153,7 +153,7 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
       padding: EdgeInsets.only(bottom: bottom),
       child: Container(
         decoration: const BoxDecoration(
-          color: Color(0xFFF7F9FD),
+          color: Color(0xFFF5FAF7),
           borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
         ),
         child: SafeArea(
@@ -179,16 +179,16 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
                         style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF2A3B52))),
+                            color: Color(0xFF24382F))),
                     const SizedBox(width: 6),
                     const Text('参数',
                         style: TextStyle(
-                            fontSize: 12, color: Color(0xFF9AA8BF))),
+                            fontSize: 12, color: Color(0xFF8FA09A))),
                     const Spacer(),
                     IconButton(
                       onPressed: () => Navigator.pop(context, false),
                       icon: const AppIcon(AppIcons.close,
-                          size: 20, color: Color(0xFF9AA8BF)),
+                          size: 20, color: Color(0xFF8FA09A)),
                     ),
                   ],
                 ),
@@ -247,7 +247,7 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
                     child: ElevatedButton(
                       onPressed: _save,
                       style: ElevatedButton.styleFrom(
-                        primary: const Color(0xFF3B6FE0),
+                        primary: const Color(0xFF3E8E6D),
                         onPrimary: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
@@ -281,7 +281,7 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
     Color color;
     if (totalText.isEmpty) {
       body = '填写总资产后即可算出「可使用 x 天」';
-      color = const Color(0xFF9AA8BF);
+      color = const Color(0xFF8FA09A);
     } else if (d == null) {
       body = _parse(_cost) <= 0
           ? '每月预算需大于 0 才能计算'
@@ -297,7 +297,7 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
       color = const Color(0xFFE0576A);
     } else {
       body = '';
-      color = const Color(0xFF2A9D5C);
+      color = const Color(0xFF3E8E6D);
     }
     // 到这里 d 一定非空（前面 d == null 已单独分支），用局部变量固化提升
     final double dd = d ?? 0;
@@ -320,7 +320,7 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
               children: [
                 const Text('可使用 ',
                     style:
-                        TextStyle(fontSize: 13, color: Color(0xFF8A99B3))),
+                        TextStyle(fontSize: 13, color: Color(0xFF7C8F86))),
                 Text(UsableDays.format(dd),
                     style: TextStyle(
                         fontSize: 22,
@@ -330,7 +330,7 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
                   const SizedBox(width: 6),
                   Text('（${UsableDays.formatYears(dd)}）',
                       style: const TextStyle(
-                          fontSize: 12, color: Color(0xFF9AA8BF))),
+                          fontSize: 12, color: Color(0xFF8FA09A))),
                 ],
               ],
             ),
@@ -355,7 +355,7 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
             width: 84,
             child: Text(label,
                 style: const TextStyle(
-                    fontSize: 14, color: Color(0xFF2A3B52))),
+                    fontSize: 14, color: Color(0xFF24382F))),
           ),
           Expanded(
             child: Container(
@@ -381,20 +381,20 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
                         ),
                       ],
                       style: const TextStyle(
-                          fontSize: 14, color: Color(0xFF2A3B52)),
+                          fontSize: 14, color: Color(0xFF24382F)),
                       decoration: InputDecoration(
                         isDense: true,
                         border: InputBorder.none,
                         hintText: hint,
                         hintStyle: const TextStyle(
-                            fontSize: 13, color: Color(0xFFC4CEDD)),
+                            fontSize: 13, color: Color(0xFFC6D6CD)),
                       ),
                     ),
                   ),
                   if (suffix != null)
                     Text(suffix,
                         style: const TextStyle(
-                            fontSize: 13, color: Color(0xFF9AA8BF))),
+                            fontSize: 13, color: Color(0xFF8FA09A))),
                 ],
               ),
             ),

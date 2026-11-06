@@ -349,7 +349,7 @@ class OverviewStackState extends State<OverviewStack>
               width: double.infinity,
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDCE5F5),
+                  color: const Color(0xFFDFEAE5),
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
@@ -511,8 +511,8 @@ class AssetSlice {
 
 /// 一组饼图配色（循环使用）。
 const List<Color> kSlicePalette = [
-  Color(0xFF3B6FE0),
-  Color(0xFF2A9D5C),
+  Color(0xFF3E8E6D),
+  Color(0xFF3E8E6D),
   Color(0xFFF0A020),
   Color(0xFF9B6BE0),
   Color(0xFF20B2C4),
@@ -616,16 +616,16 @@ class _AssetPieCardState extends State<AssetPieCard>
         children: [
           Row(
             children: const [
-              Icon(Icons.pie_chart_outline, size: 16, color: Color(0xFF3B6FE0)),
+              Icon(Icons.pie_chart_outline, size: 16, color: Color(0xFF3E8E6D)),
               SizedBox(width: 6),
               Text('资产细分',
                   style: TextStyle(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF2A3B52))),
+                      color: Color(0xFF24382F))),
               Spacer(),
               Text('仅统计金额为正',
-                  style: TextStyle(fontSize: 10.5, color: Color(0xFF9AA8BF))),
+                  style: TextStyle(fontSize: 10.5, color: Color(0xFF8FA09A))),
             ],
           ),
           const SizedBox(height: 10),
@@ -634,7 +634,7 @@ class _AssetPieCardState extends State<AssetPieCard>
               padding: EdgeInsets.symmetric(vertical: 26),
               child: Center(
                 child: Text('还没有金额为正的资产',
-                    style: TextStyle(fontSize: 13, color: Color(0xFF9AA8BF))),
+                    style: TextStyle(fontSize: 13, color: Color(0xFF8FA09A))),
               ),
             )
           else
@@ -659,14 +659,14 @@ class _AssetPieCardState extends State<AssetPieCard>
                             children: [
                               const Text('正资产',
                                   style: TextStyle(
-                                      fontSize: 9.5, color: Color(0xFF9AA8BF))),
+                                      fontSize: 9.5, color: Color(0xFF8FA09A))),
                               const SizedBox(height: 1),
                               Text(
                                 widget.hideNumbers ? '****' : _short(total),
                                 style: const TextStyle(
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.w700,
-                                    color: Color(0xFF2A3B52)),
+                                    color: Color(0xFF24382F)),
                               ),
                             ],
                           ),
@@ -721,7 +721,7 @@ class _AssetPieCardState extends State<AssetPieCard>
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style:
-                      const TextStyle(fontSize: 12, color: Color(0xFF2A3B52)),
+                      const TextStyle(fontSize: 12, color: Color(0xFF24382F)),
                 ),
               ),
               Text(
@@ -729,7 +729,7 @@ class _AssetPieCardState extends State<AssetPieCard>
                 style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF3B6FE0)),
+                    color: Color(0xFF3E8E6D)),
               ),
               const SizedBox(width: 6),
               SizedBox(
@@ -740,7 +740,7 @@ class _AssetPieCardState extends State<AssetPieCard>
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style:
-                      const TextStyle(fontSize: 11, color: Color(0xFF9AA8BF)),
+                      const TextStyle(fontSize: 11, color: Color(0xFF8FA09A)),
                 ),
               ),
             ],

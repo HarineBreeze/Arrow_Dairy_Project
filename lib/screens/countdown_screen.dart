@@ -196,7 +196,7 @@ class CountdownScreenState extends State<CountdownScreen> {
             ListTile(
               leading: Icon(
                 e.pinned ? Icons.push_pin : Icons.push_pin_outlined,
-                color: const Color(0xFF3B6FE0),
+                color: const Color(0xFF3E8E6D),
               ),
               title: Text(e.pinned ? '取消置顶' : '置顶'),
               onTap: () async {
@@ -208,7 +208,7 @@ class CountdownScreenState extends State<CountdownScreen> {
             ),
             ListTile(
               leading:
-                  const Icon(Icons.edit_outlined, color: Color(0xFF3B6FE0)),
+                  const Icon(Icons.edit_outlined, color: Color(0xFF3E8E6D)),
               title: const Text('编辑'),
               onTap: () {
                 Navigator.pop(ctx);
@@ -292,13 +292,13 @@ class CountdownScreenState extends State<CountdownScreen> {
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
                     color:
-                        on ? const Color(0xFF3B6FE0) : const Color(0xFFF5F7FB),
+                        on ? const Color(0xFF3E8E6D) : const Color(0xFFF5FAF7),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(label,
                       style: TextStyle(
                           fontSize: 13,
-                          color: on ? Colors.white : const Color(0xFF2A3B52),
+                          color: on ? Colors.white : const Color(0xFF24382F),
                           fontWeight:
                               on ? FontWeight.w600 : FontWeight.normal)),
                 ),
@@ -317,7 +317,7 @@ class CountdownScreenState extends State<CountdownScreen> {
                       style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF2A3B52))),
+                          color: Color(0xFF24382F))),
                   const SizedBox(height: 14),
                   Wrap(children: [
                     option('全部', null),
@@ -406,7 +406,7 @@ class CountdownScreenState extends State<CountdownScreen> {
           child: _loading
               ? const ListSkeleton()
               : RefreshIndicator(
-                  color: const Color(0xFF3B6FE0),
+                  color: const Color(0xFF3E8E6D),
                   onRefresh: _refresh,
                   child: _filtered.isEmpty
                       ? ListView(
@@ -478,7 +478,7 @@ class CountdownScreenState extends State<CountdownScreen> {
                 color: title == '置顶'
                     ? const Color(0xFFF2A0C0)
                     : (title == '资产日'
-                        ? const Color(0xFF9BC2F0)
+                        ? const Color(0xFF8FCFB4)
                         : const Color(0xFFA9D8B8)),
                 borderRadius: BorderRadius.circular(2),
               ),
@@ -488,13 +488,13 @@ class CountdownScreenState extends State<CountdownScreen> {
                 style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF2A3B52))),
+                    color: Color(0xFF24382F))),
             const SizedBox(width: 6),
             Text('$count',
-                style: const TextStyle(fontSize: 12, color: Color(0xFF9AA8BF))),
+                style: const TextStyle(fontSize: 12, color: Color(0xFF8FA09A))),
             const Spacer(),
             Icon(expanded ? Icons.expand_less : Icons.expand_more,
-                size: 20, color: const Color(0xFF9AA8BF)),
+                size: 20, color: const Color(0xFF8FA09A)),
           ],
         ),
       ),
@@ -506,7 +506,7 @@ class CountdownScreenState extends State<CountdownScreen> {
     final grey = e.expired;
     final loopRed = e.loopHighlight;
     Color bg = Colors.white;
-    if (grey) bg = const Color(0xFFF0F1F3);
+    if (grey) bg = const Color(0xFFEFF2F0);
 
     return Pressable(
       child:   GestureDetector(
@@ -536,7 +536,7 @@ class CountdownScreenState extends State<CountdownScreen> {
                         : e.icon,
                     style: TextStyle(
                         fontSize: 24,
-                        color: grey ? const Color(0xFF9AA8BF) : null)),
+                        color: grey ? const Color(0xFF8FA09A) : null)),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -550,8 +550,8 @@ class CountdownScreenState extends State<CountdownScreen> {
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
                             color: grey
-                                ? const Color(0xFF9AA8BF)
-                                : const Color(0xFF2A3B52))),
+                                ? const Color(0xFF8FA09A)
+                                : const Color(0xFF24382F))),
                     // 重复规则不在卡片上外显：仅作为内部行为（
                     // 提醒与倒计时推进），避免卡片信息过载
                     // 卡片上不展示事件类型，该位置显示事件备注；无备注则留空
@@ -563,8 +563,8 @@ class CountdownScreenState extends State<CountdownScreen> {
                           style: TextStyle(
                               fontSize: 12,
                               color: grey
-                                  ? const Color(0xFFB4BCC8)
-                                  : const Color(0xFF5A6B82))),
+                                  ? const Color(0xFFB2C2BA)
+                                  : const Color(0xFF647A70))),
                     ],
                   ],
                 ),
@@ -582,10 +582,10 @@ class CountdownScreenState extends State<CountdownScreen> {
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
                         color: grey
-                            ? const Color(0xFFB4BCC8)
+                            ? const Color(0xFFB2C2BA)
                             : (e.daysLeft == 0
                                 ? const Color(0xFFE0576A)
-                                : const Color(0xFF3B6FE0)),
+                                : const Color(0xFF3E8E6D)),
                       ),
                     ),
                   // 副标题：资产日「已拥有 x 天」/ 纪念日「已过去 x 天」
@@ -595,8 +595,8 @@ class CountdownScreenState extends State<CountdownScreen> {
                         style: TextStyle(
                             fontSize: 11,
                             color: grey
-                                ? const Color(0xFFB4BCC8)
-                                : const Color(0xFF9AA8BF))),
+                                ? const Color(0xFFB2C2BA)
+                                : const Color(0xFF8FA09A))),
                   ],
                   if (e.displayText.isEmpty && e.subtitle != null)
                     Text(e.subtitle!,
@@ -604,8 +604,8 @@ class CountdownScreenState extends State<CountdownScreen> {
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
                           color: grey
-                              ? const Color(0xFFB4BCC8)
-                              : const Color(0xFF3B6FE0),
+                              ? const Color(0xFFB2C2BA)
+                              : const Color(0xFF3E8E6D),
                         )),
                 ],
               ),
@@ -644,13 +644,13 @@ class CountdownScreenState extends State<CountdownScreen> {
             child: TextField(
               controller: _searchCtrl,
               autofocus: false, // 不默认吊起键盘，由用户点输入框后再弹
-              style: const TextStyle(fontSize: 15, color: Color(0xFF2A3B52)),
+              style: const TextStyle(fontSize: 15, color: Color(0xFF24382F)),
               textAlignVertical: TextAlignVertical.center,
               decoration: InputDecoration(
                 hintText: '搜索事件名称…',
-                hintStyle: const TextStyle(color: Color(0xFF9AA8BF)),
+                hintStyle: const TextStyle(color: Color(0xFF8FA09A)),
                 prefixIcon: const Icon(Icons.search,
-                    size: 18, color: Color(0xFF9AA8BF)),
+                    size: 18, color: Color(0xFF8FA09A)),
                 prefixIconConstraints:
                     const BoxConstraints(minWidth: 32, minHeight: 32),
                 isDense: true,
@@ -744,7 +744,7 @@ class CountdownScreenState extends State<CountdownScreen> {
               // 上一年
               IconButton(
                 icon: const Icon(Icons.keyboard_double_arrow_left,
-                    size: 18, color: Color(0xFF8A99B3)),
+                    size: 18, color: Color(0xFF7C8F86)),
                 tooltip: '上一年',
                 visualDensity: VisualDensity.compact,
                 padding: EdgeInsets.zero,
@@ -754,7 +754,7 @@ class CountdownScreenState extends State<CountdownScreen> {
               ),
               // 上一月
               IconButton(
-                icon: const Icon(Icons.chevron_left, color: Color(0xFF5A6B82)),
+                icon: const Icon(Icons.chevron_left, color: Color(0xFF647A70)),
                 tooltip: '上一月',
                 visualDensity: VisualDensity.compact,
                 padding: EdgeInsets.zero,
@@ -768,12 +768,12 @@ class CountdownScreenState extends State<CountdownScreen> {
                       style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF2A3B52))),
+                          color: Color(0xFF24382F))),
                 ),
               ),
               // 下一月
               IconButton(
-                icon: const Icon(Icons.chevron_right, color: Color(0xFF5A6B82)),
+                icon: const Icon(Icons.chevron_right, color: Color(0xFF647A70)),
                 tooltip: '下一月',
                 visualDensity: VisualDensity.compact,
                 padding: EdgeInsets.zero,
@@ -784,7 +784,7 @@ class CountdownScreenState extends State<CountdownScreen> {
               // 下一年
               IconButton(
                 icon: const Icon(Icons.keyboard_double_arrow_right,
-                    size: 18, color: Color(0xFF8A99B3)),
+                    size: 18, color: Color(0xFF7C8F86)),
                 tooltip: '下一年',
                 visualDensity: VisualDensity.compact,
                 padding: EdgeInsets.zero,
@@ -810,7 +810,7 @@ class CountdownScreenState extends State<CountdownScreen> {
                   child: const Text('今天',
                       style: TextStyle(
                           fontSize: 13,
-                          color: Color(0xFF3B6FE0),
+                          color: Color(0xFF3E8E6D),
                           fontWeight: FontWeight.w600)),
                 ),
               ),
@@ -822,7 +822,7 @@ class CountdownScreenState extends State<CountdownScreen> {
                       child: Center(
                         child: Text(w,
                             style: TextStyle(
-                                fontSize: 12, color: Color(0xFF9AA8BF))),
+                                fontSize: 12, color: Color(0xFF8FA09A))),
                       ),
                     ))
                 .toList(),
@@ -875,8 +875,8 @@ class CountdownScreenState extends State<CountdownScreen> {
             decoration: BoxDecoration(
               // 有记录的日期：浅蓝底纹；今天：浅蓝圆底
               color: hasEvent
-                  ? const Color(0xFFEAF0FB)
-                  : (isToday ? const Color(0xFFDCE7FF) : Colors.transparent),
+                  ? const Color(0xFFE4F2EB)
+                  : (isToday ? const Color(0xFFE4F2EB) : Colors.transparent),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Column(
@@ -890,8 +890,8 @@ class CountdownScreenState extends State<CountdownScreen> {
                             ? FontWeight.w700
                             : FontWeight.normal,
                         color: isToday
-                            ? const Color(0xFF3B6FE0)
-                            : const Color(0xFF2A3B52))),
+                            ? const Color(0xFF3E8E6D)
+                            : const Color(0xFF24382F))),
                 const SizedBox(height: 1),
                 Text(
                   hasEvent ? icon : '',

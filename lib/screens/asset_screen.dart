@@ -143,17 +143,17 @@ class AssetScreenState extends State<AssetScreen> {
             ListTile(
               leading: Icon(
                   _hasPin ? Icons.lock : Icons.lock_open,
-                  color: const Color(0xFF3B6FE0)),
+                  color: const Color(0xFF3E8E6D)),
               title: const Text('设置加密访问'),
               subtitle: Text(
                   _hasPin
                       ? '已开启：进入资产全景需输入密码'
                       : '未开启：进入资产全景无需密码',
                   style: const TextStyle(
-                      fontSize: 12, color: Color(0xFF9AA8BF))),
+                      fontSize: 12, color: Color(0xFF8FA09A))),
               trailing: Switch(
                 value: _hasPin,
-                activeColor: const Color(0xFF3B6FE0),
+                activeColor: const Color(0xFF3E8E6D),
                 onChanged: (v) {
                   Navigator.pop(ctx);
                   if (v) {
@@ -176,18 +176,18 @@ class AssetScreenState extends State<AssetScreen> {
             ListTile(
               leading: Icon(Icons.password,
                   color: _hasPin
-                      ? const Color(0xFF3B6FE0)
-                      : const Color(0xFFC3CCDA)),
+                      ? const Color(0xFF3E8E6D)
+                      : const Color(0xFFC2D4C9)),
               enabled: _hasPin,
               title: Text('修改资产密码',
                   style: TextStyle(
                       color: _hasPin
-                          ? const Color(0xFF2A3B52)
-                          : const Color(0xFFB4C0D2))),
+                          ? const Color(0xFF24382F)
+                          : const Color(0xFFB2C4BA))),
               subtitle: Text(
                   _hasPin ? '可通过当前密码或密保问题验证' : '开启加密访问后可修改',
                   style: const TextStyle(
-                      fontSize: 12, color: Color(0xFF9AA8BF))),
+                      fontSize: 12, color: Color(0xFF8FA09A))),
               onTap: _hasPin
                   ? () {
                       Navigator.pop(ctx);
@@ -285,7 +285,7 @@ class AssetScreenState extends State<AssetScreen> {
                   Text(title,
                       style: const TextStyle(
                           fontSize: 13,
-                          color: Color(0xFF9AA8BF),
+                          color: Color(0xFF8FA09A),
                           fontWeight: FontWeight.w600)),
                   const SizedBox(height: 10),
                   Wrap(
@@ -302,8 +302,8 @@ class AssetScreenState extends State<AssetScreen> {
                               horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
                             color: sel
-                                ? const Color(0xFF3B6FE0)
-                                : const Color(0xFFF5F7FB),
+                                ? const Color(0xFF3E8E6D)
+                                : const Color(0xFFF5FAF7),
                             borderRadius: BorderRadius.circular(18),
                           ),
                           child: Text(o,
@@ -311,7 +311,7 @@ class AssetScreenState extends State<AssetScreen> {
                                 fontSize: 13,
                                 color: sel
                                     ? Colors.white
-                                    : const Color(0xFF5A6B82),
+                                    : const Color(0xFF647A70),
                               )),
                         ),
                       );
@@ -346,9 +346,9 @@ class AssetScreenState extends State<AssetScreen> {
                               enabled: true,
                               child: OutlinedButton(
                                 style: OutlinedButton.styleFrom(
-                                  primary: const Color(0xFF5A6B82),
+                                  primary: const Color(0xFF647A70),
                                   side: const BorderSide(
-                                      color: Color(0xFFD6DCE8)),
+                                      color: Color(0xFFD5E2DB)),
                                   shape: RoundedRectangleBorder(
                                       borderRadius:
                                           BorderRadius.circular(12)),
@@ -373,7 +373,7 @@ class AssetScreenState extends State<AssetScreen> {
                               enabled: true,
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
-                                  primary: const Color(0xFF3B6FE0),
+                                  primary: const Color(0xFF3E8E6D),
                                   onPrimary: Colors.white,
                                   shape: RoundedRectangleBorder(
                                       borderRadius:
@@ -586,7 +586,7 @@ class AssetScreenState extends State<AssetScreen> {
           children: [
             const SizedBox(height: 10),
             ListTile(
-              leading: const Icon(Icons.edit_outlined, color: Color(0xFF3B6FE0)),
+              leading: const Icon(Icons.edit_outlined, color: Color(0xFF3E8E6D)),
               title: const Text('编辑'),
               onTap: () {
                 Navigator.pop(ctx);
@@ -679,7 +679,7 @@ class AssetScreenState extends State<AssetScreen> {
               : _loading
                   ? const ListSkeleton()
                   : RefreshIndicator(
-                      color: const Color(0xFF3B6FE0),
+                      color: const Color(0xFF3E8E6D),
                       onRefresh: _load,
                       child: _filtered.isEmpty
                           ? ListView(
@@ -765,16 +765,16 @@ class AssetScreenState extends State<AssetScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.lock_outline, size: 44, color: Color(0xFFC3CCDA)),
+          const Icon(Icons.lock_outline, size: 44, color: Color(0xFFC2D4C9)),
           const SizedBox(height: 12),
           const Text('资产全景已加密',
               style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF2A3B52))),
+                  color: Color(0xFF24382F))),
           const SizedBox(height: 6),
           const Text('输入密码后查看',
-              style: TextStyle(fontSize: 13, color: Color(0xFF9AA8BF))),
+              style: TextStyle(fontSize: 13, color: Color(0xFF8FA09A))),
           const SizedBox(height: 16),
           Pressable(
             enabled: true,
@@ -822,7 +822,7 @@ class AssetScreenState extends State<AssetScreen> {
       padding: const EdgeInsets.fromLTRB(18, 24, 18, 18),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF3B6FE0), Color(0xFF5B8AF0)],
+          colors: [Color(0xFF3E8E6D), Color(0xFF5CA985)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -1104,7 +1104,7 @@ class AssetScreenState extends State<AssetScreen> {
                   if (pos > 0)
                     Expanded(
                       flex: (pos / total * 1000).round().clamp(1, 999),
-                      child: const ColoredBox(color: Color(0xFF2A9D5C)),
+                      child: const ColoredBox(color: Color(0xFF3E8E6D)),
                     ),
                   if (neg > 0)
                     Expanded(
@@ -1162,7 +1162,7 @@ class AssetScreenState extends State<AssetScreen> {
     // 左侧色条代表资产性质：负资产红 / 理财蓝 / 其它绿
     final barColor = negative
         ? const Color(0xFFE0576A)
-        : (invest ? const Color(0xFF3B6FE0) : const Color(0xFF2A9D5C));
+        : (invest ? const Color(0xFF3E8E6D) : const Color(0xFF3E8E6D));
     return GestureDetector(
       onTap: () => _openEditor(a),
       child: Pressable(
@@ -1228,7 +1228,7 @@ class AssetScreenState extends State<AssetScreen> {
               height: 46,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: const Color(0xFFF0F4FB),
+                color: const Color(0xFFEFF5F1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(a.icon, style: const TextStyle(fontSize: 24)),
@@ -1245,14 +1245,14 @@ class AssetScreenState extends State<AssetScreen> {
                       style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF2A3B52))),
+                          color: Color(0xFF24382F))),
                   if (a.note.isNotEmpty) ...[
                     const SizedBox(height: 2),
                     Text(a.type,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                            fontSize: 12, color: Color(0xFF9AA8BF))),
+                            fontSize: 12, color: Color(0xFF8FA09A))),
                   ],
                 ],
               ),
@@ -1269,7 +1269,7 @@ class AssetScreenState extends State<AssetScreen> {
                     fontWeight: FontWeight.w700,
                     color: negative
                         ? const Color(0xFFE06A6A)
-                        : const Color(0xFF2A3B52),
+                        : const Color(0xFF24382F),
                   ),
                 ),
               ],
@@ -1523,7 +1523,7 @@ class _PinSetupDialogState extends State<_PinSetupDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text('开启后，进入资产全景需输入密码；密码仅保存在本机',
-                  style: TextStyle(fontSize: 13, color: Color(0xFF9AA8BF))),
+                  style: TextStyle(fontSize: 13, color: Color(0xFF8FA09A))),
               const SizedBox(height: 14),
               TextField(
                 controller: _p1,
@@ -1556,7 +1556,7 @@ class _PinSetupDialogState extends State<_PinSetupDialog> {
               ),
               const SizedBox(height: 14),
               const Text('密保（忘记密码时用于重置）',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF9AA8BF))),
+                  style: TextStyle(fontSize: 12, color: Color(0xFF8FA09A))),
               const SizedBox(height: 8),
               TextField(
                 controller: _qCtrl,
@@ -1603,7 +1603,7 @@ class _PinSetupDialogState extends State<_PinSetupDialog> {
             child: TextButton(
               onPressed: _saving ? null : () => Navigator.pop(context, false),
               child: const Text('取消',
-                  style: TextStyle(color: Color(0xFF8A9AB0))),
+                  style: TextStyle(color: Color(0xFF7C8F86))),
             ),
           ),
           Pressable(
@@ -1613,8 +1613,8 @@ class _PinSetupDialogState extends State<_PinSetupDialog> {
               child: Text('确认',
                   style: TextStyle(
                       color: _valid
-                          ? const Color(0xFF3B6FE0)
-                          : const Color(0xFF9AA8BF))),
+                          ? const Color(0xFF3E8E6D)
+                          : const Color(0xFF8FA09A))),
             ),
           ),
         ],
@@ -1852,7 +1852,7 @@ class _PinUnlockDialogState extends State<_PinUnlockDialog> {
             child: TextButton(
               onPressed: () => Navigator.pop(context, false),
               child: const Text('取消',
-                  style: TextStyle(color: Color(0xFF8A9AB0))),
+                  style: TextStyle(color: Color(0xFF7C8F86))),
             ),
           ),
           Pressable(
@@ -1860,7 +1860,7 @@ class _PinUnlockDialogState extends State<_PinUnlockDialog> {
             child: TextButton(
               onPressed: _forgot ? _resetByAnswer : _submit,
               child: Text('确认',
-                  style: const TextStyle(color: Color(0xFF3B6FE0))),
+                  style: const TextStyle(color: Color(0xFF3E8E6D))),
             ),
           ),
         ],
@@ -1930,14 +1930,14 @@ class _DisablePinDialogState extends State<_DisablePinDialog> {
           height: 34,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: sel ? const Color(0xFF3B6FE0) : const Color(0xFFF3F6FB),
+            color: sel ? const Color(0xFF3E8E6D) : const Color(0xFFF5FAF7),
             borderRadius: BorderRadius.circular(17),
           ),
           child: Text(label,
               style: TextStyle(
                   fontSize: 13,
                   fontWeight: sel ? FontWeight.w600 : FontWeight.w400,
-                  color: sel ? Colors.white : const Color(0xFF5A6B82))),
+                  color: sel ? Colors.white : const Color(0xFF647A70))),
         ),
       ),
     );
@@ -1956,7 +1956,7 @@ class _DisablePinDialogState extends State<_DisablePinDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text('验证身份后，资产全景将不再需要密码即可进入',
-                  style: TextStyle(fontSize: 13, color: Color(0xFF9AA8BF))),
+                  style: TextStyle(fontSize: 13, color: Color(0xFF8FA09A))),
               const SizedBox(height: 14),
               Row(
                 children: [
@@ -2025,7 +2025,7 @@ class _DisablePinDialogState extends State<_DisablePinDialog> {
             child: TextButton(
               onPressed: _busy ? null : () => Navigator.pop(context, false),
               child: const Text('取消',
-                  style: TextStyle(color: Color(0xFF8A9AB0))),
+                  style: TextStyle(color: Color(0xFF7C8F86))),
             ),
           ),
           Pressable(
@@ -2159,14 +2159,14 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
           height: 34,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: sel ? const Color(0xFF3B6FE0) : const Color(0xFFF3F6FB),
+            color: sel ? const Color(0xFF3E8E6D) : const Color(0xFFF5FAF7),
             borderRadius: BorderRadius.circular(17),
           ),
           child: Text(label,
               style: TextStyle(
                   fontSize: 13,
                   fontWeight: sel ? FontWeight.w600 : FontWeight.w400,
-                  color: sel ? Colors.white : const Color(0xFF5A6B82))),
+                  color: sel ? Colors.white : const Color(0xFF647A70))),
         ),
       ),
     );
@@ -2213,7 +2213,7 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
                     const SizedBox(height: 14),
                     const Text('如需同时修改密保，可填写下面两项（选填）',
                         style:
-                            TextStyle(fontSize: 12, color: Color(0xFF9AA8BF))),
+                            TextStyle(fontSize: 12, color: Color(0xFF8FA09A))),
                     const SizedBox(height: 8),
                     FutureBuilder<String>(
                       future: _question,
@@ -2293,7 +2293,7 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
             child: TextButton(
               onPressed: _saving ? null : () => Navigator.pop(context, false),
               child: const Text('取消',
-                  style: TextStyle(color: Color(0xFF8A9AB0))),
+                  style: TextStyle(color: Color(0xFF7C8F86))),
             ),
           ),
           Pressable(
@@ -2301,7 +2301,7 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
             child: TextButton(
               onPressed: _saving ? null : (_verified ? _save : _verify),
               child: Text(_verified ? '保存' : '下一步',
-                  style: const TextStyle(color: Color(0xFF3B6FE0))),
+                  style: const TextStyle(color: Color(0xFF3E8E6D))),
             ),
           ),
         ],
