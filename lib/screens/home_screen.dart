@@ -198,7 +198,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             ListTile(
               leading: Icon(
                 entry.pinned ? Icons.push_pin_outlined : Icons.push_pin,
-                color: const Color(0xFFE58BA0),
+                // 与下方「编辑」按钮同款绿色，不再用红色
+                color: const Color(0xFF3E8E6D),
               ),
               title: Text(entry.pinned ? '取消置顶' : '置顶',
                   style: const TextStyle(fontSize: 15)),
@@ -1187,9 +1188,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       children: [
         Padding(
           padding: const EdgeInsets.only(top: 12, left: 2, bottom: 7),
-          child: Text(
-            '📌 置顶 ${pinned.length} 篇',
-            style: const TextStyle(fontSize: 11.5, color: Color(0xFFC4697C)),
+          // 用与长按菜单一致的置顶图标，不再用 📌 emoji：
+          // emoji 在不同系统里字形差异大，且颜色不受主题控制
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.push_pin, size: 12, color: Color(0xFF3E8E6D)),
+              const SizedBox(width: 3),
+              Text(
+                '置顶 ${pinned.length} 篇',
+                style: const TextStyle(
+                    fontSize: 11.5, color: Color(0xFF3E8E6D)),
+              ),
+            ],
           ),
         ),
         // 页面横向手势优先：横滑卡带期间不让主页把菜单拖出来；
@@ -1361,6 +1372,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               IconButton(
                 icon: const Icon(Icons.menu, color: Colors.white),
                 onPressed: _openMenu,
+              ),
+              // 三条杠旁标出当前页名，与资产/事件页保持同一套「图标 + 页名」语言
+              const Text(
+                '日记',
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white),
               ),
               const Spacer(),
               IconButton(
@@ -1727,7 +1746,8 @@ class _PinnedMiniCard extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(11),
-              border: Border.all(color: const Color(0xFFE0576A), width: 1.3),
+              // 卡带里的卡本身就是置顶的，统一用主色描边
+              border: Border.all(color: const Color(0xFF3E8E6D), width: 1.3),
             ),
             // 加密笔记：卡面铺斜纹纹理（与未置顶封条卡同一语言）
             // 注意：底色必须透明，否则会盖住下面的 painter
@@ -1915,9 +1935,9 @@ class _DiaryCard extends StatelessWidget {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
-          // 置顶笔记：红色描边（收纳栏不变）
+          // 置顶笔记：主色描边（不再用红色，避免和「涨/警示红」混淆）
           side: isPinned
-              ? const BorderSide(color: Color(0xFFE0576A), width: 1.5)
+              ? const BorderSide(color: Color(0xFF3E8E6D), width: 1.5)
               : BorderSide.none,
         ),
         color: Colors.white,

@@ -408,7 +408,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   child: _buildItem(
                     icon: Icons.vibration,
-                    iconColor: const Color(0xFFF08C3A),
+                    // 与导出/导入等其它功能项同款主色（图标 + 0.1 透明度底纹）
+                    iconColor: const Color(0xFF3E8E6D),
                     title: '振动测试',
                     subtitle: '点击触发一次震动，并检测设备振动状态',
                     busy: false,

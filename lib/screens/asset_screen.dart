@@ -653,7 +653,7 @@ class AssetScreenState extends State<AssetScreen> {
                 onPressed: widget.onOpenMenu,
               ),
               const Expanded(
-                child: Text('资产全景',
+                child: Text('资产',
                     style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w600,
@@ -1162,7 +1162,7 @@ class AssetScreenState extends State<AssetScreen> {
     // 左侧色条代表资产性质：负资产红 / 理财蓝 / 其它绿
     final barColor = negative
         ? const Color(0xFFE0576A)
-        : (invest ? const Color(0xFF3E8E6D) : const Color(0xFF3E8E6D));
+        : (invest ? const Color(0xFF3E7BD6) : const Color(0xFF3E8E6D));
     return GestureDetector(
       onTap: () => _openEditor(a),
       child: Pressable(

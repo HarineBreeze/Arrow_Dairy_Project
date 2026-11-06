@@ -518,10 +518,12 @@ class CountdownScreenState extends State<CountdownScreen> {
           decoration: BoxDecoration(
             color: bg,
             borderRadius: BorderRadius.circular(14),
-            // 置顶 / 到期循环标记：红色描边（与其它主页置顶描边统一）
-            border: (loopRed || e.pinned)
-                ? Border.all(color: const Color(0xFFE0576A), width: 1.5)
-                : null,
+            // 置顶：主色描边；到期循环：保留红色警示。两者并存时以置顶为准
+            border: e.pinned
+                ? Border.all(color: const Color(0xFF3E8E6D), width: 1.5)
+                : (loopRed
+                    ? Border.all(color: const Color(0xFFE0576A), width: 1.5)
+                    : null),
           ),
           child: Row(
             children: [
@@ -693,6 +695,14 @@ class CountdownScreenState extends State<CountdownScreen> {
               IconButton(
                 icon: const Icon(Icons.menu, color: Colors.white),
                 onPressed: widget.onOpenMenu,
+              ),
+              // 三条杠旁标出页名，与日记/资产页同一套语言
+              const Text(
+                '事件',
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white),
               ),
               const Spacer(),
               IconButton(

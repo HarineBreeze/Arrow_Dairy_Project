@@ -509,15 +509,23 @@ class AssetSlice {
   });
 }
 
-/// 一组饼图配色（循环使用）。
+/// 理财类资产（基金/黄金/股票）的饼图配色：统一走蓝色系。
+///
+/// 产品语义：蓝色 = 理财部分。三个类型用同色相不同深浅区分，
+/// 既能让「理财占比」一眼成组，也不至于在饼图里糊成一块。
+const Map<String, Color> kInvestSliceColors = {
+  '基金': Color(0xFF3E7BD6),
+  '黄金': Color(0xFF5C93DE),
+  '股票': Color(0xFF2A5FA8),
+};
+
+/// 非理财类（储蓄/货币基金等）按出现顺序循环取色。
 const List<Color> kSlicePalette = [
   Color(0xFF3E8E6D),
-  Color(0xFF3E8E6D),
+  Color(0xFF5CA985),
   Color(0xFFF0A020),
-  Color(0xFF9B6BE0),
   Color(0xFF20B2C4),
-  Color(0xFFE0576A),
-  Color(0xFF6C7CE0),
+  Color(0xFF9B6BE0),
   Color(0xFFB0A84A),
 ];
 
@@ -537,15 +545,19 @@ List<AssetSlice> buildSlices(List<Asset> assets) {
   final entries = byType.entries.toList()
     ..sort((a, b) => b.value.compareTo(a.value));
 
-  return [
-    for (var i = 0; i < entries.length; i++)
-      AssetSlice(
-        type: entries[i].key,
-        amount: entries[i].value,
-        ratio: entries[i].value / total,
-        color: kSlicePalette[i % kSlicePalette.length],
-      ),
-  ];
+  final slices = <AssetSlice>[];
+  var paletteIndex = 0;
+  for (final e in entries) {
+    // 理财类固定蓝色系；其余按序取调色板，避免理财类型占掉绿色位
+    final fixed = kInvestSliceColors[e.key];
+    slices.add(AssetSlice(
+      type: e.key,
+      amount: e.value,
+      ratio: e.value / total,
+      color: fixed ?? kSlicePalette[paletteIndex++ % kSlicePalette.length],
+    ));
+  }
+  return slices;
 }
 
 /// 资产细分的金额饼图卡片（看板堆叠的第二张）。
