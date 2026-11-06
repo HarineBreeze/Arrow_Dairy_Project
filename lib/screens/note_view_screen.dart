@@ -173,7 +173,7 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
     final String? fontFamily = AppSettings.fontFamily;
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xCC3B6FE0),
+        backgroundColor: const Color(0xCC3E8E6D),
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [

@@ -167,7 +167,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
   Widget _buildSearchBar() {
     return Container(
       height: 56,
-      color: const Color(0xB33B6FE0),
+      color: const Color(0xB33E8E6D),
       padding: const EdgeInsets.fromLTRB(4, 6, 12, 6),
       child: Row(
         children: [
@@ -312,11 +312,11 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
-                    color: selected ? const Color(0xB33B6FE0) : Colors.white,
+                    color: selected ? const Color(0xB33E8E6D) : Colors.white,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                         color: selected
-                            ? const Color(0xB33B6FE0)
+                            ? const Color(0xB33E8E6D)
                             : const Color(0xFFE8EDF5)),
                   ),
                   child: Row(

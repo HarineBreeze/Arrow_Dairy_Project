@@ -148,7 +148,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
       child: Scaffold(
       backgroundColor: const Color(0xFFF5FAF7),
       appBar: AppBar(
-        backgroundColor: const Color(0xCC3B6FE0),
+        backgroundColor: const Color(0xCC3E8E6D),
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,

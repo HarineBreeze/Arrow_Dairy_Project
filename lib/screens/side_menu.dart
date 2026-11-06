@@ -168,7 +168,7 @@ class SideMenu extends StatelessWidget {
               height: tabHeight,
               child: Container(
                 decoration: BoxDecoration(
-                  color: const Color(0xB33B6FE0),
+                  color: const Color(0xB33E8E6D),
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),

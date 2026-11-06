@@ -636,7 +636,7 @@ class CountdownScreenState extends State<CountdownScreen> {
     return Container(
       key: const ValueKey('cd_search'),
       height: 48,
-      color: const Color(0xB33B6FE0),
+      color: const Color(0xB33E8E6D),
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         children: [
@@ -685,7 +685,7 @@ class CountdownScreenState extends State<CountdownScreen> {
     return Container(
       key: const ValueKey('cd_normal'),
       height: 48,
-      color: const Color(0xB33B6FE0),
+      color: const Color(0xB33E8E6D),
       child: Stack(
         children: [
           Row(

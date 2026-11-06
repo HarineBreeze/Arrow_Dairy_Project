@@ -931,7 +931,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
       onWillPop: _handleLeave,
       child: Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xCC3B6FE0),
+        backgroundColor: const Color(0xCC3E8E6D),
         foregroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(

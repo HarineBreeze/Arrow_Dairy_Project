@@ -322,7 +322,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
       appBar: AppBar(
         backgroundColor: _wishlist
             ? const Color(0xFFE58BA0)
-            : const Color(0xCC3B6FE0),
+            : const Color(0xCC3E8E6D),
         foregroundColor: Colors.white,
         elevation: 0,
         title: Text(_isNew ? '添加物品' : '编辑物品'),

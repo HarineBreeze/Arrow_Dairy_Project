@@ -447,7 +447,7 @@ class ItemListScreenState extends State<ItemListScreen> {
   Widget _buildTopBar() {
     return Container(
       height: 48,
-      color: const Color(0xB33B6FE0),
+      color: const Color(0xB33E8E6D),
       child: Row(
         children: [
           IconButton(

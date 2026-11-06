@@ -784,7 +784,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             // 贯通到低端（顶部白色与状态栏区连成一体），遮罩也能盖住状态栏
             // 区域跟随变暗。主页内容自行用 SafeArea 避开状态栏。
             body: Container(
-              color: const Color(0xB33B6FE0),
+              color: const Color(0xB33E8E6D),
               child: AnimatedBuilder(
                 animation: _menuAnim,
                 builder: (context, child) {
@@ -1297,7 +1297,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return Container(
       key: const ValueKey('search_bar'),
       height: 48,
-      color: const Color(0xB33B6FE0),
+      color: const Color(0xB33E8E6D),
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         children: [
@@ -1353,7 +1353,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return Container(
       key: const ValueKey('normal_bar'),
       height: 48,
-      color: const Color(0xB33B6FE0),
+      color: const Color(0xB33E8E6D),
       child: Stack(
         children: [
           Row(

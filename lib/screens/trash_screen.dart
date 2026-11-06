@@ -209,7 +209,7 @@ class TrashScreenState extends State<TrashScreen> {
         : '${_entries.length} 项 · 最长保留 7 天';
     return Container(
       height: 48,
-      color: const Color(0xB33B6FE0),
+      color: const Color(0xB33E8E6D),
       child: Row(
         children: [
           IconButton(
@@ -351,11 +351,11 @@ class TrashScreenState extends State<TrashScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: selected ? const Color(0xB33B6FE0) : Colors.white,
+                color: selected ? const Color(0xB33E8E6D) : Colors.white,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                     color: selected
-                        ? const Color(0xB33B6FE0)
+                        ? const Color(0xB33E8E6D)
                         : const Color(0xFFE8EDF5)),
               ),
               child: Row(

@@ -605,7 +605,7 @@ class _AssetPieCardState extends State<AssetPieCard>
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0F2A3B52),
+            color: Color(0x0F24382F),
             blurRadius: 8,
             offset: Offset(0, 2),
           ),

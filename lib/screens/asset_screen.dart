@@ -522,7 +522,7 @@ class AssetScreenState extends State<AssetScreen> {
               // 避免深色边框在浅色背景上被读成「黑框」
               boxShadow: const [
                 BoxShadow(
-                  color: Color(0x1A2A3B52),
+                  color: Color(0x1A24382F),
                   blurRadius: 6,
                   offset: Offset(0, 2),
                 ),
@@ -645,7 +645,7 @@ class AssetScreenState extends State<AssetScreen> {
         // 顶栏：与物资清单同款
         Container(
           height: 48,
-          color: const Color(0xB33B6FE0),
+          color: const Color(0xB33E8E6D),
           child: Row(
             children: [
               IconButton(
@@ -1185,7 +1185,7 @@ class AssetScreenState extends State<AssetScreen> {
       child: IgnorePointer(
         child: Container(
           decoration: BoxDecoration(
-            color: const Color(0x1A3B6FE0),
+            color: const Color(0x1A3E8E6D),
             borderRadius: const BorderRadius.horizontal(
               left: Radius.circular(6),
               right: Radius.circular(14),
@@ -1195,7 +1195,7 @@ class AssetScreenState extends State<AssetScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color: const Color(0xE63B6FE0),
+              color: const Color(0xE63E8E6D),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Text('拖动排序 · 松手取消',
