@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:diary_app/utils/app_toast.dart';
-import 'package:diary_app/widgets/save_bar.dart';
-import 'package:diary_app/widgets/save_done_button.dart';
+import 'package:ayodiray/utils/app_toast.dart';
+import 'package:ayodiray/widgets/save_bar.dart';
+import 'package:ayodiray/widgets/save_done_button.dart';
 
 /// 「反复点完成会不停弹同一句提示」的回归测试。
 ///

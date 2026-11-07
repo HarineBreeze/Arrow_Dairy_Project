@@ -12,7 +12,7 @@
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
 
    <application
-        android:label="矢量日记"
+        android:label="阿尤日记"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

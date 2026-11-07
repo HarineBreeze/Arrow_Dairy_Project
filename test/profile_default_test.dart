@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 
-import 'package:diary_app/models/user_profile.dart';
-import 'package:diary_app/screens/profile_edit_screen.dart';
-import 'package:diary_app/services/user_storage.dart';
-import 'package:diary_app/widgets/avatar.dart';
+import 'package:ayodiray/models/user_profile.dart';
+import 'package:ayodiray/screens/profile_edit_screen.dart';
+import 'package:ayodiray/services/user_storage.dart';
+import 'package:ayodiray/widgets/avatar.dart';
 
 /// 默认头像 / 默认昵称 / 昵称上限的回归测试。
 
@@ -50,11 +50,11 @@ void main() {
         (avatar.backgroundImage as AssetImage).assetName, kDefaultAvatarAsset);
   });
 
-  test('新用户默认昵称为 ArrowDiary', () {
-    expect(UserProfile().nickname, 'ArrowDiary');
-    expect(UserProfile.fromJson({}).nickname, 'ArrowDiary');
+  test('新用户默认昵称为 AyoDiray', () {
+    expect(UserProfile().nickname, 'AyoDiray');
+    expect(UserProfile.fromJson({}).nickname, 'AyoDiray');
     // 旧数据里昵称为空的，也落到默认昵称
-    expect(UserProfile.fromJson({'nickname': ''}).nickname, 'ArrowDiary');
+    expect(UserProfile.fromJson({'nickname': ''}).nickname, 'AyoDiray');
     // 设置过的昵称保持不变
     expect(UserProfile.fromJson({'nickname': '小明'}).nickname, '小明');
   });
@@ -68,8 +68,8 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(find.text('10/10'), findsOneWidget,
-        reason: '默认昵称 ArrowDiary 正好 10 个字符');
+    expect(find.text('8/10'), findsOneWidget,
+        reason: '默认昵称 AyoDiray 为 8 个字符');
 
     await tester.enterText(find.byType(TextField).first, '一二三四五六七八九十');
     await tester.pump();
@@ -106,6 +106,6 @@ void main() {
     await tester.pumpAndSettle();
 
     final saved = await tester.runAsync(() => UserStorage.load());
-    expect(saved?.nickname, 'ArrowDiary');
+    expect(saved?.nickname, 'AyoDiray');
   });
 }

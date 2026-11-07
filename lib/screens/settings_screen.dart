@@ -49,7 +49,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       setState(() => _exporting = false);
       await Share.shareXFiles(
         [XFile(path, mimeType: 'application/json')],
-        text: '「矢量日记」数据备份文件，可用于换机恢复',
+        text: '「阿尤日记」数据备份文件，可用于换机恢复',
         sharePositionOrigin: const Rect.fromLTWH(0, 0, 10, 10),
       );
     } catch (_) {

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:diary_app/utils/text_format.dart';
-import 'package:diary_app/utils/todo_text.dart';
+import 'package:ayodiray/utils/text_format.dart';
+import 'package:ayodiray/utils/todo_text.dart';
 
 void main() {
   group('待办文本解析', () {

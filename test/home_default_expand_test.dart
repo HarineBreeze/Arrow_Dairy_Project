@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:diary_app/utils/diary_group_defaults.dart';
+import 'package:ayodiray/utils/diary_group_defaults.dart';
 
 /// 主页默认展开逻辑的接线检查。
 ///

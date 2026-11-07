@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:diary_app/widgets/todo_card.dart';
+import 'package:ayodiray/widgets/todo_card.dart';
 
 Widget _host(String content, {ValueChanged<String>? onToggle}) => MaterialApp(
       home: Scaffold(

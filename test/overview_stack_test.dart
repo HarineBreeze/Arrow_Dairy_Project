@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:diary_app/models/asset.dart';
-import 'package:diary_app/widgets/asset_pie_card.dart';
+import 'package:ayodiray/models/asset.dart';
+import 'package:ayodiray/widgets/asset_pie_card.dart';
 
 Asset _a(String type, double amount, {String id = ''}) => Asset(
       id: id.isEmpty ? type : id,

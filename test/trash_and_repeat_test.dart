@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:diary_app/models/countdown_event.dart';
-import 'package:diary_app/services/trash_storage.dart';
+import 'package:ayodiray/models/countdown_event.dart';
+import 'package:ayodiray/services/trash_storage.dart';
 
 CountdownEvent _ev({
   required DateTime target,

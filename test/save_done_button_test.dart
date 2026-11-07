@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:diary_app/widgets/pressable.dart';
-import 'package:diary_app/widgets/save_done_button.dart';
+import 'package:ayodiray/widgets/pressable.dart';
+import 'package:ayodiray/widgets/save_done_button.dart';
 
 Widget _host({
   required VoidCallback? onTap,

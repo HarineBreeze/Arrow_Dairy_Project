@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:diary_app/models/user_profile.dart';
-import 'package:diary_app/screens/side_menu.dart';
-import 'package:diary_app/widgets/app_icons.dart';
-import 'package:diary_app/widgets/avatar.dart';
+import 'package:ayodiray/models/user_profile.dart';
+import 'package:ayodiray/screens/side_menu.dart';
+import 'package:ayodiray/widgets/app_icons.dart';
+import 'package:ayodiray/widgets/avatar.dart';
 
 /// 侧边栏头部排版（左右）与细线图标接入的回归测试。
 void main() {

@@ -3,8 +3,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:diary_app/screens/asset_screen.dart';
-import 'package:diary_app/widgets/pressable.dart';
+import 'package:ayodiray/screens/asset_screen.dart';
+import 'package:ayodiray/widgets/pressable.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 
 /// 回归：长按拖拽结束后，卡片按压缩放必须回到 1.0。

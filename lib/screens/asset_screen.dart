@@ -833,6 +833,10 @@ class AssetScreenState extends State<AssetScreen> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        // 两卡等大：饼图卡更高时本卡被 OverviewStack 拉伸到同高，
+        // 多出的高度用 spaceBetween 均匀分到各段之间（自然高度时无空余，
+        // 与原来的 top 排列完全一致），不会全部堆在卡片底部。
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // 左：净资产　右：可使用 x 天 —— 两栏同版式（同一行内左标题右数字）。
           //

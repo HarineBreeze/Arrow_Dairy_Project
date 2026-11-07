@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:diary_app/screens/home_screen.dart';
-import 'package:diary_app/screens/side_menu.dart';
+import 'package:ayodiray/screens/home_screen.dart';
+import 'package:ayodiray/screens/side_menu.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:path_provider_platform_interface/src/method_channel_path_provider.dart';
 

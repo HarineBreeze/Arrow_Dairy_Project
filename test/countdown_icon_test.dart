@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:diary_app/models/countdown_event.dart';
+import 'package:ayodiray/models/countdown_event.dart';
 
 /// 复刻编辑页切换类型时的图标判定（与 countdown_edit_screen.dart 内逻辑一致）
 String switchType({

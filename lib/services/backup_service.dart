@@ -81,7 +81,7 @@ class BackupService {
     final dir = await getTemporaryDirectory();
     final now = DateTime.now();
     final name =
-        '矢量日记备份_${now.year}${_two(now.month)}${_two(now.day)}_${_two(now.hour)}${_two(now.minute)}.json';
+        '阿尤日记备份_${now.year}${_two(now.month)}${_two(now.day)}_${_two(now.hour)}${_two(now.minute)}.json';
     final file = File('${dir.path}/$name');
     const encoder = JsonEncoder.withIndent('  ');
     await file.writeAsString(encoder.convert(map));
@@ -100,7 +100,7 @@ class BackupService {
       throw '不是有效的 JSON 文件';
     }
     if (decoded is! Map<String, dynamic> || decoded['app'] != 'vector-diary') {
-      throw '不是「矢量日记」的备份文件';
+      throw '不是「阿尤日记」的备份文件';
     }
     final entries = <DiaryEntry>[];
     if (decoded['diaries'] is List) {

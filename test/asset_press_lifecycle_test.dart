@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:diary_app/screens/asset_screen.dart';
-import 'package:diary_app/widgets/pressable.dart';
+import 'package:ayodiray/screens/asset_screen.dart';
+import 'package:ayodiray/widgets/pressable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';

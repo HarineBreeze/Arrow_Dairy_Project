@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:diary_app/models/asset.dart';
-import 'package:diary_app/screens/asset_edit_screen.dart';
-import 'package:diary_app/utils/app_toast.dart';
+import 'package:ayodiray/models/asset.dart';
+import 'package:ayodiray/screens/asset_edit_screen.dart';
+import 'package:ayodiray/utils/app_toast.dart';
 
 /// 「资产金额改为必填项」的回归测试。
 ///

@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import 'package:diary_app/widgets/app_icons.dart';
+import 'package:ayodiray/widgets/app_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

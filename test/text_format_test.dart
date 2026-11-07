@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:diary_app/utils/text_format.dart';
+import 'package:ayodiray/utils/text_format.dart';
 
 void main() {
   regressionTests();

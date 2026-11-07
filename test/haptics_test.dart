@@ -1,7 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:diary_app/utils/haptics.dart';
+import 'package:ayodiray/utils/haptics.dart';
 
 /// 震动链路的回归测试。
 ///

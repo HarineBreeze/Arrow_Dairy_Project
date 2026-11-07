@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:diary_app/widgets/wheel_picker.dart';
+import 'package:ayodiray/widgets/wheel_picker.dart';
 
 /// 找到包含某个标签的那一列滚轮
 Finder _columnWith(String label) => find.ancestor(

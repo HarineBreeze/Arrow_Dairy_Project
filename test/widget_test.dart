@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:diary_app/main.dart';
-import 'package:diary_app/utils/rich_text.dart';
+import 'package:ayodiray/main.dart';
+import 'package:ayodiray/utils/rich_text.dart';
 
 void main() {
   testWidgets('App 启动冒烟测试', (WidgetTester tester) async {

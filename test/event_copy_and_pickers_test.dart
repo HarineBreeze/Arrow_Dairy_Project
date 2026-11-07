@@ -6,9 +6,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:path_provider_platform_interface/src/method_channel_path_provider.dart';
 
-import 'package:diary_app/models/countdown_event.dart';
-import 'package:diary_app/screens/countdown_edit_screen.dart';
-import 'package:diary_app/screens/item_list_screen.dart';
+import 'package:ayodiray/models/countdown_event.dart';
+import 'package:ayodiray/screens/countdown_edit_screen.dart';
+import 'package:ayodiray/screens/item_list_screen.dart';
 
 /// 「把倒数日统一叫事件」「日期 / 时间选择器拆成两步」
 /// 「物品清单顶栏加标题」这三件事的回归测试。

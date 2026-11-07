@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:diary_app/widgets/format_toolbar.dart';
+import 'package:ayodiray/widgets/format_toolbar.dart';
 
 /// 模拟编辑页的底部结构：
 ///   Column( Expanded(正文), 工具栏 )  +  bottomNavigationBar(保存栏)

@@ -37,7 +37,7 @@ class DiaryApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: '矢量日记',
+      title: '阿尤日记',
       debugShowCheckedModeBanner: false,
       theme: () {
         const green = kPrimaryGreen;

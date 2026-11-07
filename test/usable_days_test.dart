@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:diary_app/services/app_settings.dart';
-import 'package:diary_app/utils/usable_days.dart';
+import 'package:ayodiray/services/app_settings.dart';
+import 'package:ayodiray/utils/usable_days.dart';
 
 /// 「可使用 x 天」公式的回归测试。
 ///

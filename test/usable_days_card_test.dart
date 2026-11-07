@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:diary_app/utils/usable_days.dart';
+import 'package:ayodiray/utils/usable_days.dart';
 
 /// 看板卡片上「净资产 / 可使用 x 天」两栏的展示契约。
 ///

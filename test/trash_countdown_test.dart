@@ -4,8 +4,8 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 
-import 'package:diary_app/models/asset.dart';
-import 'package:diary_app/services/trash_storage.dart';
+import 'package:ayodiray/models/asset.dart';
+import 'package:ayodiray/services/trash_storage.dart';
 
 /// 把getApplicationDocumentsDirectory指到临时目录，便于真实读写 trash.json
 class _TmpPathPlatform extends PathProviderPlatform {

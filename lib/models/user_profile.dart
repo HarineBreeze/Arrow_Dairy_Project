@@ -1,6 +1,6 @@
 class UserProfile {
   /// 默认昵称：用户从未设置过昵称时展示这个名字。
-  static const String defaultNickname = 'ArrowDiary';
+  static const String defaultNickname = 'AyoDiray';
 
   String nickname;
   String gender; // 'male' | 'female' | ''

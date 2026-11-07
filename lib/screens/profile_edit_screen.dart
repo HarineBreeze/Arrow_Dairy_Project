@@ -200,9 +200,15 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
             ),
           ),
         ),
-        Text(
-          '${_nicknameCtrl.text.length}/10',
-          style: const TextStyle(fontSize: 12, color: Color(0xFF8FA09A)),
+        // 计数器必须监听控制器实时刷新：之前是普通 Text，只在整页重建时
+        // 读取一次长度 —— 打字过程中计数器一直停在初始值（默认昵称恰好
+        // 10 个字符时测试也没暴露出来）。
+        ValueListenableBuilder<TextEditingValue>(
+          valueListenable: _nicknameCtrl,
+          builder: (_, v, __) => Text(
+            '${v.text.length}/10',
+            style: const TextStyle(fontSize: 12, color: Color(0xFF8FA09A)),
+          ),
         ),
       ],
     );
