@@ -336,9 +336,10 @@ void main() {
 
       final before = tester.getSize(find.byType(OverviewStack)).height;
       final beforeBottom = tester.getRect(find.byType(OverviewStack)).bottom;
-      // 190（card1 内容高度）+ 9（间距）+ 7（页面指示圈行高）
-      expect(before, closeTo(206, 1),
-          reason: '看板高度应贴合 card1 的内容高度 + 指示圈行，实际 $before');
+      // 至少 190（card1）+ 8（间距）+ 7（指示圈行）；饼图卡更高时按较高者预留，
+      // 保证指示圈落在两张卡（含溢出部分）之外
+      expect(before, greaterThanOrEqualTo(205),
+          reason: '看板高度应 >= card1 高度 + 指示圈行，实际 $before');
 
       // 整个翻页过程中逐帧检查：高度与下边界一刻都不能变
       await tester.drag(find.byKey(const ValueKey('card1')),

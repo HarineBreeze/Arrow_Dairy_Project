@@ -93,6 +93,14 @@ class OverviewStackState extends State<OverviewStack>
   /// 轮盘高度锁：一旦量到就固定，翻页、切卡、转场都不再变（见 [_stackHeight]）
   double? _heightLocked;
 
+  /// 饼图卡（role 1）的实测内容高度。
+  ///
+  /// 饼图卡通常比净资产卡高，顶层时溢出绘制到卡区之外 ——
+  /// 页面指示圈必须放在**两张卡中较高那张**的下方，否则翻到饼图页时
+  /// 圈会叠在饼图的图例上（实测 bug）。布局总高按 max 预留，
+  /// max 是常数，翻页时下方列表依旧不会被推挤。
+  double? _card2Height;
+
   /// 上一次参与定高的可用宽度 —— 宽度变了（旋转屏 / 分屏）才允许重新定高
   double _lockedAtWidth = 0;
 
@@ -158,8 +166,18 @@ class OverviewStackState extends State<OverviewStack>
   ///
   /// 只有占位卡（role 0）参与定高；另一张卡怎么长都不影响布局。
   void _onMeasure(int role, double h) {
-    if (role != 0) return; // 只有占位卡定高
     if (h <= 0) return;
+    if (role == 1) {
+      // 饼图卡只记录高度（供指示圈定位），不参与定高
+      final locked = _card2Height;
+      if (locked != null && (locked - h).abs() < 0.5) return;
+      _card2Height = h;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() {});
+      });
+      return;
+    }
+    if (role != 0) return; // 只有占位卡定高
     final locked = _heightLocked;
     if (locked != null && (locked - h).abs() < 0.5) return;
     _heightLocked = h;
@@ -167,6 +185,15 @@ class OverviewStackState extends State<OverviewStack>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) setState(() {});
     });
+  }
+
+  /// 指示圈与卡区之间的间距：两张卡中较高者溢出卡区的高度 + 8px 呼吸位。
+  /// 首帧还没量到饼图卡时按 0 处理（量到后补一次重建）。
+  double get _dotsGap {
+    final h1 = _heightLocked ?? _fallbackHeight;
+    final h2 = _card2Height;
+    final overflow = (h2 != null && h2 > h1) ? h2 - h1 : 0.0;
+    return overflow + 8;
   }
 
   /// 只允许在「布局口径变了」时重新定高：可用宽度变化（旋转屏 / 分屏 / 字号）。
@@ -340,9 +367,10 @@ class OverviewStackState extends State<OverviewStack>
                 ),
               ),
             ),
-            // 卡片下方的页面指示圈（只有一张卡时不占位）
+            // 卡片下方的页面指示圈（只有一张卡时不占位）：
+            // 间距按较高一张卡预留，圈永远落在卡片（含溢出部分）之外
             if (allowed) ...[
-              const SizedBox(height: 9),
+              SizedBox(height: _dotsGap),
               _buildPageDots(),
             ],
           ],

@@ -8,7 +8,7 @@ class AppVersion {
   AppVersion._();
 
   /// 展示用版本号（设置页底部灰色小字）
-  static const String displayVersion = 'V4.8.14';
+  static const String displayVersion = 'V4.8.15';
 
   /// 是否为内测版（菜单侧边栏「内测版」铭牌）
   static const bool isBeta = true;
