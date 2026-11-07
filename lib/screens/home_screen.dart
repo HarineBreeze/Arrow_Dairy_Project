@@ -1812,6 +1812,8 @@ class _GridTexturePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    // 同 _SealStripePainter：裁掉 4px 线宽向带子边界外的溢出
+    canvas.clipRect(Offset.zero & size);
     canvas.drawRect(
         Offset.zero & size, Paint()..color = const Color(0xFFEEF4F0));
     final paint = Paint()
@@ -2207,6 +2209,10 @@ class _SealStripePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    // 斜线两端顶到带子边界，4px 线宽会向外溢出约 2px：
+    // 底部溢出的锯齿会压到没有自绘背景的正文区（白色来自更早绘制的
+    // Material），必须在 painter 内部自行裁剪到带子矩形内。
+    canvas.clipRect(Offset.zero & size);
     canvas.drawRect(
         Offset.zero & size, Paint()..color = const Color(0xFFEEF4F0));
     final paint = Paint()
@@ -2231,6 +2237,8 @@ class _PinnedStripePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    // 同 _SealStripePainter：裁掉 4px 线宽向带子边界外的溢出
+    canvas.clipRect(Offset.zero & size);
     canvas.drawRect(
         Offset.zero & size, Paint()..color = const Color(0xFFFBE3E8));
     final paint = Paint()
@@ -2301,6 +2309,8 @@ class _StripeBandPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    // 同 _SealStripePainter：裁掉 4px 线宽向带子边界外的溢出
+    canvas.clipRect(Offset.zero & size);
     canvas.drawRect(
         Offset.zero & size, Paint()..color = const Color(0xFFEEF4F0));
     final paint = Paint()

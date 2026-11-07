@@ -5,6 +5,7 @@ import '../models/item.dart';
 import '../services/item_storage.dart';
 import '../services/trash_storage.dart';
 import '../utils/menu_gesture_gate.dart';
+import '../widgets/app_icons.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/loading_skeleton.dart';
 import 'item_edit_screen.dart';
@@ -395,7 +396,7 @@ class ItemListScreenState extends State<ItemListScreen> {
           const Expanded(child: ListSkeleton(count: 4, withAvatar: false))
         else ...[
           _buildDataView(),
-          _buildFilterSortBar(),
+          _buildFilterBar(),
           const Divider(height: 1, color: Color(0xFFE8EDF5)),
           Expanded(
             child: RefreshIndicator(
@@ -458,7 +459,7 @@ class ItemListScreenState extends State<ItemListScreen> {
           if (!_searching)
             const Padding(
               padding: EdgeInsets.only(right: 8),
-              child: Text('物品清单',
+              child: Text('物品',
                   style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w600,
@@ -490,6 +491,26 @@ class ItemListScreenState extends State<ItemListScreen> {
                   )
                 : const SizedBox(),
           ),
+          // 升/降序切换（排序方式按钮左侧）
+          IconButton(
+            tooltip: _sortAscending ? '正序' : '倒序',
+            icon: AppIcon(
+              _sortAscending ? AppIcons.arrowUp : AppIcons.arrowDn,
+              size: 20,
+              color: Colors.white,
+            ),
+            onPressed: () {
+              Haptics.light();
+              setState(() => _sortAscending = !_sortAscending);
+            },
+          ),
+          // 排序方式（底部弹出选择排序字段），位于顶栏最右侧
+          IconButton(
+            tooltip: '排序方式',
+            icon: const AppIcon(AppIcons.sort, size: 21, color: Colors.white),
+            onPressed: _showSortSheet,
+          ),
+          const SizedBox(width: 4),
         ],
       ),
     );
@@ -570,75 +591,72 @@ class ItemListScreenState extends State<ItemListScreen> {
     );
   }
 
-  Widget _buildFilterSortBar() {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(12, 4, 6, 10),
-      child: Row(
-        children: [
-          _buildFilterChip('全部', _ItemFilter.all),
-          const SizedBox(width: 4),
-          _buildFilterChip('拥有中', _ItemFilter.owning),
-          const SizedBox(width: 4),
-          _buildFilterChip('已失去', _ItemFilter.lost),
-          const SizedBox(width: 4),
-          _buildFilterChip('愿望单', _ItemFilter.wishlist),
-          // 排序按钮位于【愿望单】右侧
-          InkWell(
-            onTap: () => setState(() => _sortAscending = !_sortAscending),
-            borderRadius: BorderRadius.circular(8),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-              child: Icon(
-                _sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
-                size: 17,
-                color: const Color(0xFF3E8E6D),
+  /// 分类切换条：与日记主页「按月 / 按年 / 全部」同款样式与动画 ——
+  /// 等宽文字标签 + 底部 40×3 绿色滑块（AnimatedPositioned 250ms）。
+  Widget _buildFilterBar() {
+    const labels = <_ItemFilter, String>{
+      _ItemFilter.all: '全部',
+      _ItemFilter.owning: '拥有中',
+      _ItemFilter.lost: '已失去',
+      _ItemFilter.wishlist: '愿望单',
+    };
+    final keys = labels.keys.toList();
+    final index = keys.indexOf(_filter);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cellW = constraints.maxWidth / keys.length;
+        final left = index * cellW + (cellW - 40) / 2;
+        return Container(
+          height: 48,
+          color: Colors.white,
+          child: Stack(
+            children: [
+              Row(
+                children: List.generate(keys.length, (i) {
+                  final selected = keys[i] == _filter;
+                  return Expanded(
+                    child: InkWell(
+                      onTap: () {
+                        if (selected) return;
+                        Haptics.light();
+                        setState(() => _filter = keys[i]);
+                      },
+                      child: Center(
+                        child: Text(
+                          labels[keys[i]]!,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: selected
+                                ? FontWeight.w600
+                                : FontWeight.w400,
+                            color: selected
+                                ? const Color(0xFF3E8E6D)
+                                : const Color(0xFF647A70),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
               ),
-            ),
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOutCubic,
+                left: left,
+                bottom: 0,
+                child: Container(
+                  width: 40,
+                  height: 3,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF3E8E6D),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+            ],
           ),
-          const Spacer(),
-          InkWell(
-            onTap: _showSortSheet,
-            borderRadius: BorderRadius.circular(8),
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-              child: Icon(Icons.sort, size: 20, color: Color(0xFF3E8E6D)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterChip(String label, _ItemFilter filter) {
-    final sel = _filter == filter;
-    return GestureDetector(
-      onTap: () => setState(() => _filter = filter),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: sel
-              ? (filter == _ItemFilter.wishlist
-                  ? const Color(0xFFE58BA0)
-                  : const Color(0xFF3E8E6D))
-              : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: sel
-                ? (filter == _ItemFilter.wishlist
-                    ? const Color(0xFFE58BA0)
-                    : const Color(0xFF3E8E6D))
-                : const Color(0xFFE4F2EB),
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: sel ? Colors.white : const Color(0xFF647A70),
-          ),
-        ),
-      ),
+        );
+      },
     );
   }
 

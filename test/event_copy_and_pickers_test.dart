@@ -184,7 +184,7 @@ void main() {
   });
 
   group('物品清单顶栏', () {
-    testWidgets('菜单键右侧显示「物品清单」标题', (tester) async {
+    testWidgets('菜单键右侧显示「物品」标题', (tester) async {
       _seed();
       await tester.pumpWidget(_wrap(
         Scaffold(body: ItemListScreen(onOpenMenu: () {})),
@@ -194,10 +194,10 @@ void main() {
         await tester.pump(const Duration(milliseconds: 50));
       }
 
-      expect(find.text('物品清单'), findsOneWidget);
+      expect(find.text('物品'), findsOneWidget);
       // 标题在菜单键右侧
       final menu = tester.getCenter(find.byIcon(Icons.menu));
-      final title = tester.getCenter(find.text('物品清单'));
+      final title = tester.getCenter(find.text('物品'));
       expect(title.dx, greaterThan(menu.dx));
       // 同一行（垂直方向对齐）
       expect((title.dy - menu.dy).abs(), lessThan(6));

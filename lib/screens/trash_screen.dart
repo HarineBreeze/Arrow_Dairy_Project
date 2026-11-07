@@ -241,7 +241,8 @@ class TrashScreenState extends State<TrashScreen> {
           if (_entries.isNotEmpty)
             IconButton(
               tooltip: '清空',
-              icon: const Icon(Icons.delete_sweep_outlined,
+              // 删除类图标全站统一为普通垃圾桶轮廓（与笔记卡片右下角一致）
+              icon: const Icon(Icons.delete_outline,
                   color: Colors.white, size: 22),
               onPressed: _clearAll,
             ),
@@ -513,7 +514,8 @@ class TrashScreenState extends State<TrashScreen> {
               Container(width: 1, height: 20, color: const Color(0xFFEFF5F1)),
               Expanded(
                 child: _buildAction(
-                  icon: Icons.delete_forever_outlined,
+                  // 与全站删除图标统一：普通垃圾桶轮廓
+                  icon: Icons.delete_outline,
                   label: '彻底删除',
                   color: const Color(0xFFE0576A),
                   onTap: () => _purge(e),

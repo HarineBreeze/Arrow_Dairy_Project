@@ -14,6 +14,7 @@ import 'usable_days_settings_sheet.dart';
 import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
 import '../widgets/asset_pie_card.dart';
+import '../widgets/app_icons.dart';
 
 /// 资产全景主页。默认无需密码即可查看；
 /// 开启「加密访问」后，进入本页需先输入密码解锁。
@@ -666,7 +667,9 @@ class AssetScreenState extends State<AssetScreen> {
                 onPressed: _unlocked ? _openFilterSheet : null,
               ),
               IconButton(
-                icon: const Icon(Icons.settings_outlined, color: Colors.white),
+                // 设置图标与侧边栏「设置」同款细线图标（AppIcons.settings）
+                icon: const AppIcon(AppIcons.settings,
+                    size: 22, color: Colors.white),
                 tooltip: '设置',
                 onPressed: _openSettings, // 锁定时也可进入，用于解锁后的设置调整
               ),
@@ -852,7 +855,8 @@ class AssetScreenState extends State<AssetScreen> {
           Row(
             children: [
               _statItem('总资产', _totalAssets, Colors.white),
-              _statItem('负资产', _totalDebt, const Color(0xFFFFD9DC)),
+              // 负资产红与预览卡片负金额红同步（0xFFE06A6A）
+              _statItem('负资产', _totalDebt, const Color(0xFFE06A6A)),
               _statItem('现金流', _cashFlow, Colors.white),
               _statItem('理财资产', _investTotal, Colors.white),
             ],
@@ -1222,16 +1226,13 @@ class AssetScreenState extends State<AssetScreen> {
               padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
               child: Row(
                 children: [
-            // 图标
-            Container(
+            // 图标（无底纹：直接摆放 emoji，与整体浅色调更统一）
+            SizedBox(
               width: 46,
               height: 46,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: const Color(0xFFEFF5F1),
-                borderRadius: BorderRadius.circular(12),
+              child: Center(
+                child: Text(a.icon, style: const TextStyle(fontSize: 24)),
               ),
-              child: Text(a.icon, style: const TextStyle(fontSize: 24)),
             ),
             const SizedBox(width: 12),
             // 备注（主信息）+ 类型（副信息）
