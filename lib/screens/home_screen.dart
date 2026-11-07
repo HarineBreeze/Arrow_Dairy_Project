@@ -1131,7 +1131,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   final selected = keys[i] == _viewMode;
                   return Expanded(
                     child: InkWell(
-                      onTap: () => _switchView(keys[i]),
+                      onTap: () {
+                        // 视图切换与其他页签类交互一致：轻触震动
+                        if (selected) return;
+                        Haptics.light();
+                        _switchView(keys[i]);
+                      },
                       child: Center(
                         child: Text(
                           labels[i],

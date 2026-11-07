@@ -75,6 +75,10 @@ class OverviewStackState extends State<OverviewStack>
   /// 顶层是谁：0 = card1，1 = card2
   int _index = 0;
 
+  /// 页面指示圈的目标位置：翻页动画一开始就滑向目标页，
+  /// 拖动打断翻页时回到实际所在页（见 [_onDragStart]）。
+  int _dotIndex = 0;
+
   /// 卡片所在宽度（拖动范围与背面卡尺寸都按它算）
   double _width = 0;
 
@@ -198,6 +202,8 @@ class OverviewStackState extends State<OverviewStack>
     _anim.stop();
     _dx.value = 0;
     _syncLevels(progress: 0);
+    // 拖动打断了没播完的翻页动画：指示圈回到实际所在页
+    if (_dotIndex != _index) setState(() => _dotIndex = _index);
   }
 
   /// 轮换型的拖动：两个方向都能拖，都能翻页。
@@ -231,6 +237,8 @@ class OverviewStackState extends State<OverviewStack>
   /// 翻页：位移推到 [_exitDistance]（配合淡出，已足够「滑出去」），
   /// 到终点再一次性换层并归零。
   void _pageTo(int index) {
+    // 指示圈不等翻页结束：动画一开始就滑向目标位置
+    if (_dotIndex != index) setState(() => _dotIndex = index);
     final target =
         _dx.value < 0 ? -_exitDistance : _exitDistance;
     _animateTo(target, OverviewStack.kSettle, Curves.easeInOutCubic, () {
@@ -275,62 +283,119 @@ class OverviewStackState extends State<OverviewStack>
       builder: (context, c) {
         _width = c.maxWidth;
         _onWidthChanged(c.maxWidth);
-        return GestureDetector(
-          // 只接管水平拖动：纵向仍交给外层列表滚动
-          onHorizontalDragStart: allowed ? _onDragStart : null,
-          onHorizontalDragUpdate: allowed ? _onDragUpdate : null,
-          onHorizontalDragEnd: allowed ? _onDragEnd : null,
-          behavior: HitTestBehavior.deferToChild,
-          child: SizedBox(
-            // 高度是**锁定的常数**：只在首次量到 card1 时定一次，
-            // 之后无论怎么翻页、切卡、转场都保持不动，
-            // 下方列表里的卡片因此不会被推上推下。
-            height: _stackHeight,
-            child: ValueListenableBuilder<int?>(
-              valueListenable: _peekRole,
-              builder: (context, peek, _) => Stack(
-                clipBehavior: Clip.none,
-                alignment: Alignment.topCenter,
-                children: [
-                  // —— 第三层：更小的一圈浅色边（纯装饰，最先绘制在最底下）——
-                  if (allowed) _buildGhost(),
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    top: 0,
-                    child: _CardRole(
-                      role: 0,
-                      level: _levelA,
-                      dx: _dx,
-                      maxDrag: _maxDrag,
-                      stack: this,
-                      peeking: peek == 0,
-                      child: widget.card1,
-                      onHeight: (h) => _onMeasure(0, h),
-                    ),
-                  ),
-                  if (allowed)
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      top: 0,
-                      child: _CardRole(
-                        role: 1,
-                        level: _levelB,
-                        dx: _dx,
-                        maxDrag: _maxDrag,
-                        stack: this,
-                        peeking: peek == 1,
-                        child: widget.card2,
-                        onHeight: (h) => _onMeasure(1, h),
+        return Column(
+          children: [
+            GestureDetector(
+              // 只接管水平拖动：纵向仍交给外层列表滚动
+              onHorizontalDragStart: allowed ? _onDragStart : null,
+              onHorizontalDragUpdate: allowed ? _onDragUpdate : null,
+              onHorizontalDragEnd: allowed ? _onDragEnd : null,
+              behavior: HitTestBehavior.deferToChild,
+              child: SizedBox(
+                // 高度是**锁定的常数**：只在首次量到 card1 时定一次，
+                // 之后无论怎么翻页、切卡、转场都保持不动，
+                // 下方列表里的卡片因此不会被推上推下。
+                height: _stackHeight,
+                child: ValueListenableBuilder<int?>(
+                  valueListenable: _peekRole,
+                  builder: (context, peek, _) => Stack(
+                    clipBehavior: Clip.none,
+                    alignment: Alignment.topCenter,
+                    children: [
+                      // —— 第三层：更小的一圈浅色边（纯装饰，最先绘制在最底下）——
+                      if (allowed) _buildGhost(),
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        top: 0,
+                        child: _CardRole(
+                          role: 0,
+                          level: _levelA,
+                          dx: _dx,
+                          maxDrag: _maxDrag,
+                          stack: this,
+                          peeking: peek == 0,
+                          child: widget.card1,
+                          onHeight: (h) => _onMeasure(0, h),
+                        ),
                       ),
-                    ),
-                ],
+                      if (allowed)
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          top: 0,
+                          child: _CardRole(
+                            role: 1,
+                            level: _levelB,
+                            dx: _dx,
+                            maxDrag: _maxDrag,
+                            stack: this,
+                            peeking: peek == 1,
+                            child: widget.card2,
+                            onHeight: (h) => _onMeasure(1, h),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
               ),
             ),
-          ),
+            // 卡片下方的页面指示圈（只有一张卡时不占位）
+            if (allowed) ...[
+              const SizedBox(height: 9),
+              _buildPageDots(),
+            ],
+          ],
         );
       },
+    );
+  }
+
+  /// 卡片下方的页面指示圈：两枚空心圈 + 一枚实心圈，
+  /// 翻篇时实心圈滑到对应位置（与翻页动画同时开始）。
+  Widget _buildPageDots() {
+    const dot = 7.0;
+    const gap = 10.0;
+    return Center(
+      child: SizedBox(
+        width: dot * 2 + gap,
+        height: dot,
+        child: Stack(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                for (var i = 0; i < 2; i++)
+                  Container(
+                    width: dot,
+                    height: dot,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                          color: const Color(0x593E8E6D), width: 1.2),
+                    ),
+                  ),
+              ],
+            ),
+            // 实心圈：随翻页滑动到当前页
+            AnimatedAlign(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOutCubic,
+              alignment: _dotIndex == 0
+                  ? Alignment.centerLeft
+                  : Alignment.centerRight,
+              child: Container(
+                width: dot,
+                height: dot,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF3E8E6D),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

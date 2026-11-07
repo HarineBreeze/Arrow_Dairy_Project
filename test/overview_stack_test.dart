@@ -336,8 +336,9 @@ void main() {
 
       final before = tester.getSize(find.byType(OverviewStack)).height;
       final beforeBottom = tester.getRect(find.byType(OverviewStack)).bottom;
-      expect(before, closeTo(190, 1),
-          reason: '看板高度应贴合 card1 的内容高度，实际 $before');
+      // 190（card1 内容高度）+ 9（间距）+ 7（页面指示圈行高）
+      expect(before, closeTo(206, 1),
+          reason: '看板高度应贴合 card1 的内容高度 + 指示圈行，实际 $before');
 
       // 整个翻页过程中逐帧检查：高度与下边界一刻都不能变
       await tester.drag(find.byKey(const ValueKey('card1')),
