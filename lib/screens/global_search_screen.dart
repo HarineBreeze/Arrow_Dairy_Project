@@ -241,15 +241,6 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF647A70)),
             ),
-            const SizedBox(height: 8),
-            Text(
-              '支持检索：笔记标题、物品名称、事件名称、资产备注',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  fontSize: 12.5,
-                  height: 1.6,
-                  color: const Color(0xFF8FA09A).withOpacity(0.9)),
-            ),
           ],
         ),
       ),

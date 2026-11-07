@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/pressable.dart';
+import '../widgets/entry_icon.dart';
 
 /// 全局统一的空状态引导组件。
 ///
@@ -7,7 +8,7 @@ import '../widgets/pressable.dart';
 /// 「筛选后无结果」时都用 [EmptyState]，后续新增主页直接复用，无需再各写一套。
 ///
 /// 视觉规范：
-/// - emoji 图标 56px
+/// - 图标 56px（emoji / Lucide 细线图标，由 EntryIcon 统一渲染）
 /// - 主文案 16px，颜色 0xFF24382F
 /// - 副文案 13px，颜色 0xFF8FA09A，行高 1.7
 /// - 默认居中，顶部留白由 [topGap] 控制（列表里用 SizedBox 撑开时可为 0）
@@ -46,7 +47,7 @@ class EmptyState extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (topGap > 0) SizedBox(height: topGap),
-        Text(icon, style: const TextStyle(fontSize: 56)),
+        EntryIcon(icon, size: 56),
         const SizedBox(height: 16),
         Text(
           title,

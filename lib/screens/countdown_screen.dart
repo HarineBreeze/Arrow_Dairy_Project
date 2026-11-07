@@ -10,6 +10,7 @@ import '../utils/menu_gesture_gate.dart';
 import 'countdown_edit_screen.dart';
 import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
+import '../widgets/entry_icon.dart';
 
 /// 事件主页：顶栏（年月 + 搜索 + 筛选）、日历视图、
 /// 置顶组 / 纪念日 / 资产日 三个可折叠分组的长条卡片列表。
@@ -476,7 +477,7 @@ class CountdownScreenState extends State<CountdownScreen> {
               height: 14,
               decoration: BoxDecoration(
                 color: title == '置顶'
-                    ? const Color(0xFFF2A0C0)
+                    ? const Color(0xFFCB5C50)
                     : (title == '资产日'
                         ? const Color(0xFF8FCFB4)
                         : const Color(0xFFA9D8B8)),
@@ -532,13 +533,14 @@ class CountdownScreenState extends State<CountdownScreen> {
                 height: 46,
                 alignment: Alignment.center,
                 // 不再给图标加底纹色块，图标直接落在卡片底色上
-                child: Text(
-                    e.icon.trim().isEmpty
-                        ? CountdownEvent.defaultIconFor(e.type)
-                        : e.icon,
-                    style: TextStyle(
-                        fontSize: 24,
-                        color: grey ? const Color(0xFF8FA09A) : null)),
+                child: Builder(builder: (_) {
+                  final icon = e.icon.trim().isEmpty
+                      ? CountdownEvent.defaultIconFor(e.type)
+                      : e.icon;
+                  return EntryIcon(icon,
+                      size: 24,
+                      color: grey ? const Color(0xFF8FA09A) : null);
+                }),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -903,10 +905,7 @@ class CountdownScreenState extends State<CountdownScreen> {
                             ? const Color(0xFF3E8E6D)
                             : const Color(0xFF24382F))),
                 const SizedBox(height: 1),
-                Text(
-                  hasEvent ? icon : '',
-                  style: const TextStyle(fontSize: 9, height: 1.0),
-                ),
+                EntryIcon(hasEvent ? icon : '', size: 10),
               ],
             ),
           ),

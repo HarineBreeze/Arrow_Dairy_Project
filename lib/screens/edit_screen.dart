@@ -17,6 +17,7 @@ import '../widgets/save_done_button.dart';
 import '../widgets/save_bar.dart';
 import '../widgets/wheel_picker.dart';
 import '../utils/todo_text.dart';
+import '../widgets/entry_icon.dart';
 
 class EditScreen extends StatefulWidget {
   final DiaryEntry? entry;
@@ -1344,7 +1345,9 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                   : const Color(0xFFE4F2EB),
             ),
           ),
-          child: Text(o, style: const TextStyle(fontSize: 15)),
+          child: isMore
+              ? const Text('...', style: TextStyle(fontSize: 15))
+              : EntryIcon(o, size: 16),
         ),
       );
     }
@@ -1399,7 +1402,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                       onSelect(o);
                       Navigator.pop(ctx);
                     },
-                    child: Text(o, style: const TextStyle(fontSize: 30)),
+                    child: EntryIcon(o, size: 28),
                   );
                 }).toList(),
               ),

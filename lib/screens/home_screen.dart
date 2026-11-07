@@ -30,6 +30,7 @@ import '../widgets/countdown_banner.dart';
 import '../widgets/loading_skeleton.dart';
 import '../widgets/empty_state.dart';
 import '../utils/menu_gesture_gate.dart';
+import '../widgets/entry_icon.dart';
 
 const Color kPrimaryBlue = Color(0xFF3E8E6D);
 const Color kLightBlue = Color(0xFFE4F2EB);
@@ -236,7 +237,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       AppToast.show(
           context,
           list.firstWhere((e) => e.id == entry.id).pinned
-              ? '已置顶该笔记 📌'
+              ? '已置顶该笔记'
               : '已取消置顶');
       _load();
     } else if (action == 'edit') {
@@ -1045,7 +1046,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                   entry: e,
                                   isPinned: e.pinned,
                                   onTap: () => _openNote(e),
-                                  onDelete: () => _delete(e),
                                 ),
                               ),
                             );
@@ -1079,7 +1079,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                         entry: e,
                                         isPinned: e.pinned,
                                         onTap: () => _openNote(e),
-                                        onDelete: () => _delete(e),
                                       ),
                                     ),
                                   ),
@@ -1791,11 +1790,7 @@ class _PinnedMiniCard extends StatelessWidget {
                           if (encrypted)
                             const Icon(Icons.lock, size: 10, color: kTextLight)
                           else
-                            Text(
-                              entry.mood,
-                              maxLines: 1,
-                              style: const TextStyle(fontSize: 9.5),
-                            ),
+                            EntryIcon(entry.mood, size: 10),
                         ],
                       ),
                     ],
@@ -1903,7 +1898,7 @@ class _DayCell extends StatelessWidget {
             ),
             // 日历小心情：有日记的当日在日期下显示第一篇笔记的心情
             if (mood != null && mood!.isNotEmpty)
-              Text(mood!, style: const TextStyle(fontSize: 8, height: 1.0)),
+              EntryIcon(mood!, size: 9),
           ],
         ),
       ),
@@ -1914,14 +1909,12 @@ class _DayCell extends StatelessWidget {
 class _DiaryCard extends StatelessWidget {
   final DiaryEntry entry;
   final VoidCallback onTap;
-  final VoidCallback onDelete;
   final bool isPinned;
 
   const _DiaryCard({
     Key? key,
     required this.entry,
     required this.onTap,
-    required this.onDelete,
     this.isPinned = false,
   }) : super(key: key);
 
@@ -2024,10 +2017,9 @@ class _DiaryCard extends StatelessWidget {
                       const SizedBox(height: 5),
                       Row(
                         children: [
-                          Text(entry.mood, style: const TextStyle(fontSize: 14)),
+                          EntryIcon(entry.mood, size: 14),
                           const SizedBox(width: 4),
-                          Text(entry.weather,
-                              style: const TextStyle(fontSize: 12)),
+                          EntryIcon(entry.weather, size: 13),
                           const SizedBox(width: 6),
                           Text(_timeLabel(entry.createdAt),
                               style: const TextStyle(
@@ -2048,14 +2040,6 @@ class _DiaryCard extends StatelessWidget {
                             ),
                           ],
                           const Spacer(),
-                          GestureDetector(
-                            onTap: onDelete,
-                            child: const Icon(
-                              Icons.delete_outline,
-                              size: 18,
-                              color: kTextLight,
-                            ),
-                          ),
                         ],
                       ),
                     ],

@@ -6,6 +6,7 @@ import '../widgets/unsaved_guard.dart';
 import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
 import '../widgets/save_done_button.dart';
+import '../widgets/entry_icon.dart';
 
 /// 新增 / 编辑资产卡片。
 class AssetEditScreen extends StatefulWidget {
@@ -417,7 +418,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
           child: isMore
               ? const Icon(Icons.more_horiz,
                   size: 22, color: Color(0xFF647A70))
-              : Text(icon!, style: const TextStyle(fontSize: 22)),
+              : EntryIcon(icon!, size: 22),
         ),
       ),
     );
@@ -472,8 +473,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                                 width: 1.5,
                               ),
                             ),
-                            child: Text(e,
-                                style: const TextStyle(fontSize: 24)),
+                            child: EntryIcon(e, size: 24),
                           ),
                         );
                       }).toList(),

@@ -11,6 +11,7 @@ import '../widgets/loading_skeleton.dart';
 import 'item_edit_screen.dart';
 import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
+import '../widgets/entry_icon.dart';
 
 enum _ItemFilter { all, owning, lost, wishlist }
 
@@ -188,7 +189,7 @@ class ItemListScreenState extends State<ItemListScreen> {
       it.acquiredDate = DateTime.now();
       await ItemStorage.save(list);
       if (!mounted) return;
-      AppToast.show(context, '🎉 攒钱完成，「${it.name}」已加入拥有中！');
+      AppToast.show(context, '攒钱完成，「${it.name}」已加入拥有中！');
       _load();
       return;
     }
@@ -773,7 +774,7 @@ class _ItemCardState extends State<_ItemCard> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(item.icon, style: const TextStyle(fontSize: 40)),
+              EntryIcon(item.icon, size: 40),
               const SizedBox(height: 6),
               Text(
                 item.name,
@@ -798,11 +799,11 @@ class _ItemCardState extends State<_ItemCard> {
             ],
           ),
         ),
-        // 左上角 ❤️
-        const Positioned(
+        // 左上角 ❤️（Lucide 细线心形，主题红）
+        Positioned(
           top: 8,
           left: 10,
-          child: Text('❤️', style: TextStyle(fontSize: 13)),
+          child: EntryIcon('❤️', size: 13, color: Color(0xFFE0576A)),
         ),
         // 右上角物品总价
         Positioned(
@@ -876,7 +877,7 @@ class _ItemCardState extends State<_ItemCard> {
             children: [
               Opacity(
                 opacity: lost ? 0.5 : 1,
-                child: Text(item.icon, style: const TextStyle(fontSize: 40)),
+                child: EntryIcon(item.icon, size: 40),
               ),
               const SizedBox(height: 8),
               Text(

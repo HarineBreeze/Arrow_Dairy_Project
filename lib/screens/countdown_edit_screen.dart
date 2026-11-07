@@ -8,6 +8,7 @@ import '../widgets/pressable.dart';
 import '../widgets/save_done_button.dart';
 import '../widgets/save_bar.dart';
 import '../widgets/wheel_picker.dart';
+import '../widgets/entry_icon.dart';
 
 /// 新增 / 编辑事件。
 class CountdownEditScreen extends StatefulWidget {
@@ -677,7 +678,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
           child: isMore
               ? const Icon(Icons.more_horiz,
                   size: 22, color: Color(0xFF647A70))
-              : Text(icon!, style: const TextStyle(fontSize: 22)),
+              : EntryIcon(icon!, size: 22),
         ),
       ),
     );
@@ -729,7 +730,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                             width: 1.5,
                           ),
                         ),
-                        child: Text(e, style: const TextStyle(fontSize: 24)),
+                        child: EntryIcon(e, size: 24),
                       ),
                     );
                   }).toList(),

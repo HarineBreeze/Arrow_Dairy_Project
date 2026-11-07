@@ -8,6 +8,7 @@ import '../services/asset_storage.dart';
 import '../services/trash_storage.dart';
 import '../utils/usable_days.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/entry_icon.dart';
 import '../widgets/loading_skeleton.dart';
 import 'asset_edit_screen.dart';
 import 'usable_days_settings_sheet.dart';
@@ -522,10 +523,12 @@ class AssetScreenState extends State<AssetScreen> {
               // 不加描边：仅靠少量阴影给出「浮起」层次，
               // 避免深色边框在浅色背景上被读成「黑框」
               boxShadow: const [
+                // 长按拖动时的阴影：大幅减淡，只保留一丝下阴影
+                // （原来 0x1A + blur6 在拖动中像「深色背板」，喧宾夺主）
                 BoxShadow(
-                  color: Color(0x1A24382F),
-                  blurRadius: 6,
-                  offset: Offset(0, 2),
+                  color: Color(0x0A24382F),
+                  blurRadius: 4,
+                  offset: Offset(0, 1),
                 ),
               ],
             ),
@@ -859,8 +862,8 @@ class AssetScreenState extends State<AssetScreen> {
           Row(
             children: [
               _statItem('总资产', _totalAssets, Colors.white),
-              // 负资产红与预览卡片负金额红同步（0xFFE06A6A）
-              _statItem('负资产', _totalDebt, const Color(0xFFE06A6A)),
+              // 负资产红：#CB5C50 主题深红（绿底上比 #E06A6A 更接近卡片负金额红的观感）
+              _statItem('负资产', _totalDebt, const Color(0xFFCB5C50)),
               _statItem('现金流', _cashFlow, Colors.white),
               _statItem('理财资产', _investTotal, Colors.white),
             ],
@@ -1235,7 +1238,7 @@ class AssetScreenState extends State<AssetScreen> {
               width: 46,
               height: 46,
               child: Center(
-                child: Text(a.icon, style: const TextStyle(fontSize: 24)),
+                child: EntryIcon(a.icon, size: 24),
               ),
             ),
             const SizedBox(width: 12),

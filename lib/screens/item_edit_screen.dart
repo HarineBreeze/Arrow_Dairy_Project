@@ -9,12 +9,13 @@ import '../widgets/pressable.dart';
 import '../widgets/save_done_button.dart';
 import '../widgets/save_bar.dart';
 import '../widgets/wheel_picker.dart';
+import '../widgets/entry_icon.dart';
 
 const List<String> kCategories = ['数码设备', '衣物', '配饰', '家具'];
 const Map<String, List<String>> kCategoryIcons = {
   '数码设备': ['📱', '💻', '📷', '🎧', '⌚', '🖥️', '🎮'],
-  '衣物': ['👕', '👖', '👗', '🧥', '👟', '🧢', '👔'],
-  '配饰': ['💍', '👜', '🕶️', '🧣', '🎒', '🕐', '👓'],
+  '衣物': ['👕', '👟', '🎒', '👓', '⌚', '👜', '💍'],
+  '配饰': ['💍', '👜', '🕶️', '🕐', '👓', '⌚', '🎒'],
   '家具': ['🛋️', '🛏️', '💡', '🪑', '🚪', '📺', '🪴'],
 };
 const List<String> kFallbackIcons = ['📱', '💻', '📷', '🎧', '⌚', '🖥️', '🎮'];
@@ -729,13 +730,11 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
             color: sel ? _accent : const Color(0xFFE8EDF5),
           ),
         ),
-        child: Text(
-          value,
-          style: TextStyle(
-            fontSize: isCustom ? 18 : 18,
-            color: isCustom ? const Color(0xFF8FA09A) : null,
-          ),
-        ),
+        child: isCustom
+            // 自定义入口（…）保持灰色文本；预设值走 Lucide 细线图标
+            ? const Text('…',
+                style: TextStyle(fontSize: 18, color: Color(0xFF8FA09A)))
+            : EntryIcon(value, size: 18),
       ),
     );
   }
