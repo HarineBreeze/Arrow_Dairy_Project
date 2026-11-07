@@ -115,9 +115,11 @@ void main() {
     await tester.pumpWidget(host(UserProfile(nickname: '小明')));
     await tester.pump();
 
-    for (final label in ['全局搜索', '写日记', '物品清单', '重要事件', '资产全景', '回收站', '设置']) {
+    for (final label in ['全局搜索', '写日记', '物品清单', '重要事件', '资产全景', '回收站']) {
       expect(find.text(label), findsOneWidget, reason: '缺少导航项 $label');
     }
+    // 设置项只保留图标，不再显示「设置」文字
+    expect(find.text('设置'), findsNothing, reason: '设置项文字应已移除');
 
     // 6 个导航 + settings + chevR = 8 个
     expect(find.byType(AppIcon), findsNWidgets(8));
@@ -135,22 +137,21 @@ void main() {
       expect(tester.takeException(), isNull, reason: 'tab=$tab 渲染异常');
     }
   });
-  testWidgets('设置项图标与文字和上方导航项左对齐', (tester) async {
+  testWidgets('设置项仅保留图标，图标与上方导航项图标左对齐', (tester) async {
     await tester.binding.setSurfaceSize(const Size(400, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(host(UserProfile(nickname: '小明')));
     await tester.pump();
 
-    // 导航项与设置项内部结构一致（16 + 图标22 + 12 + 文字）；
-    // 若外层 padding 不同，文字左缘就会出现 12px 的差值
-    final trashTextRect = tester.getRect(find.text('回收站'));
-    final settingsTextRect = tester.getRect(find.text('设置'));
+    // 设置项文字已移除，只剩图标（+ 右箭头）
+    expect(find.text('设置'), findsNothing, reason: '设置项不应再有文字');
 
-    expect(settingsTextRect.left, closeTo(trashTextRect.left, 0.5),
-        reason: '设置项文字应与导航项文字左对齐');
-    expect(settingsTextRect.height, closeTo(trashTextRect.height, 0.5),
-        reason: '字号应一致（同为 15）');
+    // 设置图标与导航项图标左缘对齐：外层 padding 若不同就会出现 12px 差值
+    final trashIconRect = tester.getRect(find.byType(AppIcon).at(5));
+    final settingsIconRect = tester.getRect(find.byType(AppIcon).at(6));
+    expect(settingsIconRect.left, closeTo(trashIconRect.left, 0.5),
+        reason: '设置项图标应与导航项图标左对齐');
   });
 
 }

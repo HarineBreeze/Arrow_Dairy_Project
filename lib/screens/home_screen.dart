@@ -1113,8 +1113,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildViewBar() {
-    final keys = ['month', 'year', 'all'];
-    final labels = ['按月', '按年', '全部'];
+    final keys = ['all', 'month', 'year'];
+    final labels = ['全部', '按月', '按年'];
     final index = keys.indexOf(_viewMode);
     return LayoutBuilder(
       builder: (context, constraints) {

@@ -17,29 +17,8 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  int _diaryCount = 0;
-  int _itemCount = 0;
-  int _assetCount = 0;
-  int _countdownCount = 0;
   bool _exporting = false;
   bool _importing = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadStats();
-  }
-
-  Future<void> _loadStats() async {
-    final data = await BackupService.collect();
-    if (!mounted) return;
-    setState(() {
-      _diaryCount = data.entries.length;
-      _itemCount = data.items.length;
-      _assetCount = data.assets.length;
-      _countdownCount = data.countdowns.length;
-    });
-  }
 
   Future<void> _export() async {
     setState(() => _exporting = true);
@@ -119,7 +98,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
         setState(() => _importing = true);
         await BackupService.applyBackup(data);
-        await _loadStats();
         if (!mounted) return;
         setState(() => _importing = false);
         AppToast.show(
@@ -133,7 +111,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       // 增添合并：保留现有数据，只补充备份中多出来的条目
       setState(() => _importing = true);
       final merged = await BackupService.mergeBackup(data);
-      await _loadStats();
       if (!mounted) return;
       setState(() => _importing = false);
       AppToast.show(
@@ -300,22 +277,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   child: Column(
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.inventory_outlined,
-                                size: 16, color: Color(0xFF8FA09A)),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                  '当前数据：$_diaryCount 条笔记 · $_itemCount 件物资 · $_assetCount 笔资产 · $_countdownCount 个事件',
-                                  style: const TextStyle(
-                                      fontSize: 12, color: Color(0xFF8FA09A))),
-                            ),
-                          ],
-                        ),
-                      ),
                       _buildItem(
                         icon: Icons.ios_share,
                         iconColor: const Color(0xFF3E8E6D),

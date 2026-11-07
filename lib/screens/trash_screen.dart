@@ -310,9 +310,8 @@ class TrashScreenState extends State<TrashScreen> {
   /// 收纳栏：全部 / 笔记 / 物品 / 事件 / 资产（与全局搜索同款横滑胶囊）
   Widget _buildFilterBar() {
     final cats = <_Cat>[
-      _Cat('全部', _entries.length, Icons.all_inbox_outlined, null),
-      for (final k in TrashKind.values)
-        _Cat(k.label, _countOf(k), _iconOf(k), k),
+      _Cat('全部', _entries.length, null),
+      for (final k in TrashKind.values) _Cat(k.label, _countOf(k), k),
     ];
     return SizedBox(
       height: 52,
@@ -343,27 +342,16 @@ class TrashScreenState extends State<TrashScreen> {
                         ? const Color(0xB33E8E6D)
                         : const Color(0xFFE8EDF5)),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(c.icon,
-                      size: 14,
-                      color: selected
-                          ? Colors.white
-                          : (disabled
-                              ? const Color(0xFFC6D6CD)
-                              : const Color(0xFF3E8E6D))),
-                  const SizedBox(width: 5),
-                  Text('${c.name} ${c.count}',
-                      style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: selected
-                              ? Colors.white
-                              : (disabled
-                                  ? const Color(0xFFC6D6CD)
-                                  : const Color(0xFF24382F)))),
-                ],
+              child: Center(
+                child: Text('${c.name} ${c.count}',
+                    style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: selected
+                            ? Colors.white
+                            : (disabled
+                                ? const Color(0xFFC6D6CD)
+                                : const Color(0xFF24382F)))),
               ),
             ),
           );
@@ -555,7 +543,6 @@ class TrashScreenState extends State<TrashScreen> {
 class _Cat {
   final String name;
   final int count;
-  final IconData icon;
   final TrashKind? kind;
-  const _Cat(this.name, this.count, this.icon, this.kind);
+  const _Cat(this.name, this.count, this.kind);
 }

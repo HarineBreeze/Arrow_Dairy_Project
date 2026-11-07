@@ -252,14 +252,6 @@ class SideMenu extends StatelessWidget {
               children: const [
                 SizedBox(width: 16),
                 AppIcon(AppIcons.settings, size: 22, color: Color(0xFF647A70)),
-                SizedBox(width: 12),
-                Text(
-                  '设置',
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Color(0xFF24382F),
-                  ),
-                ),
                 Spacer(),
                 AppIcon(AppIcons.chevR, size: 20, color: Color(0xFFC6D6CD)),
                 SizedBox(width: 12),
