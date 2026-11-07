@@ -13,6 +13,7 @@ import 'package:ayodiray/utils/app_toast.dart';
 
 void main() {
   setUp(AppToast.resetForTest);
+  tearDown(AppToast.resetForTest); // 取消自动收回 timer / 关闭抽屉
 
   /// 编辑页内容较长，默认 800×600 会把「完成」按钮挤出屏幕
   Future<void> openEditor(WidgetTester tester, {Asset? asset}) async {
@@ -22,9 +23,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  int snackCount(WidgetTester tester) => tester
-      .widgetList(find.byType(SnackBar, skipOffstage: false))
-      .length;
+  // AppToast 已改为模态底部抽屉：用文案断言代替 SnackBar 计数
 
   testWidgets('金额为空点完成：提示必填且不返回（不保存）', (tester) async {
     await openEditor(tester);
@@ -34,9 +33,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 120));
 
     expect(find.text('请输入资产金额'), findsOneWidget);
-    expect(snackCount(tester), 1);
     // 页面没有 pop：说明保存流程被拦下了
     expect(find.byType(AssetEditScreen), findsOneWidget);
+    // 等提示抽屉自动收回，清掉测试时钟里的 pending timer
+    await tester.pump(const Duration(milliseconds: 1800));
+    await tester.pump(const Duration(milliseconds: 400));
   });
 
   testWidgets('金额分区标出必填星号', (tester) async {
@@ -55,6 +56,9 @@ void main() {
 
     expect(find.text('请输入正确的金额'), findsOneWidget);
     expect(find.byType(AssetEditScreen), findsOneWidget);
+    // 等提示抽屉自动收回，清掉测试时钟里的 pending timer
+    await tester.pump(const Duration(milliseconds: 1800));
+    await tester.pump(const Duration(milliseconds: 400));
   });
 
   testWidgets('金额为 0：提示「金额不能为 0」', (tester) async {
@@ -67,6 +71,9 @@ void main() {
 
     expect(find.text('金额不能为 0'), findsOneWidget);
     expect(find.byType(AssetEditScreen), findsOneWidget);
+    // 等提示抽屉自动收回，清掉测试时钟里的 pending timer
+    await tester.pump(const Duration(milliseconds: 1800));
+    await tester.pump(const Duration(milliseconds: 400));
   });
 
   testWidgets('填了合法金额：校验放行，进入保存流程', (tester) async {
@@ -77,7 +84,8 @@ void main() {
     await tester.tap(find.text('完成'));
     await tester.pump(const Duration(milliseconds: 120));
 
-    expect(snackCount(tester), 0, reason: '校验通过不应弹提示');
+    expect(find.text('金额不能为空'), findsNothing,
+        reason: '校验通过不应弹提示');
     // 按钮进入收缩动画后「完成」文字淡出，证明保存流程已启动
     expect(find.byType(AssetEditScreen), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 400));
@@ -108,5 +116,8 @@ void main() {
 
     expect(find.text('请输入资产金额'), findsOneWidget);
     expect(find.byType(AssetEditScreen), findsOneWidget);
+    // 等提示抽屉自动收回，清掉测试时钟里的 pending timer
+    await tester.pump(const Duration(milliseconds: 1800));
+    await tester.pump(const Duration(milliseconds: 400));
   });
 }

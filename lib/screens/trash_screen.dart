@@ -204,9 +204,6 @@ class TrashScreenState extends State<TrashScreen> {
 
   /// 顶栏：与其它主页同款（高 48、0xB3 蓝、三横杠）
   Widget _buildTopBar() {
-    final subtitle = _entries.isEmpty
-        ? ''
-        : '${_entries.length} 项 · 最长保留 7 天';
     return Container(
       height: 48,
       color: const Color(0xB33E8E6D),
@@ -224,20 +221,7 @@ class TrashScreenState extends State<TrashScreen> {
                 fontWeight: FontWeight.w600,
                 color: Colors.white),
           ),
-          const SizedBox(width: 8),
-          if (subtitle.isNotEmpty)
-            Expanded(
-              child: Text(
-                subtitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                    fontSize: 11.5,
-                    color: Colors.white.withOpacity(0.85)),
-              ),
-            )
-          else
-            const Spacer(),
+          const Spacer(),
           if (_entries.isNotEmpty)
             IconButton(
               tooltip: '清空',
@@ -409,7 +393,6 @@ class TrashScreenState extends State<TrashScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE8EDF5)),
       ),
       child: Column(
         children: [
@@ -417,16 +400,13 @@ class TrashScreenState extends State<TrashScreen> {
             padding: const EdgeInsets.fromLTRB(14, 11, 10, 11),
             child: Row(
               children: [
-                Container(
+                SizedBox(
                   width: 38,
                   height: 38,
-                  decoration: BoxDecoration(
-                    color: _bgOf(e.kind),
-                    borderRadius: BorderRadius.circular(10),
+                  child: Center(
+                    child: Icon(_iconOf(e.kind),
+                        size: 22, color: _fgOf(e.kind)),
                   ),
-                  alignment: Alignment.center,
-                  child: Icon(_iconOf(e.kind),
-                      size: 18, color: _fgOf(e.kind)),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -477,24 +457,14 @@ class TrashScreenState extends State<TrashScreen> {
                 ),
                 const SizedBox(width: 8),
                 // 剩余天数
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: urgent
-                        ? const Color(0xFFFBEEE9)
-                        : const Color(0xFFF5FAF7),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    left <= 1 ? '今天到期' : '$left 天后消失',
-                    style: TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w600,
-                        color: urgent
-                            ? const Color(0xFFF08C3A)
-                            : const Color(0xFF7C8F86)),
-                  ),
+                Text(
+                  left <= 1 ? '今天到期' : '$left 天后消失',
+                  style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w600,
+                      color: urgent
+                          ? const Color(0xFFF08C3A)
+                          : const Color(0xFF7C8F86)),
                 ),
               ],
             ),

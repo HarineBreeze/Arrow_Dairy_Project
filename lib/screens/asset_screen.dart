@@ -822,17 +822,19 @@ class AssetScreenState extends State<AssetScreen> {
   Widget _buildNetWorthCard() {
     final net = _netWorth;
     return Container(
-      // 顶部 16 → 24：红框内容（标题、数字、统计行）整体下移，
-      // 顶部留白与底部（18px）视觉一致 —— 之前内容顶得太靠上。
-      // 底部与内部间距不动，让卡片自然长高。
+      // 白底黑字（与资产细分卡同款观感）：白底 + 轻投影 + 顶部 16 → 24
+      // 内容整体下移，底部留白（18px）与上方视觉一致。
       padding: const EdgeInsets.fromLTRB(18, 24, 18, 18),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF3E8E6D), Color(0xFF5CA985)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0F24382F),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -861,11 +863,11 @@ class AssetScreenState extends State<AssetScreen> {
           const SizedBox(height: 20),
           Row(
             children: [
-              _statItem('总资产', _totalAssets, Colors.white),
-              // 负资产红：#CB5C50 主题深红（绿底上比 #E06A6A 更接近卡片负金额红的观感）
+              _statItem('总资产', _totalAssets, const Color(0xFF24382F)),
+              // 负资产红：#CB5C50 主题深红（与预览卡片负金额红一致）
               _statItem('负资产', _totalDebt, const Color(0xFFCB5C50)),
-              _statItem('现金流', _cashFlow, Colors.white),
-              _statItem('理财资产', _investTotal, Colors.white),
+              _statItem('现金流', _cashFlow, const Color(0xFF24382F)),
+              _statItem('理财资产', _investTotal, const Color(0xFF24382F)),
             ],
           ),
           // 正/负资产结构条（绿=正资产，红=负资产），无文字标注
@@ -923,7 +925,7 @@ class AssetScreenState extends State<AssetScreen> {
             textBaseline: TextBaseline.alphabetic,
             children: [
               const Text('净资产',
-                  style: TextStyle(fontSize: 13, color: Colors.white70)),
+                  style: TextStyle(fontSize: 13, color: Color(0xFF647A70))),
               const SizedBox(width: 4),
               // 隐藏/显示看板数字（默认显示）
               GestureDetector(
@@ -940,7 +942,7 @@ class AssetScreenState extends State<AssetScreen> {
                         ? Icons.visibility_off_outlined
                         : Icons.visibility_outlined,
                     size: 15,
-                    color: Colors.white70,
+                    color: const Color(0xFF8FA09A),
                   ),
                   baseline: 11,
                 ),
@@ -958,7 +960,7 @@ class AssetScreenState extends State<AssetScreen> {
             style: const TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.w700,
-                color: Colors.white,
+                color: Color(0xFF24382F),
                 height: 1.15),
           ),
         ),
@@ -993,7 +995,7 @@ class AssetScreenState extends State<AssetScreen> {
             textBaseline: TextBaseline.alphabetic,
             children: [
               const Text('可使用',
-                  style: TextStyle(fontSize: 13, color: Colors.white70)),
+                  style: TextStyle(fontSize: 13, color: Color(0xFF647A70))),
               const SizedBox(width: 2),
               // 圈叹号：进入参数设置。始终显示，否则算不出数时用户
               // 找不到入口，只会看到一块空白。
@@ -1029,7 +1031,7 @@ class AssetScreenState extends State<AssetScreen> {
                           height: 12,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white70, width: 1),
+                            border: Border.all(color: const Color(0xFF8FA09A), width: 1),
                           ),
                           alignment: Alignment.center,
                           child: const Text(
@@ -1038,7 +1040,7 @@ class AssetScreenState extends State<AssetScreen> {
                               fontSize: 8,
                               height: 1,
                               fontWeight: FontWeight.w700,
-                              color: Colors.white70,
+                              color: Color(0xFF8FA09A),
                             ),
                           ),
                         ),
@@ -1065,7 +1067,7 @@ class AssetScreenState extends State<AssetScreen> {
                       style: const TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.w700,
-                          color: Colors.white,
+                          color: Color(0xFF24382F),
                           height: 1.15),
                     ),
                     if (!_hideNumbers)
@@ -1076,7 +1078,7 @@ class AssetScreenState extends State<AssetScreen> {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: Colors.white70,
+                            color: Color(0xFF647A70),
                           ),
                         ),
                       ),
@@ -1088,7 +1090,7 @@ class AssetScreenState extends State<AssetScreen> {
                   style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.w700,
-                      color: Colors.white54,
+                      color: Color(0xFFC2CFC8),
                       height: 1.15),
                 ),
         ),
@@ -1109,7 +1111,7 @@ class AssetScreenState extends State<AssetScreen> {
         height: 7,
         width: double.infinity,
         child: total <= 0
-            ? const ColoredBox(color: Color(0x40FFFFFF))
+            ? const ColoredBox(color: Color(0x140F2E1F))
             : Row(
                 children: [
                   if (pos > 0)
@@ -1144,7 +1146,7 @@ class AssetScreenState extends State<AssetScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label,
-              style: const TextStyle(fontSize: 11, color: Colors.white70),
+              style: const TextStyle(fontSize: 11, color: Color(0xFF8FA09A)),
               maxLines: 1,
               overflow: TextOverflow.ellipsis),
           const SizedBox(height: 2),

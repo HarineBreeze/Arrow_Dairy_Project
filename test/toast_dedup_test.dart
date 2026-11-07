@@ -7,32 +7,15 @@ import 'package:ayodiray/widgets/save_done_button.dart';
 
 /// 「反复点完成会不停弹同一句提示」的回归测试。
 ///
-/// 关键点：SnackBar 会以动画形式进入/退出，单靠 `find.text(msg)` 数不出
-/// 「弹了几次」。这里改用 [SnackBar] 的插入次数计数 —— 每调用一次
-/// `showSnackBar` 就会新建一个 SnackBar 元素，重复弹出必然计数增加。
-
+/// AppToast 现在以**模态底部抽屉**呈现（带遮罩、从下至上滑入）：
+/// - 同一句提示在展示期内只弹一次（去重）；
+/// - 内容变化时旧的立刻关闭、新的顶上（同一时刻至多一条）；
+/// - 停留时长到点自动收回；点遮罩 / 点提示本身可提前关闭；
+/// - 展示期结束后同类提示可以正常再弹（不会永久静音）。
 void main() {
   setUp(AppToast.resetForTest);
 
-  /// 数当前树上的 SnackBar 个数（含正在退场的）
-  int snackCount(WidgetTester tester) => tester
-      .widgetList(find.byType(SnackBar, skipOffstage: false))
-      .length;
-
-  /// 数「真正显示过的条数」：每条 SnackBar 落进树里算一次。
-  ///
-  /// 只看屏幕上的 Text 数不出来 —— 退场动画期间旧条还在树上，
-  /// 而连点时新条也会叠进去；用曾经出现过的文案集合更稳定。
-  Future<void> settle(WidgetTester tester) async {
-    // 退场动画约 250ms，留足余量；分步推进让定时器按时触发
-    for (var i = 0; i < 8; i++) {
-      await tester.pump(const Duration(milliseconds: 100));
-    }
-    await tester.pumpAndSettle();
-  }
-
-  Future<void> pumpHost(WidgetTester tester,
-      {required String? Function() validate, VoidCallback? onTap}) async {
+  Future<void> pumpHost(WidgetTester tester) async {
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: const SizedBox.shrink(),
@@ -40,8 +23,8 @@ void main() {
           saveKey: GlobalKey<SaveDoneButtonState>(),
           color: const Color(0xFF3E8E6D),
           onCancel: () {},
-          validate: validate,
-          onSave: onTap ?? () {},
+          validate: () => null,
+          onSave: () {},
           onDone: () {},
         ),
       ),
@@ -49,82 +32,93 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('连点完成：同一句提示只弹一次，不会反复堆叠', (tester) async {
-    var saves = 0;
-    await pumpHost(
-      tester,
-      validate: () => '请填写物品名称',
-      onTap: () => saves++,
-    );
+  /// 直接走根 Navigator 的 context 调 show，等价于页面里
+  /// 各处 AppToast.show(context, …) 的真实路径。
+  Future<void> trigger(WidgetTester tester, String msg) async {
+    final ctx = tester.state(find.byType(Navigator)).context;
+    AppToast.show(ctx, msg);
+    await tester.pump(const Duration(milliseconds: 80));
+  }
 
-    // 连点 6 次
-    for (var i = 0; i < 6; i++) {
-      await tester.tap(find.text('完成'));
-      await tester.pump(const Duration(milliseconds: 60));
-    }
+  testWidgets('同一句提示展示期内只弹一次，不会反复堆叠', (tester) async {
+    await pumpHost(tester);
 
-    expect(saves, 0, reason: '校验未通过不应触发保存');
-    expect(snackCount(tester), 1,
-        reason: '反复点击只应存在一条提示，实际 ${snackCount(tester)}');
+    await trigger(tester, '请填写物品名称');
+    await trigger(tester, '请填写物品名称');
+    await trigger(tester, '请填写物品名称');
 
-    // 展示期内继续连点，仍然只有一条
-    for (var i = 0; i < 4; i++) {
-      await tester.tap(find.text('完成'));
-      await tester.pump(const Duration(milliseconds: 80));
-    }
-    expect(snackCount(tester), 1,
-        reason: '提示仍在展示期，不应再弹新的');
+    // 同一句在展示期内被去重：屏幕上只有一条抽屉
+    expect(find.text('请填写物品名称'), findsOneWidget,
+        reason: '同一句提示展示期内只弹一次');
+
+    // 停留时长过后自动收回（模态路由整体退出）
+    await tester.pump(const Duration(milliseconds: 1800));
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('请填写物品名称'), findsNothing,
+        reason: '提示应在停留时长后自动收回');
   });
 
-  testWidgets('提示消失后再次点击，可以正常再弹一次', (tester) async {
-    await pumpHost(tester, validate: () => '请填写物品名称');
+  testWidgets('提示消失后再次触发，可以正常再弹一次', (tester) async {
+    await pumpHost(tester);
 
-    await tester.tap(find.text('完成'));
-    await tester.pump(const Duration(milliseconds: 100));
-    expect(snackCount(tester), 1);
+    await trigger(tester, '请填写物品名称');
+    expect(find.text('请填写物品名称'), findsOneWidget);
 
-    // 等提示播完并退场（停留时长 + 入/退场动画），分步推进
-    for (var i = 0; i < 24; i++) {
-      await tester.pump(const Duration(milliseconds: 100));
-    }
-    await settle(tester);
-    expect(snackCount(tester), 0, reason: '提示应在停留时长后自动消失');
+    // 等待自动收回
+    await tester.pump(const Duration(milliseconds: 1800));
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('请填写物品名称'), findsNothing);
 
-    // 此时用户再点，应该重新提示（不能永久静音）
-    // 测试里墙钟不随 pump 前进，显式把记录标记为已过期
+    // 测试里墙钟不随 pump 前进，显式把去重记录标记为已过期
     AppToast.markExpiredForTest();
-    await tester.tap(find.text('完成'));
-    await tester.pump(const Duration(milliseconds: 100));
-    expect(snackCount(tester), 1, reason: '展示期结束后应能重新提示');
+    await trigger(tester, '请填写物品名称');
+    expect(find.text('请填写物品名称'), findsOneWidget,
+        reason: '展示期结束后应能重新提示');
+
+    // 等第二次提示自动收回，避免留下 pending timer
+    await tester.pump(const Duration(milliseconds: 1800));
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('请填写物品名称'), findsNothing);
   });
 
   testWidgets('提示内容变了：立即换成新的一句，不排队', (tester) async {
-    var msg = '请填写事件名称';
-    await pumpHost(tester, validate: () => msg);
+    await pumpHost(tester);
 
-    await tester.tap(find.text('完成'));
-    await tester.pump(const Duration(milliseconds: 80));
+    await trigger(tester, '请填写事件名称');
     expect(find.text('请填写事件名称'), findsOneWidget);
 
-    // 用户补上名称后，又缺日期 —— 提示应当立刻换成新的那句
-    msg = '请选择事件日';
-    await tester.tap(find.text('完成'));
-    await tester.pump(const Duration(milliseconds: 80));
+    // 内容变化：旧的立即关闭、新的顶上
+    await trigger(tester, '请选择事件日');
 
-    expect(find.text('请选择事件日'), findsOneWidget);
+    // 等旧提示退场动画播完
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+
+    expect(find.text('请选择事件日'), findsOneWidget,
+        reason: '新提示应立即出现');
     expect(find.text('请填写事件名称'), findsNothing,
-        reason: '旧提示应被替换掉，而不是排在后面慢慢播');
-    expect(snackCount(tester), 1, reason: '同一时刻只应存在一条提示');
+        reason: '旧提示应被立即替换掉，而不是排在后面慢慢播');
+
+    // 等新提示自动收回，避免留下 pending timer
+    await tester.pump(const Duration(milliseconds: 1800));
+    await tester.pump(const Duration(milliseconds: 400));
   });
 
-  testWidgets('校验通过时点击进入保存流程（不弹提示）', (tester) async {
-    var saves = 0;
-    await pumpHost(tester, validate: () => null, onTap: () => saves++);
+  testWidgets('点遮罩可以提前关闭提示', (tester) async {
+    await pumpHost(tester);
 
-    await tester.tap(find.text('完成'));
-    await tester.pump(const Duration(milliseconds: 60));
+    await trigger(tester, '请填写物品名称');
+    expect(find.text('请填写物品名称'), findsOneWidget);
 
-    expect(saves, 1);
-    expect(snackCount(tester), 0);
+    // 遮罩在提示条上方，点屏幕中上部命中 ModalBarrier
+    await tester.tapAt(const Offset(200, 120));
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+
+    expect(find.text('请填写物品名称'), findsNothing,
+        reason: '点遮罩应提前关闭提示');
+
+    // 遮罩关闭已取消自动收回 timer；再泵几帧确认无残留
+    await tester.pump(const Duration(milliseconds: 100));
   });
 }

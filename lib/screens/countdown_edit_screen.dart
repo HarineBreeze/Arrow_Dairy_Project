@@ -666,9 +666,8 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
           margin: const EdgeInsets.only(right: 6),
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: sel
-                ? const Color(0xFFE4F2EB)
-                : (isMore ? const Color(0xFFEFF5F1) : const Color(0xFFF5FAF7)),
+            // 图标底纹移除：未选中透明，选中保留浅绿强调
+            color: sel ? const Color(0xFFE4F2EB) : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: sel ? const Color(0xFF3E8E6D) : Colors.transparent,
@@ -719,9 +718,10 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                         height: 44,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
+                          // 图标底纹移除：未选中透明，选中保留浅绿强调
                           color: sel
                               ? const Color(0xFFE4F2EB)
-                              : const Color(0xFFF5FAF7),
+                              : Colors.transparent,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
                             color: sel

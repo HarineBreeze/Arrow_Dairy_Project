@@ -396,8 +396,9 @@ class ItemListScreenState extends State<ItemListScreen> {
         if (_loading)
           const Expanded(child: ListSkeleton(count: 4, withAvatar: false))
         else ...[
-          _buildDataView(),
           _buildFilterBar(),
+          const Divider(height: 1, color: Color(0xFFE8EDF5)),
+          _buildDataView(),
           const Divider(height: 1, color: Color(0xFFE8EDF5)),
           Expanded(
             child: RefreshIndicator(
@@ -506,9 +507,10 @@ class ItemListScreenState extends State<ItemListScreen> {
             },
           ),
           // 排序方式（底部弹出选择排序字段），位于顶栏最右侧
+          // 图标与其他主页的筛选按钮统一（filter_list 三条渐变横线）
           IconButton(
             tooltip: '排序方式',
-            icon: const AppIcon(AppIcons.sort, size: 21, color: Colors.white),
+            icon: const Icon(Icons.filter_list, size: 24, color: Colors.white),
             onPressed: _showSortSheet,
           ),
           const SizedBox(width: 4),

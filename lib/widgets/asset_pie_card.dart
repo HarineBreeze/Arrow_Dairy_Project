@@ -736,16 +736,11 @@ class _AssetPieCardState extends State<AssetPieCard>
         children: [
           Row(
             children: const [
-              Icon(Icons.pie_chart_outline, size: 16, color: Color(0xFF3E8E6D)),
-              SizedBox(width: 6),
               Text('资产细分',
                   style: TextStyle(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF24382F))),
-              Spacer(),
-              Text('仅统计金额为正',
-                  style: TextStyle(fontSize: 10.5, color: Color(0xFF8FA09A))),
             ],
           ),
           const SizedBox(height: 10),
