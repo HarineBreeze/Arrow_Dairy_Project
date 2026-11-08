@@ -1,3 +1,4 @@
+import '../widgets/app_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/countdown_event.dart';
@@ -195,8 +196,8 @@ class CountdownScreenState extends State<CountdownScreen> {
           children: [
             const SizedBox(height: 10),
             ListTile(
-              leading: Icon(
-                e.pinned ? Icons.push_pin : Icons.push_pin_outlined,
+              leading: AppIcon(
+                e.pinned ? AppIcons.pinOn : AppIcons.pin,
                 color: const Color(0xFF3E8E6D),
               ),
               title: Text(e.pinned ? '取消置顶' : '置顶'),
@@ -209,7 +210,7 @@ class CountdownScreenState extends State<CountdownScreen> {
             ),
             ListTile(
               leading:
-                  const Icon(Icons.edit_outlined, color: Color(0xFF3E8E6D)),
+                  const AppIcon(AppIcons.edit, color: Color(0xFF3E8E6D)),
               title: const Text('编辑'),
               onTap: () {
                 Navigator.pop(ctx);
@@ -217,8 +218,8 @@ class CountdownScreenState extends State<CountdownScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.delete_outline, color: Colors.red),
-              title: const Text('删除', style: TextStyle(color: Colors.red)),
+              leading: const AppIcon(AppIcons.delete, color: Color(0xFFCB5C50)),
+              title: const Text('删除', style: TextStyle(color: Color(0xFFCB5C50))),
               onTap: () async {
                 Navigator.pop(ctx);
                 final ok = await showDialog<bool>(
@@ -240,7 +241,7 @@ class CountdownScreenState extends State<CountdownScreen> {
                         child: TextButton(
                             onPressed: () => Navigator.pop(c, true),
                             child: const Text('删除',
-                                style: TextStyle(color: Colors.red))),
+                                style: TextStyle(color: Color(0xFFCB5C50)))),
                       ),
                     ],
                   ),
@@ -494,7 +495,7 @@ class CountdownScreenState extends State<CountdownScreen> {
             Text('$count',
                 style: const TextStyle(fontSize: 12, color: Color(0xFF8FA09A))),
             const Spacer(),
-            Icon(expanded ? Icons.expand_less : Icons.expand_more,
+            AppIcon(expanded ? AppIcons.chevU : AppIcons.chevD,
                 size: 20, color: const Color(0xFF8FA09A)),
           ],
         ),
@@ -523,7 +524,7 @@ class CountdownScreenState extends State<CountdownScreen> {
             border: e.pinned
                 ? Border.all(color: const Color(0xFF3E8E6D), width: 1.5)
                 : (loopRed
-                    ? Border.all(color: const Color(0xFFE0576A), width: 1.5)
+                    ? Border.all(color: const Color(0xFFCB5C50), width: 1.5)
                     : null),
           ),
           child: Row(
@@ -588,7 +589,7 @@ class CountdownScreenState extends State<CountdownScreen> {
                         color: grey
                             ? const Color(0xFFB2C2BA)
                             : (e.daysLeft == 0
-                                ? const Color(0xFFE0576A)
+                                ? const Color(0xFFCB5C50)
                                 : const Color(0xFF3E8E6D)),
                       ),
                     ),
@@ -653,7 +654,7 @@ class CountdownScreenState extends State<CountdownScreen> {
               decoration: InputDecoration(
                 hintText: '搜索事件名称…',
                 hintStyle: const TextStyle(color: Color(0xFF8FA09A)),
-                prefixIcon: const Icon(Icons.search,
+                prefixIcon: const AppIcon(AppIcons.search,
                     size: 18, color: Color(0xFF8FA09A)),
                 prefixIconConstraints:
                     const BoxConstraints(minWidth: 32, minHeight: 32),
@@ -695,7 +696,7 @@ class CountdownScreenState extends State<CountdownScreen> {
           Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.menu, color: Colors.white),
+                icon: const AppIcon(AppIcons.menu, color: Colors.white),
                 onPressed: widget.onOpenMenu,
               ),
               // 三条杠旁标出页名，与日记/资产页同一套语言
@@ -708,7 +709,7 @@ class CountdownScreenState extends State<CountdownScreen> {
               ),
               const Spacer(),
               IconButton(
-                icon: Icon(Icons.filter_list,
+                icon: AppIcon(AppIcons.filter,
                     color: _hasFilter ? const Color(0xFFFFD666) : Colors.white),
                 tooltip: '筛选',
                 onPressed: _showFilterSheet,
@@ -729,8 +730,8 @@ class CountdownScreenState extends State<CountdownScreen> {
                           fontWeight: FontWeight.w600,
                           color: Colors.white)),
                   const SizedBox(width: 4),
-                  Icon(
-                    _calendarExpanded ? Icons.expand_less : Icons.expand_more,
+                  AppIcon(
+                    _calendarExpanded ? AppIcons.chevU : AppIcons.chevD,
                     size: 18,
                     color: Colors.white70,
                   ),
@@ -755,7 +756,7 @@ class CountdownScreenState extends State<CountdownScreen> {
             children: [
               // 上一年
               IconButton(
-                icon: const Icon(Icons.keyboard_double_arrow_left,
+                icon: const AppIcon(AppIcons.dblChevL,
                     size: 18, color: Color(0xFF7C8F86)),
                 tooltip: '上一年',
                 visualDensity: VisualDensity.compact,
@@ -766,7 +767,7 @@ class CountdownScreenState extends State<CountdownScreen> {
               ),
               // 上一月
               IconButton(
-                icon: const Icon(Icons.chevron_left, color: Color(0xFF647A70)),
+                icon: const AppIcon(AppIcons.chevL, color: Color(0xFF647A70)),
                 tooltip: '上一月',
                 visualDensity: VisualDensity.compact,
                 padding: EdgeInsets.zero,
@@ -785,7 +786,7 @@ class CountdownScreenState extends State<CountdownScreen> {
               ),
               // 下一月
               IconButton(
-                icon: const Icon(Icons.chevron_right, color: Color(0xFF647A70)),
+                icon: const AppIcon(AppIcons.chevR, color: Color(0xFF647A70)),
                 tooltip: '下一月',
                 visualDensity: VisualDensity.compact,
                 padding: EdgeInsets.zero,
@@ -795,7 +796,7 @@ class CountdownScreenState extends State<CountdownScreen> {
               ),
               // 下一年
               IconButton(
-                icon: const Icon(Icons.keyboard_double_arrow_right,
+                icon: const AppIcon(AppIcons.dblChevR,
                     size: 18, color: Color(0xFF7C8F86)),
                 tooltip: '下一年',
                 visualDensity: VisualDensity.compact,

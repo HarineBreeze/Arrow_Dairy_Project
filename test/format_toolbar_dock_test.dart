@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ayodiray/widgets/format_toolbar.dart';
+import 'package:ayodiray/widgets/app_icons.dart';
 
 /// 模拟编辑页的底部结构：
 ///   Column( Expanded(正文), 工具栏 )  +  bottomNavigationBar(保存栏)
@@ -88,8 +89,10 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(find.byIcon(Icons.check_box_outlined), findsOneWidget);
-    await tester.tap(find.byIcon(Icons.check_box_outlined));
+    final todoBtn = find.byWidgetPredicate(
+        (w) => w is AppIcon && w.path == AppIcons.todo);
+    expect(todoBtn, findsOneWidget);
+    await tester.tap(todoBtn);
     await tester.pumpAndSettle();
     expect(inserted, 1);
   });

@@ -7,6 +7,7 @@ import 'package:path_provider_platform_interface/path_provider_platform_interfac
 import 'package:path_provider_platform_interface/src/method_channel_path_provider.dart';
 
 import 'package:ayodiray/models/countdown_event.dart';
+import 'package:ayodiray/widgets/app_icons.dart';
 import 'package:ayodiray/screens/countdown_edit_screen.dart';
 import 'package:ayodiray/screens/item_list_screen.dart';
 
@@ -196,7 +197,8 @@ void main() {
 
       expect(find.text('物品'), findsOneWidget);
       // 标题在菜单键右侧
-      final menu = tester.getCenter(find.byIcon(Icons.menu));
+      final menu = tester.getCenter(find.byWidgetPredicate(
+          (w) => w is AppIcon && w.path == AppIcons.menu));
       final title = tester.getCenter(find.text('物品'));
       expect(title.dx, greaterThan(menu.dx));
       // 同一行（垂直方向对齐）

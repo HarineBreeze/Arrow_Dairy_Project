@@ -88,13 +88,13 @@ class ItemListScreenState extends State<ItemListScreen> {
             const SizedBox(height: 10),
             ListTile(
               leading:
-                  const Icon(Icons.edit_outlined, color: Color(0xFF3E8E6D)),
+                  const AppIcon(AppIcons.edit, color: Color(0xFF3E8E6D)),
               title: const Text('编辑'),
               onTap: () => Navigator.pop(ctx, 'edit'),
             ),
             ListTile(
-              leading: const Icon(Icons.delete_outline, color: Colors.red),
-              title: const Text('删除', style: TextStyle(color: Colors.red)),
+              leading: const AppIcon(AppIcons.delete, color: Color(0xFFCB5C50)),
+              title: const Text('删除', style: TextStyle(color: Color(0xFFCB5C50))),
               onTap: () => Navigator.pop(ctx, 'delete'),
             ),
             const SizedBox(height: 6),
@@ -126,7 +126,7 @@ class ItemListScreenState extends State<ItemListScreen> {
               enabled: true,
               child: TextButton(
                   onPressed: () => Navigator.pop(c, true),
-                  child: const Text('删除', style: TextStyle(color: Colors.red))),
+                  child: const Text('删除', style: TextStyle(color: Color(0xFFCB5C50)))),
             ),
           ],
         ),
@@ -454,7 +454,7 @@ class ItemListScreenState extends State<ItemListScreen> {
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.menu, color: Colors.white),
+            icon: const AppIcon(AppIcons.menu, color: Colors.white),
             onPressed: widget.onOpenMenu,
           ),
           // 页面标题：与资产全景主页顶栏一致（菜单键右侧、白色 17 号加粗）
@@ -510,7 +510,7 @@ class ItemListScreenState extends State<ItemListScreen> {
           // 图标与其他主页的筛选按钮统一（filter_list 三条渐变横线）
           IconButton(
             tooltip: '排序方式',
-            icon: const Icon(Icons.filter_list, size: 24, color: Colors.white),
+            icon: const AppIcon(AppIcons.filter, size: 24, color: Colors.white),
             onPressed: _showSortSheet,
           ),
           const SizedBox(width: 4),
@@ -563,7 +563,7 @@ class ItemListScreenState extends State<ItemListScreen> {
                       const TextStyle(fontSize: 12, color: Color(0xFF8FA09A)),
                 ),
                 const SizedBox(width: 2),
-                const Icon(Icons.swap_vert, size: 14, color: Color(0xFF8FA09A)),
+                const AppIcon(AppIcons.swapV, size: 14, color: Color(0xFF8FA09A)),
               ],
             ),
           ],
@@ -740,7 +740,7 @@ class _ItemCardState extends State<_ItemCard> {
           borderRadius: BorderRadius.circular(14),
           // 愿望单物品：红色描边
           border: item.wishlist
-              ? Border.all(color: const Color(0xFFE0576A), width: 1.5)
+              ? Border.all(color: const Color(0xFFCB5C50), width: 1.5)
               : null,
         ),
         child: InkWell(
@@ -805,7 +805,7 @@ class _ItemCardState extends State<_ItemCard> {
         Positioned(
           top: 8,
           left: 10,
-          child: EntryIcon('❤️', size: 13, color: Color(0xFFE0576A)),
+          child: EntryIcon('❤️', size: 13, color: Color(0xFFCB5C50)),
         ),
         // 右上角物品总价
         Positioned(

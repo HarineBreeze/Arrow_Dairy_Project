@@ -1,3 +1,4 @@
+import '../widgets/app_icons.dart';
 import 'package:flutter/material.dart';
 import '../models/diary_entry.dart';
 import '../models/item.dart';
@@ -141,7 +142,7 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
             enabled: true,
             child: TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('删除', style: TextStyle(color: Colors.red)),
+              child: const Text('删除', style: TextStyle(color: Color(0xFFCB5C50))),
             ),
           ),
         ],
@@ -178,11 +179,11 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete_outline),
+            icon: const AppIcon(AppIcons.delete),
             onPressed: _delete,
           ),
           IconButton(
-            icon: const Icon(Icons.edit_outlined),
+            icon: const AppIcon(AppIcons.edit),
             onPressed: _openEditor,
           ),
         ],
@@ -275,7 +276,7 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
             child: Row(
               children: [
                 if (_entry.location.isNotEmpty) ...[
-                  const Icon(Icons.location_on,
+                  const AppIcon(AppIcons.mapPin,
                       size: 14, color: Color(0xFF8FA09A)),
                   const SizedBox(width: 4),
                   Text(

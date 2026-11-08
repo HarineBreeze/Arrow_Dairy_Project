@@ -1,3 +1,4 @@
+import '../widgets/app_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
@@ -608,7 +609,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
             enabled: true,
             child: TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('删除', style: TextStyle(color: Colors.red)),
+              child: const Text('删除', style: TextStyle(color: Color(0xFFCB5C50))),
             ),
           ),
         ],
@@ -774,7 +775,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.lock_outline,
+                  const AppIcon(AppIcons.lock,
                       size: 16, color: Color(0xFF3E8E6D)),
                   const SizedBox(width: 6),
                   const Text(
@@ -791,7 +792,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                     ),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(Icons.chevron_right,
+                  const AppIcon(AppIcons.chevR,
                       size: 18, color: Color(0xFF8FA09A)),
                 ],
               ),
@@ -821,7 +822,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
         ),
         child: Row(
           children: [
-            Icon(Icons.more_horiz,
+            AppIcon(AppIcons.moreH,
                 size: 16,
                 color: active ? const Color(0xFF3E8E6D) : Color(0xFF24382F)),
             const SizedBox(width: 6),
@@ -860,7 +861,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                 ),
               ),
               SwitchListTile(
-                secondary: const Icon(Icons.push_pin_outlined,
+                secondary: const AppIcon(AppIcons.pin,
                     size: 20, color: Color(0xFF3E8E6D)),
                 title: const Text('置顶',
                     style:
@@ -936,20 +937,20 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
         foregroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const AppIcon(AppIcons.back),
           tooltip: '返回',
           onPressed: () => Navigator.maybePop(context),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.undo),
+            icon: const AppIcon(AppIcons.undo),
             tooltip: '撤销',
             color: Colors.white,
             disabledColor: Colors.white.withOpacity(0.35),
             onPressed: _canUndo ? _undo : null,
           ),
           IconButton(
-            icon: const Icon(Icons.redo),
+            icon: const AppIcon(AppIcons.redo),
             tooltip: '重做',
             color: Colors.white,
             disabledColor: Colors.white.withOpacity(0.35),
@@ -957,7 +958,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
           ),
           if (!_isNew)
             IconButton(
-              icon: const Icon(Icons.delete_outline),
+              icon: const AppIcon(AppIcons.delete),
               onPressed: _delete,
             ),
         ],
@@ -1024,7 +1025,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                         child: const Padding(
                           padding: EdgeInsets.symmetric(
                               horizontal: 6, vertical: 4),
-                          child: Icon(Icons.refresh,
+                          child: AppIcon(AppIcons.restore,
                               size: 18, color: Color(0xFF8FA09A)),
                         ),
                       ),
@@ -1268,7 +1269,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
       children: [
         Expanded(
           child: _buildInfoCell(
-            icon: Icons.event,
+            icon: AppIcons.event,
             label: '${d.year}年${d.month}月${d.day}日',
             onTap: _pickDate,
           ),
@@ -1276,7 +1277,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
         const SizedBox(width: 12),
         Expanded(
           child: _buildInfoCell(
-            icon: Icons.location_on,
+            icon: AppIcons.mapPin,
             label: _location.isEmpty ? '地点' : _location,
             onTap: _pickLocation,
           ),
@@ -1286,7 +1287,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
   }
 
   Widget _buildInfoCell({
-    required IconData icon,
+    required String icon,
     required String label,
     required VoidCallback onTap,
   }) {
@@ -1301,7 +1302,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
         ),
         child: Row(
           children: [
-            Icon(icon, size: 16, color: const Color(0xFF3E8E6D)),
+            AppIcon(icon, size: 16, color: const Color(0xFF3E8E6D)),
             const SizedBox(width: 6),
             Expanded(
               child: Text(

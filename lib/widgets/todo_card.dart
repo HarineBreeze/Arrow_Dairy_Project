@@ -1,3 +1,4 @@
+import 'app_icons.dart';
 import 'package:flutter/material.dart';
 
 import '../utils/haptics.dart';
@@ -58,7 +59,7 @@ class TodoCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.checklist_rounded,
+              const AppIcon(AppIcons.todo,
                   size: 16, color: Color(0xFF3E8E6D)),
               const SizedBox(width: 6),
               const Text('待办清单',
@@ -151,7 +152,7 @@ class _TodoRow extends StatelessWidget {
                     ),
                   ),
                   child: todo.done
-                      ? const Icon(Icons.check,
+                      ? const AppIcon(AppIcons.check,
                           size: 13, color: Colors.white)
                       : null,
                 ),

@@ -124,6 +124,59 @@ class AppIcons {
   static const String currency = 'M7 5l5 6.6L17 5 M12 11.6v8.4 M8 13.6h8 M8 16.6h8';
   static const String hr = 'M3.6 12h16.8';
 
+  // ---------------- 补齐批次（替换残余 Material 图标） ----------------
+
+  /// 双左箭头：日历快捷跳转
+  static const String dblChevL = 'M11.4 6L5.4 12l6 6 M18.6 6l-6 6 6 6';
+  /// 双右箭头：日历快捷跳转
+  static const String dblChevR = 'M12.6 6l6 6-6 6 M5.4 6l6 6-6 6';
+
+  /// 单选圆点（成对）
+  static const String radioOff = 'M12 4.8a7.2 7.2 0 1 0 0 14.4 7.2 7.2 0 0 0 0-14.4Z';
+  static const String radioOn =
+      'M12 4.8a7.2 7.2 0 1 0 0 14.4 7.2 7.2 0 0 0 0-14.4Z'
+      ' M12 9.4a2.6 2.6 0 1 1 0 5.2 2.6 2.6 0 0 1 0-5.2Z';
+
+  /// 字体选择（T 字形）
+  static const String fontType =
+      'M4.6 6.6V4.4h14.8v2.2 M12 4.4v15.2 M8.8 19.6h6.4';
+
+  /// 振动
+  static const String vibrate =
+      'M9.6 4.8h4.8a1.8 1.8 0 0 1 1.8 1.8v10.8a1.8 1.8 0 0 1-1.8 1.8H9.6'
+      'a1.8 1.8 0 0 1-1.8-1.8V6.6a1.8 1.8 0 0 1 1.8-1.8Z'
+      ' M4.8 9.4v5.2 M19.2 9.4v5.2';
+
+  /// 位置
+  static const String mapPin =
+      'M12 21.2s6.2-5.7 6.2-10.6a6.2 6.2 0 1 0-12.4 0C5.8 15.5 12 21.2 12 21.2Z'
+      ' M12 7.4a2.9 2.9 0 1 0 0 5.8 2.9 2.9 0 0 0 0-5.8Z';
+
+  /// 撤销 / 重做（成对，镜像）
+  static const String undo =
+      'M4.8 8.4h9.6a4.8 4.8 0 0 1 0 9.6H8 M4.8 8.4l4-4 M4.8 8.4l4 4';
+  static const String redo =
+      'M19.2 8.4H9.6a4.8 4.8 0 0 0 0 9.6h6.4 M19.2 8.4l-4-4 M19.2 8.4l-4 4';
+
+  /// 更多（横排三点）
+  static const String moreH = 'M6.4 12v.01 M12 12v.01 M17.6 12v.01';
+
+  /// 无搜索结果（放大镜 + 圆内叉）
+  static const String searchX =
+      'M4 10.5a6.5 6.5 0 1 0 13 0 6.5 6.5 0 1 0-13 0Z M15.4 15.4L20.6 20.6'
+      ' M8.3 8.3l4.4 4.4 M12.7 8.3l-4.4 4.4';
+
+  /// 时钟
+  static const String clock =
+      'M12 3.8a8.2 8.2 0 1 0 0 16.4 8.2 8.2 0 0 0 0-16.4Z'
+      ' M12 7.4V12l3.2 1.9';
+
+  /// 收起键盘
+  static const String keyboardHide =
+      'M4.2 6.6h15.6a1.6 1.6 0 0 1 1.6 1.6v7.6a1.6 1.6 0 0 1-1.6 1.6H4.2'
+      'a1.6 1.6 0 0 1-1.6-1.6V8.2a1.6 1.6 0 0 1 1.6-1.6Z'
+      ' M6.4 10v.01 M9.6 10v.01 M12.8 10v.01 M16 10v.01 M8.6 14.6h6.8';
+
   // ---------------- 富文本工具栏（线宽 2.0，见 [AppIcon.strokeWidth]） ----------------
   static const String bold =
       'M7 4.6h6.2a4.2 4.2 0 0 1 0 8.4H7Z M7 13h7a4.4 4.4 0 0 1 0 8.8H7Z';
@@ -185,6 +238,19 @@ class AppIcons {
     'success': success,
     'currency': currency,
     'hr': hr,
+    'dblChevL': dblChevL,
+    'dblChevR': dblChevR,
+    'radioOff': radioOff,
+    'radioOn': radioOn,
+    'fontType': fontType,
+    'vibrate': vibrate,
+    'mapPin': mapPin,
+    'undo': undo,
+    'redo': redo,
+    'moreH': moreH,
+    'searchX': searchX,
+    'clock': clock,
+    'keyboardHide': keyboardHide,
     'bold': bold,
     'italic': italic,
     'underline': underline,

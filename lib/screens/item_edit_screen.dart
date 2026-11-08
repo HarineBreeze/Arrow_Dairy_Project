@@ -1,3 +1,4 @@
+import '../widgets/app_icons.dart';
 import 'package:flutter/material.dart';
 import '../models/item.dart';
 import '../services/item_storage.dart';
@@ -210,7 +211,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
             enabled: true,
             child: TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('删除', style: TextStyle(color: Colors.red)),
+              child: const Text('删除', style: TextStyle(color: Color(0xFFCB5C50))),
             ),
           ),
         ],
@@ -328,14 +329,14 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         elevation: 0,
         title: Text(_isNew ? '添加物品' : '编辑物品'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const AppIcon(AppIcons.back),
           tooltip: '返回',
           onPressed: () => Navigator.maybePop(context),
         ),
         actions: [
           if (!_isNew)
             IconButton(
-              icon: const Icon(Icons.delete_outline),
+              icon: const AppIcon(AppIcons.delete),
               onPressed: _delete,
             ),
         ],
@@ -516,7 +517,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
               ),
             ),
             const SizedBox(width: 4),
-            const Icon(Icons.chevron_right,
+            const AppIcon(AppIcons.chevR,
                 size: 18, color: Color(0xFFC6D6CD)),
           ],
         ),
@@ -533,7 +534,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
             style: TextStyle(fontSize: 15, color: Color(0xFF24382F))),
         const Spacer(),
         // 加减号并排放置在已攒金额左侧
-        _buildStepButton(Icons.remove, () {
+        _buildStepButton(AppIcons.minus, () {
           setState(() {
             _savedAmount = (_savedAmount - _saveStep) < 0
                 ? 0
@@ -541,7 +542,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
           });
         }),
         const SizedBox(width: 8),
-        _buildStepButton(Icons.add, () {
+        _buildStepButton(AppIcons.plus, () {
           setState(() => _savedAmount += _saveStep);
         }),
         const SizedBox(width: 14),
@@ -562,7 +563,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
           ),
         ),
         const SizedBox(width: 4),
-        const Icon(Icons.chevron_right, size: 18, color: Color(0xFFC6D6CD)),
+        const AppIcon(AppIcons.chevR, size: 18, color: Color(0xFFC6D6CD)),
       ],
     );
   }
@@ -842,7 +843,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         ),
         child: Row(
           children: [
-            const Icon(Icons.event, size: 16, color: Color(0xFF3E8E6D)),
+            const AppIcon(AppIcons.event, size: 16, color: Color(0xFF3E8E6D)),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -863,7 +864,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
             if (onClear != null)
               GestureDetector(
                 onTap: onClear,
-                child: const Icon(Icons.close,
+                child: const AppIcon(AppIcons.close,
                     size: 16, color: Color(0xFF8FA09A)),
               ),
           ],
@@ -918,7 +919,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         const Text('使用次数',
             style: TextStyle(fontSize: 15, color: Color(0xFF24382F))),
         const Spacer(),
-        _buildStepButton(Icons.remove, () => _changeUsage(-1)),
+        _buildStepButton(AppIcons.minus, () => _changeUsage(-1)),
         const SizedBox(width: 8),
         SizedBox(
           width: 52,
@@ -936,7 +937,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
           ),
         ),
         const SizedBox(width: 8),
-        _buildStepButton(Icons.add, () => _changeUsage(1)),
+        _buildStepButton(AppIcons.plus, () => _changeUsage(1)),
         const SizedBox(width: 6),
         const Text('次',
             style: TextStyle(fontSize: 14, color: Color(0xFF8FA09A))),
@@ -951,7 +952,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
     setState(() {});
   }
 
-  Widget _buildStepButton(IconData icon, VoidCallback onTap) {
+  Widget _buildStepButton(String icon, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
       child: Container(
@@ -962,7 +963,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
           shape: BoxShape.circle,
           border: Border.all(color: const Color(0xFFE4F2EB)),
         ),
-        child: Icon(icon, size: 18, color: _accent),
+        child: AppIcon(icon, size: 18, color: _accent),
       ),
     );
   }

@@ -294,7 +294,7 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
       color = const Color(0xFFF08C3A);
     } else if (UsableDays.isSuspicious(d)) {
       body = '数值异常偏大，请检查总资产与月消费';
-      color = const Color(0xFFE0576A);
+      color = const Color(0xFFCB5C50);
     } else {
       body = '';
       color = const Color(0xFF3E8E6D);

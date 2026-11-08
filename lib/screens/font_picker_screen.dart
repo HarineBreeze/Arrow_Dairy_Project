@@ -1,3 +1,4 @@
+import '../widgets/app_icons.dart';
 import 'package:flutter/material.dart';
 import '../utils/app_toast.dart';
 import '../services/app_settings.dart';
@@ -87,10 +88,10 @@ class _FontPickerScreenState extends State<FontPickerScreen> {
                       ),
                       const SizedBox(width: 8),
                       if (selected)
-                        const Icon(Icons.check_circle,
+                        const AppIcon(AppIcons.success,
                             color: Color(0xFF3E8E6D), size: 22)
                       else
-                        const Icon(Icons.radio_button_unchecked,
+                        const AppIcon(AppIcons.radioOff,
                             color: Color(0xFFC6D6CD), size: 22),
                     ],
                   ),

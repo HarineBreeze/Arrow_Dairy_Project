@@ -1,4 +1,5 @@
 import 'dart:io';
+import '../widgets/app_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
@@ -105,7 +106,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       appBar: AppBar(
         title: const Text('个人信息'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const AppIcon(AppIcons.back),
           tooltip: '返回',
           onPressed: () => Navigator.maybePop(context),
         ),
@@ -131,7 +132,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                         color: Color(0xFF3E8E6D),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.camera_alt,
+                      child: const AppIcon(AppIcons.camera,
                           size: 14, color: Colors.white),
                     ),
                   ),

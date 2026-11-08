@@ -126,7 +126,7 @@ void main() {
     final greenBox = (row.children[0] as Expanded).child as ColoredBox;
     final redBox = (row.children[1] as Expanded).child as ColoredBox;
     expect(greenBox.color, const Color(0xFF3E8E6D), reason: '正资产=绿色');
-    expect(redBox.color, const Color(0xFFE0576A), reason: '负资产=红色');
+    expect(redBox.color, const Color(0xFFCB5C50), reason: '负资产=红色');
   });
 
   testWidgets('只有正资产（无负债）时结构条整条绿色', (tester) async {

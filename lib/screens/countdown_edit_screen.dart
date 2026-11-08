@@ -1,3 +1,4 @@
+import '../widgets/app_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/countdown_event.dart';
@@ -163,7 +164,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
             enabled: true,
             child: TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('删除', style: TextStyle(color: Colors.red))),
+                child: const Text('删除', style: TextStyle(color: Color(0xFFCB5C50)))),
           ),
         ],
       ),
@@ -239,14 +240,14 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
         centerTitle: true,
         title: Text(widget.event == null ? '新增事件' : '编辑事件'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const AppIcon(AppIcons.back),
           tooltip: '返回',
           onPressed: () => Navigator.maybePop(context),
         ),
         actions: [
           if (widget.event != null)
             IconButton(
-                icon: const Icon(Icons.delete_outline), onPressed: _delete),
+                icon: const AppIcon(AppIcons.delete), onPressed: _delete),
         ],
       ),
       body: SingleChildScrollView(
@@ -327,7 +328,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                       decoration: _box(),
                       child: Row(
                         children: [
-                          Icon(Icons.event_outlined,
+                          AppIcon(AppIcons.event,
                               size: 17,
                               color: _target == null
                                   ? const Color(0xFF8FA09A)
@@ -370,7 +371,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                       decoration: _box(),
                       child: Row(
                         children: [
-                          Icon(Icons.schedule_outlined,
+                          AppIcon(AppIcons.clock,
                               size: 17,
                               color: _target == null
                                   ? const Color(0xFF8FA09A)
@@ -594,10 +595,10 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
+              AppIcon(
                 selected
-                    ? Icons.radio_button_checked
-                    : Icons.radio_button_unchecked,
+                    ? AppIcons.radioOn
+                    : AppIcons.radioOff,
                 size: 15,
                 color: selected
                     ? const Color(0xFF3E8E6D)
@@ -675,7 +676,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
             ),
           ),
           child: isMore
-              ? const Icon(Icons.more_horiz,
+              ? const AppIcon(AppIcons.moreH,
                   size: 22, color: Color(0xFF647A70))
               : EntryIcon(icon!, size: 22),
         ),

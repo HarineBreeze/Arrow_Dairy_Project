@@ -1,3 +1,4 @@
+import '../widgets/app_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/asset.dart';
@@ -94,7 +95,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
             enabled: true,
             child: TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('删除', style: TextStyle(color: Colors.red)),
+              child: const Text('删除', style: TextStyle(color: Color(0xFFCB5C50))),
             ),
           ),
         ],
@@ -155,7 +156,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
         centerTitle: true,
         title: Text(widget.asset == null ? '新增资产' : '编辑资产'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const AppIcon(AppIcons.back),
           tooltip: '返回',
           onPressed: () => Navigator.maybePop(context),
         ),
@@ -163,7 +164,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
         actions: [
           if (widget.asset != null)
             IconButton(
-              icon: const Icon(Icons.delete_outline),
+              icon: const AppIcon(AppIcons.delete),
               onPressed: _delete,
             ),
         ],
@@ -208,7 +209,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                     AnimatedRotation(
                       turns: _typeOpen ? 0.5 : 0,
                       duration: const Duration(milliseconds: 200),
-                      child: const Icon(Icons.keyboard_arrow_down,
+                      child: const AppIcon(AppIcons.chevD,
                           color: Color(0xFF647A70)),
                     ),
                   ],
@@ -268,7 +269,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                                                   : const Color(0xFF24382F))),
                                     ),
                                     if (t == _type)
-                                      const Icon(Icons.check,
+                                      const AppIcon(AppIcons.check,
                                           size: 16,
                                           color: Color(0xFF3E8E6D)),
                                   ],
@@ -339,7 +340,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
               const Padding(
                 padding: EdgeInsets.only(left: 4, top: 6),
                 child: Text('该类型会计入负资产，金额请填正数',
-                    style: TextStyle(fontSize: 12, color: Color(0xFFE06A6A))),
+                    style: TextStyle(fontSize: 12, color: Color(0xFFCB5C50))),
               ),
             const SizedBox(height: 28),
 
@@ -377,7 +378,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
             const Text(' *',
                 style: TextStyle(
                     fontSize: 13,
-                    color: Color(0xFFE06A6A),
+                    color: Color(0xFFCB5C50),
                     fontWeight: FontWeight.w700)),
         ],
       ),
@@ -415,7 +416,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
             ),
           ),
           child: isMore
-              ? const Icon(Icons.more_horiz,
+              ? const AppIcon(AppIcons.moreH,
                   size: 22, color: Color(0xFF647A70))
               : EntryIcon(icon!, size: 22),
         ),

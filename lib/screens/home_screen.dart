@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../widgets/app_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart' show DragStartBehavior;
 import 'package:flutter/services.dart' show SystemUiOverlayStyle;
@@ -197,8 +198,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           children: [
             const SizedBox(height: 6),
             ListTile(
-              leading: Icon(
-                entry.pinned ? Icons.push_pin_outlined : Icons.push_pin,
+              leading: AppIcon(
+                entry.pinned ? AppIcons.pin : AppIcons.pinOn,
                 // 与下方「编辑」按钮同款绿色，不再用红色
                 color: const Color(0xFF3E8E6D),
               ),
@@ -210,14 +211,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             if (!entry.encrypted) ...[
               ListTile(
                 leading:
-                    const Icon(Icons.edit_outlined, color: Color(0xFF3E8E6D)),
+                    const AppIcon(AppIcons.edit, color: Color(0xFF3E8E6D)),
                 title: const Text('编辑', style: TextStyle(fontSize: 15)),
                 onTap: () => Navigator.pop(ctx, 'edit'),
               ),
               ListTile(
-                leading: const Icon(Icons.delete_outline, color: Colors.red),
+                leading: const AppIcon(AppIcons.delete, color: Color(0xFFCB5C50)),
                 title: const Text('删除',
-                    style: TextStyle(fontSize: 15, color: Colors.red)),
+                    style: TextStyle(fontSize: 15, color: Color(0xFFCB5C50))),
                 onTap: () => Navigator.pop(ctx, 'delete'),
               ),
             ],
@@ -289,7 +290,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   const SizedBox(height: 8),
                   Text(
                     error,
-                    style: const TextStyle(color: Colors.red, fontSize: 12),
+                    style: const TextStyle(color: Color(0xFFCB5C50), fontSize: 12),
                   ),
                 ],
               ],
@@ -372,7 +373,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     const SizedBox(height: 8),
                     Text(
                       error,
-                      style: const TextStyle(color: Colors.red, fontSize: 12),
+                      style: const TextStyle(color: Color(0xFFCB5C50), fontSize: 12),
                     ),
                   ],
                   if (revealedPwd != null) ...[
@@ -684,7 +685,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             enabled: true,
             child: TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('删除', style: TextStyle(color: Colors.red)),
+              child: const Text('删除', style: TextStyle(color: Color(0xFFCB5C50))),
             ),
           ),
         ],
@@ -978,7 +979,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         _openEditor();
                       }
                     },
-                    child: const Icon(Icons.add),
+                    child: const AppIcon(AppIcons.plus),
                   ),
           ),
         ),
@@ -1197,7 +1198,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.push_pin, size: 12, color: Color(0xFF3E8E6D)),
+              const AppIcon(AppIcons.pinOn, size: 12, color: Color(0xFF3E8E6D)),
               const SizedBox(width: 3),
               Text(
                 '置顶 ${pinned.length} 篇',
@@ -1259,7 +1260,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             AnimatedRotation(
               turns: expanded ? 0 : -0.25,
               duration: const Duration(milliseconds: 180),
-              child: const Icon(Icons.expand_more,
+              child: const AppIcon(AppIcons.chevD,
                   size: 13, color: Color(0xFFB2C4BA)),
             ),
             const SizedBox(width: 3),
@@ -1324,7 +1325,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               decoration: InputDecoration(
                 hintText: '搜索标题关键词…',
                 hintStyle: const TextStyle(color: Color(0xFF8FA09A)),
-                prefixIcon: const Icon(Icons.search,
+                prefixIcon: const AppIcon(AppIcons.search,
                     size: 18, color: Color(0xFF8FA09A)),
                 prefixIconConstraints:
                     const BoxConstraints(minWidth: 32, minHeight: 32),
@@ -1374,7 +1375,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.menu, color: Colors.white),
+                icon: const AppIcon(AppIcons.menu, color: Colors.white),
                 onPressed: _openMenu,
               ),
               // 三条杠旁标出当前页名，与资产/事件页保持同一套「图标 + 页名」语言
@@ -1387,7 +1388,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               ),
               const Spacer(),
               IconButton(
-                icon: Icon(Icons.filter_list,
+                icon: AppIcon(AppIcons.filter,
                     color: _activeTopic == null
                         ? Colors.white
                         : const Color(0xFFFFD666)),
@@ -1412,8 +1413,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     ),
                   ),
                   const SizedBox(width: 4),
-                  Icon(
-                    _calendarExpanded ? Icons.expand_less : Icons.expand_more,
+                  AppIcon(
+                    _calendarExpanded ? AppIcons.chevU : AppIcons.chevD,
                     size: 18,
                     color: Colors.white70,
                   ),
@@ -1542,7 +1543,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          const Icon(Icons.tag, size: 14, color: Color(0xFF3E8E6D)),
+          const AppIcon(AppIcons.tag, size: 14, color: Color(0xFF3E8E6D)),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
@@ -1552,7 +1553,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           ),
           GestureDetector(
             onTap: () => setState(() => _activeTopic = null),
-            child: const Icon(Icons.close, size: 16, color: Color(0xFF3E8E6D)),
+            child: const AppIcon(AppIcons.close, size: 16, color: Color(0xFF3E8E6D)),
           ),
         ],
       ),
@@ -1579,7 +1580,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       children: [
         // ◀◀ 按年翻页
         IconButton(
-          icon: const Icon(Icons.keyboard_double_arrow_left,
+          icon: const AppIcon(AppIcons.dblChevL,
               size: 20, color: kTextMid),
           tooltip: '上一年',
           visualDensity: VisualDensity.compact,
@@ -1588,7 +1589,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               DateTime(_visibleMonth.year - 1, _visibleMonth.month, 1)),
         ),
         IconButton(
-          icon: const Icon(Icons.chevron_left, color: kTextMid),
+          icon: const AppIcon(AppIcons.chevL, color: kTextMid),
           onPressed: () => setState(() => _visibleMonth =
               DateTime(_visibleMonth.year, _visibleMonth.month - 1, 1)),
         ),
@@ -1601,13 +1602,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           ),
         ),
         IconButton(
-          icon: const Icon(Icons.chevron_right, color: kTextMid),
+          icon: const AppIcon(AppIcons.chevR, color: kTextMid),
           onPressed: () => setState(() => _visibleMonth =
               DateTime(_visibleMonth.year, _visibleMonth.month + 1, 1)),
         ),
         // ▶▶ 按年翻页
         IconButton(
-          icon: const Icon(Icons.keyboard_double_arrow_right,
+          icon: const AppIcon(AppIcons.dblChevR,
               size: 20, color: kTextMid),
           tooltip: '下一年',
           visualDensity: VisualDensity.compact,
@@ -1788,7 +1789,7 @@ class _PinnedMiniCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 3),
                           if (encrypted)
-                            const Icon(Icons.lock, size: 10, color: kTextLight)
+                            const AppIcon(AppIcons.lock, size: 10, color: kTextLight)
                           else
                             EntryIcon(entry.mood, size: 10),
                         ],
@@ -2026,7 +2027,7 @@ class _DiaryCard extends StatelessWidget {
                                   fontSize: 11, color: kTextLight)),
                           if (entry.location.isNotEmpty) ...[
                             const SizedBox(width: 6),
-                            const Icon(Icons.location_on,
+                            const AppIcon(AppIcons.mapPin,
                                 size: 13, color: kTextLight),
                             const SizedBox(width: 1),
                             Flexible(
@@ -2068,7 +2069,7 @@ class _DiaryCard extends StatelessWidget {
               color: const Color(0xFFFBE3E8),
               child: CustomPaint(
                 foregroundPainter: const _DashedRRectPainter(
-                    color: Color(0xFFE0576A), radius: 14),
+                    color: Color(0xFFCB5C50), radius: 14),
                 child: CustomPaint(
                   painter: const _PinnedStripePainter(),
                   child: Material(
@@ -2100,7 +2101,7 @@ class _DiaryCard extends StatelessWidget {
                                 style: const TextStyle(
                                     fontSize: 11, color: kTextLight)),
                             const SizedBox(width: 4),
-                            const Icon(Icons.lock,
+                            const AppIcon(AppIcons.lock,
                                 size: 12, color: kTextLight),
                           ],
                         ),
@@ -2136,7 +2137,7 @@ class _DiaryCard extends StatelessWidget {
                       padding: const EdgeInsets.fromLTRB(14, 6, 14, 6),
                       child: Row(
                         children: [
-                          const Icon(Icons.lock,
+                          const AppIcon(AppIcons.lock,
                               size: 11, color: kTextLight),
                           const SizedBox(width: 4),
                           const Text('已加密',

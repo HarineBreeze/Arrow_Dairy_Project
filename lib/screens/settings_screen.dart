@@ -1,4 +1,5 @@
 import 'package:file_picker/file_picker.dart';
+import '../widgets/app_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import '../utils/app_toast.dart';
@@ -88,7 +89,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 enabled: true,
                 child: TextButton(
                   onPressed: () => Navigator.pop(ctx, true),
-                  child: const Text('覆盖导入', style: TextStyle(color: Colors.red)),
+                  child: const Text('覆盖导入', style: TextStyle(color: Color(0xFFCB5C50))),
                 ),
               ),
             ],
@@ -213,8 +214,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(
-              sel ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+            AppIcon(
+              sel ? AppIcons.radioOn : AppIcons.radioOff,
               size: 18,
               color: sel ? const Color(0xFF3E8E6D) : const Color(0xFFC6D6CD),
             ),
@@ -278,7 +279,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: Column(
                     children: [
                       _buildItem(
-                        icon: Icons.ios_share,
+                        icon: AppIcons.share,
                         iconColor: const Color(0xFF3E8E6D),
                         title: '导出数据',
                         subtitle: '以 JSON 格式保存数据到本地',
@@ -287,7 +288,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       const Divider(height: 1, indent: 52),
                       _buildItem(
-                        icon: Icons.download,
+                        icon: AppIcons.download,
                         iconColor: const Color(0xFF3E8E6D),
                         title: '导入数据',
                         subtitle: '支持增添合并或完全覆盖两种导入方式',
@@ -321,7 +322,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     border: Border.all(color: const Color(0xFFE8EDF5)),
                   ),
                   child: _buildItem(
-                    icon: Icons.font_download_outlined,
+                    icon: AppIcons.fontType,
                     iconColor: const Color(0xFF3E8E6D),
                     title: '笔记字体',
                     subtitle:
@@ -368,7 +369,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     border: Border.all(color: const Color(0xFFE8EDF5)),
                   ),
                   child: _buildItem(
-                    icon: Icons.vibration,
+                    icon: AppIcons.vibrate,
                     // 与导出/导入等其它功能项同款主色（图标 + 0.1 透明度底纹）
                     iconColor: const Color(0xFF3E8E6D),
                     title: '振动测试',
@@ -561,7 +562,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildItem({
-    required IconData icon,
+    required String icon,
     required Color iconColor,
     required String title,
     required String subtitle,
@@ -582,7 +583,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 color: iconColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(9),
               ),
-              child: Icon(icon, size: 20, color: iconColor),
+              child: AppIcon(icon, size: 20, color: iconColor),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -608,7 +609,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
             else
-              const Icon(Icons.chevron_right, color: Color(0xFFC6D6CD)),
+              const AppIcon(AppIcons.chevR, color: Color(0xFFC6D6CD)),
           ],
         ),
       ),

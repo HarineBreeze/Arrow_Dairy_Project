@@ -1,3 +1,4 @@
+import 'app_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../utils/text_format.dart';
@@ -332,10 +333,10 @@ class FormatToolbarState extends State<FormatToolbar> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: const [
-                          Icon(Icons.add,
+                          AppIcon(AppIcons.plus,
                               size: 15, color: Color(0xFF24382F)),
                           SizedBox(width: 2),
-                          Icon(Icons.check_box_outlined,
+                          AppIcon(AppIcons.todo,
                               size: 16, color: Color(0xFF24382F)),
                         ],
                       ),
@@ -357,7 +358,7 @@ class FormatToolbarState extends State<FormatToolbar> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.border_color_outlined,
+                          const AppIcon(AppIcons.edit,
                               size: 18, color: Color(0xFF24382F)),
                           const SizedBox(width: 3),
                           Container(
@@ -392,7 +393,7 @@ class FormatToolbarState extends State<FormatToolbar> {
                         children: const [
                           Text('A', style: TextStyle(fontSize: 12)),
                           Text('A', style: TextStyle(fontSize: 17)),
-                          Icon(Icons.arrow_drop_down,
+                          AppIcon(AppIcons.chevD,
                               size: 16, color: Color(0xFF8FA09A)),
                         ],
                       ),
@@ -417,7 +418,7 @@ class FormatToolbarState extends State<FormatToolbar> {
               height: 36,
               padding: const EdgeInsets.symmetric(horizontal: 10),
               alignment: Alignment.center,
-              child: const Icon(Icons.keyboard_hide,
+              child: const AppIcon(AppIcons.keyboardHide,
                   size: 20, color: Color(0xFF8FA09A)),
             ),
           ),
@@ -466,7 +467,7 @@ class FormatToolbarState extends State<FormatToolbar> {
                     ),
                   ),
                   child: active
-                      ? const Icon(Icons.check,
+                      ? const AppIcon(AppIcons.check,
                           size: 16, color: Color(0xFF24382F))
                       : null,
                 ),

@@ -1,3 +1,4 @@
+import 'app_icons.dart';
 import 'package:flutter/material.dart';
 import '../models/countdown_event.dart';
 
@@ -137,7 +138,7 @@ class CountdownBannerHostState extends State<CountdownBannerHost>
               ),
             ),
             const SizedBox(width: 8),
-            const Icon(Icons.chevron_right, size: 20, color: Color(0xFFC6D6CD)),
+            const AppIcon(AppIcons.chevR, size: 20, color: Color(0xFFC6D6CD)),
           ],
         ),
       ),

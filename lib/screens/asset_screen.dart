@@ -143,8 +143,8 @@ class AssetScreenState extends State<AssetScreen> {
             ),
             // 加密访问开关（在上方）
             ListTile(
-              leading: Icon(
-                  _hasPin ? Icons.lock : Icons.lock_open,
+              leading: AppIcon(
+                  _hasPin ? AppIcons.lock : AppIcons.unlock,
                   color: const Color(0xFF3E8E6D)),
               title: const Text('设置加密访问'),
               subtitle: Text(
@@ -176,7 +176,7 @@ class AssetScreenState extends State<AssetScreen> {
             ),
             // 修改密码：仅开启加密后可用
             ListTile(
-              leading: Icon(Icons.password,
+              leading: AppIcon(AppIcons.lock,
                   color: _hasPin
                       ? const Color(0xFF3E8E6D)
                       : const Color(0xFFC2D4C9)),
@@ -590,7 +590,7 @@ class AssetScreenState extends State<AssetScreen> {
           children: [
             const SizedBox(height: 10),
             ListTile(
-              leading: const Icon(Icons.edit_outlined, color: Color(0xFF3E8E6D)),
+              leading: const AppIcon(AppIcons.edit, color: Color(0xFF3E8E6D)),
               title: const Text('编辑'),
               onTap: () {
                 Navigator.pop(ctx);
@@ -598,9 +598,9 @@ class AssetScreenState extends State<AssetScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.delete_outline, color: Colors.red),
+              leading: const AppIcon(AppIcons.delete, color: Color(0xFFCB5C50)),
               title: const Text('删除',
-                  style: TextStyle(color: Colors.red)),
+                  style: TextStyle(color: Color(0xFFCB5C50))),
               onTap: () async {
                 Navigator.pop(ctx);
                 final ok = await showDialog<bool>(
@@ -622,7 +622,7 @@ class AssetScreenState extends State<AssetScreen> {
                         child: TextButton(
                             onPressed: () => Navigator.pop(c, true),
                             child: const Text('删除',
-                                style: TextStyle(color: Colors.red))),
+                                style: TextStyle(color: Color(0xFFCB5C50)))),
                       ),
                     ],
                   ),
@@ -653,7 +653,7 @@ class AssetScreenState extends State<AssetScreen> {
           child: Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.menu, color: Colors.white),
+                icon: const AppIcon(AppIcons.menu, color: Colors.white),
                 onPressed: widget.onOpenMenu,
               ),
               const Expanded(
@@ -664,7 +664,7 @@ class AssetScreenState extends State<AssetScreen> {
                         color: Colors.white)),
               ),
               IconButton(
-                icon: Icon(Icons.filter_list,
+                icon: AppIcon(AppIcons.filter,
                     color: _hasFilter ? const Color(0xFFFFD666) : Colors.white),
                 tooltip: '筛选',
                 onPressed: _unlocked ? _openFilterSheet : null,
@@ -771,7 +771,7 @@ class AssetScreenState extends State<AssetScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.lock_outline, size: 44, color: Color(0xFFC2D4C9)),
+          const AppIcon(AppIcons.lock, size: 44, color: Color(0xFFC2D4C9)),
           const SizedBox(height: 12),
           const Text('资产全景已加密',
               style: TextStyle(
@@ -937,10 +937,10 @@ class AssetScreenState extends State<AssetScreen> {
                 behavior: HitTestBehavior.opaque,
                 child: _baselineIcon(
                   // 眼睛偏上 → baseline 减小让它下沉
-                  Icon(
+                  AppIcon(
                     _hideNumbers
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined,
+                        ? AppIcons.eyeOff
+                        : AppIcons.eyeOn,
                     size: 15,
                     color: const Color(0xFF8FA09A),
                   ),
@@ -1122,7 +1122,7 @@ class AssetScreenState extends State<AssetScreen> {
                   if (neg > 0)
                     Expanded(
                       flex: (neg / total * 1000).round().clamp(1, 999),
-                      child: const ColoredBox(color: Color(0xFFE0576A)),
+                      child: const ColoredBox(color: Color(0xFFCB5C50)),
                     ),
                 ],
               ),
@@ -1174,7 +1174,7 @@ class AssetScreenState extends State<AssetScreen> {
     final invest = _investTypes.contains(a.type);
     // 左侧色条代表资产性质：负资产红 / 理财蓝 / 其它绿
     final barColor = negative
-        ? const Color(0xFFE0576A)
+        ? const Color(0xFFCB5C50)
         : (invest ? const Color(0xFF3E7BD6) : const Color(0xFF3E8E6D));
     return GestureDetector(
       onTap: () => _openEditor(a),
@@ -1278,7 +1278,7 @@ class AssetScreenState extends State<AssetScreen> {
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                     color: negative
-                        ? const Color(0xFFE06A6A)
+                        ? const Color(0xFFCB5C50)
                         : const Color(0xFF24382F),
                   ),
                 ),
@@ -1593,13 +1593,13 @@ class _PinSetupDialogState extends State<_PinSetupDialog> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    const Icon(Icons.error_outline,
-                        size: 16, color: Color(0xFFD9534F)),
+                    const AppIcon(AppIcons.warn,
+                        size: 16, color: Color(0xFFCB5C50)),
                     const SizedBox(width: 6),
                     Flexible(
                       child: Text(_tip!,
                           style: const TextStyle(
-                              fontSize: 13, color: Color(0xFFD9534F))),
+                              fontSize: 13, color: Color(0xFFCB5C50))),
                     ),
                   ],
                 ),
@@ -1758,7 +1758,7 @@ class _PinUnlockDialogState extends State<_PinUnlockDialog> {
                 decoration: InputDecoration(
                   labelText: '密码',
                   errorText: _error,
-                  errorStyle: const TextStyle(color: Color(0xFFD9534F)),
+                  errorStyle: const TextStyle(color: Color(0xFFCB5C50)),
                   border: const OutlineInputBorder(),
                 ),
                 onSubmitted: (_) => _submit(),
@@ -1770,13 +1770,13 @@ class _PinUnlockDialogState extends State<_PinUnlockDialog> {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    const Icon(Icons.error_outline,
-                        size: 16, color: Color(0xFFD9534F)),
+                    const AppIcon(AppIcons.warn,
+                        size: 16, color: Color(0xFFCB5C50)),
                     const SizedBox(width: 6),
                     Flexible(
                       child: Text(_error!,
                           style: const TextStyle(
-                              fontSize: 13, color: Color(0xFFD9534F),
+                              fontSize: 13, color: Color(0xFFCB5C50),
                               fontWeight: FontWeight.w500)),
                     ),
                   ],
@@ -1813,7 +1813,7 @@ class _PinUnlockDialogState extends State<_PinUnlockDialog> {
                 decoration: InputDecoration(
                   labelText: '密保答案',
                   errorText: _error,
-                  errorStyle: const TextStyle(color: Color(0xFFD9534F)),
+                  errorStyle: const TextStyle(color: Color(0xFFCB5C50)),
                   border: const OutlineInputBorder(),
                 ),
                 onSubmitted: (_) => _resetByAnswer(),
@@ -1825,13 +1825,13 @@ class _PinUnlockDialogState extends State<_PinUnlockDialog> {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    const Icon(Icons.error_outline,
-                        size: 16, color: Color(0xFFD9534F)),
+                    const AppIcon(AppIcons.warn,
+                        size: 16, color: Color(0xFFCB5C50)),
                     const SizedBox(width: 6),
                     Flexible(
                       child: Text(_error!,
                           style: const TextStyle(
-                              fontSize: 13, color: Color(0xFFD9534F),
+                              fontSize: 13, color: Color(0xFFCB5C50),
                               fontWeight: FontWeight.w500)),
                     ),
                   ],
@@ -2013,14 +2013,14 @@ class _DisablePinDialogState extends State<_DisablePinDialog> {
                   padding: const EdgeInsets.only(top: 10),
                   child: Row(
                     children: [
-                      const Icon(Icons.error_outline,
-                          size: 16, color: Color(0xFFD9534F)),
+                      const AppIcon(AppIcons.warn,
+                          size: 16, color: Color(0xFFCB5C50)),
                       const SizedBox(width: 6),
                       Flexible(
                         child: Text(_error!,
                             style: const TextStyle(
                                 fontSize: 13,
-                                color: Color(0xFFD9534F),
+                                color: Color(0xFFCB5C50),
                                 fontWeight: FontWeight.w500)),
                       ),
                     ],
@@ -2043,7 +2043,7 @@ class _DisablePinDialogState extends State<_DisablePinDialog> {
             child: TextButton(
               onPressed: _busy ? null : _confirm,
               child: const Text('确认取消',
-                  style: TextStyle(color: Color(0xFFD9534F))),
+                  style: TextStyle(color: Color(0xFFCB5C50))),
             ),
           ),
         ],
@@ -2142,13 +2142,13 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
       padding: const EdgeInsets.only(top: 10),
       child: Row(
         children: [
-          const Icon(Icons.error_outline, size: 16, color: Color(0xFFD9534F)),
+          const AppIcon(AppIcons.warn, size: 16, color: Color(0xFFCB5C50)),
           const SizedBox(width: 6),
           Flexible(
             child: Text(_error!,
                 style: const TextStyle(
                     fontSize: 13,
-                    color: Color(0xFFD9534F),
+                    color: Color(0xFFCB5C50),
                     fontWeight: FontWeight.w500)),
           ),
         ],

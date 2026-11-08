@@ -1,3 +1,4 @@
+import '../widgets/app_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -172,7 +173,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.menu, color: Colors.white),
+            icon: const AppIcon(AppIcons.menu, color: Colors.white),
             tooltip: '菜单',
             onPressed: widget.onOpenMenu,
           ),
@@ -186,7 +187,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.search, size: 18, color: Color(0xFF8FA09A)),
+                  const AppIcon(AppIcons.search, size: 18, color: Color(0xFF8FA09A)),
                   const SizedBox(width: 6),
                   Expanded(
                     child: TextField(
@@ -211,7 +212,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                         _ctrl.clear();
                         setState(() {});
                       },
-                      child: const Icon(Icons.close,
+                      child: const AppIcon(AppIcons.close,
                           size: 16, color: Color(0xFF8FA09A)),
                     ),
                 ],
@@ -231,7 +232,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.manage_search,
+            AppIcon(AppIcons.search,
                 size: 56, color: const Color(0xFF8FA09A).withOpacity(0.6)),
             const SizedBox(height: 14),
             const Text(
@@ -260,7 +261,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: const [
-            Icon(Icons.search_off, size: 48, color: Color(0xFFC6D6CD)),
+            AppIcon(AppIcons.searchX, size: 48, color: Color(0xFFC6D6CD)),
             SizedBox(height: 10),
             Text('没有匹配的内容',
                 style: TextStyle(fontSize: 13.5, color: Color(0xFF8FA09A))),
@@ -272,13 +273,13 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
     // 收纳栏：从左到右固定顺序 笔记/物品/事件/资产
     final cats = <_SearchCategory>[
       _SearchCategory(
-          '笔记', '${diaries.length} 篇', Icons.book_outlined, diaries.isNotEmpty),
-      _SearchCategory('物品', '${items.length} 件', Icons.inventory_2_outlined,
+          '笔记', '${diaries.length} 篇', AppIcons.diary, diaries.isNotEmpty),
+      _SearchCategory('物品', '${items.length} 件', AppIcons.items,
           items.isNotEmpty),
       _SearchCategory('事件', '${events.length} 个',
-          Icons.event_available_outlined, events.isNotEmpty),
+          AppIcons.event, events.isNotEmpty),
       _SearchCategory('资产', _assetLocked ? '已加密' : '${assets.length} 项',
-          Icons.account_balance_outlined, assets.isNotEmpty),
+          AppIcons.asset, assets.isNotEmpty),
     ];
 
     return ListView(
@@ -313,7 +314,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(c.icon,
+                      AppIcon(c.icon,
                           size: 14,
                           color: selected
                               ? Colors.white
@@ -343,12 +344,12 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           if (diaries.isNotEmpty)
             _buildSection(
               '笔记',
-              Icons.book_outlined,
+              AppIcons.diary,
               diaries
                   .map((e) => _ResultRow(
                         icon: e.encrypted
-                            ? Icons.lock_outline
-                            : Icons.book_outlined,
+                            ? AppIcons.lock
+                            : AppIcons.diary,
                         iconBg: const Color(0xFFE4F2EB),
                         iconColor: const Color(0xFF3E8E6D),
                         title: e.encrypted
@@ -364,10 +365,10 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           if (items.isNotEmpty)
             _buildSection(
               '物品',
-              Icons.inventory_2_outlined,
+              AppIcons.items,
               items
                   .map((e) => _ResultRow(
-                        icon: Icons.inventory_2_outlined,
+                        icon: AppIcons.items,
                         iconBg: const Color(0xFFE7F3EA),
                         iconColor: const Color(0xFF3E8E6D),
                         title: e.name,
@@ -384,10 +385,10 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           if (events.isNotEmpty)
             _buildSection(
               '事件',
-              Icons.event_available_outlined,
+              AppIcons.event,
               events
                   .map((e) => _ResultRow(
-                        icon: Icons.event_available_outlined,
+                        icon: AppIcons.event,
                         iconBg: const Color(0xFFFBEEE9),
                         iconColor: const Color(0xFFF08C3A),
                         title: e.name,
@@ -404,10 +405,10 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           if (assets.isNotEmpty)
             _buildSection(
               '资产',
-              Icons.account_balance_outlined,
+              AppIcons.asset,
               assets
                   .map((e) => _ResultRow(
-                        icon: Icons.account_balance_outlined,
+                        icon: AppIcons.asset,
                         iconBg: const Color(0xFFECF2EE),
                         iconColor: const Color(0xFF647A70),
                         title: e.note.isNotEmpty ? e.note : e.type,
@@ -442,10 +443,10 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
       behavior: HitTestBehavior.opaque,
       child: Padding(
         padding: const EdgeInsets.all(6),
-        child: Icon(
+        child: AppIcon(
           _hideAssetAmount
-              ? Icons.visibility_off_outlined
-              : Icons.visibility_outlined,
+              ? AppIcons.eyeOff
+              : AppIcons.eyeOn,
           size: 16,
           color: const Color(0xFF8FA09A),
         ),
@@ -453,7 +454,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
     );
   }
 
-  Widget _buildSection(String title, IconData icon, List<_ResultRow> rows) {
+  Widget _buildSection(String title, String icon, List<_ResultRow> rows) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Column(
@@ -463,7 +464,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
             padding: const EdgeInsets.only(left: 2, bottom: 7),
             child: Row(
               children: [
-                Icon(icon, size: 13, color: const Color(0xFF8FA09A)),
+                AppIcon(icon, size: 13, color: const Color(0xFF8FA09A)),
                 const SizedBox(width: 5),
                 Text(title,
                     style: const TextStyle(
@@ -507,13 +508,13 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
 class _SearchCategory {
   final String name;
   final String count;
-  final IconData icon;
+  final String icon;
   final bool hasHit;
   const _SearchCategory(this.name, this.count, this.icon, this.hasHit);
 }
 
 class _ResultRow extends StatelessWidget {
-  final IconData icon;
+  final String icon;
   final Color iconBg;
   final Color iconColor;
   final String title;
@@ -550,7 +551,7 @@ class _ResultRow extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 alignment: Alignment.center,
-                child: Icon(icon, size: 18, color: iconColor),
+                child: AppIcon(icon, size: 18, color: iconColor),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -574,7 +575,7 @@ class _ResultRow extends StatelessWidget {
                 ),
               ),
               if (trailing != null) trailing!,
-              const Icon(Icons.chevron_right, size: 18, color: Color(0xFFC6D6CD)),
+              const AppIcon(AppIcons.chevR, size: 18, color: Color(0xFFC6D6CD)),
             ],
           ),
         ),

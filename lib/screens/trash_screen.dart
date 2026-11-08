@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../widgets/app_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -134,7 +135,7 @@ class TrashScreenState extends State<TrashScreen> {
             child: TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
                 child:
-                    const Text('彻底删除', style: TextStyle(color: Colors.red))),
+                    const Text('彻底删除', style: TextStyle(color: Color(0xFFCB5C50)))),
           ),
         ],
       ),
@@ -169,7 +170,7 @@ class TrashScreenState extends State<TrashScreen> {
             enabled: true,
             child: TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('清空', style: TextStyle(color: Colors.red))),
+                child: const Text('清空', style: TextStyle(color: Color(0xFFCB5C50)))),
           ),
         ],
       ),
@@ -210,7 +211,7 @@ class TrashScreenState extends State<TrashScreen> {
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.menu, color: Colors.white),
+            icon: const AppIcon(AppIcons.menu, color: Colors.white),
             onPressed: widget.onOpenMenu,
           ),
           const SizedBox(width: 4),
@@ -226,7 +227,7 @@ class TrashScreenState extends State<TrashScreen> {
             IconButton(
               tooltip: '清空',
               // 删除类图标全站统一为普通垃圾桶轮廓（与笔记卡片右下角一致）
-              icon: const Icon(Icons.delete_outline,
+              icon: const AppIcon(AppIcons.delete,
                   color: Colors.white, size: 22),
               onPressed: _clearAll,
             ),
@@ -243,7 +244,7 @@ class TrashScreenState extends State<TrashScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.delete_outline,
+            AppIcon(AppIcons.delete,
                 size: 54,
                 color: const Color(0xFF8FA09A).withOpacity(0.55)),
             const SizedBox(height: 14),
@@ -360,16 +361,16 @@ class TrashScreenState extends State<TrashScreen> {
     );
   }
 
-  IconData _iconOf(TrashKind k) {
+  String _iconOf(TrashKind k) {
     switch (k) {
       case TrashKind.diary:
-        return Icons.book_outlined;
+        return AppIcons.diary;
       case TrashKind.item:
-        return Icons.inventory_2_outlined;
+        return AppIcons.items;
       case TrashKind.event:
-        return Icons.event_available_outlined;
+        return AppIcons.event;
       case TrashKind.asset:
-        return Icons.account_balance_outlined;
+        return AppIcons.asset;
     }
   }
 
@@ -392,7 +393,7 @@ class TrashScreenState extends State<TrashScreen> {
                   width: 38,
                   height: 38,
                   child: Center(
-                    child: Icon(_iconOf(e.kind),
+                    child: AppIcon(_iconOf(e.kind),
                         size: 22, color: _fgOf(e.kind)),
                   ),
                 ),
@@ -463,7 +464,7 @@ class TrashScreenState extends State<TrashScreen> {
             children: [
               Expanded(
                 child: _buildAction(
-                  icon: Icons.restore,
+                  icon: AppIcons.restore,
                   label: '还原',
                   color: const Color(0xFF3E8E6D),
                   onTap: () => _restore(e),
@@ -473,9 +474,9 @@ class TrashScreenState extends State<TrashScreen> {
               Expanded(
                 child: _buildAction(
                   // 与全站删除图标统一：普通垃圾桶轮廓
-                  icon: Icons.delete_outline,
+                  icon: AppIcons.delete,
                   label: '彻底删除',
-                  color: const Color(0xFFE0576A),
+                  color: const Color(0xFFCB5C50),
                   onTap: () => _purge(e),
                 ),
               ),
@@ -487,7 +488,7 @@ class TrashScreenState extends State<TrashScreen> {
   }
 
   Widget _buildAction({
-    required IconData icon,
+    required String icon,
     required String label,
     required Color color,
     required VoidCallback onTap,
@@ -500,7 +501,7 @@ class TrashScreenState extends State<TrashScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 15, color: color),
+            AppIcon(icon, size: 15, color: color),
             const SizedBox(width: 5),
             Text(label,
                 style: TextStyle(

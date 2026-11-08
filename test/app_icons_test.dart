@@ -116,7 +116,7 @@ void main() {
 
     test('每个图标都有实体，不能是空路径或退化点', () {
       // 纯水平 / 纯竖直线条类图标天然只有一个维度为 0，单独排除
-      const flat = {'minus', 'hr', 'menu'};
+      const flat = {'minus', 'hr', 'menu', 'moreH'};
       AppIcons.all.forEach((name, path) {
         final b = parseIconPath(path.split('|fill').first).getBounds();
         final area = b.width * b.height;
