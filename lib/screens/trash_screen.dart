@@ -257,7 +257,7 @@ class TrashScreenState extends State<TrashScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              '删除的笔记、物品、事件、资产会先放到这里\n7 天内可随时还原',
+              '删除的内容支持7日内恢复哦～',
               textAlign: TextAlign.center,
               style: TextStyle(
                   fontSize: 13,

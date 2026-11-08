@@ -781,59 +781,15 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     ansCtrl.dispose();
   }
 
-  Widget _buildVisibilityRow() {
-    return Row(
-      children: [
-        Expanded(
-          child: InkWell(
-            onTap: _pickVisibility,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE4F2EB)),
-              ),
-              child: Row(
-                children: [
-                  const AppIcon(AppIcons.lock,
-                      size: 16, color: Color(0xFF3E8E6D)),
-                  const SizedBox(width: 6),
-                  const Text(
-                    '可见度',
-                    style: TextStyle(fontSize: 13, color: Color(0xFF24382F)),
-                  ),
-                  const Spacer(),
-                  Text(
-                    _encrypted ? '加密' : '公开',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF3E8E6D),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  const AppIcon(AppIcons.chevR,
-                      size: 18, color: Color(0xFF8FA09A)),
-                ],
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(child: _buildMoreButton()),
-      ],
-    );
-  }
-
-  // 「更多」按钮：目前提供置顶开关，未来在此扩展其它选项
+  // 「更多」按钮：置顶开关 + 可见度（原独立按钮已收进此面板）
   Widget _buildMoreButton() {
     final active = _pinned;
     return InkWell(
       onTap: _showMoreSheet,
-      borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+        // 与时间/地点按钮同款：填满父级分配的高度
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
           color: active ? const Color(0xFFE4F2EB) : Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -880,6 +836,33 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                   color: const Color(0xFFDFEAE5),
                   borderRadius: BorderRadius.circular(2),
                 ),
+              ),
+              ListTile(
+                leading: const AppIcon(AppIcons.lock,
+                    size: 20, color: Color(0xFF3E8E6D)),
+                title: const Text('可见度',
+                    style:
+                        TextStyle(fontSize: 13, color: Color(0xFF24382F))),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _encrypted ? '加密' : '公开',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF3E8E6D),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const AppIcon(AppIcons.chevR,
+                        size: 18, color: Color(0xFF8FA09A)),
+                  ],
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickVisibility();
+                },
               ),
               SwitchListTile(
                 secondary: const AppIcon(AppIcons.pin,
@@ -987,7 +970,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 键盘弹出时收起封面图/日期/可见度，给正文腾出可视区域。
+          // 键盘弹出时收起封面图与信息按钮区，给正文腾出可视区域。
           // 高度系数实时跟随键盘比例（见 didChangeMetrics），全程同步无跳变；
           // AnimatedSize 兜底：设备不逐帧上报 insets 时也能平滑过渡。
           AnimatedSize(
@@ -1006,10 +989,6 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildImageSection(),
-                const SizedBox(height: 14),
-                _buildDateLocationRow(),
-                const SizedBox(height: 12),
-                _buildVisibilityRow(),
                 const SizedBox(height: 16),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -1280,29 +1259,6 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
   }
 
 
-  Widget _buildDateLocationRow() {
-    final d = _publishDate;
-    return Row(
-      children: [
-        Expanded(
-          child: _buildInfoCell(
-            icon: AppIcons.event,
-            label: '${d.year}年${d.month}月${d.day}日',
-            onTap: _pickDate,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildInfoCell(
-            icon: AppIcons.mapPin,
-            label: _location.isEmpty ? '地点' : _location,
-            onTap: _pickLocation,
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildInfoCell({
     required String icon,
     required String label,
@@ -1311,7 +1267,9 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+        // 竖排信息按钮：填满父级分配的高度，内容左对齐居中
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -1322,14 +1280,18 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
             AppIcon(icon, size: 16, color: const Color(0xFF3E8E6D)),
             const SizedBox(width: 6),
             Expanded(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Color(0xFF24382F),
-                  fontWeight: FontWeight.w600,
+              // 超宽时整体缩小适配（如「2026年12月31日」落在窄列）
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF24382F),
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
@@ -1341,10 +1303,13 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
 
   // ---------- 封面图 ----------
 
-  /// 封面图区：未选图 = 浅色添加条；已选图 = 4:3 缩略图（点击可换图）。
+  /// 封面图区：「封面图 + 移除」标签行 + 左封面图、右信息按钮列。
+  /// 右侧竖排 时间 / 地点 / 更多 三个等宽按钮，高度与 4:3 封面图对齐；
+  /// 未选图时封面图为同尺寸的浅色添加条，保持左右结构一致。
   /// 图片走应用目录副本，原图被删除后卡片仍可显示。
   Widget _buildImageSection() {
     final hasImage = _imagePath.isNotEmpty && File(_imagePath).existsSync();
+    final d = _publishDate;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1375,65 +1340,95 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
           ],
         ),
         const SizedBox(height: 6),
-        if (!hasImage)
-          InkWell(
-            onTap: _pickImage,
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              height: 76,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE4F2EB)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  AppIcon(AppIcons.image,
-                      size: 18, color: Color(0xFF3E8E6D)),
-                  SizedBox(width: 6),
-                  Text('添加封面图 · 4:3',
-                      style: TextStyle(
-                          fontSize: 13, color: Color(0xFF3E8E6D))),
-                ],
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 左：封面图（无图 = 同尺寸添加条），点击选图 / 换图
+            GestureDetector(
+              onTap: _pickImage,
+              child: SizedBox(
+                width: 180,
+                child: AspectRatio(
+                  aspectRatio: 4 / 3,
+                  child: hasImage
+                      ? Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.file(File(_imagePath),
+                                  fit: BoxFit.cover),
+                            ),
+                            Positioned(
+                              right: 6,
+                              bottom: 6,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: const Color(0x66000000),
+                                  borderRadius: BorderRadius.circular(99),
+                                ),
+                                child: const Text('更换',
+                                    style: TextStyle(
+                                        fontSize: 11, color: Colors.white)),
+                              ),
+                            ),
+                          ],
+                        )
+                      : Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border:
+                                Border.all(color: const Color(0xFFE4F2EB)),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              AppIcon(AppIcons.image,
+                                  size: 18, color: Color(0xFF3E8E6D)),
+                              SizedBox(width: 6),
+                              Text('添加封面图 · 4:3',
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      color: Color(0xFF3E8E6D))),
+                            ],
+                          ),
+                        ),
+                ),
               ),
             ),
-          )
-        else
-          GestureDetector(
-            onTap: _pickImage,
-            child: SizedBox(
-              width: 180,
-              child: AspectRatio(
-                aspectRatio: 4 / 3,
-                child: Stack(
-                  fit: StackFit.expand,
+            const SizedBox(width: 12),
+            // 右：时间 / 地点 / 更多，竖排等宽等高，底边与封面图对齐
+            Expanded(
+              child: SizedBox(
+                height: 135, // 180 × 3/4
+                child: Column(
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.file(File(_imagePath), fit: BoxFit.cover),
-                    ),
-                    Positioned(
-                      right: 6,
-                      bottom: 6,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: const Color(0x66000000),
-                          borderRadius: BorderRadius.circular(99),
-                        ),
-                        child: const Text('更换',
-                            style:
-                                TextStyle(fontSize: 11, color: Colors.white)),
+                    Expanded(
+                      child: _buildInfoCell(
+                        icon: AppIcons.event,
+                        label: '${d.year}年${d.month}月${d.day}日',
+                        onTap: _pickDate,
                       ),
                     ),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: _buildInfoCell(
+                        icon: AppIcons.mapPin,
+                        label: _location.isEmpty ? '地点' : _location,
+                        onTap: _pickLocation,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Expanded(child: _buildMoreButton()),
                   ],
                 ),
               ),
             ),
-          ),
+          ],
+        ),
       ],
     );
   }

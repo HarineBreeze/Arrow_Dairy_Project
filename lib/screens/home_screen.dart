@@ -1711,10 +1711,13 @@ class _PinnedMiniCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final d = entry.publishDate;
+    final t = entry.createdAt;
+    final hh = t.hour.toString().padLeft(2, '0');
+    final mm = t.minute.toString().padLeft(2, '0');
     final encrypted = entry.encrypted;
     // 置顶卡两种形态，均为两行：
-    // ① 加密笔记：第 1 行副标题，第 2 行「月.日 + 锁」
-    // ② 公开笔记：第 1 行标题，   第 2 行「月.日 + 心情」
+    // ① 加密笔记：第 1 行副标题，第 2 行「完整日期时间 + 锁」
+    // ② 公开笔记：第 1 行标题，   第 2 行「完整日期时间」
     final title = encrypted
         ? (entry.subtitle.isNotEmpty ? entry.subtitle : '加密笔记')
         : (entry.title.isNotEmpty ? entry.title : '（无标题）');
@@ -1756,11 +1759,11 @@ class _PinnedMiniCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 5),
-                      // 第 2 行：月.日（加密笔记额外带锁标）
+                      // 第 2 行：完整日期时间（加密笔记额外带锁标）
                       Row(
                         children: [
                           Text(
-                            '${d.month}.${d.day}',
+                            '${d.year}/${d.month}/${d.day} $hh:$mm',
                             style:
                                 const TextStyle(fontSize: 9.5, color: kTextLight),
                           ),
