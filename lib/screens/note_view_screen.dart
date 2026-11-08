@@ -180,26 +180,16 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                 children: [
                   // 排版顺序：封面图 → 标题 → 正文；无图时标题直接从顶部开始
                   if (_hasImage) ...[
-                    // 与主页卡片封面图共享元素，形成「图片放大到正文」的连贯转场
-                    Hero(
-                      tag: 'note_cover_${_entry.id}',
-                      flightShuttleBuilder: (_, __, ___, ____, _____) =>
-                          ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.file(File(_entry.imagePath),
-                            fit: BoxFit.cover),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: AspectRatio(
-                          aspectRatio: 4 / 3,
-                          // 页宽 - 左右各 16 边距；降采样解码后滚动更顺
-                          child: EntryImage(
-                            path: _entry.imagePath,
-                            displayWidth:
-                                MediaQuery.of(context).size.width - 32,
-                            iconSize: 24,
-                          ),
+                    // 封面图只随页面滑入，不做跨页共享元素飞行
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: AspectRatio(
+                        aspectRatio: 4 / 3,
+                        // 页宽 - 左右各 16 边距；降采样解码后滚动更顺
+                        child: EntryImage(
+                          path: _entry.imagePath,
+                          displayWidth: MediaQuery.of(context).size.width - 32,
+                          iconSize: 24,
                         ),
                       ),
                     ),

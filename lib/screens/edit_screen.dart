@@ -1458,11 +1458,11 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
+                            children: const [
                               AppIcon(AppIcons.image,
                                   size: 18, color: Color(0xFF3E8E6D)),
                               SizedBox(width: 6),
-                              Text('添加封面图 · 4:3',
+                              Text('添加封面图',
                                   style: TextStyle(
                                       fontSize: 13,
                                       color: Color(0xFF3E8E6D))),

@@ -1060,11 +1060,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       ),
               ),
               // 长列表快速回顶：只在滚过一屏后出现，避免遮挡内容。
-              // 位置必须避开右下角的新建 FAB（占据底部 16~72），否则会被它盖住。
+              // 与右下角新建 FAB 同一水平线（FAB 中心 = bottom 16 + 56/2 = 44，
+              // 按钮 42 高 → bottom = 44 - 21 = 23），水平排在 FAB 左侧留 12px 间隙
+              // （FAB 左边缘距右 16 + 56 = 72，按钮右边缘 84 > 72 才不会重叠）。
               if (_showBackTop)
                 Positioned(
-                  right: 16,
-                  bottom: 92,
+                  right: 84,
+                  bottom: 23,
                   child: GestureDetector(
                     onTap: _scrollToTop,
                     child: Container(
@@ -2034,23 +2036,15 @@ class _DiaryCard extends StatelessWidget {
       padding: const EdgeInsets.all(10),
       child: Row(
         children: [
-          // 封面图与浏览页共享元素：点开笔记时图片从卡片位置飞到正文位置
-          Hero(
-            tag: 'note_cover_${entry.id}',
-            // 飞行中统一用原文件渲染：两端解码宽度不同（124 vs 全宽），
-            // 交给 Hero 默认处理会中途闪一次占位块
-            flightShuttleBuilder: (_, __, ___, ____, _____) => ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.file(File(entry.imagePath), fit: BoxFit.cover),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: SizedBox(
-                width: 124,
-                height: 93, // 4:3
-                // 按 124 逻辑宽降采样解码，避免原图整幅驻留内存
-                child: EntryImage(path: entry.imagePath, displayWidth: 124),
-              ),
+          // 不再与浏览页做共享元素转场：图片飞行与整页右→左滑入叠加时
+          // 起点与终点每帧都在移动，轨迹会拐弯，观感比单一位移更乱。
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: SizedBox(
+              width: 124,
+              height: 93, // 4:3
+              // 按 124 逻辑宽降采样解码，避免原图整幅驻留内存
+              child: EntryImage(path: entry.imagePath, displayWidth: 124),
             ),
           ),
           const SizedBox(width: 12),
