@@ -585,7 +585,8 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
           margin: const EdgeInsets.symmetric(horizontal: 3),
           padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
           decoration: BoxDecoration(
-            color: selected ? const Color(0xFFE4F2EB) : const Color(0xFFF5FAF7),
+            // 未选中无底纹，仅选中保留浅绿底 + 绿描边
+            color: selected ? const Color(0xFFE4F2EB) : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: selected ? const Color(0xFF3E8E6D) : Colors.transparent,

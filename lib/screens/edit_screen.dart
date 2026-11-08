@@ -633,20 +633,40 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setState) => AlertDialog(
-          title: const Text('可见度'),
+          // 圆角与全局弹窗一致（16）
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16)),
+          titlePadding: const EdgeInsets.fromLTRB(24, 22, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(0, 12, 0, 4),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          title: const Text('可见度',
+              style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF24382F))),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               RadioListTile<String>(
-                title: const Text('公开'),
+                title: const Text('公开',
+                    style: TextStyle(
+                        fontSize: 15, color: Color(0xFF24382F))),
                 value: 'public',
                 groupValue: choice,
+                dense: true,
+                visualDensity: VisualDensity.compact,
+                activeColor: const Color(0xFF3E8E6D),
                 onChanged: (v) => setState(() => choice = v!),
               ),
               RadioListTile<String>(
-                title: const Text('加密'),
+                title: const Text('加密',
+                    style: TextStyle(
+                        fontSize: 15, color: Color(0xFF24382F))),
                 value: 'encrypted',
                 groupValue: choice,
+                dense: true,
+                visualDensity: VisualDensity.compact,
+                activeColor: const Color(0xFF3E8E6D),
                 onChanged: (v) => setState(() => choice = v!),
               ),
             ],
@@ -655,13 +675,22 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
             Pressable(
               enabled: true,
               child: TextButton(
-                  onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('取消',
+                    style: TextStyle(
+                        fontSize: 15, color: Color(0xFF647A70))),
+              ),
             ),
             Pressable(
               enabled: true,
               child: TextButton(
-                  onPressed: () => Navigator.pop(ctx, choice),
-                  child: const Text('确定')),
+                onPressed: () => Navigator.pop(ctx, choice),
+                child: const Text('确定',
+                    style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF3E8E6D))),
+              ),
             ),
           ],
         ),
@@ -1347,7 +1376,8 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
             ),
           ),
           child: isMore
-              ? const Text('...', style: TextStyle(fontSize: 15))
+              // 细线三点：与 emoji 图标同尺寸，底纹长宽自然一致
+              ? const AppIcon(AppIcons.moreH, size: 16)
               : EntryIcon(o, size: 16),
         ),
       );

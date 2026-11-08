@@ -273,13 +273,12 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
     // 收纳栏：从左到右固定顺序 笔记/物品/事件/资产
     final cats = <_SearchCategory>[
       _SearchCategory(
-          '笔记', '${diaries.length} 篇', AppIcons.diary, diaries.isNotEmpty),
-      _SearchCategory('物品', '${items.length} 件', AppIcons.items,
-          items.isNotEmpty),
+          '笔记', '${diaries.length} 篇', diaries.isNotEmpty),
+      _SearchCategory('物品', '${items.length} 件', items.isNotEmpty),
       _SearchCategory('事件', '${events.length} 个',
-          AppIcons.event, events.isNotEmpty),
+          events.isNotEmpty),
       _SearchCategory('资产', _assetLocked ? '已加密' : '${assets.length} 项',
-          AppIcons.asset, assets.isNotEmpty),
+          assets.isNotEmpty),
     ];
 
     return ListView(
@@ -314,14 +313,6 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      AppIcon(c.icon,
-                          size: 14,
-                          color: selected
-                              ? Colors.white
-                              : (c.hasHit
-                                  ? const Color(0xFF3E8E6D)
-                                  : const Color(0xFFC6D6CD))),
-                      const SizedBox(width: 5),
                       Text('${c.name} ${c.count}',
                           style: TextStyle(
                               fontSize: 13,
@@ -344,7 +335,6 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           if (diaries.isNotEmpty)
             _buildSection(
               '笔记',
-              AppIcons.diary,
               diaries
                   .map((e) => _ResultRow(
                         icon: e.encrypted
@@ -364,7 +354,6 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           if (items.isNotEmpty)
             _buildSection(
               '物品',
-              AppIcons.items,
               items
                   .map((e) => _ResultRow(
                         icon: AppIcons.items,
@@ -383,7 +372,6 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           if (events.isNotEmpty)
             _buildSection(
               '事件',
-              AppIcons.event,
               events
                   .map((e) => _ResultRow(
                         icon: AppIcons.event,
@@ -402,7 +390,6 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           if (assets.isNotEmpty)
             _buildSection(
               '资产',
-              AppIcons.asset,
               assets
                   .map((e) => _ResultRow(
                         icon: AppIcons.asset,
@@ -450,7 +437,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
     );
   }
 
-  Widget _buildSection(String title, String icon, List<_ResultRow> rows) {
+  Widget _buildSection(String title, List<_ResultRow> rows) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Column(
@@ -458,17 +445,11 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.only(left: 2, bottom: 7),
-            child: Row(
-              children: [
-                AppIcon(icon, size: 13, color: const Color(0xFF8FA09A)),
-                const SizedBox(width: 5),
-                Text(title,
-                    style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF7C8F86))),
-              ],
-            ),
+            child: Text(title,
+                style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF7C8F86))),
           ),
           Container(
             // 预览卡去描边：白底圆角 + 内部分隔线
@@ -504,9 +485,8 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
 class _SearchCategory {
   final String name;
   final String count;
-  final String icon;
   final bool hasHit;
-  const _SearchCategory(this.name, this.count, this.icon, this.hasHit);
+  const _SearchCategory(this.name, this.count, this.hasHit);
 }
 
 class _ResultRow extends StatelessWidget {

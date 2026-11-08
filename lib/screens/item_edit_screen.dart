@@ -953,17 +953,16 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
   }
 
   Widget _buildStepButton(String icon, VoidCallback onTap) {
+    // 无底纹：裸图标 + 圆形点击区，视觉与该行文字居中对齐
     return InkWell(
       onTap: onTap,
-      child: Container(
-        width: 32,
-        height: 32,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-          border: Border.all(color: const Color(0xFFE4F2EB)),
+      customBorder: const CircleBorder(),
+      child: SizedBox(
+        width: 28,
+        height: 28,
+        child: Center(
+          child: AppIcon(icon, size: 18, color: _accent),
         ),
-        child: AppIcon(icon, size: 18, color: _accent),
       ),
     );
   }

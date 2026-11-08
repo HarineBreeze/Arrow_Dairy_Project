@@ -936,7 +936,8 @@ class AssetScreenState extends State<AssetScreen> {
                 },
                 behavior: HitTestBehavior.opaque,
                 child: _baselineIcon(
-                  // 眼睛偏上 → baseline 减小让它下沉
+                  // 眼睛圆心要与文字字形中心齐：15px 图标取 baseline 14，
+                  // 与右栏叹号（18px 盒 / baseline 15，圆心 bl-6）一致
                   AppIcon(
                     _hideNumbers
                         ? AppIcons.eyeOff
@@ -944,7 +945,7 @@ class AssetScreenState extends State<AssetScreen> {
                     size: 15,
                     color: const Color(0xFF8FA09A),
                   ),
-                  baseline: 11,
+                  baseline: 14,
                 ),
               ),
             ],
