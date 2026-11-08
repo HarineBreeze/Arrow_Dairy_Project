@@ -1,4 +1,5 @@
 import '../widgets/app_icons.dart';
+import '../widgets/entry_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
@@ -366,6 +367,8 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
 
   bool _kbAtDown = false; // 手指按下瞬间键盘是否真实弹出（viewInsets 判断）
   bool _kbVisible = false; // 键盘当前是否弹出（用于联动收起/展开头部信息区）
+  Offset? _downGlobal; // 正文上最近一次按下的全局坐标（聚焦后定位光标用）
+  final GlobalKey _contentFieldKey = GlobalKey(); // 正文 TextField，用于取 EditableText 状态
 
   // 记录按下时是否已有选区、键盘是否弹出
   void _onPointerDown(PointerDownEvent e) {
@@ -373,6 +376,42 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     _tapStartedWithSelection = sel.isValid && !sel.isCollapsed;
     // 用真实键盘高度判断，而非焦点（返回键收起键盘后焦点仍在）
     _kbAtDown = _isKbVisible();
+    _downGlobal = e.position; // 记下按下的全局坐标，聚焦后用于定位光标
+  }
+
+  /// 未聚焦时正文处于 readOnly，点击不会移动光标（会落到上次位置/文末）。
+  /// 聚焦生效后按按下坐标把光标放到用户点的地方，符合「点哪改哪」的直觉。
+  void _placeCaretAtDownPoint() {
+    final global = _downGlobal;
+    if (global == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final state = _editableStateOf(_contentFieldKey.currentContext);
+      final render = state?.renderEditable;
+      if (render == null || !render.hasSize) return;
+      final local = render.globalToLocal(global);
+      // 点在文本区外（如右侧空白）时夹回行内合法位置
+      final pos = render.getPositionForPoint(local);
+      _contentCtrl.selection =
+          TextSelection.collapsed(offset: pos.offset.clamp(0, _contentCtrl.text.length));
+    });
+  }
+
+  /// 在子树里找 EditableTextState（TextField 内部由它承载光标与滚动）
+  EditableTextState? _editableStateOf(BuildContext? root) {
+    if (root == null) return null;
+    EditableTextState? found;
+    void visit(Element el) {
+      if (found != null) return;
+      if (el is StatefulElement && el.state is EditableTextState) {
+        found = el.state as EditableTextState;
+        return;
+      }
+      el.visitChildren(visit);
+    }
+
+    root.visitChildElements(visit);
+    return found;
   }
 
   /// 单点正文 = 想编辑文字 → 弹键盘；长按拖选 = 想排版 → 不弹键盘。
@@ -389,7 +428,11 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
       _savedEnd = 0;
       // 光标位置交给 TextField 自身的点击处理（定位到点击处），不再强制回旧选区末尾；
       // 立即请求焦点（无延迟）：readOnly 将随重建变为 false，didUpdateWidget 会自动接通键盘
-      if (!_contentFocus.hasFocus) _contentFocus.requestFocus();
+      if (!_contentFocus.hasFocus) {
+        _contentFocus.requestFocus();
+        // readOnly 期间的那一次点击本身不会移动光标，聚焦后补一次定位
+        _placeCaretAtDownPoint();
+      }
       return;
     }
     if (_isKbVisible()) {
@@ -1028,6 +1071,8 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                       child: TextField(
                         controller: _titleCtrl,
                         maxLength: 15,
+                        // 键盘弹出时标题不被输入法贴边遮挡
+                        scrollPadding: const EdgeInsets.only(bottom: 120),
                         style: const TextStyle(
                             fontSize: 22, fontWeight: FontWeight.w600),
                         decoration: InputDecoration(
@@ -1117,6 +1162,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                       child: Listener(
                         onPointerDown: _onPointerDown,
                         child: TextField(
+                        key: _contentFieldKey,
                         controller: _contentCtrl,
                         focusNode: _contentFocus,
                         readOnly: _selecting || !_contentFocus.hasFocus,
@@ -1126,6 +1172,8 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                         minLines: null,
                         expands: true,
                         textAlignVertical: TextAlignVertical.top,
+                        // 光标在正文底部时，确保它滚到排版栏与字数计数器上方
+                        scrollPadding: const EdgeInsets.only(bottom: 132),
                         style: const TextStyle(fontSize: 15, height: 1.7),
                         decoration: const InputDecoration(
                           hintText: '今天发生了什么…',
@@ -1359,8 +1407,10 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                           children: [
                             ClipRRect(
                               borderRadius: BorderRadius.circular(12),
-                              child: Image.file(File(_imagePath),
-                                  fit: BoxFit.cover),
+                              child: EntryImage(
+                                path: _imagePath,
+                                displayWidth: 180,
+                              ),
                             ),
                             // 右上角：移除当前封面图（点击二次确认）
                             Positioned(

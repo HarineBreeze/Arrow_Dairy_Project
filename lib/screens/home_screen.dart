@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import '../widgets/app_icons.dart';
+import '../widgets/entry_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart' show DragStartBehavior;
 import 'package:flutter/services.dart' show SystemUiOverlayStyle;
@@ -1023,51 +1024,78 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   onRefresh: _load,
                   color: const Color(0xFF3E8E6D),
                   child: isFlat
-                      ? ListView(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-                          children: [
-                            if (pinned.isNotEmpty) _buildPinnedRail(pinned),
-                            for (final e in flatList) _cardRow(e),
-                          ],
-                        )
-                      : SingleChildScrollView(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              // 置顶横滑卡带：随内容滚动，不吸顶
-                              if (pinned.isNotEmpty) _buildPinnedRail(pinned),
-                              for (var gi = 0; gi < groups.length; gi++) ...[
-                                _buildGroupHeader(groups[gi],
-                                    _isGroupExpanded(groups[gi].key)),
-                                if (_isGroupExpanded(groups[gi].key))
-                                  for (final e in groups[gi].entries)
-                                    _cardRow(e),
-                                if (gi == groups.length - 1)
-                                  const SizedBox(height: 12),
-                              ],
-                            ],
-                          ),
-                        ),
+                      ? _buildFlatList(pinned, flatList)
+                      : _buildGroupedList(pinned, groups),
                 ),
         ),
       ],
     );
   }
 
-  /// 单张卡片 + 长按手势（按住 500ms 不动，弹出操作菜单）
+  /// 「全部」：置顶卡带（第 0 项）+ 平铺卡片，懒加载构建。
+  /// 之前用 ListView(children:) 会一次性构建全部卡片，几百篇时首帧明显偏慢。
+  Widget _buildFlatList(List<DiaryEntry> pinned, List<DiaryEntry> list) {
+    final hasRail = pinned.isNotEmpty;
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+      itemCount: list.length + (hasRail ? 1 : 0),
+      itemBuilder: (context, i) {
+        if (hasRail && i == 0) return _buildPinnedRail(pinned);
+        return _cardRow(list[hasRail ? i - 1 : i]);
+      },
+    );
+  }
+
+  /// 「按日/按月/按年」：把「分组头 / 卡片」摊平成一维行后交给 builder，
+  /// 折叠起来的分组不产生卡片行，展开也只是多出可见范围内的构建。
+  Widget _buildGroupedList(List<DiaryEntry> pinned, List<_NoteGroup> groups) {
+    final rows = <_NoteRow>[];
+    for (final g in groups) {
+      rows.add(_NoteRow.header(g));
+      if (_isGroupExpanded(g.key)) {
+        for (final e in g.entries) {
+          rows.add(_NoteRow.entry(e));
+        }
+      }
+    }
+    final hasRail = pinned.isNotEmpty;
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+      itemCount: rows.length + (hasRail ? 1 : 0) + 1,
+      itemBuilder: (context, i) {
+        var index = i;
+        if (hasRail) {
+          if (i == 0) return _buildPinnedRail(pinned);
+          index = i - 1;
+        }
+        // 末尾留白（与旧版 Column 末尾的 SizedBox 一致）
+        if (index == rows.length) return const SizedBox(height: 12);
+        final row = rows[index];
+        if (row.group != null) {
+          return _buildGroupHeader(
+              row.group!, _isGroupExpanded(row.group!.key));
+        }
+        return _cardRow(row.entry!);
+      },
+    );
+  }
+
+  /// 单张卡片 + 长按手势（按住 500ms 不动，弹出操作菜单）。
+  /// 外层 RepaintBoundary：滚动时卡片内容不参与主列表重绘。
   Widget _cardRow(DiaryEntry e) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 8),
-      child: Listener(
-        onPointerDown: (ev) => _onCardPointerDown(e, ev.position),
-        onPointerMove: (ev) => _onCardPointerMove(ev.position),
-        onPointerUp: (_) => _cancelPressTracking(),
-        onPointerCancel: (_) => _cancelPressTracking(),
-        child: _DiaryCard(
-          entry: e,
-          isPinned: e.pinned,
-          onTap: () => _openNote(e),
+    return RepaintBoundary(
+      child: Padding(
+        padding: const EdgeInsets.only(top: 8),
+        child: Listener(
+          onPointerDown: (ev) => _onCardPointerDown(e, ev.position),
+          onPointerMove: (ev) => _onCardPointerMove(ev.position),
+          onPointerUp: (_) => _cancelPressTracking(),
+          onPointerCancel: (_) => _cancelPressTracking(),
+          child: _DiaryCard(
+            entry: e,
+            isPinned: e.pinned,
+            onTap: () => _openNote(e),
+          ),
         ),
       ),
     );
@@ -1700,6 +1728,15 @@ class _NoteGroup {
   });
 }
 
+/// 分组视图摊平后的一行：要么是分组头，要么是一张卡片。
+/// 用 builder 列表时只保留「数据行」，widget 按需构建。
+class _NoteRow {
+  final _NoteGroup? group;
+  final DiaryEntry? entry;
+  _NoteRow.header(this.group) : entry = null;
+  _NoteRow.entry(this.entry) : group = null;
+}
+
 /// 置顶横滑卡带里的迷你卡（P3）：红描边 + 标题 + 日期/心情，加密笔记只露副标题
 class _PinnedMiniCard extends StatelessWidget {
   final DiaryEntry entry;
@@ -1935,18 +1972,8 @@ class _DiaryCard extends StatelessWidget {
             child: SizedBox(
               width: 124,
               height: 93, // 4:3
-              child: Image.file(
-                File(entry.imagePath),
-                fit: BoxFit.cover,
-                // 图片损坏时不留空洞，退回浅色占位
-                errorBuilder: (_, __, ___) => const ColoredBox(
-                  color: Color(0xFFE4F2EB),
-                  child: Center(
-                    child: AppIcon(AppIcons.image,
-                        size: 20, color: Color(0xFF8FA09A)),
-                  ),
-                ),
-              ),
+              // 按 124 逻辑宽降采样解码，避免原图整幅驻留内存
+              child: EntryImage(path: entry.imagePath, displayWidth: 124),
             ),
           ),
           const SizedBox(width: 12),

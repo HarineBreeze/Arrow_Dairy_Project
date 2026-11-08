@@ -1,4 +1,5 @@
 import '../widgets/app_icons.dart';
+import '../widgets/entry_image.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../models/diary_entry.dart';
@@ -211,16 +212,12 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                       borderRadius: BorderRadius.circular(12),
                       child: AspectRatio(
                         aspectRatio: 4 / 3,
-                        child: Image.file(
-                          File(_entry.imagePath),
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const ColoredBox(
-                            color: Color(0xFFE4F2EB),
-                            child: Center(
-                              child: AppIcon(AppIcons.image,
-                                  size: 24, color: Color(0xFF8FA09A)),
-                            ),
-                          ),
+                        // 页宽 - 左右各 16 边距；降采样解码后滚动更顺
+                        child: EntryImage(
+                          path: _entry.imagePath,
+                          displayWidth:
+                              MediaQuery.of(context).size.width - 32,
+                          iconSize: 24,
                         ),
                       ),
                     ),
