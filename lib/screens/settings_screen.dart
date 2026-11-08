@@ -576,14 +576,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
           children: [
-            Container(
+            // 去底纹：仅保留图标本体，固定 36×36 让标题与次行对齐
+            // （修复：原底纹容器未设 alignment，图标贴左上角错位）
+            SizedBox(
               width: 36,
               height: 36,
-              decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(9),
-              ),
-              child: AppIcon(icon, size: 20, color: iconColor),
+              child: Center(child: AppIcon(icon, size: 22, color: iconColor)),
             ),
             const SizedBox(width: 12),
             Expanded(

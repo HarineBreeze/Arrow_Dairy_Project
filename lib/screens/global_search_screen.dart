@@ -350,7 +350,6 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                         icon: e.encrypted
                             ? AppIcons.lock
                             : AppIcons.diary,
-                        iconBg: const Color(0xFFE4F2EB),
                         iconColor: const Color(0xFF3E8E6D),
                         title: e.encrypted
                             ? (e.subtitle.isNotEmpty ? e.subtitle : '加密笔记')
@@ -369,7 +368,6 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
               items
                   .map((e) => _ResultRow(
                         icon: AppIcons.items,
-                        iconBg: const Color(0xFFE7F3EA),
                         iconColor: const Color(0xFF3E8E6D),
                         title: e.name,
                         subtitle:
@@ -389,7 +387,6 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
               events
                   .map((e) => _ResultRow(
                         icon: AppIcons.event,
-                        iconBg: const Color(0xFFFBEEE9),
                         iconColor: const Color(0xFFF08C3A),
                         title: e.name,
                         subtitle:
@@ -409,7 +406,6 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
               assets
                   .map((e) => _ResultRow(
                         icon: AppIcons.asset,
-                        iconBg: const Color(0xFFECF2EE),
                         iconColor: const Color(0xFF647A70),
                         title: e.note.isNotEmpty ? e.note : e.type,
                         subtitle: '${e.type} · ${_assetAmountLabel(e)}',
@@ -475,10 +471,10 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
             ),
           ),
           Container(
+            // 预览卡去描边：白底圆角 + 内部分隔线
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFE8EDF5)),
             ),
             child: Column(
               children: [
@@ -515,7 +511,6 @@ class _SearchCategory {
 
 class _ResultRow extends StatelessWidget {
   final String icon;
-  final Color iconBg;
   final Color iconColor;
   final String title;
   final String subtitle;
@@ -525,7 +520,6 @@ class _ResultRow extends StatelessWidget {
   const _ResultRow({
     Key? key,
     required this.icon,
-    required this.iconBg,
     required this.iconColor,
     required this.title,
     required this.subtitle,
@@ -543,15 +537,11 @@ class _ResultRow extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
           child: Row(
             children: [
-              Container(
+              // 去底纹：与设置页同款，固定 38×38 居中
+              SizedBox(
                 width: 38,
                 height: 38,
-                decoration: BoxDecoration(
-                  color: iconBg,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                alignment: Alignment.center,
-                child: AppIcon(icon, size: 18, color: iconColor),
+                child: Center(child: AppIcon(icon, size: 20, color: iconColor)),
               ),
               const SizedBox(width: 12),
               Expanded(
