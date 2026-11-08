@@ -435,9 +435,6 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         decoration: BoxDecoration(
           color: sel ? accent : Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: sel ? accent : const Color(0xFFE4F2EB),
-          ),
         ),
         child: Text(
           label,
@@ -670,9 +667,6 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
               decoration: BoxDecoration(
                 color: sel ? _accent : Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: sel ? _accent : const Color(0xFFE4F2EB),
-                ),
               ),
               child: Text(
                 c,
@@ -691,7 +685,6 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE4F2EB)),
             ),
             child: const Text(
               '自定义',
@@ -727,9 +720,6 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         decoration: BoxDecoration(
           color: sel ? _accent.withOpacity(0.15) : Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: sel ? _accent : const Color(0xFFE8EDF5),
-          ),
         ),
         child: isCustom
             // 自定义入口（…）保持灰色文本；预设值走 Lucide 细线图标
@@ -839,7 +829,6 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE4F2EB)),
         ),
         child: Row(
           children: [
@@ -893,9 +882,6 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
                 decoration: BoxDecoration(
                   color: sel ? _accent : Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: sel ? _accent : const Color(0xFFE4F2EB),
-                  ),
                 ),
                 child: Text(
                   labels[i],

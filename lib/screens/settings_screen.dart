@@ -210,8 +210,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         decoration: BoxDecoration(
           color: sel ? const Color(0xFFE4F2EB) : const Color(0xFFF5FAF7),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-              color: sel ? const Color(0xFF3E8E6D) : const Color(0xFFE8EDF5)),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -276,7 +274,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFE8EDF5)),
                   ),
                   child: Column(
                     children: [
@@ -321,7 +318,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFE8EDF5)),
                   ),
                   child: _buildItem(
                     icon: AppIcons.fontType,
@@ -354,7 +350,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFE8EDF5)),
                   ),
                   child: _buildItem(
                     icon: AppIcons.vibrate,

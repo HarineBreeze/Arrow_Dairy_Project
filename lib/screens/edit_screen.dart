@@ -1434,21 +1434,6 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                                 ),
                               ),
                             ),
-                            Positioned(
-                              right: 6,
-                              bottom: 6,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: const Color(0x66000000),
-                                  borderRadius: BorderRadius.circular(99),
-                                ),
-                                child: const Text('更换',
-                                    style: TextStyle(
-                                        fontSize: 11, color: Colors.white)),
-                              ),
-                            ),
                           ],
                         )
                       : Container(

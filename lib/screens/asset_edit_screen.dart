@@ -410,10 +410,6 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
             // 图标底纹移除：未选中透明，选中保留浅绿强调
             color: sel ? const Color(0xFFE4F2EB) : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: sel ? const Color(0xFF3E8E6D) : Colors.transparent,
-              width: 1.5,
-            ),
           ),
           child: isMore
               ? const AppIcon(AppIcons.moreH,
@@ -467,12 +463,6 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                                   ? const Color(0xFFE4F2EB)
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: sel
-                                    ? const Color(0xFF3E8E6D)
-                                    : Colors.transparent,
-                                width: 1.5,
-                              ),
                             ),
                             child: EntryIcon(e, size: 24),
                           ),
@@ -491,7 +481,12 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                             TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
                         counterText: '',
                         isDense: true,
-                        border: OutlineInputBorder(),
+                        // 与页面其它输入框统一：浅底填充替代描边
+                        filled: true,
+                        fillColor: Color(0xFFF5FAF7),
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
                       ),
                       onChanged: (_) => setSheetState(() {}),
                     ),
@@ -535,7 +530,6 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
     return BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: const Color(0xFFE8EDF5)),
     );
   }
 }
