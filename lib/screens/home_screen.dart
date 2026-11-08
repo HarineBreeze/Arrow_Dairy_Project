@@ -190,7 +190,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (ctx) => SafeArea(
         child: Column(
@@ -290,7 +290,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   const SizedBox(height: 8),
                   Text(
                     error,
-                    style: const TextStyle(color: Color(0xFFCB5C50), fontSize: 12),
+                    style: const TextStyle(color: Color(0xFFCB5C50), fontSize: 13),
                   ),
                 ],
               ],
@@ -354,13 +354,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 if (entry.passwordHint.isEmpty)
                   const Text(
                     '这条笔记没有设置密保问题哦～',
-                    style: TextStyle(fontSize: 14, color: Color(0xFF647A70)),
+                    style: TextStyle(fontSize: 13, color: Color(0xFF647A70)),
                   )
                 else ...[
                   Text(
                     'Q：${entry.passwordHint}',
                     style: const TextStyle(
-                        fontSize: 14, height: 1.5, color: Color(0xFF24382F)),
+                        fontSize: 13, height: 1.5, color: Color(0xFF24382F)),
                   ),
                   const SizedBox(height: 10),
                   TextField(
@@ -373,7 +373,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     const SizedBox(height: 8),
                     Text(
                       error,
-                      style: const TextStyle(color: Color(0xFFCB5C50), fontSize: 12),
+                      style: const TextStyle(color: Color(0xFFCB5C50), fontSize: 13),
                     ),
                   ],
                   if (revealedPwd != null) ...[
@@ -384,7 +384,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           horizontal: 12, vertical: 10),
                       decoration: BoxDecoration(
                         color: const Color(0xFFE4F2EB),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
                         '密码：$revealedPwd',
@@ -1141,7 +1141,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         child: Text(
                           labels[i],
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 13,
                             fontWeight:
                                 selected ? FontWeight.w600 : FontWeight.w400,
                             color: selected
@@ -1203,7 +1203,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               Text(
                 '置顶 ${pinned.length} 篇',
                 style: const TextStyle(
-                    fontSize: 11.5, color: Color(0xFF3E8E6D)),
+                    fontSize: 11, color: Color(0xFF3E8E6D)),
               ),
             ],
           ),
@@ -1267,7 +1267,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             Text(
               dateText,
               style: TextStyle(
-                fontSize: 11.5,
+                fontSize: 11,
                 fontWeight: FontWeight.w600,
                 color: accent ? kPrimaryBlue : kTextDark,
               ),
@@ -1276,13 +1276,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               const SizedBox(width: 5),
               Text(
                 _weekdayLabel(group.date),
-                style: const TextStyle(fontSize: 10.5, color: kTextLight),
+                style: const TextStyle(fontSize: 11, color: kTextLight),
               ),
             ],
             const SizedBox(width: 6),
             Text(
               '${group.entries.length} 篇',
-              style: const TextStyle(fontSize: 10.5, color: kTextLight),
+              style: const TextStyle(fontSize: 11, color: kTextLight),
             ),
             const Spacer(),
           ],
@@ -1382,7 +1382,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               const Text(
                 '日记',
                 style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: Colors.white),
               ),
@@ -1433,7 +1433,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (ctx) {
         return SafeArea(
@@ -1508,7 +1508,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           decoration: BoxDecoration(
                             color:
                                 active ? const Color(0xFF3E8E6D) : Colors.white,
-                            borderRadius: BorderRadius.circular(18),
+                            borderRadius: BorderRadius.circular(16),
                             border: Border.all(
                               color: active
                                   ? const Color(0xFF3E8E6D)
@@ -1642,7 +1642,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 child: Center(
                   child: Text(
                     w,
-                    style: const TextStyle(fontSize: 12, color: kTextLight),
+                    style: const TextStyle(fontSize: 13, color: kTextLight),
                   ),
                 ),
               ))
@@ -1744,20 +1744,20 @@ class _PinnedMiniCard extends StatelessWidget {
     return Pressable(
       child:   Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(11),
+        borderRadius: BorderRadius.circular(12),
         child: InkWell(
-          borderRadius: BorderRadius.circular(11),
+          borderRadius: BorderRadius.circular(12),
           onTap: onTap,
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(11),
+              borderRadius: BorderRadius.circular(12),
               // 卡带里的卡本身就是置顶的，统一用主色描边
               border: Border.all(color: const Color(0xFF3E8E6D), width: 1.3),
             ),
             // 加密笔记：卡面铺斜纹纹理（与未置顶封条卡同一语言）
             // 注意：底色必须透明，否则会盖住下面的 painter
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
               child: CustomPaint(
                 painter: encrypted ? const _GridTexturePainter() : null,
                 child: Container(
@@ -1773,7 +1773,7 @@ class _PinnedMiniCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 11.5,
+                          fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: kTextDark,
                         ),
@@ -1935,7 +1935,7 @@ class _DiaryCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 10),
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           // 置顶笔记：主色描边（不再用红色，避免和「涨/警示红」混淆）
           side: isPinned
               ? const BorderSide(color: Color(0xFF3E8E6D), width: 1.5)
@@ -1943,7 +1943,7 @@ class _DiaryCard extends StatelessWidget {
         ),
         color: Colors.white,
         child: InkWell(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(13, 12, 14, 12),
@@ -1979,7 +1979,7 @@ class _DiaryCard extends StatelessWidget {
                             maxLines: 1,
                             softWrap: false,
                             style:
-                                const TextStyle(fontSize: 10, color: kTextLight)),
+                                const TextStyle(fontSize: 11, color: kTextLight)),
                       ),
                     ],
                   ),
@@ -1998,7 +1998,7 @@ class _DiaryCard extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                fontSize: 15.5,
+                                fontSize: 15,
                                 fontWeight: FontWeight.w600,
                                 color: kTextDark,
                               ),
@@ -2012,7 +2012,7 @@ class _DiaryCard extends StatelessWidget {
                           entry.content,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 12.5, color: kTextMid),
+                          style: const TextStyle(fontSize: 13, color: kTextMid),
                         ),
                       ],
                       const SizedBox(height: 5),
@@ -2064,7 +2064,7 @@ class _DiaryCard extends StatelessWidget {
         child:   Container(
           margin: const EdgeInsets.only(bottom: 10),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
             child: ColoredBox(
               color: const Color(0xFFFBE3E8),
               child: CustomPaint(
@@ -2122,7 +2122,7 @@ class _DiaryCard extends StatelessWidget {
       child:   Container(
         margin: const EdgeInsets.only(bottom: 10),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           child: Material(
             color: Colors.white,
             child: InkWell(

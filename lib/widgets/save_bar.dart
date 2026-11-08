@@ -103,7 +103,7 @@ class _SaveBarState extends State<SaveBar> {
                           ),
                         ),
                         child: const Text('取消',
-                            style: TextStyle(fontSize: 16)),
+                            style: TextStyle(fontSize: 15)),
                       ),
                     ),
                   ),

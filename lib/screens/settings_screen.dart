@@ -75,7 +75,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             content: const Text(
               '导入后将覆盖当前手机上的全部数据，原有内容无法恢复。',
               style: TextStyle(
-                  fontSize: 14, color: Color(0xFF647A70), height: 1.6),
+                  fontSize: 13, color: Color(0xFF647A70), height: 1.6),
             ),
             actions: [
               Pressable(
@@ -135,7 +135,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
           shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Text('导入备份'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -226,7 +226,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   Text(label,
                       style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: sel
                               ? const Color(0xFF3E8E6D)
@@ -234,7 +234,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(height: 2),
                   Text(desc,
                       style: const TextStyle(
-                          fontSize: 12, color: Color(0xFF7C8F86), height: 1.5)),
+                          fontSize: 13, color: Color(0xFF7C8F86), height: 1.5)),
                 ],
               ),
             ),
@@ -273,7 +273,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: const Color(0xFFE8EDF5)),
                   ),
                   child: Column(
@@ -318,7 +318,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: const Color(0xFFE8EDF5)),
                   ),
                   child: _buildItem(
@@ -365,7 +365,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: const Color(0xFFE8EDF5)),
                   ),
                   child: _buildItem(
@@ -389,7 +389,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Text(
                 AppVersion.displayVersion,
                 style: TextStyle(
-                  fontSize: 11.5,
+                  fontSize: 11,
                   color: Color(0xFFB2C2BA),
                   letterSpacing: 0.4,
                 ),
@@ -417,7 +417,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: const Text(
           '!',
           style: TextStyle(
-            fontSize: 10,
+            fontSize: 11,
             height: 1,
             fontWeight: FontWeight.w700,
             color: Color(0xFF3E8E6D),
@@ -571,7 +571,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }) {
     return InkWell(
       onTap: busy ? null : onTap,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(16),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
@@ -596,7 +596,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(height: 2),
                   Text(subtitle,
                       style: const TextStyle(
-                          fontSize: 12, color: Color(0xFF8FA09A))),
+                          fontSize: 13, color: Color(0xFF8FA09A))),
                 ],
               ),
             ),

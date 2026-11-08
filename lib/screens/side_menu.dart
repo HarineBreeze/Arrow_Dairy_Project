@@ -92,7 +92,7 @@ class SideMenu extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.left,
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF24382F),
                   ),
@@ -105,12 +105,12 @@ class SideMenu extends StatelessWidget {
                         const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF08C3A),
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Text(
                       '内测版',
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 11,
                         height: 1.2,
                         fontWeight: FontWeight.w600,
                         color: Colors.white,
@@ -125,7 +125,7 @@ class SideMenu extends StatelessWidget {
                   textAlign: TextAlign.left,
                   maxLines: 1,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 13,
                     color: Color(0xFF8FA09A),
                   ),
                 ),
@@ -169,7 +169,7 @@ class SideMenu extends StatelessWidget {
               child: Container(
                 decoration: BoxDecoration(
                   color: const Color(0xB33E8E6D),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
             ),
@@ -213,7 +213,7 @@ class SideMenu extends StatelessWidget {
             color: Colors.transparent,
             child: InkWell(
               onTap: onTap,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
               child: Row(
                 children: [
                   const SizedBox(width: 16),
@@ -245,7 +245,7 @@ class SideMenu extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onOpenSettings,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
           child: SizedBox(
             height: 52,
             child: Row(

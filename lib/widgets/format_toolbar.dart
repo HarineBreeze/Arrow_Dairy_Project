@@ -211,7 +211,7 @@ class FormatToolbarState extends State<FormatToolbar> {
         ),
         child: Text(
           label,
-          style: (style ?? const TextStyle(fontSize: 14)).copyWith(
+          style: (style ?? const TextStyle(fontSize: 13)).copyWith(
             color: active ? Colors.white : const Color(0xFF24382F),
           ),
         ),
@@ -291,14 +291,14 @@ class FormatToolbarState extends State<FormatToolbar> {
                     active: _isOn('underline', true),
                     onTap: () => _toggle('underline'),
                     style: const TextStyle(
-                        fontSize: 16, decoration: TextDecoration.underline),
+                        fontSize: 15, decoration: TextDecoration.underline),
                   ),
                   _textBtn(
                     label: 'S',
                     active: _isOn('strike', true),
                     onTap: () => _toggle('strike'),
                     style: const TextStyle(
-                        fontSize: 16, decoration: TextDecoration.lineThrough),
+                        fontSize: 15, decoration: TextDecoration.lineThrough),
                   ),
                   _divider(),
                   // 话题 / 物品：把符号插到选区文字前面
@@ -307,14 +307,14 @@ class FormatToolbarState extends State<FormatToolbar> {
                     active: false,
                     onTap: () => widget.onInsertTag?.call(true),
                     style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.w600),
+                        fontSize: 17, fontWeight: FontWeight.w600),
                   ),
                   _textBtn(
                     label: '@',
                     active: false,
                     onTap: () => widget.onInsertTag?.call(false),
                     style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.w600),
+                        fontSize: 17, fontWeight: FontWeight.w600),
                   ),
                   _divider(),
                   // 待办清单：在该行插入「[ ] 」，浏览页可勾选
@@ -366,7 +366,7 @@ class FormatToolbarState extends State<FormatToolbar> {
                             height: 12,
                             decoration: BoxDecoration(
                               color: _hex(_highlights.first),
-                              borderRadius: BorderRadius.circular(3),
+                              borderRadius: BorderRadius.circular(8),
                               border:
                                   Border.all(color: const Color(0xFFD5E2DB)),
                             ),
@@ -391,7 +391,7 @@ class FormatToolbarState extends State<FormatToolbar> {
                       ),
                       child: Row(
                         children: const [
-                          Text('A', style: TextStyle(fontSize: 12)),
+                          Text('A', style: TextStyle(fontSize: 13)),
                           Text('A', style: TextStyle(fontSize: 17)),
                           AppIcon(AppIcons.chevD,
                               size: 16, color: Color(0xFF8FA09A)),
@@ -441,7 +441,7 @@ class FormatToolbarState extends State<FormatToolbar> {
       child: Row(
         children: [
           const Text('高亮',
-              style: TextStyle(fontSize: 12, color: Color(0xFF8FA09A))),
+              style: TextStyle(fontSize: 13, color: Color(0xFF8FA09A))),
           const SizedBox(width: 10),
           ...List.generate(_highlights.length, (i) {
             final c = _highlights[i];
@@ -487,7 +487,7 @@ class FormatToolbarState extends State<FormatToolbar> {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Text('清除',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF647A70))),
+                  style: TextStyle(fontSize: 13, color: Color(0xFF647A70))),
             ),
           ),
         ],
@@ -504,7 +504,7 @@ class FormatToolbarState extends State<FormatToolbar> {
       child: Row(
         children: [
           const Text('字号',
-              style: TextStyle(fontSize: 12, color: Color(0xFF8FA09A))),
+              style: TextStyle(fontSize: 13, color: Color(0xFF8FA09A))),
           const SizedBox(width: 10),
           ...List.generate(_sizes.length, (i) {
             final sz = _sizes[i];
@@ -528,7 +528,7 @@ class FormatToolbarState extends State<FormatToolbar> {
                   child: Text(
                     _sizeLabels[i],
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 13,
                       color: active ? Colors.white : const Color(0xFF24382F),
                       fontWeight: active ? FontWeight.w600 : FontWeight.normal,
                     ),

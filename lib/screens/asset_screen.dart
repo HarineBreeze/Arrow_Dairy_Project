@@ -128,7 +128,7 @@ class AssetScreenState extends State<AssetScreen> {
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (ctx) => SafeArea(
         child: Column(
@@ -139,7 +139,7 @@ class AssetScreenState extends State<AssetScreen> {
               padding: EdgeInsets.fromLTRB(20, 18, 20, 10),
               child: Text('设置',
                   style:
-                      TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                      TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
             ),
             // 加密访问开关（在上方）
             ListTile(
@@ -152,7 +152,7 @@ class AssetScreenState extends State<AssetScreen> {
                       ? '已开启：进入资产全景需输入密码'
                       : '未开启：进入资产全景无需密码',
                   style: const TextStyle(
-                      fontSize: 12, color: Color(0xFF8FA09A))),
+                      fontSize: 13, color: Color(0xFF8FA09A))),
               trailing: Switch(
                 value: _hasPin,
                 activeColor: const Color(0xFF3E8E6D),
@@ -189,7 +189,7 @@ class AssetScreenState extends State<AssetScreen> {
               subtitle: Text(
                   _hasPin ? '可通过当前密码或密保问题验证' : '开启加密访问后可修改',
                   style: const TextStyle(
-                      fontSize: 12, color: Color(0xFF8FA09A))),
+                      fontSize: 13, color: Color(0xFF8FA09A))),
               onTap: _hasPin
                   ? () {
                       Navigator.pop(ctx);
@@ -274,7 +274,7 @@ class AssetScreenState extends State<AssetScreen> {
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (ctx) {
         return StatefulBuilder(
@@ -306,7 +306,7 @@ class AssetScreenState extends State<AssetScreen> {
                             color: sel
                                 ? const Color(0xFF3E8E6D)
                                 : const Color(0xFFF5FAF7),
-                            borderRadius: BorderRadius.circular(18),
+                            borderRadius: BorderRadius.circular(16),
                           ),
                           child: Text(o,
                               style: TextStyle(
@@ -333,7 +333,7 @@ class AssetScreenState extends State<AssetScreen> {
                   children: [
                     const Text('筛选',
                         style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600)),
+                            fontSize: 15, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 16),
                     group('按资产类型', ['全部', '总资产', '负资产', '现金流', '理财金'],
                         _typeFilter, (v) => _typeFilter = v),
@@ -519,7 +519,7 @@ class AssetScreenState extends State<AssetScreen> {
           scale: 1.03,
           child: DecoratedBox(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
               // 不加描边：仅靠少量阴影给出「浮起」层次，
               // 避免深色边框在浅色背景上被读成「黑框」
               boxShadow: const [
@@ -582,7 +582,7 @@ class AssetScreenState extends State<AssetScreen> {
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (ctx) => SafeArea(
         child: Column(
@@ -824,7 +824,7 @@ class AssetScreenState extends State<AssetScreen> {
     return Container(
       // 白底黑字（与资产细分卡同款观感）：白底 + 轻投影 + 顶部 16 → 24
       // 内容整体下移，底部留白（18px）与上方视觉一致。
-      padding: const EdgeInsets.fromLTRB(18, 24, 18, 18),
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 18),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -1076,7 +1076,7 @@ class AssetScreenState extends State<AssetScreen> {
                         child: Text(
                           '天',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: Color(0xFF647A70),
                           ),
@@ -1105,7 +1105,7 @@ class AssetScreenState extends State<AssetScreen> {
     final neg = _totalDebt.abs();
     final total = pos + neg;
     return ClipRRect(
-      borderRadius: BorderRadius.circular(4),
+      borderRadius: BorderRadius.circular(8),
       child: SizedBox(
         key: const ValueKey('asset-structure-bar'),
         height: 7,
@@ -1153,7 +1153,7 @@ class AssetScreenState extends State<AssetScreen> {
           Text(
             _money(value),
             style: TextStyle(
-                fontSize: 13.5, fontWeight: FontWeight.w600, color: color),
+                fontSize: 13, fontWeight: FontWeight.w600, color: color),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -1200,8 +1200,8 @@ class AssetScreenState extends State<AssetScreen> {
           decoration: BoxDecoration(
             color: const Color(0x1A3E8E6D),
             borderRadius: const BorderRadius.horizontal(
-              left: Radius.circular(6),
-              right: Radius.circular(14),
+              left: Radius.circular(8),
+              right: Radius.circular(16),
             ),
           ),
           alignment: Alignment.center,
@@ -1212,7 +1212,7 @@ class AssetScreenState extends State<AssetScreen> {
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Text('拖动排序 · 松手取消',
-                style: TextStyle(fontSize: 12, color: Colors.white)),
+                style: TextStyle(fontSize: 13, color: Colors.white)),
           ),
         ),
       ),
@@ -1224,8 +1224,8 @@ class AssetScreenState extends State<AssetScreen> {
     final negative = a.amount < 0;
     return ClipRRect(
           borderRadius: const BorderRadius.horizontal(
-            left: Radius.circular(6),
-            right: Radius.circular(14),
+            left: Radius.circular(8),
+            right: Radius.circular(16),
           ),
           child: Container(
             color: barColor,
@@ -1262,7 +1262,7 @@ class AssetScreenState extends State<AssetScreen> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                            fontSize: 12, color: Color(0xFF8FA09A))),
+                            fontSize: 13, color: Color(0xFF8FA09A))),
                   ],
                 ],
               ),
@@ -1275,7 +1275,7 @@ class AssetScreenState extends State<AssetScreen> {
                           ? '-¥${(-a.amount).toStringAsFixed((-a.amount).truncateToDouble() == -a.amount ? 0 : 2)}'
                           : '¥${a.amount.toStringAsFixed(a.amount.truncateToDouble() == a.amount ? 0 : 2)}'),
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.w700,
                     color: negative
                         ? const Color(0xFFCB5C50)
@@ -1566,7 +1566,7 @@ class _PinSetupDialogState extends State<_PinSetupDialog> {
               ),
               const SizedBox(height: 14),
               const Text('密保（忘记密码时用于重置）',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF8FA09A))),
+                  style: TextStyle(fontSize: 13, color: Color(0xFF8FA09A))),
               const SizedBox(height: 8),
               TextField(
                 controller: _qCtrl,
@@ -1803,7 +1803,7 @@ class _PinUnlockDialogState extends State<_PinUnlockDialog> {
                 future: _question,
                 builder: (c, snap) => Text(
                   snap.data ?? '',
-                  style: const TextStyle(fontSize: 14),
+                  style: const TextStyle(fontSize: 13),
                 ),
               ),
               const SizedBox(height: 10),
@@ -1941,7 +1941,7 @@ class _DisablePinDialogState extends State<_DisablePinDialog> {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: sel ? const Color(0xFF3E8E6D) : const Color(0xFFF5FAF7),
-            borderRadius: BorderRadius.circular(17),
+            borderRadius: BorderRadius.circular(16),
           ),
           child: Text(label,
               style: TextStyle(
@@ -1994,7 +1994,7 @@ class _DisablePinDialogState extends State<_DisablePinDialog> {
                   future: _question,
                   builder: (c, snap) => Text(snap.data ?? '',
                       style: const TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w500)),
+                          fontSize: 13, fontWeight: FontWeight.w500)),
                 ),
                 const SizedBox(height: 10),
                 TextField(
@@ -2170,7 +2170,7 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: sel ? const Color(0xFF3E8E6D) : const Color(0xFFF5FAF7),
-            borderRadius: BorderRadius.circular(17),
+            borderRadius: BorderRadius.circular(16),
           ),
           child: Text(label,
               style: TextStyle(
@@ -2223,7 +2223,7 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
                     const SizedBox(height: 14),
                     const Text('如需同时修改密保，可填写下面两项（选填）',
                         style:
-                            TextStyle(fontSize: 12, color: Color(0xFF8FA09A))),
+                            TextStyle(fontSize: 13, color: Color(0xFF8FA09A))),
                     const SizedBox(height: 8),
                     FutureBuilder<String>(
                       future: _question,
@@ -2278,7 +2278,7 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
                         builder: (c, snap) => Text(
                           snap.data ?? '',
                           style: const TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w500),
+                              fontSize: 13, fontWeight: FontWeight.w500),
                         ),
                       ),
                       const SizedBox(height: 10),

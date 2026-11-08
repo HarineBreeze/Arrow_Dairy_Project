@@ -218,7 +218,7 @@ class SaveDoneButtonState extends State<SaveDoneButton>
                             opacity: (1 - t * 2.2).clamp(0.0, 1.0),
                             child: const Text('完成',
                                 style: TextStyle(
-                                    fontSize: 16, color: Colors.white)),
+                                    fontSize: 15, color: Colors.white)),
                           ),
                           // 对勾：描边逐段绘出
                           if (_c.value > 0)

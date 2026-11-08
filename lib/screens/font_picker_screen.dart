@@ -34,9 +34,9 @@ class _FontPickerScreenState extends State<FontPickerScreen> {
             padding: const EdgeInsets.only(bottom: 10),
             child: Material(
               color: selected ? const Color(0xFFE4F2EB) : Colors.white,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
               child: InkWell(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(16),
                 onTap: () async {
                   await AppSettings.setFontFamily(id);
                   if (!mounted) return;
@@ -49,7 +49,7 @@ class _FontPickerScreenState extends State<FontPickerScreen> {
                 child: Container(
                   padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: selected
                           ? const Color(0xFF3E8E6D)

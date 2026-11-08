@@ -204,7 +204,7 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                     children: [
                       Text(_entry.mood, style: const TextStyle(fontSize: 28)),
                       const SizedBox(width: 10),
-                      Text(_entry.weather, style: const TextStyle(fontSize: 24)),
+                      Text(_entry.weather, style: const TextStyle(fontSize: 22)),
                     ],
                   ),
                   if (_entry.title.isNotEmpty) ...[
@@ -245,7 +245,7 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                             .toSet(),
                         onTapMention: _openItem,
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 15,
                           height: 1.8,
                           color: const Color(0xFF24382F),
                           fontFamily: fontFamily,
@@ -261,7 +261,7 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                       itemNames:
                           _items.map((e) => e.name).where((n) => n.isNotEmpty).toSet(),
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 15,
                         height: 1.5,
                         color: const Color(0xFF24382F),
                         fontFamily: fontFamily,

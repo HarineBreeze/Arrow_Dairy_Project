@@ -253,7 +253,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                                   color: t == _type
                                       ? const Color(0xFFE4F2EB)
                                       : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(10),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Row(
                                   children: [
@@ -312,7 +312,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                 children: [
                   const Text('¥',
                       style: TextStyle(
-                          fontSize: 18,
+                          fontSize: 17,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF24382F))),
                   const SizedBox(width: 6),
@@ -322,11 +322,11 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),
                       style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.w600),
+                          fontSize: 17, fontWeight: FontWeight.w600),
                       decoration: InputDecoration(
                         hintText: _isLiability ? '输入欠款金额' : '输入资产金额',
                         hintStyle: const TextStyle(
-                            fontSize: 14, color: Color(0xFF8FA09A)),
+                            fontSize: 13, color: Color(0xFF8FA09A)),
                         border: InputBorder.none,
                         contentPadding:
                             const EdgeInsets.symmetric(vertical: 14),
@@ -340,7 +340,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
               const Padding(
                 padding: EdgeInsets.only(left: 4, top: 6),
                 child: Text('该类型会计入负资产，金额请填正数',
-                    style: TextStyle(fontSize: 12, color: Color(0xFFCB5C50))),
+                    style: TextStyle(fontSize: 13, color: Color(0xFFCB5C50))),
               ),
             const SizedBox(height: 28),
 
@@ -409,7 +409,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
           decoration: BoxDecoration(
             // 图标底纹移除：未选中透明，选中保留浅绿强调
             color: sel ? const Color(0xFFE4F2EB) : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: sel ? const Color(0xFF3E8E6D) : Colors.transparent,
               width: 1.5,
@@ -431,7 +431,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (ctx) {
         return StatefulBuilder(
@@ -445,7 +445,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                   children: [
                     const Text('选择图标',
                         style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600)),
+                            fontSize: 15, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 14),
                     Wrap(
                       spacing: 10,
@@ -466,7 +466,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                               color: sel
                                   ? const Color(0xFFE4F2EB)
                                   : Colors.transparent,
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: sel
                                     ? const Color(0xFF3E8E6D)

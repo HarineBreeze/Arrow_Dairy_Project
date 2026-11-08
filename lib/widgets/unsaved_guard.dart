@@ -24,10 +24,10 @@ Future<bool> confirmLeaveIfDirty(
     barrierDismissible: false,
     builder: (ctx) => AlertDialog(
       backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: const Text(
         '有未保存的修改哦，确认返回吗?',
-        style: TextStyle(fontSize: 16, color: Color(0xFF24382F)),
+        style: TextStyle(fontSize: 15, color: Color(0xFF24382F)),
       ),
       content: const Text(
         '返回后本次修改不会保存。',
@@ -39,7 +39,7 @@ Future<bool> confirmLeaveIfDirty(
           child: TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
             child: const Text('取消',
-                style: TextStyle(color: Color(0xFF7C8F86), fontSize: 14)),
+                style: TextStyle(color: Color(0xFF7C8F86), fontSize: 13)),
           ),
         ),
         Pressable(
@@ -49,7 +49,7 @@ Future<bool> confirmLeaveIfDirty(
             child: const Text('确定',
                 style: TextStyle(
                     color: Color(0xFF3E8E6D),
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: FontWeight.w600)),
           ),
         ),

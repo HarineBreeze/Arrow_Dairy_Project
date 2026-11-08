@@ -218,7 +218,7 @@ class TrashScreenState extends State<TrashScreen> {
           const Text(
             '回收站',
             style: TextStyle(
-                fontSize: 16,
+                fontSize: 15,
                 fontWeight: FontWeight.w600,
                 color: Colors.white),
           ),
@@ -251,7 +251,7 @@ class TrashScreenState extends State<TrashScreen> {
             const Text(
               '回收站是空的',
               style: TextStyle(
-                  fontSize: 14.5,
+                  fontSize: 15,
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF647A70)),
             ),
@@ -260,7 +260,7 @@ class TrashScreenState extends State<TrashScreen> {
               '删除的笔记、物品、事件、资产会先放到这里\n7 天内可随时还原',
               textAlign: TextAlign.center,
               style: TextStyle(
-                  fontSize: 12.5,
+                  fontSize: 13,
                   height: 1.7,
                   color: const Color(0xFF8FA09A).withOpacity(0.95)),
             ),
@@ -281,7 +281,7 @@ class TrashScreenState extends State<TrashScreen> {
                   child: Text(
                     '${_category?.label ?? ''}没有内容',
                     style: const TextStyle(
-                        fontSize: 13.5, color: Color(0xFF8FA09A)),
+                        fontSize: 13, color: Color(0xFF8FA09A)),
                   ),
                 )
               : ListView(
@@ -296,7 +296,7 @@ class TrashScreenState extends State<TrashScreen> {
                       child: Text(
                         '超过 7 天的内容会自动彻底删除',
                         style: TextStyle(
-                            fontSize: 11.5,
+                            fontSize: 11,
                             color:
                                 const Color(0xFF8FA09A).withOpacity(0.9)),
                       ),
@@ -337,7 +337,7 @@ class TrashScreenState extends State<TrashScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
                 color: selected ? const Color(0xB33E8E6D) : Colors.white,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                     color: selected
                         ? const Color(0xB33E8E6D)
@@ -346,7 +346,7 @@ class TrashScreenState extends State<TrashScreen> {
               child: Center(
                 child: Text('${c.name} ${c.count}',
                     style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: selected
                             ? Colors.white
@@ -381,7 +381,7 @@ class TrashScreenState extends State<TrashScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         children: [
@@ -410,7 +410,7 @@ class TrashScreenState extends State<TrashScreen> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                  fontSize: 14.5,
+                                  fontSize: 15,
                                   fontWeight: FontWeight.w600,
                                   color: Color(0xFF24382F)),
                             ),
@@ -423,7 +423,7 @@ class TrashScreenState extends State<TrashScreen> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                            fontSize: 11.5, color: Color(0xFF8FA09A)),
+                            fontSize: 11, color: Color(0xFF8FA09A)),
                       ),
                     ],
                   ),
@@ -433,7 +433,7 @@ class TrashScreenState extends State<TrashScreen> {
                 Text(
                   left <= 1 ? '今天到期' : '$left 天后消失',
                   style: TextStyle(
-                      fontSize: 10.5,
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: urgent
                           ? const Color(0xFFF08C3A)
@@ -479,7 +479,7 @@ class TrashScreenState extends State<TrashScreen> {
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(16),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(
@@ -489,7 +489,7 @@ class TrashScreenState extends State<TrashScreen> {
             const SizedBox(width: 5),
             Text(label,
                 style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: color)),
           ],

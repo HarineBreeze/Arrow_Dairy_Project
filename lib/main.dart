@@ -97,7 +97,7 @@ class DiaryApp extends StatelessWidget {
             bodyText1: TextStyle(
                 color: Color(0xFF24382F), fontSize: 15, height: 1.6),
             bodyText2: TextStyle(
-                color: Color(0xFF647A70), fontSize: 14, height: 1.6),
+                color: Color(0xFF647A70), fontSize: 13, height: 1.6),
           ),
         );
       }(),

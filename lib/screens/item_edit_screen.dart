@@ -434,7 +434,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
         decoration: BoxDecoration(
           color: sel ? accent : Colors.white,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: sel ? accent : const Color(0xFFE4F2EB),
           ),
@@ -442,7 +442,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 12,
+            fontSize: 13,
             color: sel ? Colors.white : const Color(0xFF647A70),
           ),
         ),
@@ -599,7 +599,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
                     child: Text(
                       '$pct%',
                       style: const TextStyle(
-                        fontSize: 10,
+                        fontSize: 11,
                         height: 1.0,
                         fontWeight: FontWeight.w600,
                         color: Colors.white,
@@ -640,7 +640,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
           child: TextField(
             controller: _nameCtrl,
             maxLength: 20,
-            style: const TextStyle(fontSize: 16),
+            style: const TextStyle(fontSize: 15),
             decoration: const InputDecoration(
               hintText: '请输入物品名',
               border: InputBorder.none,
@@ -726,7 +726,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: sel ? _accent.withOpacity(0.15) : Colors.white,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: sel ? _accent : const Color(0xFFE8EDF5),
           ),
@@ -734,7 +734,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         child: isCustom
             // 自定义入口（…）保持灰色文本；预设值走 Lucide 细线图标
             ? const Text('…',
-                style: TextStyle(fontSize: 18, color: Color(0xFF8FA09A)))
+                style: TextStyle(fontSize: 17, color: Color(0xFF8FA09A)))
             : EntryIcon(value, size: 18),
       ),
     );
@@ -751,7 +751,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
           child: TextField(
             controller: _priceCtrl,
             keyboardType: TextInputType.number,
-            style: const TextStyle(fontSize: 16),
+            style: const TextStyle(fontSize: 15),
             decoration: const InputDecoration(
               hintText: '0.00',
               prefixText: '¥ ',
@@ -778,7 +778,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
             controller: _extraCtrl,
             keyboardType:
                 const TextInputType.numberWithOptions(decimal: true, signed: true),
-            style: const TextStyle(fontSize: 16),
+            style: const TextStyle(fontSize: 15),
             decoration: const InputDecoration(
               hintText: '选填，可为负数',
               prefixText: '¥ ',
@@ -892,7 +892,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
                   color: sel ? _accent : Colors.white,
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: sel ? _accent : const Color(0xFFE4F2EB),
                   ),
@@ -900,7 +900,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
                 child: Text(
                   labels[i],
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 13,
                     color: sel ? Colors.white : const Color(0xFF647A70),
                   ),
                 ),
@@ -927,7 +927,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
             controller: _usageCtrl,
             keyboardType: TextInputType.number,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 16),
+            style: const TextStyle(fontSize: 15),
             decoration: const InputDecoration(
               hintText: '0',
               border: InputBorder.none,
@@ -940,7 +940,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         _buildStepButton(AppIcons.plus, () => _changeUsage(1)),
         const SizedBox(width: 6),
         const Text('次',
-            style: TextStyle(fontSize: 14, color: Color(0xFF8FA09A))),
+            style: TextStyle(fontSize: 13, color: Color(0xFF8FA09A))),
       ],
     );
   }

@@ -70,7 +70,7 @@ class TodoCard extends StatelessWidget {
               const Spacer(),
               Text('$done / $total',
                   style: const TextStyle(
-                      fontSize: 12,
+                      fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF3E8E6D))),
             ],
@@ -143,7 +143,7 @@ class _TodoRow extends StatelessWidget {
                     color: todo.done
                         ? const Color(0xFF3E8E6D)
                         : Colors.transparent,
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(8),
                     border: Border.all(
                       color: todo.done
                           ? const Color(0xFF3E8E6D)

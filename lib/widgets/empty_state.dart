@@ -53,7 +53,7 @@ class EmptyState extends StatelessWidget {
           title,
           textAlign: TextAlign.center,
           style: const TextStyle(
-            fontSize: 16,
+            fontSize: 15,
             color: Color(0xFF24382F),
             fontWeight: FontWeight.w500,
           ),
@@ -80,7 +80,7 @@ class EmptyState extends StatelessWidget {
               ),
               child: Text(actionLabel!,
                   style: const TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w600)),
+                      fontSize: 13, fontWeight: FontWeight.w600)),
             ),
           ),
         ],

@@ -188,7 +188,7 @@ class CountdownScreenState extends State<CountdownScreen> {
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (ctx) => SafeArea(
         child: Column(
@@ -273,7 +273,7 @@ class CountdownScreenState extends State<CountdownScreen> {
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (ctx) {
         return StatefulBuilder(builder: (ctx, setSheet) {
@@ -295,7 +295,7 @@ class CountdownScreenState extends State<CountdownScreen> {
                   decoration: BoxDecoration(
                     color:
                         on ? const Color(0xFF3E8E6D) : const Color(0xFFF5FAF7),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(label,
                       style: TextStyle(
@@ -493,7 +493,7 @@ class CountdownScreenState extends State<CountdownScreen> {
                     color: Color(0xFF24382F))),
             const SizedBox(width: 6),
             Text('$count',
-                style: const TextStyle(fontSize: 12, color: Color(0xFF8FA09A))),
+                style: const TextStyle(fontSize: 13, color: Color(0xFF8FA09A))),
             const Spacer(),
             AppIcon(expanded ? AppIcons.chevU : AppIcons.chevD,
                 size: 20, color: const Color(0xFF8FA09A)),
@@ -519,7 +519,7 @@ class CountdownScreenState extends State<CountdownScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           decoration: BoxDecoration(
             color: bg,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
             // 置顶：主色描边；到期循环：保留红色警示。两者并存时以置顶为准
             border: e.pinned
                 ? Border.all(color: const Color(0xFF3E8E6D), width: 1.5)
@@ -566,7 +566,7 @@ class CountdownScreenState extends State<CountdownScreen> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 13,
                               color: grey
                                   ? const Color(0xFFB2C2BA)
                                   : const Color(0xFF647A70))),
@@ -703,7 +703,7 @@ class CountdownScreenState extends State<CountdownScreen> {
               const Text(
                 '事件',
                 style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: Colors.white),
               ),
@@ -835,7 +835,7 @@ class CountdownScreenState extends State<CountdownScreen> {
                       child: Center(
                         child: Text(w,
                             style: TextStyle(
-                                fontSize: 12, color: Color(0xFF8FA09A))),
+                                fontSize: 13, color: Color(0xFF8FA09A))),
                       ),
                     ))
                 .toList(),
@@ -897,7 +897,7 @@ class CountdownScreenState extends State<CountdownScreen> {
               children: [
                 Text('$day',
                     style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 13,
                         height: 1.1,
                         fontWeight: (isToday || hasEvent)
                             ? FontWeight.w700

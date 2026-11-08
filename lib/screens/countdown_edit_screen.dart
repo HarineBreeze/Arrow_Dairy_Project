@@ -502,7 +502,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
               padding: const EdgeInsets.only(left: 4),
               child: Text(
                 _repeatHint,
-                style: const TextStyle(fontSize: 12, color: Color(0xFF8FA09A)),
+                style: const TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
               ),
             ),
             const SizedBox(height: 16),
@@ -534,7 +534,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                 _remindBeforeDays == 0
                     ? '在事件日当天的设定时间提醒'
                     : '在事件日前 $_remindBeforeDays 天的设定时间提醒',
-                style: const TextStyle(fontSize: 12, color: Color(0xFF8FA09A)),
+                style: const TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
               ),
             ),
           ],
@@ -586,7 +586,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
           decoration: BoxDecoration(
             color: selected ? const Color(0xFFE4F2EB) : const Color(0xFFF5FAF7),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: selected ? const Color(0xFF3E8E6D) : Colors.transparent,
               width: 1.5,
@@ -669,7 +669,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
           decoration: BoxDecoration(
             // 图标底纹移除：未选中透明，选中保留浅绿强调
             color: sel ? const Color(0xFFE4F2EB) : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: sel ? const Color(0xFF3E8E6D) : Colors.transparent,
               width: 1.5,
@@ -690,7 +690,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setSheet) => SafeArea(
@@ -702,7 +702,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
               children: [
                 const Text('选择图标',
                     style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                        TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 14),
                 Wrap(
                   spacing: 10,
@@ -723,7 +723,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                           color: sel
                               ? const Color(0xFFE4F2EB)
                               : Colors.transparent,
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: sel
                                 ? const Color(0xFF3E8E6D)

@@ -157,7 +157,7 @@ Future<DateTime?> showWheelDatePicker(
     context: context,
     backgroundColor: Colors.white,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
     builder: (ctx) => _DateWheelSheet(
       initial: initial,
@@ -346,7 +346,7 @@ Future<TimeOfDay?> showWheelTimePicker(
     context: context,
     backgroundColor: Colors.white,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
     builder: (ctx) => _WheelSheet(
       title: title,
@@ -417,13 +417,13 @@ class _SheetHeader extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('取消',
-                style: TextStyle(fontSize: 16, color: Color(0xFF647A70))),
+                style: TextStyle(fontSize: 15, color: Color(0xFF647A70))),
           ),
           Expanded(
             child: Center(
               child: Text(title,
                   style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF24382F))),
             ),
@@ -432,7 +432,7 @@ class _SheetHeader extends StatelessWidget {
             onPressed: onConfirm,
             child: const Text('确定',
                 style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: _kBlue)),
           ),

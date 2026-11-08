@@ -701,7 +701,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
               const Align(
                 alignment: Alignment.centerLeft,
                 child: Text('密保问题（选填）',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF8FA09A))),
+                    style: TextStyle(fontSize: 13, color: Color(0xFF8FA09A))),
               ),
               TextField(
                 controller: hintCtrl,
@@ -715,7 +715,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
               const Align(
                 alignment: Alignment.centerLeft,
                 child: Text('密保问题答案',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF8FA09A))),
+                    style: TextStyle(fontSize: 13, color: Color(0xFF8FA09A))),
               ),
               TextField(
                 controller: ansCtrl,
@@ -865,7 +865,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                     size: 20, color: Color(0xFF3E8E6D)),
                 title: const Text('置顶',
                     style:
-                        TextStyle(fontSize: 14, color: Color(0xFF24382F))),
+                        TextStyle(fontSize: 13, color: Color(0xFF24382F))),
                 value: _pinned,
                 activeColor: const Color(0xFF3E8E6D),
                 onChanged: (v) {
@@ -1002,7 +1002,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                         controller: _titleCtrl,
                         maxLength: 15,
                         style: const TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.w600),
+                            fontSize: 22, fontWeight: FontWeight.w600),
                         decoration: InputDecoration(
                           // 标题为空时随机展示一条写作话题作为引导
                           hintText: _titleCtrl.text.isEmpty ? _prompt : '标题',
@@ -1021,7 +1021,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                     if (_titleCtrl.text.isEmpty)
                       InkWell(
                         onTap: _shufflePrompt,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(16),
                         child: const Padding(
                           padding: EdgeInsets.symmetric(
                               horizontal: 6, vertical: 4),
@@ -1032,7 +1032,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                     Text(
                       '${_titleCtrl.text.length}/15',
                       style: const TextStyle(
-                          fontSize: 12, color: Color(0xFF8FA09A)),
+                          fontSize: 13, color: Color(0xFF8FA09A)),
                     ),
                   ],
                 ),
@@ -1050,7 +1050,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                           decoration: const InputDecoration(
                             hintText: '此处标题会公开显示哦～',
                             hintStyle: TextStyle(
-                                fontSize: 14, color: Color(0xFF8FA09A)),
+                                fontSize: 13, color: Color(0xFF8FA09A)),
                             border: InputBorder.none,
                             counterText: '',
                           ),
@@ -1060,7 +1060,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                       Text(
                         '${_subtitleCtrl.text.length}/15',
                         style: const TextStyle(
-                            fontSize: 12, color: Color(0xFF8FA09A)),
+                            fontSize: 13, color: Color(0xFF8FA09A)),
                       ),
                     ],
                   ),
@@ -1099,7 +1099,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                         minLines: null,
                         expands: true,
                         textAlignVertical: TextAlignVertical.top,
-                        style: const TextStyle(fontSize: 16, height: 1.7),
+                        style: const TextStyle(fontSize: 15, height: 1.7),
                         decoration: const InputDecoration(
                           hintText: '今天发生了什么…',
                           border: InputBorder.none,
@@ -1141,7 +1141,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                       child: Text(
                         '${_contentCtrl.text.length}/2000',
                         style: const TextStyle(
-                            fontSize: 12, color: Color(0xFF8FA09A)),
+                            fontSize: 13, color: Color(0xFF8FA09A)),
                       ),
                     ),
                   ],
@@ -1339,7 +1339,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
             color: (isSel && !isMore)
                 ? const Color(0xFF3E8E6D)
                 : Colors.white,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: (isSel && !isMore)
                   ? const Color(0xFF3E8E6D)
@@ -1357,7 +1357,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label,
-            style: const TextStyle(fontSize: 12, color: Color(0xFF9A8A7E))),
+            style: const TextStyle(fontSize: 13, color: Color(0xFF9A8A7E))),
         const SizedBox(height: 6),
         Wrap(
           spacing: 6,

@@ -154,7 +154,7 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
       child: Container(
         decoration: const BoxDecoration(
           color: Color(0xFFF5FAF7),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
         ),
         child: SafeArea(
           top: false,
@@ -183,7 +183,7 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
                     const SizedBox(width: 6),
                     const Text('参数',
                         style: TextStyle(
-                            fontSize: 12, color: Color(0xFF8FA09A))),
+                            fontSize: 13, color: Color(0xFF8FA09A))),
                     const Spacer(),
                     IconButton(
                       onPressed: () => Navigator.pop(context, false),
@@ -312,7 +312,7 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
         children: [
           if (body.isNotEmpty) ...[
             Text(body,
-                style: TextStyle(fontSize: 12.5, color: color, height: 1.5)),
+                style: TextStyle(fontSize: 13, color: color, height: 1.5)),
           ] else ...[
             Row(
               crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -330,7 +330,7 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
                   const SizedBox(width: 6),
                   Text('（${UsableDays.formatYears(dd)}）',
                       style: const TextStyle(
-                          fontSize: 12, color: Color(0xFF8FA09A))),
+                          fontSize: 13, color: Color(0xFF8FA09A))),
                 ],
               ],
             ),
@@ -355,7 +355,7 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
             width: 84,
             child: Text(label,
                 style: const TextStyle(
-                    fontSize: 14, color: Color(0xFF24382F))),
+                    fontSize: 13, color: Color(0xFF24382F))),
           ),
           Expanded(
             child: Container(
@@ -363,7 +363,7 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: const Color(0xFFE8EDF5)),
               ),
               child: Row(
@@ -381,7 +381,7 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
                         ),
                       ],
                       style: const TextStyle(
-                          fontSize: 14, color: Color(0xFF24382F)),
+                          fontSize: 13, color: Color(0xFF24382F)),
                       decoration: InputDecoration(
                         isDense: true,
                         border: InputBorder.none,

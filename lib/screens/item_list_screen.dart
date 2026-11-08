@@ -79,7 +79,7 @@ class ItemListScreenState extends State<ItemListScreen> {
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (ctx) => SafeArea(
         child: Column(
@@ -301,7 +301,7 @@ class ItemListScreenState extends State<ItemListScreen> {
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (ctx) {
         return StatefulBuilder(
@@ -332,7 +332,7 @@ class ItemListScreenState extends State<ItemListScreen> {
                             decoration: BoxDecoration(
                               color:
                                   sel ? const Color(0xFF3E8E6D) : Colors.white,
-                              borderRadius: BorderRadius.circular(18),
+                              borderRadius: BorderRadius.circular(16),
                               border: Border.all(
                                 color: sel
                                     ? const Color(0xFF3E8E6D)
@@ -368,7 +368,7 @@ class ItemListScreenState extends State<ItemListScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          child: const Text('完成', style: TextStyle(fontSize: 16)),
+                          child: const Text('完成', style: TextStyle(fontSize: 15)),
                         ),
                       ),
                     ),
@@ -560,7 +560,7 @@ class ItemListScreenState extends State<ItemListScreen> {
                 Text(
                   label,
                   style:
-                      const TextStyle(fontSize: 12, color: Color(0xFF8FA09A)),
+                      const TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
                 ),
                 const SizedBox(width: 2),
                 const AppIcon(AppIcons.swapV, size: 14, color: Color(0xFF8FA09A)),
@@ -587,7 +587,7 @@ class ItemListScreenState extends State<ItemListScreen> {
           const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(fontSize: 12, color: Color(0xFF8FA09A)),
+            style: const TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
           ),
         ],
       ),
@@ -628,7 +628,7 @@ class ItemListScreenState extends State<ItemListScreen> {
                         child: Text(
                           labels[keys[i]]!,
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 13,
                             fontWeight: selected
                                 ? FontWeight.w600
                                 : FontWeight.w400,
@@ -737,14 +737,14 @@ class _ItemCardState extends State<_ItemCard> {
           color: item.wishlist
               ? const Color(0xFFFBE9EC) // 低饱和度淡粉色
               : (item.lostDate != null ? const Color(0xFFE1ECE6) : Colors.white),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           // 愿望单物品：红色描边
           border: item.wishlist
               ? Border.all(color: const Color(0xFFCB5C50), width: 1.5)
               : null,
         ),
         child: InkWell(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           onTap: widget.onTap,
           onLongPress: widget.onLongPress,
           child: AnimatedSwitcher(
@@ -791,7 +791,7 @@ class _ItemCardState extends State<_ItemCard> {
               const SizedBox(height: 4),
               Text(
                 '已攒 ¥${_fmt(item.savedAmount)}',
-                style: const TextStyle(fontSize: 12, color: Color(0xFF3E8E6D)),
+                style: const TextStyle(fontSize: 13, color: Color(0xFF3E8E6D)),
               ),
               const SizedBox(height: 8),
               Padding(
@@ -813,7 +813,7 @@ class _ItemCardState extends State<_ItemCard> {
           right: 10,
           child: Text(
             '¥${_fmt(item.price)}',
-            style: const TextStyle(fontSize: 10, color: Color(0xFFB58793)),
+            style: const TextStyle(fontSize: 11, color: Color(0xFFB58793)),
           ),
         ),
       ],
@@ -823,7 +823,7 @@ class _ItemCardState extends State<_ItemCard> {
   Widget _buildProgressbar() {
     final pct = (item.progress * 100).round();
     return ClipRRect(
-      borderRadius: BorderRadius.circular(4),
+      borderRadius: BorderRadius.circular(8),
       child: SizedBox(
         height: 9,
         child: Stack(
@@ -909,7 +909,7 @@ class _ItemCardState extends State<_ItemCard> {
                 child: Text(
                   usageLabel,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 13,
                     color: lost
                         ? const Color(0xFFAFBFB8)
                         : const Color(0xFF8FA09A),
@@ -925,7 +925,7 @@ class _ItemCardState extends State<_ItemCard> {
           child: Text(
             '¥${item.actualPrice.toStringAsFixed(0)}',
             style: TextStyle(
-              fontSize: 10,
+              fontSize: 11,
               color: lost ? const Color(0xFFAFBFB8) : const Color(0xFF8FA09A),
             ),
           ),

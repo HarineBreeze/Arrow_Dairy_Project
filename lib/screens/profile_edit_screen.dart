@@ -142,7 +142,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
             const SizedBox(height: 8),
             const Text(
               '点击更换头像',
-              style: TextStyle(fontSize: 12, color: Color(0xFF8FA09A)),
+              style: TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
             ),
             const SizedBox(height: 28),
             _buildNicknameField(),
@@ -192,7 +192,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
           child: TextField(
             controller: _nicknameCtrl,
             maxLength: 10,
-            style: const TextStyle(fontSize: 16),
+            style: const TextStyle(fontSize: 15),
             decoration: const InputDecoration(
               hintText: UserProfile.defaultNickname,
               hintStyle: TextStyle(color: Color(0xFF8FA09A)),
@@ -208,7 +208,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
           valueListenable: _nicknameCtrl,
           builder: (_, v, __) => Text(
             '${v.text.length}/10',
-            style: const TextStyle(fontSize: 12, color: Color(0xFF8FA09A)),
+            style: const TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
           ),
         ),
       ],
@@ -244,7 +244,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
         decoration: BoxDecoration(
           color: selected ? const Color(0xFF3E8E6D) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: selected
                 ? const Color(0xFF3E8E6D)
@@ -254,7 +254,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 13,
             color: selected ? Colors.white : const Color(0xFF647A70),
           ),
         ),

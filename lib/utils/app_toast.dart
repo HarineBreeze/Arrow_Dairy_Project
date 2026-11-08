@@ -96,7 +96,7 @@ class AppToast {
                   child: Text(
                     message,
                     style: const TextStyle(
-                        fontSize: 14.5,
+                        fontSize: 15,
                         height: 1.4,
                         color: Colors.white,
                         fontWeight: FontWeight.w500),

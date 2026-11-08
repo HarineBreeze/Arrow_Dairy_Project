@@ -96,12 +96,12 @@ class CountdownBannerHostState extends State<CountdownBannerHost>
   Widget _buildBannerCard(CountdownEvent e) {
     return Material(
       elevation: 12,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(16),
       color: Colors.white,
       child: Container(
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(color: const Color(0xFFE8EDF5)),
         ),
         child: Row(
@@ -133,7 +133,7 @@ class CountdownBannerHostState extends State<CountdownBannerHost>
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style:
-                          TextStyle(fontSize: 12, color: Color(0xFF8FA09A))),
+                          TextStyle(fontSize: 13, color: Color(0xFF8FA09A))),
                 ],
               ),
             ),
