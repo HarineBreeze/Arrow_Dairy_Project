@@ -1,4 +1,5 @@
 import '../widgets/app_icons.dart';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../models/diary_entry.dart';
 import '../models/item.dart';
@@ -104,6 +105,10 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
 
   bool get _hasTodos => TodoText.parseAll(_entry.content).isNotEmpty;
 
+  /// 封面图是否可用（文件被系统清理时自动回退为无图）
+  bool get _hasImage =>
+      _entry.imagePath.isNotEmpty && File(_entry.imagePath).existsSync();
+
   /// 勾选/取消一条待办：只改正文里的 `[ ]` ↔ `[x]`，其余内容与排版不动。
   ///
   /// 先更新界面再落盘（乐观更新）：勾选是高频小操作，等 IO 回包再刷新
@@ -200,15 +205,28 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Text(_entry.mood, style: const TextStyle(fontSize: 28)),
-                      const SizedBox(width: 10),
-                      Text(_entry.weather, style: const TextStyle(fontSize: 22)),
-                    ],
-                  ),
+                  // 排版顺序：封面图 → 标题 → 正文；无图时标题直接从顶部开始
+                  if (_hasImage) ...[
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: AspectRatio(
+                        aspectRatio: 4 / 3,
+                        child: Image.file(
+                          File(_entry.imagePath),
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const ColoredBox(
+                            color: Color(0xFFE4F2EB),
+                            child: Center(
+                              child: AppIcon(AppIcons.image,
+                                  size: 24, color: Color(0xFF8FA09A)),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                   if (_entry.title.isNotEmpty) ...[
-                    const SizedBox(height: 16),
+                    if (_hasImage) const SizedBox(height: 12),
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),

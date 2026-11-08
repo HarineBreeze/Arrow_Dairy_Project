@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import '../widgets/app_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart' show DragStartBehavior;
@@ -31,7 +32,6 @@ import '../widgets/countdown_banner.dart';
 import '../widgets/loading_skeleton.dart';
 import '../widgets/empty_state.dart';
 import '../utils/menu_gesture_gate.dart';
-import '../widgets/entry_icon.dart';
 
 const Color kPrimaryBlue = Color(0xFF3E8E6D);
 const Color kLightBlue = Color(0xFFE4F2EB);
@@ -575,14 +575,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     });
   }
 
-  /// 默认展开的分组：日视图下为「最近 7 天」，其余视图为当前月/年
+  /// 默认展开的分组：按日视图下为「最近 7 天」，月/年为当前月/年，
+  /// 全部视图不分组（无需展开项）
   ///
   /// 「最近 7 天」按自然日往前数（含今天），中间没写的日子本来就不会
   /// 生成分组，所以多算几天也不会有空分组，只是保证不会漏掉刚好
   /// 落在第 7 天写的那篇。规则细节见 [DiaryGroupDefaults]。
   List<String> _defaultExpandedKeys() {
-    if (_viewMode != 'all') return [_defaultGroupKey()];
-    return DiaryGroupDefaults.expandedKeys();
+    if (_viewMode == 'day') return DiaryGroupDefaults.expandedKeys();
+    if (_viewMode == 'all') return const [];
+    return [_defaultGroupKey()];
   }
 
   String _defaultGroupKey() {
@@ -708,18 +710,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   Set<String> get _markedDates =>
       _entries.map((e) => _dateKey(e.publishDate)).toSet();
-
-  /// 当天第一篇（按创建时间最早）笔记的心情，用于日历小图标
-  String? _moodOfDay(DateTime d) {
-    DiaryEntry? first;
-    for (final e in _entries) {
-      if (!_sameDay(e.publishDate, d)) continue;
-      if (first == null || e.createdAt.isBefore(first.createdAt)) {
-        first = e;
-      }
-    }
-    return first?.mood;
-  }
 
   List<DiaryEntry> get _filtered {
     var list = _entries;
@@ -998,11 +988,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Widget _buildSkeleton() => const ListSkeleton();
 
   Widget _buildBody() {
-    final groups = _buildGroups();
+    // 「全部」：不分组、无日期收纳栏，除置顶外的笔记按时间平铺；
+    // 「按日/按月/按年」：保留可折叠的收纳栏
+    final isFlat = _viewMode == 'all';
+    final groups = isFlat ? <_NoteGroup>[] : _buildGroups();
     // 置顶笔记：顶部横滑卡带（不参与时间分组）
     final pinned = _filtered.where((e) => e.pinned).toList();
-    // 标签筛选 + 全部视图：不按时间分组，所有匹配笔记平铺展示
-    final flatTopicList = _activeTopic != null && _viewMode == 'all';
+    final flatList =
+        isFlat ? _filtered.where((e) => !e.pinned).toList() : <DiaryEntry>[];
+    final isEmpty =
+        isFlat ? (flatList.isEmpty && pinned.isEmpty) : groups.isEmpty;
     return Column(
       children: [
         _buildTopBar(),
@@ -1019,8 +1014,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         ),
         const Divider(height: 1, color: Color(0xFFE8EDF5)),
         Expanded(
-          child: (groups.isEmpty && !flatTopicList) ||
-                  (flatTopicList && _filtered.isEmpty)
+          child: isEmpty
               ? _EmptyState(
                   hasQuery: _query.isNotEmpty,
                   hasDate: _selectedDate != null,
@@ -1028,70 +1022,54 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               : RefreshIndicator(
                   onRefresh: _load,
                   color: const Color(0xFF3E8E6D),
-                  child: flatTopicList
-                      ? ListView.builder(
+                  child: isFlat
+                      ? ListView(
                           padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-                          itemCount: _filtered.length,
-                          itemBuilder: (context, i) {
-                            final e = _filtered[i];
-                            return Padding(
-                              padding: const EdgeInsets.only(top: 8),
-                              child: Listener(
-                                onPointerDown: (ev) =>
-                                    _onCardPointerDown(e, ev.position),
-                                onPointerMove: (ev) =>
-                                    _onCardPointerMove(ev.position),
-                                onPointerUp: (_) => _cancelPressTracking(),
-                                onPointerCancel: (_) => _cancelPressTracking(),
-                                child: _DiaryCard(
-                                  entry: e,
-                                  isPinned: e.pinned,
-                                  onTap: () => _openNote(e),
-                                ),
-                              ),
-                            );
-                          },
+                          children: [
+                            if (pinned.isNotEmpty) _buildPinnedRail(pinned),
+                            for (final e in flatList) _cardRow(e),
+                          ],
                         )
                       : SingleChildScrollView(
                           padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                            // 置顶横滑卡带：随内容滚动，不吸顶
-                            if (pinned.isNotEmpty) _buildPinnedRail(pinned),
-                            for (var gi = 0; gi < groups.length; gi++) ...[
-                              _buildGroupHeader(
-                                  groups[gi], _isGroupExpanded(groups[gi].key)),
-                              for (final e in groups[gi].entries)
+                              // 置顶横滑卡带：随内容滚动，不吸顶
+                              if (pinned.isNotEmpty) _buildPinnedRail(pinned),
+                              for (var gi = 0; gi < groups.length; gi++) ...[
+                                _buildGroupHeader(groups[gi],
+                                    _isGroupExpanded(groups[gi].key)),
                                 if (_isGroupExpanded(groups[gi].key))
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 8),
-                                    child: Listener(
-                                      // 按住卡片 500ms 不动，弹出操作菜单
-                                      onPointerDown: (ev) =>
-                                          _onCardPointerDown(e, ev.position),
-                                      onPointerMove: (ev) =>
-                                          _onCardPointerMove(ev.position),
-                                      onPointerUp: (_) =>
-                                          _cancelPressTracking(),
-                                      onPointerCancel: (_) =>
-                                          _cancelPressTracking(),
-                                      child: _DiaryCard(
-                                        entry: e,
-                                        isPinned: e.pinned,
-                                        onTap: () => _openNote(e),
-                                      ),
-                                    ),
-                                  ),
-                              if (gi == groups.length - 1)
-                                const SizedBox(height: 12),
-                            ],
+                                  for (final e in groups[gi].entries)
+                                    _cardRow(e),
+                                if (gi == groups.length - 1)
+                                  const SizedBox(height: 12),
+                              ],
                             ],
                           ),
                         ),
                 ),
         ),
       ],
+    );
+  }
+
+  /// 单张卡片 + 长按手势（按住 500ms 不动，弹出操作菜单）
+  Widget _cardRow(DiaryEntry e) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Listener(
+        onPointerDown: (ev) => _onCardPointerDown(e, ev.position),
+        onPointerMove: (ev) => _onCardPointerMove(ev.position),
+        onPointerUp: (_) => _cancelPressTracking(),
+        onPointerCancel: (_) => _cancelPressTracking(),
+        child: _DiaryCard(
+          entry: e,
+          isPinned: e.pinned,
+          onTap: () => _openNote(e),
+        ),
+      ),
     );
   }
 
@@ -1114,8 +1092,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildViewBar() {
-    final keys = ['all', 'month', 'year'];
-    final labels = ['全部', '按月', '按年'];
+    final keys = ['all', 'day', 'month', 'year'];
+    final labels = ['全部', '按日', '按月', '按年'];
     final index = keys.indexOf(_viewMode);
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -1246,11 +1224,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   /// 时间分组头（T1）：无底块的浅灰小字行；今天用蓝色高亮日期
   Widget _buildGroupHeader(_NoteGroup group, bool expanded) {
     final isToday = _sameDay(group.date, DateTime.now());
-    final isWeekView = _viewMode == 'all';
-    final accent = isToday && isWeekView;
+    final isDayView = _viewMode == 'day';
+    final accent = isToday && isDayView;
     // 日视图：「10月27日」＋ 星期；月/年视图：整段作为日期
     final dateText =
-        isWeekView ? '${group.date.month}月${group.date.day}日' : group.label;
+        isDayView ? '${group.date.month}月${group.date.day}日' : group.label;
     return InkWell(
       onTap: () => _toggleGroup(group.key),
       child: Padding(
@@ -1272,7 +1250,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 color: accent ? kPrimaryBlue : kTextDark,
               ),
             ),
-            if (isWeekView) ...[
+            if (isDayView) ...[
               const SizedBox(width: 5),
               Text(
                 _weekdayLabel(group.date),
@@ -1673,7 +1651,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         hasEntry: hasEntry,
         isSelected: isSelected,
         isToday: isToday,
-        mood: hasEntry ? _moodOfDay(date) : null,
         onTap: () {
           setState(() {
             if (_selectedDate != null && _sameDay(date, _selectedDate!)) {
@@ -1779,7 +1756,7 @@ class _PinnedMiniCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 5),
-                      // 第 2 行：月.日 + （加密：锁 / 公开：心情）
+                      // 第 2 行：月.日（加密笔记额外带锁标）
                       Row(
                         children: [
                           Text(
@@ -1787,11 +1764,11 @@ class _PinnedMiniCard extends StatelessWidget {
                             style:
                                 const TextStyle(fontSize: 9.5, color: kTextLight),
                           ),
-                          const SizedBox(width: 3),
-                          if (encrypted)
-                            const AppIcon(AppIcons.lock, size: 10, color: kTextLight)
-                          else
-                            EntryIcon(entry.mood, size: 10),
+                          if (encrypted) ...[
+                            const SizedBox(width: 3),
+                            const AppIcon(AppIcons.lock,
+                                size: 10, color: kTextLight),
+                          ],
                         ],
                       ),
                     ],
@@ -1848,7 +1825,6 @@ class _DayCell extends StatelessWidget {
   final bool hasEntry;
   final bool isSelected;
   final bool isToday;
-  final String? mood; // 当天第一篇笔记的心情
   final VoidCallback onTap;
 
   const _DayCell({
@@ -1857,7 +1833,6 @@ class _DayCell extends StatelessWidget {
     required this.hasEntry,
     required this.isSelected,
     required this.isToday,
-    this.mood,
     required this.onTap,
   }) : super(key: key);
 
@@ -1884,23 +1859,14 @@ class _DayCell extends StatelessWidget {
               : null,
         ),
         alignment: Alignment.center,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              '$day',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: (hasEntry || isSelected)
-                    ? FontWeight.w700
-                    : FontWeight.w400,
-                color: fg,
-              ),
-            ),
-            // 日历小心情：有日记的当日在日期下显示第一篇笔记的心情
-            if (mood != null && mood!.isNotEmpty)
-              EntryIcon(mood!, size: 9),
-          ],
+        child: Text(
+          '$day',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight:
+                (hasEntry || isSelected) ? FontWeight.w700 : FontWeight.w400,
+            color: fg,
+          ),
         ),
       ),
     );
@@ -1930,8 +1896,12 @@ class _DiaryCard extends StatelessWidget {
     final isEncrypted = entry.encrypted;
     // 加密笔记：封条风卡片（斜纹密封带 + 虚线边框），只外显副标题与日期时间
     if (isEncrypted) return _buildEncryptedCard();
+    // 有图走「左图右文」（图片 4:3）；无图沿用原撕页日历排版。
+    // 图片文件可能已被系统清理：以实际存在为准，缺失自动回退无图版。
+    final hasImage =
+        entry.imagePath.isNotEmpty && File(entry.imagePath).existsSync();
     return Pressable(
-      child:   Card(
+      child: Card(
         margin: const EdgeInsets.only(bottom: 10),
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -1945,113 +1915,177 @@ class _DiaryCard extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(13, 12, 14, 12),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // 左侧日期徽章：大号「日」+ 年月小字，像撕页日历
-                Container(
-                  width: 52,
-                  padding: const EdgeInsets.only(right: 10),
-                  margin: const EdgeInsets.symmetric(vertical: 4),
-                  decoration: const BoxDecoration(
-                    border: Border(
-                      right: BorderSide(color: Color(0xFFE8EDF5)),
-                    ),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text('${entry.publishDate.day}',
-                          style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF3E8E6D),
-                              height: 1.1)),
-                      const SizedBox(height: 2),
-                      // 年月：不换行，超宽时整体缩小适配两位月份
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                            '${entry.publishDate.year}.${entry.publishDate.month.toString().padLeft(2, '0')}',
-                            maxLines: 1,
-                            softWrap: false,
-                            style:
-                                const TextStyle(fontSize: 11, color: kTextLight)),
-                      ),
-                    ],
+          child: hasImage ? _buildImageCard() : _buildTextCard(),
+        ),
+      ),
+    );
+  }
+
+  /// 有图版（方案 D）：左 4:3 图 + 右侧标题/摘要/元信息，单卡最矮
+  Widget _buildImageCard() {
+    return Padding(
+      padding: const EdgeInsets.all(10),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: SizedBox(
+              width: 124,
+              height: 93, // 4:3
+              child: Image.file(
+                File(entry.imagePath),
+                fit: BoxFit.cover,
+                // 图片损坏时不留空洞，退回浅色占位
+                errorBuilder: (_, __, ___) => const ColoredBox(
+                  color: Color(0xFFE4F2EB),
+                  child: Center(
+                    child: AppIcon(AppIcons.image,
+                        size: 20, color: Color(0xFF8FA09A)),
                   ),
                 ),
-                const SizedBox(width: 12),
-                // 右侧：标题 / 摘要 / 心情天气地点脚注
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              entry.title.isNotEmpty ? entry.title : '（无标题）',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: kTextDark,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (entry.content.isNotEmpty) ...[
-                        const SizedBox(height: 3),
-                        Text(
-                          entry.content,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 13, color: kTextMid),
-                        ),
-                      ],
-                      const SizedBox(height: 5),
-                      Row(
-                        children: [
-                          EntryIcon(entry.mood, size: 14),
-                          const SizedBox(width: 4),
-                          EntryIcon(entry.weather, size: 13),
-                          const SizedBox(width: 6),
-                          Text(_timeLabel(entry.createdAt),
-                              style: const TextStyle(
-                                  fontSize: 11, color: kTextLight)),
-                          if (entry.location.isNotEmpty) ...[
-                            const SizedBox(width: 6),
-                            const AppIcon(AppIcons.mapPin,
-                                size: 13, color: kTextLight),
-                            const SizedBox(width: 1),
-                            Flexible(
-                              child: Text(
-                                entry.location,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                    fontSize: 11, color: kTextLight),
-                              ),
-                            ),
-                          ],
-                          const Spacer(),
-                        ],
-                      ),
-                    ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  entry.title.isNotEmpty ? entry.title : '（无标题）',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: kTextDark,
+                    height: 1.35,
                   ),
+                ),
+                if (entry.content.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    entry.content,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontSize: 13, color: kTextMid, height: 1.45),
+                  ),
+                ],
+                const SizedBox(height: 6),
+                _buildMetaRow(withDate: true),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 无图版：现有撕页日历排版（日期徽章 + 标题/摘要/时间地点）
+  Widget _buildTextCard() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(13, 12, 14, 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // 左侧日期徽章：大号「日」+ 年月小字，像撕页日历
+          Container(
+            width: 52,
+            padding: const EdgeInsets.only(right: 10),
+            margin: const EdgeInsets.symmetric(vertical: 4),
+            decoration: const BoxDecoration(
+              border: Border(
+                right: BorderSide(color: Color(0xFFE8EDF5)),
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text('${entry.publishDate.day}',
+                    style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF3E8E6D),
+                        height: 1.1)),
+                const SizedBox(height: 2),
+                // 年月：不换行，超宽时整体缩小适配两位月份
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                      '${entry.publishDate.year}.${entry.publishDate.month.toString().padLeft(2, '0')}',
+                      maxLines: 1,
+                      softWrap: false,
+                      style: const TextStyle(fontSize: 11, color: kTextLight)),
                 ),
               ],
             ),
           ),
-        ),
-      )
-    );;
+          const SizedBox(width: 12),
+          // 右侧：标题 / 摘要 / 时间地点
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  entry.title.isNotEmpty ? entry.title : '（无标题）',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: kTextDark,
+                  ),
+                ),
+                if (entry.content.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    entry.content,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 13, color: kTextMid),
+                  ),
+                ],
+                const SizedBox(height: 5),
+                _buildMetaRow(withDate: false),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 元信息行：日期（仅图卡需要）/ 时间 / 地点
+  Widget _buildMetaRow({required bool withDate}) {
+    final d = entry.publishDate;
+    return Row(
+      children: [
+        if (withDate) ...[
+          Text('${d.month}.${d.day}',
+              style: const TextStyle(fontSize: 11, color: kTextLight)),
+          const SizedBox(width: 5),
+        ],
+        Text(_timeLabel(entry.createdAt),
+            style: const TextStyle(fontSize: 11, color: kTextLight)),
+        if (entry.location.isNotEmpty) ...[
+          const SizedBox(width: 6),
+          const AppIcon(AppIcons.mapPin, size: 13, color: kTextLight),
+          const SizedBox(width: 1),
+          Flexible(
+            child: Text(
+              entry.location,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 11, color: kTextLight),
+            ),
+          ),
+        ],
+        const Spacer(),
+      ],
+    );
   }
 
   /// 加密笔记卡片（封条风）：

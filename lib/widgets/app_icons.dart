@@ -124,6 +124,12 @@ class AppIcons {
   static const String currency = 'M7 5l5 6.6L17 5 M12 11.6v8.4 M8 13.6h8 M8 16.6h8';
   static const String hr = 'M3.6 12h16.8';
 
+  /// 图片（相框 + 圆点 + 山峦）：封面图入口
+  static const String image =
+      'M5 4.4h14a2 2 0 0 1 2 2v11.2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6.4a2 2 0 0 1 2-2Z'
+      ' M10 10.6a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z'
+      ' M21 15.6l-4.4-4.4a1.7 1.7 0 0 0-2.4 0L6.6 18.8';
+
   // ---------------- 补齐批次（替换残余 Material 图标） ----------------
 
   /// 双左箭头：日历快捷跳转
@@ -238,6 +244,7 @@ class AppIcons {
     'success': success,
     'currency': currency,
     'hr': hr,
+    'image': image,
     'dblChevL': dblChevL,
     'dblChevR': dblChevR,
     'radioOff': radioOff,

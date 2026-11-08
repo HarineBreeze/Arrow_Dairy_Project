@@ -4,8 +4,9 @@ class DiaryEntry {
   String subtitle;
   String content;
   String formats; // 富文本排版（JSON 字符串），空串表示无格式
-  String mood;
-  String weather;
+  String mood; // 已从编辑/卡片移除，仅保留字段兼容旧数据
+  String weather; // 同上
+  String imagePath; // 首图本地路径，空串 = 无图
   String location;
   bool encrypted;
   String password;
@@ -24,6 +25,7 @@ class DiaryEntry {
     this.formats = '',
     this.mood = '😊',
     this.weather = '☀️',
+    this.imagePath = '',
     this.location = '',
     this.encrypted = false,
     this.password = '',
@@ -44,6 +46,7 @@ class DiaryEntry {
       'formats': formats,
       'mood': mood,
       'weather': weather,
+      'imagePath': imagePath,
       'location': location,
       'encrypted': encrypted,
       'password': password,
@@ -66,6 +69,8 @@ class DiaryEntry {
       formats: json['formats'] as String? ?? '',
       mood: json['mood'] as String? ?? '😊',
       weather: json['weather'] as String? ?? '☀️',
+      // 旧数据没有该字段：按无图渲染，零迁移
+      imagePath: json['imagePath'] as String? ?? '',
       location: json['location'] as String? ?? '',
       encrypted: json['encrypted'] as bool? ?? false,
       password: json['password'] as String? ?? '',

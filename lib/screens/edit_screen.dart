@@ -2,6 +2,9 @@ import '../widgets/app_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import '../utils/app_toast.dart';
 import '../models/diary_entry.dart';
 import '../services/diary_storage.dart';
@@ -18,7 +21,6 @@ import '../widgets/save_done_button.dart';
 import '../widgets/save_bar.dart';
 import '../widgets/wheel_picker.dart';
 import '../utils/todo_text.dart';
-import '../widgets/entry_icon.dart';
 
 class EditScreen extends StatefulWidget {
   final DiaryEntry? entry;
@@ -34,8 +36,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
   late final TextEditingController _subtitleCtrl;
   late final HighlightEditingController _contentCtrl;
   Set<String> _itemNames = {};
-  late String _mood;
-  late String _weather;
+  late String _imagePath;
   late String _location;
   late DateTime _publishDate;
   bool _encrypted = false;
@@ -66,15 +67,6 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
   // 选区变更时重建工具栏，避免它沿用过一次的区间锁定/展开面板
   GlobalKey<FormatToolbarState> _toolbarKey = GlobalKey<FormatToolbarState>();
   String _lastContent = '';
-
-  static const List<String> _moods = ['😊', '😌', '😢', '😡', '😴', '🥰'];
-  static const List<String> _weathers = ['🌞', '⛅', '🌧️', '❄️', '🌙', '🌈'];
-  static const List<String> _moreMoods = [
-    '🤩', '😭', '😤', '🤯', '🥳', '🤔', '😷', '🥺', '😎', '🤗', '😇', '🤪'
-  ];
-  static const List<String> _moreWeathers = [
-    '🌤️', '🌦️', '🌨️', '⛈️', '🌪️', '🌫️', '⚡', '💨', '🌈', '🌊', '☁️', '🌡️'
-  ];
 
   bool get _isNew => widget.entry == null;
 
@@ -167,8 +159,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     _contentFocus.addListener(_onFocusChange);
     _contentCtrl.addListener(_onSelectionChanged);
     WidgetsBinding.instance.addObserver(this); // 监听键盘真实弹出/收起（viewInsets）
-    _mood = widget.entry?.mood ?? _moods.first;
-    _weather = widget.entry?.weather ?? _weathers.first;
+    _imagePath = widget.entry?.imagePath ?? '';
     _location = widget.entry?.location ?? '';
     _publishDate =
         widget.entry?.publishDate ?? widget.defaultDate ?? DateTime.now();
@@ -190,8 +181,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
         _subtitleCtrl.text,
         _contentCtrl.text,
         FormatStore.encode(_formats),
-        _mood,
-        _weather,
+        _imagePath,
         _location,
         _pinned ? '1' : '0',
         _publishDate.toIso8601String(),
@@ -546,8 +536,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
         subtitle: subtitle,
         content: content,
         formats: content.isEmpty ? '' : FormatStore.encode(_formats),
-        mood: _mood,
-        weather: _weather,
+        imagePath: _imagePath,
         location: _location,
         encrypted: _encrypted,
         password: _password,
@@ -566,8 +555,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
         list[idx].content = content;
         list[idx].formats =
             content.isEmpty ? '' : FormatStore.encode(_formats);
-        list[idx].mood = _mood;
-        list[idx].weather = _weather;
+        list[idx].imagePath = _imagePath;
         list[idx].location = _location;
         list[idx].encrypted = _encrypted;
         list[idx].password = _password;
@@ -995,7 +983,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 键盘弹出时收起心情/天气/日期/可见度，给正文腾出可视区域。
+          // 键盘弹出时收起封面图/日期/可见度，给正文腾出可视区域。
           // 高度系数实时跟随键盘比例（见 didChangeMetrics），全程同步无跳变；
           // AnimatedSize 兜底：设备不逐帧上报 insets 时也能平滑过渡。
           AnimatedSize(
@@ -1009,16 +997,12 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                 child: _kbFactor <= 0.001
                     ? const SizedBox(width: double.infinity)
                     : Padding(
-            padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildChipRow('今天心情', _moods, _mood,
-                    (v) => setState(() => _mood = v), _moreMoods),
-                const SizedBox(height: 10),
-                _buildChipRow('天气', _weathers, _weather,
-                    (v) => setState(() => _weather = v), _moreWeathers),
-                const SizedBox(height: 16),
+                _buildImageSection(),
+                const SizedBox(height: 14),
                 _buildDateLocationRow(),
                 const SizedBox(height: 12),
                 _buildVisibilityRow(),
@@ -1351,100 +1335,167 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildChipRow(
-    String label,
-    List<String> options,
-    String selected,
-    ValueChanged<String> onSelect,
-    List<String> moreOptions,
-  ) {
-    Widget chip(String o, {VoidCallback? onTap, bool isMore = false}) {
-      final isSel = o == selected;
-      return GestureDetector(
-        onTap: onTap ?? () => onSelect(o),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: (isSel && !isMore)
-                ? const Color(0xFF3E8E6D)
-                : Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: (isSel && !isMore)
-                  ? const Color(0xFF3E8E6D)
-                  : const Color(0xFFE4F2EB),
-            ),
-          ),
-          child: isMore
-              // 细线三点：与 emoji 图标同尺寸，底纹长宽自然一致
-              ? const AppIcon(AppIcons.moreH, size: 16)
-              : EntryIcon(o, size: 16),
-        ),
-      );
-    }
+  // ---------- 封面图 ----------
 
+  /// 封面图区：未选图 = 浅色添加条；已选图 = 4:3 缩略图（点击可换图）。
+  /// 图片走应用目录副本，原图被删除后卡片仍可显示。
+  Widget _buildImageSection() {
+    final hasImage = _imagePath.isNotEmpty && File(_imagePath).existsSync();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(fontSize: 13, color: Color(0xFF9A8A7E))),
-        const SizedBox(height: 6),
-        Wrap(
-          spacing: 6,
-          runSpacing: 6,
+        Row(
           children: [
-            ...options.map((o) => chip(o)),
-            chip('...',
-                isMore: true,
-                onTap: () => _showMoreEmoji(label, moreOptions, onSelect)),
+            const Text('封面图',
+                style: TextStyle(fontSize: 13, color: Color(0xFF9A8A7E))),
+            const Spacer(),
+            if (hasImage)
+              GestureDetector(
+                onTap: () => setState(() => _imagePath = ''),
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  child: Row(
+                    children: [
+                      AppIcon(AppIcons.close,
+                          size: 12, color: Color(0xFF8FA09A)),
+                      SizedBox(width: 3),
+                      Text('移除',
+                          style: TextStyle(
+                              fontSize: 12, color: Color(0xFF8FA09A))),
+                    ],
+                  ),
+                ),
+              ),
           ],
         ),
+        const SizedBox(height: 6),
+        if (!hasImage)
+          InkWell(
+            onTap: _pickImage,
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              height: 76,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE4F2EB)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  AppIcon(AppIcons.image,
+                      size: 18, color: Color(0xFF3E8E6D)),
+                  SizedBox(width: 6),
+                  Text('添加封面图 · 4:3',
+                      style: TextStyle(
+                          fontSize: 13, color: Color(0xFF3E8E6D))),
+                ],
+              ),
+            ),
+          )
+        else
+          GestureDetector(
+            onTap: _pickImage,
+            child: SizedBox(
+              width: 180,
+              child: AspectRatio(
+                aspectRatio: 4 / 3,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.file(File(_imagePath), fit: BoxFit.cover),
+                    ),
+                    Positioned(
+                      right: 6,
+                      bottom: 6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0x66000000),
+                          borderRadius: BorderRadius.circular(99),
+                        ),
+                        child: const Text('更换',
+                            style:
+                                TextStyle(fontSize: 11, color: Colors.white)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }
 
-  Future<void> _showMoreEmoji(
-      String label, List<String> options, ValueChanged<String> onSelect) async {
-    await showModalBottomSheet(
+  Future<void> _pickImage() async {
+    final source = await showModalBottomSheet<ImageSource>(
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('更多$label',
-                  style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF24382F))),
-              const SizedBox(height: 16),
-              Wrap(
-                spacing: 14,
-                runSpacing: 14,
-                children: options.map((o) {
-                  return GestureDetector(
-                    onTap: () {
-                      onSelect(o);
-                      Navigator.pop(ctx);
-                    },
-                    child: EntryIcon(o, size: 28),
-                  );
-                }).toList(),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE4EDE8),
+                borderRadius: BorderRadius.circular(2),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 10),
+            ListTile(
+              leading: const AppIcon(AppIcons.image,
+                  size: 20, color: Color(0xFF3E8E6D)),
+              title: const Text('从相册选择',
+                  style: TextStyle(fontSize: 15, color: Color(0xFF24382F))),
+              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+            ),
+            ListTile(
+              leading: const AppIcon(AppIcons.camera,
+                  size: 20, color: Color(0xFF3E8E6D)),
+              title: const Text('拍照',
+                  style: TextStyle(fontSize: 15, color: Color(0xFF24382F))),
+              onTap: () => Navigator.pop(ctx, ImageSource.camera),
+            ),
+            const SizedBox(height: 8),
+          ],
         ),
       ),
     );
+    if (source == null || !mounted) return;
+    try {
+      final XFile? file = await ImagePicker().pickImage(
+        source: source,
+        maxWidth: 1600,
+        maxHeight: 1600,
+        imageQuality: 85,
+      );
+      if (file == null) return;
+      // 复制到应用目录：相册原图被删/移动后笔记图仍然有效
+      final dir = await getApplicationDocumentsDirectory();
+      final path =
+          '${dir.path}/note_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      await File(file.path).copy(path);
+      if (!mounted) return;
+      setState(() => _imagePath = path);
+    } catch (_) {
+      if (!mounted) return;
+      AppToast.show(context, '选择图片失败，请重试');
+    }
   }
 }
-
 /// 撤销栈快照：正文纯文本 + 排版格式
 class _Snap {
   final String text;

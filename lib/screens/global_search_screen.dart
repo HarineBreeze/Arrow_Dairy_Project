@@ -344,8 +344,9 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                         title: e.encrypted
                             ? (e.subtitle.isNotEmpty ? e.subtitle : '加密笔记')
                             : (e.title.isNotEmpty ? e.title : '（无标题）'),
-                        subtitle:
-                            '${e.publishDate.year}.${e.publishDate.month.toString().padLeft(2, '0')}.${e.publishDate.day.toString().padLeft(2, '0')} · ${e.encrypted ? '已加密' : e.mood}',
+                        subtitle: e.encrypted
+                            ? '${e.publishDate.year}.${e.publishDate.month.toString().padLeft(2, '0')}.${e.publishDate.day.toString().padLeft(2, '0')} · 已加密'
+                            : '${e.publishDate.year}.${e.publishDate.month.toString().padLeft(2, '0')}.${e.publishDate.day.toString().padLeft(2, '0')}',
                         onTap: () => _openNote(e),
                       ))
                   .toList(),
