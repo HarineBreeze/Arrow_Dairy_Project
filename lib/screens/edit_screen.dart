@@ -21,6 +21,10 @@ import '../widgets/save_done_button.dart';
 import '../widgets/save_bar.dart';
 import '../widgets/wheel_picker.dart';
 import '../utils/todo_text.dart';
+import 'image_crop_screen.dart';
+
+/// 封面图抽屉动作
+enum _ImageAction { gallery, camera, crop }
 
 class EditScreen extends StatefulWidget {
   final DiaryEntry? entry;
@@ -1435,7 +1439,8 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _pickImage() async {
-    final source = await showModalBottomSheet<ImageSource>(
+    final hasImage = _imagePath.isNotEmpty && File(_imagePath).existsSync();
+    final action = await showModalBottomSheet<_ImageAction>(
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
@@ -1460,21 +1465,47 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                   size: 20, color: Color(0xFF3E8E6D)),
               title: const Text('从相册选择',
                   style: TextStyle(fontSize: 15, color: Color(0xFF24382F))),
-              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+              onTap: () => Navigator.pop(ctx, _ImageAction.gallery),
             ),
             ListTile(
               leading: const AppIcon(AppIcons.camera,
                   size: 20, color: Color(0xFF3E8E6D)),
               title: const Text('拍照',
                   style: TextStyle(fontSize: 15, color: Color(0xFF24382F))),
-              onTap: () => Navigator.pop(ctx, ImageSource.camera),
+              onTap: () => Navigator.pop(ctx, _ImageAction.camera),
             ),
+            // 自由裁剪：仅已选封面图时可用，对当前图固定 4:3 裁剪
+            if (hasImage)
+              ListTile(
+                leading: const AppIcon(AppIcons.crop,
+                    size: 20, color: Color(0xFF3E8E6D)),
+                title: const Text('自由裁剪（4:3）',
+                    style: TextStyle(fontSize: 15, color: Color(0xFF24382F))),
+                onTap: () => Navigator.pop(ctx, _ImageAction.crop),
+              ),
             const SizedBox(height: 8),
           ],
         ),
       ),
     );
-    if (source == null || !mounted) return;
+    if (action == null || !mounted) return;
+    if (action == _ImageAction.crop) {
+      try {
+        final cropped = await Navigator.push<String>(
+          context,
+          MaterialPageRoute(builder: (_) => ImageCropScreen(imagePath: _imagePath)),
+        );
+        if (cropped != null && cropped.isNotEmpty && mounted) {
+          setState(() => _imagePath = cropped);
+        }
+      } catch (_) {
+        if (mounted) AppToast.show(context, '裁剪失败，请重试');
+      }
+      return;
+    }
+    final source = action == _ImageAction.gallery
+        ? ImageSource.gallery
+        : ImageSource.camera;
     try {
       final XFile? file = await ImagePicker().pickImage(
         source: source,

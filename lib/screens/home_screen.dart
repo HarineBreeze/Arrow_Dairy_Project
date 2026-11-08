@@ -2059,12 +2059,14 @@ class _DiaryCard extends StatelessWidget {
   }
 
   /// 元信息行：日期（仅图卡需要）/ 时间 / 地点
+  /// 地点用 Flexible 吃满剩余宽度直到卡片右内边距（结尾不放 Spacer，
+  /// 否则 Spacer 会与 Flexible 平分剩余空间，地点文字被提前截断）
   Widget _buildMetaRow({required bool withDate}) {
     final d = entry.publishDate;
     return Row(
       children: [
         if (withDate) ...[
-          Text('${d.month}.${d.day}',
+          Text('${d.year}/${d.month}/${d.day}',
               style: const TextStyle(fontSize: 11, color: kTextLight)),
           const SizedBox(width: 5),
         ],
@@ -2083,7 +2085,6 @@ class _DiaryCard extends StatelessWidget {
             ),
           ),
         ],
-        const Spacer(),
       ],
     );
   }

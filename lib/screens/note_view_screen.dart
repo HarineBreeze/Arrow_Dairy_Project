@@ -170,7 +170,7 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
     final t = _entry.createdAt;
     final h = t.hour.toString().padLeft(2, '0');
     final m = t.minute.toString().padLeft(2, '0');
-    return '${d.year}-${d.month}-${d.day} $h:$m';
+    return '${d.year}/${d.month}/${d.day} $h:$m';
   }
 
   @override
@@ -293,26 +293,32 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
               ),
             ),
           ),
+          // 底部信息行：时间在最左，与正文文字左缘对齐
+          // （正文卡片有 16px 内边距，页面 padding 16，合计 32px）
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            padding: const EdgeInsets.fromLTRB(32, 8, 16, 16),
             child: Row(
               children: [
-                if (_entry.location.isNotEmpty) ...[
-                  const AppIcon(AppIcons.mapPin,
-                      size: 14, color: Color(0xFF8FA09A)),
-                  const SizedBox(width: 4),
-                  Text(
-                    _entry.location,
-                    style: const TextStyle(
-                        fontSize: 13, color: Color(0xFF8FA09A)),
-                  ),
-                  const SizedBox(width: 10),
-                ],
                 Text(
                   _timeLabel(),
                   style: const TextStyle(
                       fontSize: 13, color: Color(0xFF8FA09A)),
                 ),
+                if (_entry.location.isNotEmpty) ...[
+                  const SizedBox(width: 10),
+                  const AppIcon(AppIcons.mapPin,
+                      size: 14, color: Color(0xFF8FA09A)),
+                  const SizedBox(width: 4),
+                  Flexible(
+                    child: Text(
+                      _entry.location,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          fontSize: 13, color: Color(0xFF8FA09A)),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

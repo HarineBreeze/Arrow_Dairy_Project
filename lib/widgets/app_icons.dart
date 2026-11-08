@@ -167,6 +167,10 @@ class AppIcons {
   /// 更多（横排三点）
   static const String moreH = 'M6.4 12v.01 M12 12v.01 M17.6 12v.01';
 
+  /// 裁剪（封面图 4:3 自由裁剪）
+  static const String crop =
+      'M6 2v14a2 2 0 0 0 2 2h14 M18 22V8a2 2 0 0 0-2-2H2';
+
   /// 无搜索结果（放大镜 + 圆内叉）
   static const String searchX =
       'M4 10.5a6.5 6.5 0 1 0 13 0 6.5 6.5 0 1 0-13 0Z M15.4 15.4L20.6 20.6'
@@ -255,6 +259,7 @@ class AppIcons {
     'undo': undo,
     'redo': redo,
     'moreH': moreH,
+    'crop': crop,
     'searchX': searchX,
     'clock': clock,
     'keyboardHide': keyboardHide,
