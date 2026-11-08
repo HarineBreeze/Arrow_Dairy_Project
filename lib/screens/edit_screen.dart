@@ -619,6 +619,44 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     }
   }
 
+  /// 点击封面图右上角垃圾桶：二次确认后移除
+  Future<void> _confirmRemoveImage() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        titlePadding: const EdgeInsets.fromLTRB(24, 22, 24, 0),
+        contentPadding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        title: const Text('移除封面图',
+            style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF24382F))),
+        content: const Text('移除后本篇笔记将不再显示封面图',
+            style: TextStyle(fontSize: 15, color: Color(0xFF647A70))),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('取消',
+                style: TextStyle(fontSize: 15, color: Color(0xFF647A70))),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('移除',
+                style: TextStyle(
+                    fontSize: 15,
+                    color: Color(0xFFCB5C50),
+                    fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      setState(() => _imagePath = '');
+    }
+  }
+
   Future<void> _pickVisibility() async {
     String choice = _encrypted ? 'encrypted' : 'public';
     final result = await showDialog<String>(
@@ -835,8 +873,6 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                 ),
               ),
               ListTile(
-                leading: const AppIcon(AppIcons.lock,
-                    size: 20, color: Color(0xFF3E8E6D)),
                 title: const Text('可见度',
                     style:
                         TextStyle(fontSize: 13, color: Color(0xFF24382F))),
@@ -862,8 +898,6 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                 },
               ),
               SwitchListTile(
-                secondary: const AppIcon(AppIcons.pin,
-                    size: 20, color: Color(0xFF3E8E6D)),
                 title: const Text('置顶',
                     style:
                         TextStyle(fontSize: 13, color: Color(0xFF24382F))),
@@ -1328,15 +1362,16 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                               child: Image.file(File(_imagePath),
                                   fit: BoxFit.cover),
                             ),
-                            // 右上角：移除当前封面图
+                            // 右上角：移除当前封面图（点击二次确认）
                             Positioned(
                               right: 6,
                               top: 6,
                               child: GestureDetector(
-                                onTap: () => setState(() => _imagePath = ''),
+                                onTap: _confirmRemoveImage,
                                 child: Container(
                                   width: 26,
                                   height: 26,
+                                  alignment: Alignment.center,
                                   decoration: const BoxDecoration(
                                     color: Color(0x66000000),
                                     shape: BoxShape.circle,
