@@ -415,22 +415,6 @@ class TrashScreenState extends State<TrashScreen> {
                                   color: Color(0xFF24382F)),
                             ),
                           ),
-                          const SizedBox(width: 6),
-                          // 类型小铭牌
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 5, vertical: 1),
-                            decoration: BoxDecoration(
-                              color: _bgOf(e.kind),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(e.kind.label,
-                                style: TextStyle(
-                                    fontSize: 9.5,
-                                    height: 1.3,
-                                    fontWeight: FontWeight.w600,
-                                    color: _fgOf(e.kind))),
-                          ),
                         ],
                       ),
                       const SizedBox(height: 3),
@@ -512,19 +496,6 @@ class TrashScreenState extends State<TrashScreen> {
         ),
       ),
     );
-  }
-
-  Color _bgOf(TrashKind k) {
-    switch (k) {
-      case TrashKind.diary:
-        return const Color(0xFFE4F2EB);
-      case TrashKind.item:
-        return const Color(0xFFE7F3EA);
-      case TrashKind.event:
-        return const Color(0xFFFBEEE9);
-      case TrashKind.asset:
-        return const Color(0xFFECF2EE);
-    }
   }
 
   Color _fgOf(TrashKind k) {

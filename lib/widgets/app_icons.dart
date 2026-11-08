@@ -274,7 +274,10 @@ class AppIcons {
 class AppIcon extends StatelessWidget {
   final String path;
   final double size;
-  final Color color;
+
+  /// 未指定时跟随 [IconTheme]（AppBar.foregroundColor / IconButton.color
+  /// 由此下发，绿底顶栏的白色图标即来自这里）；无主题时回退深墨色。
+  final Color? color;
 
   /// 覆盖线宽（富文本工具栏等需要更粗笔画的场景传 2.0）
   final double? strokeWidth;
@@ -283,18 +286,20 @@ class AppIcon extends StatelessWidget {
     this.path, {
     Key? key,
     this.size = 24,
-    this.color = const Color(0xFF273830),
+    this.color,
     this.strokeWidth,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final Color effColor =
+        color ?? IconTheme.of(context).color ?? const Color(0xFF273830);
     final w = strokeWidth ?? (size <= 16 ? 1.8 : 1.6);
     return SizedBox(
       width: size,
       height: size,
       child: CustomPaint(
-        painter: _IconPainter(path, color, w, size / 24),
+        painter: _IconPainter(path, effColor, w, size / 24),
         isComplex: false,
         willChange: false,
       ),

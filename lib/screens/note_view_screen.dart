@@ -183,7 +183,11 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
             onPressed: _delete,
           ),
           IconButton(
-            icon: const AppIcon(AppIcons.edit),
+            // 编辑笔路径重心比垃圾桶高约 1.8px，绘制下移补齐基线
+            icon: Transform.translate(
+              offset: const Offset(0, 1.8),
+              child: const AppIcon(AppIcons.edit),
+            ),
             onPressed: _openEditor,
           ),
         ],

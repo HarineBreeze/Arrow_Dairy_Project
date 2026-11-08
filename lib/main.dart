@@ -46,6 +46,9 @@ class DiaryApp extends StatelessWidget {
           primarySwatch: swatch,
           primaryColor: green,
           scaffoldBackgroundColor: const Color(0xFFF5FAF7),
+          // AppIcon 默认跟随 IconTheme；此处钉死深墨色，
+          // AppBar.foregroundColor(白) 会在此基础上对顶栏图标覆写
+          iconTheme: const IconThemeData(color: Color(0xFF273830)),
           colorScheme: const ColorScheme.light(
             primary: green,
             secondary: Color(0xFF4B9C7D),
