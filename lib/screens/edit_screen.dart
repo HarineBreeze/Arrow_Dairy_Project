@@ -793,9 +793,6 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
         decoration: BoxDecoration(
           color: active ? const Color(0xFFE4F2EB) : Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-              color:
-                  active ? const Color(0xFF3E8E6D) : const Color(0xFFE4F2EB)),
         ),
         child: Row(
           children: [
@@ -1273,7 +1270,6 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE4F2EB)),
         ),
         child: Row(
           children: [
@@ -1314,33 +1310,6 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          children: [
-            const Text('封面图',
-                style: TextStyle(fontSize: 13, color: Color(0xFF9A8A7E))),
-            const Spacer(),
-            if (hasImage)
-              GestureDetector(
-                onTap: () => setState(() => _imagePath = ''),
-                behavior: HitTestBehavior.opaque,
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                  child: Row(
-                    children: [
-                      AppIcon(AppIcons.close,
-                          size: 12, color: Color(0xFF8FA09A)),
-                      SizedBox(width: 3),
-                      Text('移除',
-                          style: TextStyle(
-                              fontSize: 12, color: Color(0xFF8FA09A))),
-                    ],
-                  ),
-                ),
-              ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 左：封面图（无图 = 同尺寸添加条），点击选图 / 换图
@@ -1358,6 +1327,27 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                               borderRadius: BorderRadius.circular(12),
                               child: Image.file(File(_imagePath),
                                   fit: BoxFit.cover),
+                            ),
+                            // 右上角：移除当前封面图
+                            Positioned(
+                              right: 6,
+                              top: 6,
+                              child: GestureDetector(
+                                onTap: () => setState(() => _imagePath = ''),
+                                child: Container(
+                                  width: 26,
+                                  height: 26,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0x66000000),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const AppIcon(
+                                    AppIcons.trash,
+                                    size: 15,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
                             ),
                             Positioned(
                               right: 6,
@@ -1380,8 +1370,6 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
-                            border:
-                                Border.all(color: const Color(0xFFE4F2EB)),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
