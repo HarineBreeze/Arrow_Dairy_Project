@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../utils/app_motion.dart';
 import 'package:flutter/services.dart';
 import '../utils/app_toast.dart';
 import '../models/item.dart';
@@ -141,24 +143,7 @@ class ItemListScreenState extends State<ItemListScreen> {
     }
   }
 
-  Route<T> _slideRoute<T>(Widget page) {
-    return PageRouteBuilder<T>(
-      transitionDuration: const Duration(milliseconds: 300),
-      reverseTransitionDuration: const Duration(milliseconds: 300),
-      pageBuilder: (context, animation, secondaryAnimation) => page,
-      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        final curved =
-            CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
-        return SlideTransition(
-          position: Tween<Offset>(
-            begin: const Offset(1, 0),
-            end: Offset.zero,
-          ).animate(curved),
-          child: child,
-        );
-      },
-    );
-  }
+  Route<T> _slideRoute<T>(Widget page) => AppMotion.slide<T>(page);
 
   Future<void> _incrementUsage(Item item) async {
     final list = await ItemStorage.load();

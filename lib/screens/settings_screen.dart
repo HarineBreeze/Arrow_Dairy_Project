@@ -1,6 +1,8 @@
 import 'package:file_picker/file_picker.dart';
 import '../widgets/app_icons.dart';
 import 'package:flutter/material.dart';
+
+import '../utils/app_motion.dart';
 import 'package:share_plus/share_plus.dart';
 import '../utils/app_toast.dart';
 import '../services/app_settings.dart';
@@ -331,22 +333,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     onTap: () async {
                       await Navigator.push(
                         context,
-                        PageRouteBuilder(
-                          transitionDuration: const Duration(milliseconds: 300),
-                          reverseTransitionDuration:
-                              const Duration(milliseconds: 300),
-                          pageBuilder: (_, __, ___) => const FontPickerScreen(),
-                          transitionsBuilder: (_, animation, __, child) {
-                            final curved = CurvedAnimation(
-                                parent: animation, curve: Curves.easeOutCubic);
-                            return SlideTransition(
-                              position: Tween<Offset>(
-                                begin: const Offset(1, 0),
-                                end: Offset.zero,
-                              ).animate(curved),
-                              child: child,
-                            );
-                          },
+                        AppMotion.slide(
+                          const FontPickerScreen(),
                         ),
                       );
                       if (mounted) setState(() {});

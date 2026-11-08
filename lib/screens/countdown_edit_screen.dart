@@ -581,11 +581,12 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
         child: Container(
-          height: 56,
+          // 去掉左侧小圆圈后改为单行文字，高度由 56 收到 38
+          height: 38,
           margin: const EdgeInsets.symmetric(horizontal: 3),
-          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 4),
           decoration: BoxDecoration(
-            // 未选中无底纹，仅选中保留浅绿底 + 绿描边
+            // 选中态用浅绿底 + 绿描边表达，不再额外加圆圈图标（重复表述）
             color: selected ? const Color(0xFFE4F2EB) : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
@@ -593,39 +594,21 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
               width: 1.5,
             ),
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              AppIcon(
-                selected
-                    ? AppIcons.radioOn
-                    : AppIcons.radioOff,
-                size: 15,
+          alignment: Alignment.center,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              maxLines: 1,
+              softWrap: false,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
                 color: selected
                     ? const Color(0xFF3E8E6D)
-                    : const Color(0xFF8FA09A),
+                    : const Color(0xFF24382F),
               ),
-              const SizedBox(height: 3),
-              // 文字宽度不超过胶囊内宽，超长时整体缩小（不会撑破边框）
-              Flexible(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    softWrap: false,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight:
-                          selected ? FontWeight.w600 : FontWeight.normal,
-                      color: selected
-                          ? const Color(0xFF3E8E6D)
-                          : const Color(0xFF24382F),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

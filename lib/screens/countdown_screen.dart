@@ -1,5 +1,7 @@
 import '../widgets/app_icons.dart';
 import 'package:flutter/material.dart';
+
+import '../utils/app_motion.dart';
 import 'package:flutter/services.dart';
 import '../models/countdown_event.dart';
 import '../services/countdown_storage.dart';
@@ -96,20 +98,7 @@ class CountdownScreenState extends State<CountdownScreen> {
     await _openEditor(_events[i]);
   }
 
-  PageRouteBuilder<T> _slideRoute<T>(Widget page) => PageRouteBuilder<T>(
-        transitionDuration: const Duration(milliseconds: 300),
-        reverseTransitionDuration: const Duration(milliseconds: 300),
-        pageBuilder: (_, __, ___) => page,
-        transitionsBuilder: (_, animation, __, child) {
-          final curved =
-              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
-          return SlideTransition(
-            position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
-                .animate(curved),
-            child: child,
-          );
-        },
-      );
+  Route<T> _slideRoute<T>(Widget page) => AppMotion.slide<T>(page);
 
   // ---------- 过滤 ----------
 

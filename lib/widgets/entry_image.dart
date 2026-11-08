@@ -34,6 +34,19 @@ class EntryImage extends StatelessWidget {
     return (displayWidth * dpr * 1.5).round().clamp(120, 1600);
   }
 
+  /// 预解码用的 provider：与 build 内 `Image.file(cacheWidth:)` 走同一条
+  /// 路径（内部就是 ResizeImage(FileImage)），因此预解码进去的图能被后续
+  /// 首次渲染直接命中，省掉一帧的解码等待。
+  static ImageProvider provider(
+    BuildContext context,
+    String path,
+    double displayWidth,
+  ) {
+    final dpr = MediaQuery.of(context).devicePixelRatio;
+    final w = (displayWidth * dpr * 1.5).round().clamp(120, 1600);
+    return ResizeImage(FileImage(File(path)), width: w);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Image.file(

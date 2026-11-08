@@ -3,6 +3,8 @@ import 'dart:io';
 import '../widgets/app_icons.dart';
 import '../widgets/entry_image.dart';
 import 'package:flutter/material.dart';
+
+import '../utils/app_motion.dart';
 import 'package:flutter/gestures.dart' show DragStartBehavior;
 import 'package:flutter/services.dart' show SystemUiOverlayStyle;
 import '../utils/app_toast.dart';
@@ -50,6 +52,11 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   List<DiaryEntry> _entries = [];
   bool _loading = true;
+
+  /// 列表滚动控制器：用于「回顶」按钮的显隐与跳转。
+  /// 两种视图（全部 / 分组）同一时刻只挂一个，共用同一个 controller。
+  final ScrollController _listCtrl = ScrollController();
+  bool _showBackTop = false;
   bool _searching = false;
   final TextEditingController _searchCtrl = TextEditingController();
   String _query = '';
@@ -86,6 +93,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _menuAnim =
         CurvedAnimation(parent: _menuController, curve: Curves.easeOutCubic);
     _expandedKeys.addAll(_defaultExpandedKeys());
+    _listCtrl.addListener(_onListScroll);
     _load();
     _loadProfile();
     _initCountdown();
@@ -123,6 +131,24 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       _entries = list;
       _loading = false;
     });
+    _precacheCovers(list);
+  }
+
+  /// 首屏封面图预解码：放到下一帧之后做，不占用首帧时间。
+  /// 只预热前 5 张（约一屏），其余仍按需解码 —— 全部预热反而会
+  /// 在进入页面时抢解码线程，让第一张图的显示变慢。
+  void _precacheCovers(List<DiaryEntry> list) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      for (final e in list.take(5)) {
+        if (e.imagePath.isEmpty) continue;
+        if (!File(e.imagePath).existsSync()) continue;
+        precacheImage(
+          EntryImage.provider(context, e.imagePath, 124),
+          context,
+        ).catchError((Object _) {}); // 单张失败不影响其它
+      }
+    });
   }
 
   Future<void> _loadProfile() async {
@@ -131,24 +157,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     setState(() => _profile = p);
   }
 
-  Route<T> _slideRoute<T>(Widget page) {
-    return PageRouteBuilder<T>(
-      transitionDuration: const Duration(milliseconds: 300),
-      reverseTransitionDuration: const Duration(milliseconds: 300),
-      pageBuilder: (context, animation, secondaryAnimation) => page,
-      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        final curved =
-            CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
-        return SlideTransition(
-          position: Tween<Offset>(
-            begin: const Offset(1, 0),
-            end: Offset.zero,
-          ).animate(curved),
-          child: child,
-        );
-      },
-    );
-  }
+  Route<T> _slideRoute<T>(Widget page) => AppMotion.slide<T>(page);
 
   Timer? _stillTimer; // 40ms 静止观察
   Offset? _pressPos;
@@ -748,9 +757,28 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   void dispose() {
     _stillTimer?.cancel();
+    _listCtrl.removeListener(_onListScroll);
+    _listCtrl.dispose();
     _menuController.dispose();
     _searchCtrl.dispose();
     super.dispose();
+  }
+
+  /// 滚动超过一屏（600px）才显示「回顶」，避免短列表时按钮常驻遮挡卡片
+  void _onListScroll() {
+    if (!_listCtrl.hasClients) return;
+    final show = _listCtrl.offset > AppMotion.backToTopThreshold;
+    if (show != _showBackTop) setState(() => _showBackTop = show);
+  }
+
+  void _scrollToTop() {
+    if (!_listCtrl.hasClients) return;
+    Haptics.light();
+    _listCtrl.animateTo(
+      0,
+      duration: const Duration(milliseconds: 420),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   @override
@@ -1015,18 +1043,52 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         ),
         const Divider(height: 1, color: Color(0xFFE8EDF5)),
         Expanded(
-          child: isEmpty
-              ? _EmptyState(
-                  hasQuery: _query.isNotEmpty,
-                  hasDate: _selectedDate != null,
-                )
-              : RefreshIndicator(
-                  onRefresh: _load,
-                  color: const Color(0xFF3E8E6D),
-                  child: isFlat
-                      ? _buildFlatList(pinned, flatList)
-                      : _buildGroupedList(pinned, groups),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: isEmpty
+                    ? _EmptyState(
+                        hasQuery: _query.isNotEmpty,
+                        hasDate: _selectedDate != null,
+                      )
+                    : RefreshIndicator(
+                        onRefresh: _load,
+                        color: const Color(0xFF3E8E6D),
+                        child: isFlat
+                            ? _buildFlatList(pinned, flatList)
+                            : _buildGroupedList(pinned, groups),
+                      ),
+              ),
+              // 长列表快速回顶：只在滚过一屏后出现，避免遮挡内容。
+              // 位置必须避开右下角的新建 FAB（占据底部 16~72），否则会被它盖住。
+              if (_showBackTop)
+                Positioned(
+                  right: 16,
+                  bottom: 92,
+                  child: GestureDetector(
+                    onTap: _scrollToTop,
+                    child: Container(
+                      width: 42,
+                      height: 42,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0x1F24382F),
+                            blurRadius: 14,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: const AppIcon(AppIcons.arrowUp,
+                          size: 18, color: Color(0xFF3E8E6D)),
+                    ),
+                  ),
                 ),
+            ],
+          ),
         ),
       ],
     );
@@ -1037,6 +1099,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Widget _buildFlatList(List<DiaryEntry> pinned, List<DiaryEntry> list) {
     final hasRail = pinned.isNotEmpty;
     return ListView.builder(
+      // PageStorageKey：切换视图 / 从浏览页返回后仍停在原位置
+      key: const PageStorageKey('note_list_all'),
+      controller: _listCtrl,
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
       itemCount: list.length + (hasRail ? 1 : 0),
       itemBuilder: (context, i) {
@@ -1060,6 +1125,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
     final hasRail = pinned.isNotEmpty;
     return ListView.builder(
+      key: const PageStorageKey('note_list_grouped'),
+      controller: _listCtrl,
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
       itemCount: rows.length + (hasRail ? 1 : 0) + 1,
       itemBuilder: (context, i) {
@@ -1967,13 +2034,23 @@ class _DiaryCard extends StatelessWidget {
       padding: const EdgeInsets.all(10),
       child: Row(
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: SizedBox(
-              width: 124,
-              height: 93, // 4:3
-              // 按 124 逻辑宽降采样解码，避免原图整幅驻留内存
-              child: EntryImage(path: entry.imagePath, displayWidth: 124),
+          // 封面图与浏览页共享元素：点开笔记时图片从卡片位置飞到正文位置
+          Hero(
+            tag: 'note_cover_${entry.id}',
+            // 飞行中统一用原文件渲染：两端解码宽度不同（124 vs 全宽），
+            // 交给 Hero 默认处理会中途闪一次占位块
+            flightShuttleBuilder: (_, __, ___, ____, _____) => ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.file(File(entry.imagePath), fit: BoxFit.cover),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: SizedBox(
+                width: 124,
+                height: 93, // 4:3
+                // 按 124 逻辑宽降采样解码，避免原图整幅驻留内存
+                child: EntryImage(path: entry.imagePath, displayWidth: 124),
+              ),
             ),
           ),
           const SizedBox(width: 12),

@@ -863,8 +863,9 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
   }
 
   // 「更多」按钮：置顶开关 + 可见度（原独立按钮已收进此面板）
+  // 无论里面是否有已开启的项，按钮都保持常态白底 —— 高亮会和右侧的
+  // 时间/地点按钮形成视觉噪音，且用户反馈「有设置时变绿」不易理解。
   Widget _buildMoreButton() {
-    final active = _pinned;
     return InkWell(
       onTap: _showMoreSheet,
       child: Container(
@@ -872,22 +873,16 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
         alignment: Alignment.centerLeft,
         padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
-          color: active ? const Color(0xFFE4F2EB) : Colors.white,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
-          children: [
-            AppIcon(AppIcons.moreH,
-                size: 16,
-                color: active ? const Color(0xFF3E8E6D) : Color(0xFF24382F)),
-            const SizedBox(width: 6),
+          children: const [
+            AppIcon(AppIcons.moreH, size: 16, color: Color(0xFF24382F)),
+            SizedBox(width: 6),
             Text(
               '更多',
-              style: TextStyle(
-                fontSize: 13,
-                color: active ? const Color(0xFF3E8E6D) : Color(0xFF24382F),
-                fontWeight: active ? FontWeight.w600 : FontWeight.normal,
-              ),
+              style: TextStyle(fontSize: 13, color: Color(0xFF24382F)),
             ),
           ],
         ),
@@ -916,6 +911,8 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                 ),
               ),
               ListTile(
+                // 标题离屏幕边缘太近，两侧各加 8 的内缩（默认 16）
+                contentPadding: const EdgeInsets.only(left: 24, right: 16),
                 title: const Text('可见度',
                     style:
                         TextStyle(fontSize: 13, color: Color(0xFF24382F))),
@@ -941,6 +938,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                 },
               ),
               SwitchListTile(
+                contentPadding: const EdgeInsets.only(left: 24, right: 16),
                 title: const Text('置顶',
                     style:
                         TextStyle(fontSize: 13, color: Color(0xFF24382F))),
@@ -1058,7 +1056,9 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                 child: _kbFactor <= 0.001
                     ? const SizedBox(width: double.infinity)
                     : Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+            // 顶部留白从 8 加到 26：原来封面图紧贴导航栏，和下面的标题
+            // 之间反而空出一大段，视觉重心偏上
+            padding: const EdgeInsets.fromLTRB(20, 26, 20, 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

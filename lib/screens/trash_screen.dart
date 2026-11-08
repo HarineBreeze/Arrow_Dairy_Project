@@ -31,15 +31,25 @@ class TrashScreenState extends State<TrashScreen> {
   /// 当前排序：删除时间倒序（新删的在上）
   bool _newestFirst = true;
 
-  /// 每分钟刷新一次：剩余天数跨天实时递减，到期项也会当场消失
-  /// （TrashStorage.load 会顺带清理过期项）
+  /// 每分钟刷新一次：剩余天数跨天实时递减。
+  /// 原来直接 `_load()`，页面开着就每分钟读一次文件 + 全量解析；
+  /// 现在只做内存内的重建（daysLeft 由当前时间实时算出），
+  /// 仅当真的有条目过期时才回读存储，顺带清理过期登记。
   Timer? _ticker;
 
   @override
   void initState() {
     super.initState();
     _load();
-    _ticker = Timer.periodic(const Duration(minutes: 1), (_) => _load());
+    _ticker = Timer.periodic(const Duration(minutes: 1), (_) => _tick());
+  }
+
+  void _tick() {
+    if (!mounted) return;
+    final alive = _entries.where((e) => e.daysLeft > 0).toList();
+    final hadExpired = alive.length != _entries.length;
+    setState(() => _entries = alive);
+    if (hadExpired) _load();
   }
 
   @override

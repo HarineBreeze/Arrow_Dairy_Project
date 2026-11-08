@@ -4,6 +4,12 @@ import 'screens/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // 图片缓存上限：降采样后单张约 200–600KB，60MB / 300 张足够覆盖
+  // 一屏到两屏的滚动预热；超出后按 LRU 回收，避免长时间浏览有图笔记后
+  // 内存只涨不落（默认 100MB / 1000 张对手机端偏大）。
+  final cache = PaintingBinding.instance.imageCache;
+  cache.maximumSize = 300;
+  cache.maximumSizeBytes = 60 << 20;
   await AppSettings.load(); // 提前读入手写体等设置
   runApp(const DiaryApp());
 }
