@@ -195,18 +195,16 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                     ),
                   ],
                   if (_entry.title.isNotEmpty) ...[
-                    if (_hasImage) const SizedBox(height: 12),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                    if (_hasImage) const SizedBox(height: 16),
+                    // 标题不再套白色卡片：直接落在页面底纹上，
+                    // 左右补 16 与下方正文的文字左缘对齐
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
                         _entry.title,
                         style: TextStyle(
                           fontSize: 22,
+                          height: 1.35,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFF24382F),
                           fontFamily: fontFamily,
@@ -215,7 +213,7 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                     ),
                   ],
                   if (_entry.content.isNotEmpty) ...[
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),

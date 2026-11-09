@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
 /// 可选字体目录（id 即 Flutter family 名）。
@@ -23,11 +24,16 @@ class FontCatalog {
 /// App 全局设置。持久化到 documents/app_settings.json。
 /// 内存缓存，启动时 load 后即可同步读取。
 class AppSettings {
-  /// 浏览页正文字体，'' 或 null = 系统默认
+  /// App 全局字体，'' 或 null = 系统默认
   static String? _fontFamily;
   static String? get fontFamily =>
       (_fontFamily == null || _fontFamily!.isEmpty) ? null : _fontFamily;
   static String get fontFamilyId => _fontFamily ?? '';
+
+  /// 字体变更通知：MaterialApp 监听后重建主题，实现全局换字体。
+  /// 值为当前字体 family（null = 默认字体）。
+  static final ValueNotifier<String?> fontNotifier =
+      ValueNotifier<String?>(null);
 
   // ---------------- 「可使用天数」参数 ----------------
 
@@ -120,10 +126,13 @@ class AppSettings {
     } catch (_) {
       _fontFamily = null;
     }
+    // 启动时也要同步一次，避免首帧与已存设置不一致
+    fontNotifier.value = fontFamily;
   }
 
   static Future<void> setFontFamily(String id) async {
     _fontFamily = id;
+    fontNotifier.value = fontFamily;
     await _persist();
   }
 

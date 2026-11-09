@@ -259,12 +259,10 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
 
     // 收纳栏：从左到右固定顺序 笔记/物品/事件/资产
     final cats = <_SearchCategory>[
-      _SearchCategory(
-          '笔记', '${diaries.length} 篇', diaries.isNotEmpty),
-      _SearchCategory('物品', '${items.length} 件', items.isNotEmpty),
-      _SearchCategory('事件', '${events.length} 个',
-          events.isNotEmpty),
-      _SearchCategory('资产', _assetLocked ? '已加密' : '${assets.length} 项',
+      _SearchCategory('笔记', '${diaries.length}', diaries.isNotEmpty),
+      _SearchCategory('物品', '${items.length}', items.isNotEmpty),
+      _SearchCategory('事件', '${events.length}', events.isNotEmpty),
+      _SearchCategory('资产', _assetLocked ? '已加密' : '${assets.length}',
           assets.isNotEmpty),
     ];
 
@@ -324,10 +322,6 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
               '笔记',
               diaries
                   .map((e) => _ResultRow(
-                        icon: e.encrypted
-                            ? AppIcons.lock
-                            : AppIcons.diary,
-                        iconColor: const Color(0xFF3E8E6D),
                         title: e.encrypted
                             ? (e.subtitle.isNotEmpty ? e.subtitle : '加密笔记')
                             : (e.title.isNotEmpty ? e.title : '（无标题）'),
@@ -344,8 +338,6 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
               '物品',
               items
                   .map((e) => _ResultRow(
-                        icon: AppIcons.items,
-                        iconColor: const Color(0xFF3E8E6D),
                         title: e.name,
                         subtitle:
                             '${e.category} · ¥${e.price.toStringAsFixed(e.price.truncateToDouble() == e.price ? 0 : 2)}',
@@ -362,8 +354,6 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
               '事件',
               events
                   .map((e) => _ResultRow(
-                        icon: AppIcons.event,
-                        iconColor: const Color(0xFFF08C3A),
                         title: e.name,
                         subtitle:
                             '${e.target.year}.${e.target.month.toString().padLeft(2, '0')}.${e.target.day.toString().padLeft(2, '0')} · ${e.type}',
@@ -380,8 +370,6 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
               '资产',
               assets
                   .map((e) => _ResultRow(
-                        icon: AppIcons.asset,
-                        iconColor: const Color(0xFF647A70),
                         title: e.note.isNotEmpty ? e.note : e.type,
                         subtitle: '${e.type} · ${_assetAmountLabel(e)}',
                         // 资产结果卡默认「关闭小眼睛」：金额打码；
@@ -448,7 +436,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
             child: Column(
               children: [
                 for (var i = 0; i < rows.length; i++) ...[
-                  if (i > 0) const Divider(height: 1, indent: 56),
+                  if (i > 0) const Divider(height: 1, indent: 14),
                   rows[i],
                 ],
               ],
@@ -478,8 +466,6 @@ class _SearchCategory {
 }
 
 class _ResultRow extends StatelessWidget {
-  final String icon;
-  final Color iconColor;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
@@ -487,8 +473,6 @@ class _ResultRow extends StatelessWidget {
 
   const _ResultRow({
     Key? key,
-    required this.icon,
-    required this.iconColor,
     required this.title,
     required this.subtitle,
     required this.onTap,
@@ -505,13 +489,6 @@ class _ResultRow extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
           child: Row(
             children: [
-              // 去底纹：与设置页同款，固定 38×38 居中
-              SizedBox(
-                width: 38,
-                height: 38,
-                child: Center(child: AppIcon(icon, size: 20, color: iconColor)),
-              ),
-              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

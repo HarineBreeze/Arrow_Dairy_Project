@@ -302,7 +302,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   padding: const EdgeInsets.only(left: 4, bottom: 8),
                   child: Row(
                     children: [
-                      const Text('笔记字体',
+                      const Text('字体',
                           style: TextStyle(
                               fontSize: 13,
                               color: Color(0xFF8FA09A),
@@ -322,7 +322,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: _buildItem(
                     icon: AppIcons.fontType,
                     iconColor: const Color(0xFF3E8E6D),
-                    title: '笔记字体',
+                    title: '字体',
                     subtitle:
                         '当前：${FontCatalog.nameOf(AppSettings.fontFamilyId.isEmpty ? null : AppSettings.fontFamilyId) ?? '默认字体'}',
                     busy: false,
@@ -410,15 +410,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  /// 笔记字体作用范围提示
+  /// 字体作用范围提示
   void _showFontScopeTip(BuildContext context) {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('笔记字体', style: TextStyle(fontSize: 17)),
+        title: const Text('字体', style: TextStyle(fontSize: 17)),
         content: const Text(
-          '该字体设置仅作用于笔记浏览页面。',
+          '该字体设置对 App 全局生效（笔记、物品、事件、资产等所有页面）。',
           style: TextStyle(fontSize: 13, height: 1.6),
         ),
         actions: [

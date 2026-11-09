@@ -42,72 +42,82 @@ class DiaryApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: '阿尤日记',
-      debugShowCheckedModeBanner: false,
-      theme: () {
-        const green = kPrimaryGreen;
-        final swatch = createBambooSwatch(green);
-        return ThemeData(
-          primarySwatch: swatch,
-          primaryColor: green,
-          scaffoldBackgroundColor: const Color(0xFFF5FAF7),
-          // AppIcon 默认跟随 IconTheme；此处钉死深墨色，
-          // AppBar.foregroundColor(白) 会在此基础上对顶栏图标覆写
-          iconTheme: const IconThemeData(color: Color(0xFF273830)),
-          colorScheme: const ColorScheme.light(
-            primary: green,
-            secondary: Color(0xFF4B9C7D),
-            surface: Color(0xFFFFFFFF),
-          ),
-          appBarTheme: const AppBarTheme(
-            backgroundColor: green,
-            foregroundColor: Colors.white,
-            elevation: 0,
-            centerTitle: true,
-          ),
-          floatingActionButtonTheme: const FloatingActionButtonThemeData(
-            backgroundColor: green,
-            foregroundColor: Colors.white,
-          ),
-          // 选框类控件：激活态统一竹青，未选中态走各自默认
-          checkboxTheme: CheckboxThemeData(
-            fillColor: MaterialStateProperty.resolveWith((states) =>
-                states.contains(MaterialState.selected) ? green : null),
-          ),
-          radioTheme: RadioThemeData(
-            fillColor: MaterialStateProperty.resolveWith((states) =>
-                states.contains(MaterialState.selected) ? green : null),
-          ),
-          switchTheme: SwitchThemeData(
-            thumbColor: MaterialStateProperty.resolveWith((states) =>
-                states.contains(MaterialState.selected) ? Colors.white : null),
-            trackColor: MaterialStateProperty.resolveWith((states) =>
-                states.contains(MaterialState.selected)
-                    ? green
-                    : const Color(0xFFC6D6CD)),
-          ),
-          // 文本选区/光标：Android 默认取 colorScheme.primary 已是绿，
-          // 这里显式钉死，iOS 等平台也不会再出现默认蓝
-          textSelectionTheme: TextSelectionThemeData(
-            cursorColor: green,
-            selectionColor: green.withOpacity(0.30),
-            selectionHandleColor: green,
-          ),
-          progressIndicatorTheme: const ProgressIndicatorThemeData(
-            color: green,
-            linearTrackColor: Color(0xFFE4F2EB),
-            circularTrackColor: Color(0xFFE4F2EB),
-          ),
-          textTheme: const TextTheme(
-            bodyText1: TextStyle(
-                color: Color(0xFF24382F), fontSize: 15, height: 1.6),
-            bodyText2: TextStyle(
-                color: Color(0xFF647A70), fontSize: 13, height: 1.6),
-          ),
-        );
-      }(),
-      home: const HomeScreen(),
+    // 字体在设置页切换后，主题整体重建 → 全 App 生效
+    return ValueListenableBuilder<String?>(
+      valueListenable: AppSettings.fontNotifier,
+      builder: (context, fontFamily, _) => MaterialApp(
+        title: '阿尤日记',
+        debugShowCheckedModeBanner: false,
+        theme: _buildTheme(fontFamily),
+        home: const HomeScreen(),
+      ),
+    );
+  }
+
+  ThemeData _buildTheme(String? fontFamily) {
+    const green = kPrimaryGreen;
+    final swatch = createBambooSwatch(green);
+    return ThemeData(
+      // 字体设置全局生效：ThemeData 会把 fontFamily 合并进默认
+      // TextTheme 的每一档，自定义的 bodyText1/2（未指定 family）
+      // 在 merge 时也跟随继承
+      fontFamily: fontFamily,
+      primarySwatch: swatch,
+      primaryColor: green,
+      scaffoldBackgroundColor: const Color(0xFFF5FAF7),
+      // AppIcon 默认跟随 IconTheme；此处钉死深墨色，
+      // AppBar.foregroundColor(白) 会在此基础上对顶栏图标覆写
+      iconTheme: const IconThemeData(color: Color(0xFF273830)),
+      colorScheme: const ColorScheme.light(
+        primary: green,
+        secondary: Color(0xFF4B9C7D),
+        surface: Color(0xFFFFFFFF),
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: green,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+      ),
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: green,
+        foregroundColor: Colors.white,
+      ),
+      // 选框类控件：激活态统一竹青，未选中态走各自默认
+      checkboxTheme: CheckboxThemeData(
+        fillColor: MaterialStateProperty.resolveWith((states) =>
+            states.contains(MaterialState.selected) ? green : null),
+      ),
+      radioTheme: RadioThemeData(
+        fillColor: MaterialStateProperty.resolveWith((states) =>
+            states.contains(MaterialState.selected) ? green : null),
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: MaterialStateProperty.resolveWith((states) =>
+            states.contains(MaterialState.selected) ? Colors.white : null),
+        trackColor: MaterialStateProperty.resolveWith((states) =>
+            states.contains(MaterialState.selected)
+                ? green
+                : const Color(0xFFC6D6CD)),
+      ),
+      // 文本选区/光标：Android 默认取 colorScheme.primary 已是绿，
+      // 这里显式钉死，iOS 等平台也不会再出现默认蓝
+      textSelectionTheme: TextSelectionThemeData(
+        cursorColor: green,
+        selectionColor: green.withOpacity(0.30),
+        selectionHandleColor: green,
+      ),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: green,
+        linearTrackColor: Color(0xFFE4F2EB),
+        circularTrackColor: Color(0xFFE4F2EB),
+      ),
+      textTheme: const TextTheme(
+        bodyText1:
+            TextStyle(color: Color(0xFF24382F), fontSize: 15, height: 1.6),
+        bodyText2:
+            TextStyle(color: Color(0xFF647A70), fontSize: 13, height: 1.6),
+      ),
     );
   }
 }

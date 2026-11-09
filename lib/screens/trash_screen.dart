@@ -304,7 +304,7 @@ class TrashScreenState extends State<TrashScreen> {
                     const SizedBox(height: 4),
                     Center(
                       child: Text(
-                        '超过 7 天的内容会自动彻底删除',
+                        '超过7天的内容将彻底删除',
                         style: TextStyle(
                             fontSize: 11,
                             color:
@@ -371,19 +371,6 @@ class TrashScreenState extends State<TrashScreen> {
     );
   }
 
-  String _iconOf(TrashKind k) {
-    switch (k) {
-      case TrashKind.diary:
-        return AppIcons.diary;
-      case TrashKind.item:
-        return AppIcons.items;
-      case TrashKind.event:
-        return AppIcons.event;
-      case TrashKind.asset:
-        return AppIcons.asset;
-    }
-  }
-
   Widget _buildCard(TrashEntry e) {
     final left = e.daysLeft;
     // 剩余 ≤2 天：橙色警示
@@ -396,36 +383,23 @@ class TrashScreenState extends State<TrashScreen> {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(14, 11, 10, 11),
+            // 右侧留 12，让右上角的天数标签贴角
+            padding: const EdgeInsets.fromLTRB(14, 11, 12, 11),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(
-                  width: 38,
-                  height: 38,
-                  child: Center(
-                    child: AppIcon(_iconOf(e.kind),
-                        size: 22, color: _fgOf(e.kind)),
-                  ),
-                ),
-                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              e.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF24382F)),
-                            ),
-                          ),
-                        ],
+                      Text(
+                        e.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF24382F)),
                       ),
                       const SizedBox(height: 3),
                       Text(
@@ -439,26 +413,28 @@ class TrashScreenState extends State<TrashScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                // 剩余天数
-                Text(
-                  left <= 1 ? '今天到期' : '$left 天后消失',
-                  style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: urgent
-                          ? const Color(0xFFF08C3A)
-                          : const Color(0xFF7C8F86)),
+                // 剩余天数：移到卡片右上角，字号收小
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(
+                    left <= 1 ? '今天到期' : '$left 天后消失',
+                    style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: urgent
+                            ? const Color(0xFFF08C3A)
+                            : const Color(0xFF7C8F86)),
+                  ),
                 ),
               ],
             ),
           ),
           const Divider(height: 1, color: Color(0xFFEFF5F1)),
-          // 操作区：还原 / 彻底删除
+          // 操作区：还原 / 彻底删除（纯文字，不再带图标）
           Row(
             children: [
               Expanded(
                 child: _buildAction(
-                  icon: AppIcons.restore,
                   label: '还原',
                   color: const Color(0xFF3E8E6D),
                   onTap: () => _restore(e),
@@ -467,8 +443,6 @@ class TrashScreenState extends State<TrashScreen> {
               Container(width: 1, height: 20, color: const Color(0xFFEFF5F1)),
               Expanded(
                 child: _buildAction(
-                  // 与全站删除图标统一：普通垃圾桶轮廓
-                  icon: AppIcons.delete,
                   label: '彻底删除',
                   color: const Color(0xFFCB5C50),
                   onTap: () => _purge(e),
@@ -482,7 +456,6 @@ class TrashScreenState extends State<TrashScreen> {
   }
 
   Widget _buildAction({
-    required String icon,
     required String label,
     required Color color,
     required VoidCallback onTap,
@@ -492,33 +465,15 @@ class TrashScreenState extends State<TrashScreen> {
       borderRadius: BorderRadius.circular(16),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            AppIcon(icon, size: 15, color: color),
-            const SizedBox(width: 5),
-            Text(label,
-                style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: color)),
-          ],
+        child: Center(
+          child: Text(label,
+              style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: color)),
         ),
       ),
     );
-  }
-
-  Color _fgOf(TrashKind k) {
-    switch (k) {
-      case TrashKind.diary:
-        return const Color(0xFF3E8E6D);
-      case TrashKind.item:
-        return const Color(0xFF3E8E6D);
-      case TrashKind.event:
-        return const Color(0xFFF08C3A);
-      case TrashKind.asset:
-        return const Color(0xFF647A70);
-    }
   }
 }
 
