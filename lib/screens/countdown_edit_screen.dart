@@ -96,20 +96,6 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
 
   static const List<String> _quickIcons = CountdownEvent.quickIcons;
 
-  /// 重复规则的说明文案
-  String get _repeatHint {
-    switch (_repeat) {
-      case RepeatRule.none:
-        return '到期后停止计数，不再重复';
-      case RepeatRule.yearly:
-        return '到期后自动进入下一年的同月同日倒计时';
-      case RepeatRule.monthly:
-        return '到期后自动进入下一个月的同日倒计时（小月自动取当月最后一天）';
-      case RepeatRule.weekly:
-        return '到期后自动进入下一周的同一天倒计时';
-    }
-  }
-
   /// 进入页面时保存的图标原文（可能为空 → 表示用类型默认）
   String _initIcon = '';
 
@@ -497,18 +483,10 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.only(left: 4),
-              child: Text(
-                _repeatHint,
-                style: const TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
-              ),
-            ),
             const SizedBox(height: 16),
 
-            // 提前提醒（0 = 当天）
-            _sectionLabel('提前提醒'),
+            // 提醒时间（0 = 当天）
+            _sectionLabel('提醒时间'),
             Container(
               padding: const EdgeInsets.all(8),
               decoration: _box(),
@@ -525,16 +503,6 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                     ),
                   ],
                 ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.only(left: 4),
-              child: Text(
-                _remindBeforeDays == 0
-                    ? '在事件日当天的设定时间提醒'
-                    : '在事件日前 $_remindBeforeDays 天的设定时间提醒',
-                style: const TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
               ),
             ),
           ],

@@ -342,42 +342,52 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
+        // 版式与事件编辑页统一：灰色小节标题在上、内容块在下，
+        // 节与节之间 16px 空隙，不再用分割线
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _sectionLabel('物品状态'),
             _buildStatusRow(),
-            const Divider(height: 1),
             const SizedBox(height: 16),
+            _sectionLabel('物品名称'),
             _buildNameField(),
-            const Divider(height: 1),
             const SizedBox(height: 16),
+            _sectionLabel('物品价格'),
             _buildPriceField(),
-            const Divider(height: 1),
-            const SizedBox(height: 16),
             if (!_wishlist) ...[
-              _buildExtraPriceField(),
-              const Divider(height: 1),
               const SizedBox(height: 16),
+              _sectionLabel('附加价格'),
+              _buildExtraPriceField(),
             ],
+            const SizedBox(height: 16),
+            _sectionLabel('物品类型'),
             _buildCategoryRow(),
             const SizedBox(height: 16),
+            _sectionLabel('物品图标'),
             _buildIconRow(),
             if (!_wishlist) ...[
               const SizedBox(height: 16),
+              _sectionLabel('日期'),
               _buildDateRow(),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
+              _sectionLabel('计算方式'),
               _buildCalcMethodRow(),
               if (_calcMethod == 1) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
+                _sectionLabel('使用次数'),
                 _buildUsageField(),
               ],
             ] else ...[
               const SizedBox(height: 16),
+              _sectionLabel('每次攒钱'),
               _buildSavePerTimeRow(),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
+              _sectionLabel('已攒金额'),
               _buildSavedAmountRow(),
               const SizedBox(height: 16),
+              _sectionLabel('攒钱进度'),
               _buildProgressBarRow(),
             ],
           ],
@@ -413,9 +423,6 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
   Widget _buildStatusRow() {
     return Row(
       children: [
-        const Text('物品状态',
-            style: TextStyle(fontSize: 15, color: Color(0xFF24382F))),
-        const Spacer(),
         _buildStatusChip('已拥有', false),
         const SizedBox(width: 8),
         _buildStatusChip('愿望单', true),
@@ -496,13 +503,11 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         if (v != null && v >= 0) setState(() => _savePerTime = v);
       },
       borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        decoration: _box(),
         child: Row(
           children: [
-            const Text('每次攒钱',
-                style: TextStyle(fontSize: 15, color: Color(0xFF24382F))),
-            const Spacer(),
             Text(
               _savePerTime > 0 ? '¥${_fmtAmount(_savePerTime)}' : '点击设置',
               style: TextStyle(
@@ -513,7 +518,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
                     : const Color(0xFF8FA09A),
               ),
             ),
-            const SizedBox(width: 4),
+            const Spacer(),
             const AppIcon(AppIcons.chevR,
                 size: 18, color: Color(0xFFC6D6CD)),
           ],
@@ -525,43 +530,44 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
   double get _saveStep => _savePerTime > 0 ? _savePerTime : 1;
 
   Widget _buildSavedAmountRow() {
-    return Row(
-      children: [
-        const Text('已攒金额',
-            style: TextStyle(fontSize: 15, color: Color(0xFF24382F))),
-        const Spacer(),
-        // 加减号并排放置在已攒金额左侧
-        _buildStepButton(AppIcons.minus, () {
-          setState(() {
-            _savedAmount = (_savedAmount - _saveStep) < 0
-                ? 0
-                : _savedAmount - _saveStep;
-          });
-        }),
-        const SizedBox(width: 8),
-        _buildStepButton(AppIcons.plus, () {
-          setState(() => _savedAmount += _saveStep);
-        }),
-        const SizedBox(width: 14),
-        // 金额右侧显示，与「每次攒钱」金额对齐
-        GestureDetector(
-          onTap: () async {
-            final v = await _inputAmountDialog('已攒金额', _savedAmount);
-            if (v != null && v >= 0) setState(() => _savedAmount = v);
-          },
-          behavior: HitTestBehavior.opaque,
-          child: Text(
-            '¥${_fmtAmount(_savedAmount)}',
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF3E8E6D),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: _box(),
+      child: Row(
+        children: [
+          // 加减号并排放置在已攒金额左侧
+          _buildStepButton(AppIcons.minus, () {
+            setState(() {
+              _savedAmount = (_savedAmount - _saveStep) < 0
+                  ? 0
+                  : _savedAmount - _saveStep;
+            });
+          }),
+          const SizedBox(width: 8),
+          _buildStepButton(AppIcons.plus, () {
+            setState(() => _savedAmount += _saveStep);
+          }),
+          const Spacer(),
+          // 金额右侧显示，点按可直接输入
+          GestureDetector(
+            onTap: () async {
+              final v = await _inputAmountDialog('已攒金额', _savedAmount);
+              if (v != null && v >= 0) setState(() => _savedAmount = v);
+            },
+            behavior: HitTestBehavior.opaque,
+            child: Text(
+              '¥${_fmtAmount(_savedAmount)}',
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF3E8E6D),
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 4),
-        const AppIcon(AppIcons.chevR, size: 18, color: Color(0xFFC6D6CD)),
-      ],
+          const SizedBox(width: 4),
+          const AppIcon(AppIcons.chevR, size: 18, color: Color(0xFFC6D6CD)),
+        ],
+      ),
     );
   }
 
@@ -574,10 +580,6 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 与「已攒金额、每次攒钱」同行样式一致（15号、深灰、左对齐）
-        const Text('攒钱进度',
-            style: TextStyle(fontSize: 15, color: Color(0xFF24382F))),
-        const SizedBox(height: 10),
         // 长度进一步缩短
         Padding(
           padding: const EdgeInsets.only(right: 56),
@@ -621,31 +623,38 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
   double get price =>
       double.tryParse(_priceCtrl.text.trim()) ?? 0;
 
-  Widget _buildLabel(String text) => Text(
-        text,
-        style: const TextStyle(fontSize: 13, color: Color(0xFF9A8A7E)),
+  /// 小节标题：与事件编辑页同一套（灰色小字、加粗、左侧留 4px）
+  Widget _sectionLabel(String text) => Padding(
+        padding: const EdgeInsets.only(left: 4, bottom: 8),
+        child: Text(text,
+            style: const TextStyle(
+                fontSize: 13,
+                color: Color(0xFF8FA09A),
+                fontWeight: FontWeight.w600)),
+      );
+
+  /// 白色圆角内容块：与事件编辑页同一套
+  BoxDecoration _box() => BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
       );
 
   Widget _buildNameField() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        const Text('物品名',
-            style: TextStyle(fontSize: 15, color: Color(0xFF24382F))),
-        const SizedBox(width: 16),
-        Expanded(
-          child: TextField(
-            controller: _nameCtrl,
-            maxLength: 20,
-            style: const TextStyle(fontSize: 15),
-            decoration: const InputDecoration(
-              hintText: '请输入物品名',
-              border: InputBorder.none,
-              counterText: '',
-            ),
-          ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: _box(),
+      child: TextField(
+        controller: _nameCtrl,
+        maxLength: 20,
+        style: const TextStyle(fontSize: 15),
+        decoration: const InputDecoration(
+          hintText: '请输入物品名',
+          hintStyle: TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
+          border: InputBorder.none,
+          counterText: '',
+          contentPadding: EdgeInsets.symmetric(vertical: 14),
         ),
-      ],
+      ),
     );
   }
 
@@ -731,25 +740,20 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
   }
 
   Widget _buildPriceField() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        const Text('物品价格',
-            style: TextStyle(fontSize: 15, color: Color(0xFF24382F))),
-        const SizedBox(width: 16),
-        Expanded(
-          child: TextField(
-            controller: _priceCtrl,
-            keyboardType: TextInputType.number,
-            style: const TextStyle(fontSize: 15),
-            decoration: const InputDecoration(
-              hintText: '0.00',
-              prefixText: '¥ ',
-              border: InputBorder.none,
-            ),
-          ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: _box(),
+      child: TextField(
+        controller: _priceCtrl,
+        keyboardType: TextInputType.number,
+        style: const TextStyle(fontSize: 15),
+        decoration: const InputDecoration(
+          hintText: '0.00',
+          prefixText: '¥ ',
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(vertical: 14),
         ),
-      ],
+      ),
     );
   }
 
@@ -757,36 +761,37 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
   Widget _buildExtraPriceField() {
     final extra = double.tryParse(_extraCtrl.text.trim()) ?? 0;
     final price = double.tryParse(_priceCtrl.text.trim()) ?? 0;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        const Text('附加价格',
-            style: TextStyle(fontSize: 15, color: Color(0xFF24382F))),
-        const SizedBox(width: 16),
-        Expanded(
-          child: TextField(
-            controller: _extraCtrl,
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true, signed: true),
-            style: const TextStyle(fontSize: 15),
-            decoration: const InputDecoration(
-              hintText: '选填，可为负数',
-              prefixText: '¥ ',
-              border: InputBorder.none,
-            ),
-            onChanged: (_) => setState(() {}),
-          ),
-        ),
-        if (extra != 0 || price > 0)
-          Text(
-            '实际 ¥${_fmtAmount(price + extra)}',
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF3E8E6D),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: _box(),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _extraCtrl,
+              keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true, signed: true),
+              style: const TextStyle(fontSize: 15),
+              decoration: const InputDecoration(
+                hintText: '选填，可为负数',
+                prefixText: '¥ ',
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(vertical: 14),
+              ),
+              onChanged: (_) => setState(() {}),
             ),
           ),
-      ],
+          if (extra != 0 || price > 0)
+            Text(
+              '实际 ¥${_fmtAmount(price + extra)}',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF3E8E6D),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -865,69 +870,63 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
   Widget _buildCalcMethodRow() {
     final methods = [0, 1];
     final labels = ['价格/天数', '价格/使用次数'];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildLabel('均价计算方式'),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          children: List.generate(methods.length, (i) {
-            final sel = _calcMethod == methods[i];
-            return GestureDetector(
-              onTap: () => setState(() => _calcMethod = methods[i]),
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color: sel ? _accent : Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Text(
-                  labels[i],
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: sel ? Colors.white : const Color(0xFF647A70),
-                  ),
-                ),
+    return Wrap(
+      spacing: 8,
+      children: List.generate(methods.length, (i) {
+        final sel = _calcMethod == methods[i];
+        return GestureDetector(
+          onTap: () => setState(() => _calcMethod = methods[i]),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: sel ? _accent : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Text(
+              labels[i],
+              style: TextStyle(
+                fontSize: 13,
+                color: sel ? Colors.white : const Color(0xFF647A70),
               ),
-            );
-          }),
-        ),
-      ],
+            ),
+          ),
+        );
+      }),
     );
   }
 
   Widget _buildUsageField() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        const Text('使用次数',
-            style: TextStyle(fontSize: 15, color: Color(0xFF24382F))),
-        const Spacer(),
-        _buildStepButton(AppIcons.minus, () => _changeUsage(-1)),
-        const SizedBox(width: 8),
-        SizedBox(
-          width: 52,
-          child: TextField(
-            controller: _usageCtrl,
-            keyboardType: TextInputType.number,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 15),
-            decoration: const InputDecoration(
-              hintText: '0',
-              border: InputBorder.none,
-              isDense: true,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: _box(),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _buildStepButton(AppIcons.minus, () => _changeUsage(-1)),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 52,
+            child: TextField(
+              controller: _usageCtrl,
+              keyboardType: TextInputType.number,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 15),
+              decoration: const InputDecoration(
+                hintText: '0',
+                border: InputBorder.none,
+                isDense: true,
+                contentPadding: EdgeInsets.symmetric(vertical: 12),
+              ),
+              onChanged: (_) => setState(() {}),
             ),
-            onChanged: (_) => setState(() {}),
           ),
-        ),
-        const SizedBox(width: 8),
-        _buildStepButton(AppIcons.plus, () => _changeUsage(1)),
-        const SizedBox(width: 6),
-        const Text('次',
-            style: TextStyle(fontSize: 13, color: Color(0xFF8FA09A))),
-      ],
+          const SizedBox(width: 8),
+          _buildStepButton(AppIcons.plus, () => _changeUsage(1)),
+          const SizedBox(width: 6),
+          const Text('次',
+              style: TextStyle(fontSize: 13, color: Color(0xFF8FA09A))),
+        ],
+      ),
     );
   }
 
