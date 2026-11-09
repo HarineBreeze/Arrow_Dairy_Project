@@ -73,6 +73,10 @@ void main() {
     expect(find.text('笔记字体'), findsNothing, reason: '旧名称应全部替换');
     // 分组标题 + 功能项标题，两处都叫「字体」
     expect(find.text('字体'), findsNWidgets(2));
+
+    // 「字体」分组标题旁不再有圈叹号提示：全页只剩数据备份分组那一个
+    expect(find.text('!'), findsOneWidget,
+        reason: '「字体」分组标题旁的提示符号应已移除');
   });
 
   testWidgets('字体设置经主题全局生效', (tester) async {
@@ -142,12 +146,12 @@ void main() {
     expect(find.text('超过7天的内容将彻底删除'), findsOneWidget);
   });
 
-  testWidgets('浏览页标题不再套白色底纹', (tester) async {
+  testWidgets('浏览页标题套白色圆角底纹', (tester) async {
     usePhone(tester);
     final now = DateTime.now();
     final note = DiaryEntry(
       id: 'n1',
-      title: '标题不该有底纹',
+      title: '标题有底纹',
       content: '正文内容',
       createdAt: now,
       updatedAt: now,
@@ -157,20 +161,19 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: NoteViewScreen(entry: note)));
     await _settle(tester);
 
-    final title = find.text('标题不该有底纹');
+    final title = find.text('标题有底纹');
     expect(title, findsOneWidget);
 
-    // 向上找祖先里是否有白底 Container（旧实现的底纹）
+    // 标题应存在一个直接的白色圆角卡片祖先（底纹回归）
     final containers = tester
         .widgetList<Container>(
             find.ancestor(of: title, matching: find.byType(Container)))
         .toList();
-    for (final c in containers) {
+    final hasWhiteCard = containers.any((c) {
       final d = c.decoration;
-      if (d is BoxDecoration) {
-        expect(d.color, isNot(Colors.white), reason: '标题不应再有白色底纹');
-      }
-    }
+      return d is BoxDecoration && d.color == Colors.white;
+    });
+    expect(hasWhiteCard, isTrue, reason: '标题应有白色底纹');
   });
 
   testWidgets('搜索页筛选栏无量词，结果卡无图标', (tester) async {

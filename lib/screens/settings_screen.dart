@@ -298,20 +298,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Padding(
-                  padding: const EdgeInsets.only(left: 4, bottom: 8),
-                  child: Row(
-                    children: [
-                      const Text('字体',
-                          style: TextStyle(
-                              fontSize: 13,
-                              color: Color(0xFF8FA09A),
-                              fontWeight: FontWeight.w600)),
-                      const SizedBox(width: 6),
-                      _buildInfoDot(
-                        onTap: () => _showFontScopeTip(context),
-                      ),
-                    ],
+                const Padding(
+                  padding: EdgeInsets.only(left: 4, bottom: 8),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text('字体',
+                        style: TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF8FA09A),
+                            fontWeight: FontWeight.w600)),
                   ),
                 ),
                 Container(
@@ -406,30 +401,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             color: Color(0xFF3E8E6D),
           ),
         ),
-      ),
-    );
-  }
-
-  /// 字体作用范围提示
-  void _showFontScopeTip(BuildContext context) {
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('字体', style: TextStyle(fontSize: 17)),
-        content: const Text(
-          '该字体设置对 App 全局生效（笔记、物品、事件、资产等所有页面）。',
-          style: TextStyle(fontSize: 13, height: 1.6),
-        ),
-        actions: [
-          Pressable(
-            enabled: true,
-            child: TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('知道了'),
-            ),
-          ),
-        ],
       ),
     );
   }

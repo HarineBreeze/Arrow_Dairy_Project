@@ -498,31 +498,42 @@ class AssetScreenState extends State<AssetScreen> {
     // 列表项 = Padding(间距) + 卡片本体。投影必须只包卡片本体：
     // 若连同透明间距一起投影，会透出一块灰色「背板」，
     // 叠在位移中的邻卡上就像「一张卡嵌着另一张卡」。
+    // 注意：间距不能再重复包一层——proxy 的高度由框架按列表项实测给定，
+    // 再加一层 Padding 会把卡片压矮（内部 Column 溢出、内容变形）。
     final inner = child is Padding ? child.child! : child;
     return Material(
       color: Colors.transparent,
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: Transform.scale(
-          scale: 1.03,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              // 不加描边：仅靠少量阴影给出「浮起」层次，
-              // 避免深色边框在浅色背景上被读成「黑框」
-              boxShadow: const [
-                // 长按拖动时的阴影：大幅减淡，只保留一丝下阴影
-                // （原来 0x1A + blur6 在拖动中像「深色背板」，喧宾夺主）
-                BoxShadow(
-                  color: Color(0x0A24382F),
-                  blurRadius: 4,
-                  offset: Offset(0, 1),
-                ),
-              ],
-            ),
-            child: inner,
+      child: AnimatedBuilder(
+        animation: animation,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            // 不加描边：仅靠少量阴影给出「浮起」层次，
+            // 避免深色边框在浅色背景上被读成「黑框」
+            boxShadow: const [
+              // 长按拖动时的阴影：大幅减淡，只保留一丝下阴影
+              // （原来 0x1A + blur6 在拖动中像「深色背板」，喧宾夺主）
+              BoxShadow(
+                color: Color(0x0A24382F),
+                blurRadius: 4,
+                offset: Offset(0, 1),
+              ),
+            ],
           ),
+          child: inner,
         ),
+        builder: (context, boxed) {
+          // 拿起瞬间随过渡动画等比缩小到 96%：
+          // 只有一个缩放源、中心对齐，卡片和图标一起等比变小，
+          // 不再出现「下方往上收」的形变。
+          final t =
+              Curves.easeOut.transform(animation.value.clamp(0.0, 1.0));
+          return Transform.scale(
+            scale: 1.0 - 0.04 * t,
+            alignment: Alignment.center,
+            child: boxed,
+          );
+        },
       ),
     );
   }
@@ -734,7 +745,6 @@ class AssetScreenState extends State<AssetScreen> {
                                       const EdgeInsets.only(bottom: 10),
                                   child: _CardShell(
                                     index: i,
-                                    held: _pendingId == a.id,
                                     pressHandle: handle,
                                     onHold: () => _onCardHold(a),
                                     onRelease: (moved) =>
@@ -1289,7 +1299,6 @@ class AssetScreenState extends State<AssetScreen> {
 /// · 按住后发生位移 → 视为拖拽排序，交还给 ReorderableListView。
 class _CardShell extends StatefulWidget {
   final int index;
-  final bool held;
   final VoidCallback onHold;
   final ValueChanged<bool> onRelease;
   final Widget Function(bool held, bool moved) builder;
@@ -1299,7 +1308,6 @@ class _CardShell extends StatefulWidget {
   const _CardShell({
     Key? key,
     required this.index,
-    required this.held,
     required this.onHold,
     required this.onRelease,
     required this.builder,
@@ -1320,8 +1328,13 @@ class _CardShellState extends State<_CardShell> {
   /// 长按提示是否已触发过（每轮按压只触发一次）
   bool _fired = false;
 
-  /// 已开始拖拽（由 [ReorderableListView] 的代理接管显示）
-  bool _dragging = false;
+  /// 按住提示（半透明 + 「拖动排序·松手取消」）是否正在显示。
+  ///
+  /// 必须放在本 State 而不是父级的 `_pendingId`：
+  /// 拖拽浮层是同一份 widget 在 Overlay 里的新实例，若提示由父级状态驱动，
+  /// 浮层会带着「半透明 + 提示层」的快照飞起来，观感像卡片变形。
+  /// 放在这里，浮层实例的 `_hinting` 初始就是 false，永远是干净的完整卡片。
+  bool _hinting = false;
 
   /// 判定为「拖动」的最小位移（逻辑像素）
   static const double _slop = 8;
@@ -1330,7 +1343,6 @@ class _CardShellState extends State<_CardShell> {
     _downAt = e.position;
     _moved = false;
     _fired = false;
-    _dragging = false;
     // 按下即缩到 90%，并保持到这个手指抬起
     widget.pressHandle.press();
   }
@@ -1349,7 +1361,7 @@ class _CardShellState extends State<_CardShell> {
     if (start == null) return;
     if (!_moved && (e.position - start).distance > _slop) {
       _moved = true;
-      if (mounted) setState(() {});
+      if (mounted) setState(() => _hinting = false);
     }
   }
 
@@ -1367,23 +1379,14 @@ class _CardShellState extends State<_CardShell> {
 
   void _onCancel(PointerCancelEvent e) {
     _downAt = null;
-    _dragging = false;
     _settle();
     if (mounted) setState(() => _moved = false);
   }
 
   /// 松手统一出口：从 90% 走弹簧动画回到 100%
   void _settle() {
-    final wasDragging = _dragging;
-    _dragging = false;
     widget.pressHandle.release();
-    if (wasDragging && mounted) setState(() {});
-  }
-
-  /// 延迟拖拽真正开始（卡片被提到 Overlay 里跟着手指走）
-  void _onDragStart() {
-    if (!mounted) return;
-    setState(() => _dragging = true);
+    if (mounted) setState(() => _hinting = false);
   }
 
   @override
@@ -1400,9 +1403,10 @@ class _CardShellState extends State<_CardShell> {
           onHold: () {
             if (_fired) return;
             _fired = true;
+            setState(() => _hinting = true);
             widget.onHold();
           },
-          child: widget.builder(widget.held, _moved),
+          child: widget.builder(_hinting, _moved),
         ),
       ),
     );

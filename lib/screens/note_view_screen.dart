@@ -196,10 +196,14 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                   ],
                   if (_entry.title.isNotEmpty) ...[
                     if (_hasImage) const SizedBox(height: 16),
-                    // 标题不再套白色卡片：直接落在页面底纹上，
-                    // 左右补 16 与下方正文的文字左缘对齐
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                    // 标题回到白色卡片底纹上：与下方正文卡片同一视觉层级
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       child: Text(
                         _entry.title,
                         style: TextStyle(

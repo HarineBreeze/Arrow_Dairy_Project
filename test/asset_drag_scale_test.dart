@@ -104,4 +104,73 @@ void main() {
     expect(s2, closeTo(1.0, 1e-3));
     expect(s3, closeTo(1.0, 1e-3));
   });
+
+  testWidgets('拖拽中的浮层：等比缩小、无按住提示残留', (tester) async {
+    final dir = Directory(
+        '/tmp/drag_proxy_${DateTime.now().microsecondsSinceEpoch}');
+    dir.createSync(recursive: true);
+    final assets = [
+      {'id': 'a1', 'icon': '🏦', 'note': '借张三', 'type': '欠款', 'amount': -500},
+      {'id': 'a2', 'icon': '💳', 'note': '日常支出', 'type': '信用卡', 'amount': -2000},
+      {'id': 'a3', 'icon': '🏦', 'note': '工资卡', 'type': '银行储蓄', 'amount': 3000},
+    ];
+    File('${dir.path}/assets.json').writeAsStringSync(jsonEncode(assets));
+    PathProviderPlatform.instance = _FakePathProvider(dir.path);
+
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(body: AssetScreen()),
+    ));
+    for (var i = 0; i < 12; i++) {
+      await tester.runAsync(() async {
+        await Future<void>.delayed(const Duration(milliseconds: 30));
+      });
+      await tester.pump();
+      if (!tester.allWidgets
+          .any((w) => w.runtimeType.toString() == 'ListSkeleton')) {
+        break;
+      }
+    }
+    await tester.pump(const Duration(milliseconds: 300));
+
+    final start = tester.getCenter(find.text('借张三'));
+    final g = await tester.startGesture(start);
+    await tester.pump(const Duration(milliseconds: 700));
+    await tester.pump(const Duration(milliseconds: 300)); // 浮起动画完成
+    await g.moveBy(const Offset(0, 40));
+    await tester.pump();
+
+    // 浮层是框架私有类 _DragItemProxy，按运行时类型查找
+    final proxies = tester.allElements
+        .where((e) => e.widget.runtimeType.toString() == '_DragItemProxy')
+        .toList();
+    expect(proxies.length, 1, reason: '拖拽中应存在且仅存在一个浮层代理');
+
+    // 1) 浮层里不应残留按住提示（半透明层/「拖动排序」胶囊属于列表实例的按住态）
+    final proxyTree = find.descendant(
+      of: find.byWidget(proxies.first.widget),
+      matching: find.byWidgetPredicate((w) => w is Text),
+    );
+    for (final t in tester.widgetList<Text>(proxyTree)) {
+      expect(t.data, isNot(contains('拖动排序')),
+          reason: '浮层不应带着「拖动排序」提示飞行');
+    }
+
+    // 2) 浮层内的缩放必须是「不放大」的等比缩小（1.0 → 0.96）
+    final transforms = tester.widgetList<Transform>(
+      find.descendant(
+        of: find.byWidget(proxies.first.widget),
+        matching: find.byType(Transform),
+      ),
+    );
+    final scales = transforms
+        .map((t) => t.transform.storage[0])
+        .where((v) => (v - 1).abs() > 1e-9);
+    for (final s in scales) {
+      expect(s, lessThanOrEqualTo(1.0 + 1e-9),
+          reason: '拖拽浮层只允许等比缩小，不允许放大到 1.03');
+    }
+
+    await g.up();
+    await tester.pump(const Duration(milliseconds: 600));
+  });
 }
