@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/list_text.dart';
 import '../utils/rich_text.dart';
 import '../utils/todo_text.dart';
 import '../utils/text_format.dart';
@@ -14,6 +15,10 @@ class HighlightEditingController extends TextEditingController {
 
   /// 基准字号，用于计算相对字号。
   double baseSize;
+
+  /// 当前文本中属于列表标记（`1. ` / `· ` / `　a. `）的字符位置掩码。
+  /// 每次 buildTextSpan 重建一次，避免逐字符扫描行首。
+  List<bool> _markMask = const [];
 
   HighlightEditingController({
     required this.itemNames,
@@ -38,6 +43,7 @@ class HighlightEditingController extends TextEditingController {
     final segments = RichTextParser.parse(text, itemNames);
     final children = <TextSpan>[];
     int cursor = 0;
+    _markMask = _buildMarkMask();
 
     TextSpan buildPlain(String raw, int start) {
       // 对普通文本按格式区间切分
@@ -74,12 +80,31 @@ class HighlightEditingController extends TextEditingController {
     return TextSpan(style: style, children: children);
   }
 
+  /// 标出所有列表标记占用的字符位置，供 [_styleAt] 染色。
+  List<bool> _buildMarkMask() {
+    if (text.isEmpty) return const [];
+    final mask = List<bool>.filled(text.length, false);
+    for (final m in ListText.scan(text)) {
+      final end = m.markEnd.clamp(0, text.length);
+      for (var i = m.lineStart; i < end; i++) {
+        mask[i] = true;
+      }
+    }
+    return mask;
+  }
+
+  bool _isMarkAt(int pos) {
+    if (pos < 0 || pos >= _markMask.length) return false;
+    return _markMask[pos];
+  }
+
   bool _sameStyle(TextStyle? a, TextStyle? b) {
     return a?.fontWeight == b?.fontWeight &&
         a?.fontStyle == b?.fontStyle &&
         a?.decoration == b?.decoration &&
         a?.backgroundColor == b?.backgroundColor &&
-        a?.fontSize == b?.fontSize;
+        a?.fontSize == b?.fontSize &&
+        a?.color == b?.color;
   }
 
   TextStyle? _styleAt(int pos) {
@@ -90,6 +115,9 @@ class HighlightEditingController extends TextEditingController {
       return const TextStyle(
           color: Color(0xFF3E8E6D), fontWeight: FontWeight.w700);
     }
+    // 列表标记（1. / · / 　a.）：主色 + 半粗，让「标题感」立起来，
+    // 正文本身不受影响，用户自己的 B/S 样式仍叠加在上面
+    final isMark = _isMarkAt(pos);
     bool bold = false, italic = false, underline = false, strike = false;
     String? highlight;
     double? size;
@@ -104,7 +132,7 @@ class HighlightEditingController extends TextEditingController {
       if (f.highlight != null) highlight = f.highlight;
       if (f.size != null) size = f.size;
     }
-    if (!any) return null;
+    if (!any && !isMark) return null;
 
     // 只写「非默认」的属性，避免覆盖父级样式
     final decos = <TextDecoration>[];
@@ -112,13 +140,14 @@ class HighlightEditingController extends TextEditingController {
     if (strike) decos.add(TextDecoration.lineThrough);
 
     return TextStyle(
-      fontWeight: bold ? FontWeight.w700 : null,
+      fontWeight: (bold || isMark) ? FontWeight.w700 : null,
       fontStyle: italic ? FontStyle.italic : null,
       decoration: decos.isEmpty
           ? null
           : (decos.length == 1 ? decos.first : TextDecoration.combine(decos)),
       backgroundColor: highlight != null ? _parseColor(highlight) : null,
       fontSize: size,
+      color: isMark ? const Color(0xFF3E8E6D) : null,
     );
   }
 

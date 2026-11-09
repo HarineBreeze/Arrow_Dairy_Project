@@ -1,6 +1,7 @@
 import 'app_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../utils/list_text.dart';
 import '../utils/text_format.dart';
 import '../utils/haptics.dart';
 
@@ -23,6 +24,9 @@ class FormatToolbar extends StatefulWidget {
   /// 点击 ➕ 时回调：在当前光标/选区处插入待办清单。
   final VoidCallback? onInsertTodo;
 
+  /// 列表格式（数字 / 圆点 / 正文 / 升级 / 降级）。
+  final ValueChanged<ListAction>? onListAction;
+
   const FormatToolbar({
     Key? key,
     required this.controller,
@@ -33,6 +37,7 @@ class FormatToolbar extends StatefulWidget {
     this.rangeEnd,
     this.onInsertTag,
     this.onInsertTodo,
+    this.onListAction,
   }) : super(key: key);
 
   @override
@@ -105,6 +110,10 @@ class FormatToolbarState extends State<FormatToolbar> {
     _lockStart = null;
     _lockEnd = null;
   }
+
+  /// 当前生效区间所在的列表标记（不是列表行则为 null）。
+  ListMark? get _currentMark =>
+      ListText.markAt(widget.controller.text, _range[0]);
 
   bool _isOn(String key, dynamic value) {
     final rg = _range;
@@ -219,6 +228,34 @@ class FormatToolbarState extends State<FormatToolbar> {
     );
   }
 
+  /// 升级 / 降级按钮。非列表行或已在该层时置灰不可点。
+  Widget _levelBtn(ListMark? mark, {required bool up}) {
+    final enabled =
+        mark != null && (up ? mark.level == 2 : mark.level == 1);
+    return InkWell(
+      onTap: enabled
+          ? () {
+              Haptics.light();
+              widget.onListAction?.call(up ? ListAction.up : ListAction.down);
+            }
+          : null,
+      borderRadius: BorderRadius.circular(8),
+      child: Opacity(
+        opacity: enabled ? 1 : 0.3,
+        child: Container(
+          width: 26,
+          height: 36,
+          alignment: Alignment.center,
+          child: AppIcon(
+            up ? AppIcons.chevU : AppIcons.chevD,
+            size: 18,
+            color: const Color(0xFF24382F),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _divider() => Container(
         width: 1,
         height: 18,
@@ -239,6 +276,7 @@ class FormatToolbarState extends State<FormatToolbar> {
     final rg = _range;
     final s = rg[0], e = rg[1];
     final currentSize = FormatStore.stateAt(widget.formats, s, e).size ?? 16.0;
+    final mark = ListText.markAt(widget.controller.text, s);
 
     return Container(
       decoration: BoxDecoration(
@@ -259,14 +297,14 @@ class FormatToolbarState extends State<FormatToolbar> {
           children: [
             if (_panel == 1) _buildColorPanel(),
             if (_panel == 2) _buildSizePanel(currentSize),
-            _buildMainRow(),
+            _buildMainRow(mark),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildMainRow() {
+  Widget _buildMainRow(ListMark? mark) {
     // 收拢一档按钮间距（38 → 34）：多出「待办」入口后，
     // 小屏横向滚动区不至于把高亮/字号挤出可点范围。
     final row = Row(
@@ -342,6 +380,30 @@ class FormatToolbarState extends State<FormatToolbar> {
                       ),
                     ),
                   ),
+                  _divider(),
+                  // 列表：数字 / 圆点 / 退回正文 / 升级 / 降级
+                  _textBtn(
+                    label: '1.',
+                    active: mark != null && mark.ordered,
+                    onTap: () => widget.onListAction?.call(ListAction.number),
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w700),
+                  ),
+                  _textBtn(
+                    label: '·',
+                    active: mark != null && !mark.ordered,
+                    onTap: () => widget.onListAction?.call(ListAction.bullet),
+                    style: const TextStyle(
+                        fontSize: 19, fontWeight: FontWeight.w700),
+                  ),
+                  _textBtn(
+                    label: '正文',
+                    active: false,
+                    onTap: () => widget.onListAction?.call(ListAction.plain),
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  _levelBtn(mark, up: true),
+                  _levelBtn(mark, up: false),
                   _divider(),
                   // 高亮入口
                   InkWell(

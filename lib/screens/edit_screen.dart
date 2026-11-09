@@ -14,6 +14,7 @@ import '../services/trash_storage.dart';
 import '../widgets/highlight_controller.dart';
 import '../widgets/format_toolbar.dart';
 import '../utils/text_format.dart';
+import '../utils/list_text.dart';
 import '../utils/writing_prompts.dart';
 import '../widgets/unsaved_guard.dart';
 import '../utils/haptics.dart';
@@ -1190,6 +1191,8 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                             setState(() {});
                             return;
                           }
+                          // 列表语义先处理：回车续号、退格退回、序号收拢
+                          if (_handleListEdit(v)) return;
                           if (v != _lastContent) {
                             // 先把「改变前」的状态压栈，再更新为当前
                             _pushUndo(_lastContent, _formats);
@@ -1259,6 +1262,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
       rangeEnd: _savedEnd,
       onInsertTag: _insertTag,
       onInsertTodo: _insertTodo,
+      onListAction: _applyList,
       onChanged: (v) {
         // 记录改变前的状态，再应用新格式
         _pushUndo(_lastContent, _formats);
@@ -1320,6 +1324,212 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
       _selecting = false;
       _showToolbar = true;
     });
+  }
+
+  // ---------- 列表（数字 / 圆点 / 二级） ----------
+
+  /// 只剩裸标记（`1.` / `·` / `　a.`）的行——退格删掉空格后落到这里
+  static final RegExp _bareMark = RegExp('^(\\d{1,3}\\.|$bulletMark|'
+      '\u3000[a-z]\\.|\u3000$bulletMark)\$');
+
+  static const String bulletMark = '·';
+
+  /// 工具栏列表按钮：把光标所在行改成对应形态。
+  void _applyList(ListAction action) {
+    final text = _contentCtrl.text;
+    final sel = _contentCtrl.selection;
+    int pos;
+    if (_selecting && _savedEnd > 0) {
+      pos = _savedStart;
+    } else {
+      pos = sel.isValid ? sel.start : text.length;
+    }
+    pos = pos.clamp(0, text.length);
+
+    final mark = ListText.markAt(text, pos);
+    final lineStart = ListText.lineStartOf(text, pos);
+    final lineEnd = ListText.lineEndOf(text, pos);
+    final rel = pos - lineStart;
+    final oldLen = mark?.length ?? 0;
+
+    String next;
+    int nextLen;
+    int? explicitCursor;
+    var formats = _formats;
+
+    if (action == ListAction.plain) {
+      // 选中多行时逐行去掉标记；只清光标所在行时 rs == re 的那一段
+      final hasSel = sel.isValid && !sel.isCollapsed;
+      final rs = (hasSel ? sel.start : lineStart).clamp(0, text.length);
+      final re = (hasSel ? sel.end : lineEnd).clamp(0, text.length);
+      final marks = ListText.scan(text)
+          .where((m) => m.lineStart >= rs && m.lineStart <= re)
+          .toList();
+      var work = text;
+      var shift = 0;
+      for (final m in marks.reversed) {
+        work = work.replaceRange(m.lineStart, m.markEnd, '');
+        if (m.lineStart < rs) shift += m.length;
+      }
+      next = work;
+      nextLen = 0;
+      explicitCursor = (rs - shift).clamp(0, next.length);
+      formats = _clearFormats(formats, rs, re);
+    } else if (action == ListAction.up || action == ListAction.down) {
+      if (mark == null) {
+        AppToast.show(context, '先把这一行变成列表，再调整层级');
+        return;
+      }
+      final level = action == ListAction.up ? 1 : 2;
+      if (mark.level == level) return;
+      next = ListText.setLevel(text, pos, level);
+      nextLen = ListText.label(ordered: mark.ordered, level: level).length;
+    } else {
+      final ordered = action == ListAction.number;
+      // 已是同一形态：再点一次退回正文
+      if (mark != null && mark.ordered == ordered && mark.level == 1) {
+        next = ListText.clearMark(text, pos);
+        nextLen = 0;
+      } else {
+        final level = mark?.level ?? 1;
+        next = ListText.setMark(text, pos, ordered: ordered, level: level);
+        nextLen = ListText.label(ordered: ordered, level: level).length;
+      }
+    }
+
+    if (next == text) return;
+
+    // 光标保持行内相对位置；原本停在标记内部时落到新标记末尾
+    final cursor = explicitCursor ??
+        ((oldLen > 0 && rel < oldLen)
+            ? lineStart + nextLen
+            : lineStart + rel + (nextLen - oldLen));
+
+    _pushUndo(text, _formats);
+    final norm = ListText.normalize(next);
+    _commitText(norm.text, norm.mapOffset(cursor),
+        old: text, formats: formats, pushUndo: false);
+  }
+
+  /// 清掉某区间的字符格式（加粗 / 斜体 / 下划线 / 删除线 / 高亮 / 字号）。
+  List<TextFormat> _clearFormats(
+      List<TextFormat> source, int start, int end) {
+    if (end <= start) return source;
+    final cleared = FormatStore.apply(
+      source,
+      start,
+      end,
+      const TextFormat(
+          start: 0,
+          end: 0,
+          bold: false,
+          italic: false,
+          underline: false,
+          strike: false),
+      clearHighlight: true,
+      clearSize: true,
+    );
+    cleared.removeWhere((f) =>
+        f.bold != true &&
+        f.italic != true &&
+        f.underline != true &&
+        f.strike != true &&
+        f.highlight == null &&
+        f.size == null);
+    return cleared;
+  }
+
+  /// 用新文本替换正文（不经过 onChanged），并把格式区间迁移过去。
+  void _commitText(
+    String text,
+    int cursor, {
+    String? old,
+    List<TextFormat>? formats,
+    bool pushUndo = true,
+  }) {
+    final before = old ?? _contentCtrl.text;
+    if (pushUndo) _pushUndo(before, _formats);
+    _formats =
+        FormatStore.adjustToText(formats ?? _formats, before, text);
+    _contentCtrl.value = TextEditingValue(
+      text: text,
+      selection:
+          TextSelection.collapsed(offset: cursor.clamp(0, text.length)),
+    );
+    _contentCtrl.setFormats(_formats);
+    _lastContent = text;
+    Haptics.light();
+    if (mounted) setState(() {});
+  }
+
+  /// onChanged 里拦截三类「列表语义」的输入：回车续号、退格退回、序号收拢。
+  /// 返回 true 表示已经改写了正文，外层不必再走常规流程。
+  bool _handleListEdit(String v) {
+    final old = _lastContent;
+    if (old == v) return false;
+
+    var p = 0;
+    final minLen = old.length < v.length ? old.length : v.length;
+    while (p < minLen && old.codeUnitAt(p) == v.codeUnitAt(p)) {
+      p++;
+    }
+    var so = old.length, sn = v.length;
+    while (so > p && sn > p && old.codeUnitAt(so - 1) == v.codeUnitAt(sn - 1)) {
+      so--;
+      sn--;
+    }
+    final deleted = so - p;
+    final inserted = sn - p;
+
+    // 回车：续号，或空条目退出列表
+    if (deleted == 0 && inserted == 1 && v[p] == '\n') {
+      if (_enterList(v, p)) return true;
+    }
+    // 退格把标记删成裸序号：整段退回正文
+    if (deleted == 1 && inserted == 0) {
+      if (_dropBareMark(v, p)) return true;
+    }
+    // 删行 / 改号造成的断裂：自动收拢成连续序号
+    final norm = ListText.normalize(v);
+    if (norm.text != v) {
+      final cursor = _contentCtrl.selection.baseOffset;
+      _commitText(norm.text, norm.mapOffset(cursor), old: old);
+      return true;
+    }
+    return false;
+  }
+
+  /// 在 [nlPos] 处的换行后，为新行补上同类型前缀。
+  bool _enterList(String v, int nlPos) {
+    final ls = nlPos == 0 ? 0 : ListText.lineStartOf(v, nlPos - 1);
+    final mark = ListText.parseLine(v.substring(ls, nlPos), ls);
+    if (mark == null) return false;
+
+    String work;
+    int cursor;
+    if (mark.markEnd == nlPos) {
+      // 空条目再回车：这一行退回正文（连按两次回车即退出列表）
+      work = v.replaceRange(mark.lineStart, mark.markEnd, '');
+      cursor = nlPos - mark.length;
+    } else {
+      final prefix = ListText.continuationOf(mark);
+      work = v.replaceRange(nlPos + 1, nlPos + 1, prefix);
+      cursor = nlPos + 1 + prefix.length;
+    }
+    final norm = ListText.normalize(work);
+    _commitText(norm.text, norm.mapOffset(cursor));
+    return true;
+  }
+
+  /// 标记被删到只剩序号时，把残余标记一并清掉，一次退格即退回正文。
+  bool _dropBareMark(String v, int pos) {
+    final ls = ListText.lineStartOf(v, pos);
+    final le = ListText.lineEndOf(v, pos);
+    if (!_bareMark.hasMatch(v.substring(ls, le))) return false;
+    final work = v.replaceRange(ls, le, '');
+    final norm = ListText.normalize(work);
+    _commitText(norm.text, norm.mapOffset(ls));
+    return true;
   }
 
   /// 保存栏：默认「取消 + 完成」左右分布；点完成后取消按钮淡出让位，
