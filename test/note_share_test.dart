@@ -82,21 +82,9 @@ void main() {
     });
   });
 
-  group('分享卡底部横条几何', () {
-    test('footerHeightFor：横条恒为整图的 1/6', () {
-      // 常规内容高度
-      final f1 = ShareCard.footerHeightFor(900);
-      expect(f1, closeTo(180, 1e-9));
-      // 总高 = 900 + 180 → 横条占比 1/6
-      expect(f1 / (900 + f1), closeTo(1 / 6, 1e-9));
-
-      // 过短内容：内容区撑高到 550，横条 110，仍为 1/6
-      final f2 = ShareCard.footerHeightFor(200);
-      expect(f2, closeTo(110, 1e-9));
-      expect(f2 / (550 + f2), closeTo(1 / 6, 1e-9));
-    });
-
-    testWidgets('横条为白底，含 Logo、APP 名称、时间与地点', (tester) async {
+  group('分享卡底部信息条样式', () {
+    testWidgets('信息条紧贴内容区：自然高度、Logo 左缘与正文白卡对齐',
+        (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -105,8 +93,6 @@ void main() {
                 ShareCard(
                   entry: _entry(),
                   items: const <Item>[],
-                  footerHeight: 110,
-                  contentHeight: 550,
                   footerKey: const ValueKey('share_footer'),
                 ),
               ],
@@ -119,16 +105,44 @@ void main() {
       final footerBox = tester.renderObject<RenderBox>(
         find.byKey(const ValueKey('share_footer')),
       );
-      expect(footerBox.size.height, 110);
+      // 信息条为自然高度（上下 14/16 内边距 + 40px Logo 行），不再占 1/6 大白区
+      expect(footerBox.size.height, lessThan(120));
+      expect(footerBox.size.height, greaterThan(40));
+
+      // Logo 左缘与内容区标题白卡左缘对齐（同一 20px 内边距）
+      final logoLeft = tester.getTopLeft(
+        find.descendant(
+          of: find.byKey(const ValueKey('share_footer')),
+          matching: find.byWidgetPredicate((w) =>
+              w is Image && w.image is AssetImage),
+        ),
+      ).dx;
+      final titleCardLeft = tester.getTopLeft(
+        // 树中第一个白色圆角卡 = 标题卡（其后还有正文内联与待办卡）
+        find.byWidgetPredicate((w) =>
+                w is Container &&
+                w.decoration is BoxDecoration &&
+                (w.decoration as BoxDecoration).color == Colors.white)
+            .first,
+      ).dx;
+      expect(logoLeft, closeTo(titleCardLeft, 0.5));
+
+      // 内容区之下就是信息条，再往下没有多余白色区域
+      final columnBox = tester.renderObject<RenderBox>(
+        find.byType(ShareCard),
+      );
+      expect(
+        footerBox.size.height,
+        closeTo(
+          columnBox.size.height -
+              tester.getTopLeft(find.byKey(const ValueKey('share_footer'))).dy,
+          0.5,
+        ),
+      );
 
       expect(find.text('阿尤日记'), findsOneWidget);
       expect(find.text('2026/11/11 09:30'), findsOneWidget);
       expect(find.text('厦门·鼓浪屿'), findsOneWidget);
-      // Logo 资源图已打进卡片
-      expect(
-        find.byWidgetPredicate((w) => w is Image && w.image is AssetImage),
-        findsOneWidget,
-      );
     });
   });
 

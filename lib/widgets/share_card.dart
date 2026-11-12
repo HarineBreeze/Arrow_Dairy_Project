@@ -16,50 +16,22 @@ import 'todo_card.dart';
 ///
 /// 结构（自上而下）：
 /// - 内容区（浅绿底）：封面图 → 标题白卡 → 正文白卡 → 待办卡
-/// - 底部白色横条：占整张图高度的 **1/6**，显示
-///   APP Logo、APP 名称、写作日期时间与地点（品牌露出位）。
-///
-/// 几何约定：`footerHeight = contentHeight / 5`，即底部横条正好是
-/// 整图（内容 5/6 + 横条 1/6）的六分之一。内容过短时把内容区
-/// 最小高度撑到 `110 * 5`，保证横条至少 110px、比例仍然成立。
+/// - 底部白色信息条（自然高度，紧贴内容区）：显示 APP Logo、
+///   APP 名称、写作日期时间与地点（品牌露出位）。
+///   左侧内边距 20 与内容区正文对齐，下方不留多余白区。
 class ShareCard extends StatelessWidget {
   final DiaryEntry entry;
   final List<Item> items;
 
-  /// 底部横条高度（由 [captureShareCard] 测量后传入；测量前传 0）
-  final double footerHeight;
-
-  /// 撑高后的内容区高度（null = 自然高度，用于第一遍测量）
-  final double? contentHeight;
-
-  /// 内容区测量 key（第一遍测量用）
-  final Key? contentKey;
-
-  /// 横条 key（测试与校验用）
+  /// 信息条 key（测试与校验用）
   final Key? footerKey;
 
   const ShareCard({
     Key? key,
     required this.entry,
     required this.items,
-    this.footerHeight = 0,
-    this.contentHeight,
-    this.contentKey,
     this.footerKey,
   }) : super(key: key);
-
-  /// 由内容自然高度推算底部横条高度（纯函数，便于测试）
-  static double footerHeightFor(double contentHeight) {
-    const minFooter = 110.0;
-    final stretched = contentHeight < minFooter * 5 ? minFooter * 5 : contentHeight;
-    return stretched / 5;
-  }
-
-  /// 内容区被撑高后的目标高度（与 [footerHeightFor] 同一套几何）
-  static double stretchedHeightFor(double contentHeight) {
-    const minFooter = 110.0;
-    return contentHeight < minFooter * 5 ? minFooter * 5 : contentHeight;
-  }
 
   /// 写作时间文案：与浏览页底部信息行同一格式
   String get _timeLabel {
@@ -78,7 +50,6 @@ class ShareCard extends StatelessWidget {
     final bool hasTodos = TodoText.parseAll(entry.content).isNotEmpty;
 
     final content = Container(
-      key: contentKey,
       width: 375,
       color: const Color(0xFFF5FAF7),
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
@@ -165,17 +136,14 @@ class ShareCard extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (contentHeight != null)
-          SizedBox(height: contentHeight, child: content)
-        else
-          content,
-        // 底部 1/6 白色横条：Logo + 名称 + 写作时间地点
+        content,
+        // 底部白色信息条：自然高度，紧贴内容区，Logo + 名称 + 写作时间地点。
+        // 左内边距 20 与内容区正文的 20px 内边距对齐。
         Container(
           key: footerKey,
-          height: footerHeight,
           width: 375,
           color: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
           child: Row(
             children: [
               ClipRRect(
