@@ -33,6 +33,12 @@ class UserProfile {
   /// 最近一次「每日首次发布」奖励的日期（yyyy-MM-dd），空 = 从未领取
   String lastWriteReward;
 
+  /// 已兑换「VIP日卡」的次数（单用户上限见 RewardService.vipCardMaxCount）
+  int vipCardCount;
+
+  /// 当前生效的 VIP 日卡到期时间（ISO 8601），空 = 没有生效中的日卡
+  String vipCardExpireAt;
+
   UserProfile({
     this.nickname = defaultNickname,
     this.gender = '',
@@ -42,6 +48,8 @@ class UserProfile {
     List<String>? ownedBadges,
     List<String>? redeemedCodes,
     this.lastWriteReward = '',
+    this.vipCardCount = 0,
+    this.vipCardExpireAt = '',
   })  : ownedBadges = _normalizeOwned(ownedBadges, badge),
         redeemedCodes = redeemedCodes ?? <String>[];
 
@@ -58,6 +66,16 @@ class UserProfile {
   /// 是否已拥有某个身份牌
   bool owns(String badgeId) => ownedBadges.contains(badgeId);
 
+  /// VIP 日卡到期时间（未设置返回 null）
+  DateTime? get vipCardExpireTime =>
+      vipCardExpireAt.isEmpty ? null : DateTime.tryParse(vipCardExpireAt);
+
+  /// VIP 日卡是否生效中（兑换时刻起 24 小时内）
+  bool get vipCardActive {
+    final t = vipCardExpireTime;
+    return t != null && DateTime.now().isBefore(t);
+  }
+
   Map<String, dynamic> toJson() => {
         'nickname': nickname,
         'gender': gender,
@@ -67,6 +85,8 @@ class UserProfile {
         'ownedBadges': ownedBadges,
         'redeemedCodes': redeemedCodes,
         'lastWriteReward': lastWriteReward,
+        'vipCardCount': vipCardCount,
+        'vipCardExpireAt': vipCardExpireAt,
       };
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -74,8 +94,27 @@ class UserProfile {
     // 这里把空值当作普通版，并把旧数据里已佩戴的牌补进已拥有列表，
     // 避免升级后原有的内测版 / VIP 变成不可用。
     final rawBadge = json['badge'] as String? ?? '';
-    final current = rawBadge.isEmpty ? badgeNormal : rawBadge;
-    return UserProfile(
+    var current = rawBadge.isEmpty ? badgeNormal : rawBadge;
+    final rawOwned =
+        (json['ownedBadges'] as List?)?.map((e) => e.toString()).toList();
+
+    // VIP 日卡到期摘牌：VIP 戴在身上、不在已拥有列表（非兑换码获得）、
+    // 且带日卡痕迹（有到期时间或兑换次数）时，过期即换回普通版。
+    // 没有日卡痕迹的旧档案 VIP（升级前遗留）保持原样，继续视作永久拥有。
+    var vipCardWorn = false;
+    if (current == badgeVip &&
+        !(rawOwned ?? const <String>[]).contains(badgeVip)) {
+      final expireAt = json['vipCardExpireAt'] as String? ?? '';
+      final count = (json['vipCardCount'] as num?)?.toInt() ?? 0;
+      if (expireAt.isNotEmpty || count > 0) {
+        final expireTime = DateTime.tryParse(expireAt);
+        final active = expireTime != null && DateTime.now().isBefore(expireTime);
+        if (!active) current = badgeNormal;
+        vipCardWorn = active;
+      }
+    }
+
+    final profile = UserProfile(
       // 旧数据里昵称为空的也落到默认昵称
       nickname: (json['nickname'] as String? ?? '').isEmpty
           ? defaultNickname
@@ -84,12 +123,19 @@ class UserProfile {
       avatarPath: json['avatarPath'] as String? ?? '',
       points: (json['points'] as num?)?.toInt() ?? 0,
       badge: current,
-      ownedBadges:
-          (json['ownedBadges'] as List?)?.map((e) => e.toString()).toList(),
+      ownedBadges: rawOwned,
       redeemedCodes:
           (json['redeemedCodes'] as List?)?.map((e) => e.toString()).toList() ??
               <String>[],
       lastWriteReward: json['lastWriteReward'] as String? ?? '',
+      vipCardCount: (json['vipCardCount'] as num?)?.toInt() ?? 0,
+      vipCardExpireAt: json['vipCardExpireAt'] as String? ?? '',
     );
+    if (vipCardWorn) {
+      // 撤销构造器对「当前佩戴牌」的自动补入：日卡 VIP 只是临时佩戴，
+      // 不能混进已拥有列表变成永久牌
+      profile.ownedBadges.remove(badgeVip);
+    }
+    return profile;
   }
 }

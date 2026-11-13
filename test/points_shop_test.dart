@@ -148,7 +148,7 @@ void main() {
   });
 
   group('积分商城页面', () {
-    testWidgets('显示余额与商品价格', (tester) async {
+    testWidgets('显示余额与商品价格（诞生日 + VIP日卡）', (tester) async {
       await tester.binding.setSurfaceSize(const Size(600, 1200));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -164,7 +164,28 @@ void main() {
       expect(find.text('120'), findsOneWidget);
       expect(find.text('诞生日'), findsOneWidget);
       expect(find.text('50 积分'), findsOneWidget);
+      expect(find.text('VIP日卡'), findsOneWidget);
+      expect(find.text('200 积分'), findsOneWidget);
+      // 120 分够买诞生日、不够买 VIP日卡
       expect(find.text('兑换'), findsOneWidget);
+      expect(find.text('积分不足'), findsOneWidget);
+    });
+
+    testWidgets('旧提示语已移除', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(600, 1200));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(MaterialApp(
+        home: PointsShopScreen(
+          loadOverride: () async => UserProfile(points: 120),
+        ),
+      ));
+      await tester.pump();
+
+      expect(find.text('佩戴后显示在昵称旁'), findsNothing);
+      expect(find.textContaining('兑换后会立即佩戴'), findsNothing);
+      expect(find.text('积分可通过每日首次发布笔记、参与活动获得。'),
+          findsOneWidget);
     });
 
     testWidgets('积分不足时按钮为「积分不足」且不可点', (tester) async {
@@ -183,8 +204,8 @@ void main() {
       ));
       await tester.pump();
 
-      expect(find.text('积分不足'), findsOneWidget);
-      await tester.tap(find.text('积分不足'));
+      expect(find.text('积分不足'), findsNWidgets(2));
+      await tester.tap(find.text('积分不足').first);
       await tester.pump(const Duration(milliseconds: 300));
       expect(bought, 0);
     });
@@ -238,6 +259,161 @@ void main() {
 
       expect(find.text('70'), findsOneWidget, reason: '余额应刷新为 70');
       expect(find.text('已拥有'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 2)); // 排空 toast 定时器
+    });
+  });
+
+  group('VIP日卡', () {
+    test('兑换：扣 200 分 → 计次数 → 立即佩戴且 24 小时内生效', () async {
+      writeProfile(UserProfile(points: 260));
+      final r = await RewardService.buyVipCard(UserProfile.badgeVip);
+      expect(r.ok, isTrue);
+      expect(r.message, contains('24小时'));
+
+      final p = await UserStorage.load();
+      expect(p.points, 60);
+      expect(p.vipCardCount, 1);
+      expect(p.badge, UserProfile.badgeVip);
+      expect(p.vipCardActive, isTrue);
+      expect(p.owns(UserProfile.badgeVip), isFalse,
+          reason: '日卡 VIP 不是永久拥有');
+      // 到期时间应在 24 小时内（留 1 分钟时钟误差）
+      final left = p.vipCardExpireTime!.difference(DateTime.now());
+      expect(left.inMinutes, inInclusiveRange(23 * 60, 24 * 60));
+    });
+
+    test('积分不足：不扣分、不计次', () async {
+      writeProfile(UserProfile(points: 199));
+      final r = await RewardService.buyVipCard(UserProfile.badgeVip);
+      expect(r.ok, isFalse);
+      expect(r.message, contains('积分不足'));
+
+      final p = await UserStorage.load();
+      expect(p.points, 199);
+      expect(p.vipCardCount, 0);
+    });
+
+    test('单用户上限 30 次：达到后拒绝兑换', () async {
+      writeProfile(UserProfile(points: 9999, vipCardCount: 30));
+      final r = await RewardService.buyVipCard(UserProfile.badgeVip);
+      expect(r.ok, isFalse);
+      expect(r.message, contains('兑换上限'));
+
+      final p = await UserStorage.load();
+      expect(p.points, 9999, reason: '达到上限后不扣分');
+      expect(p.vipCardCount, 30);
+    });
+
+    test('日卡生效期间可切换佩戴（非永久拥有也能戴）', () async {
+      writeProfile(UserProfile(
+        points: 0,
+        badge: UserProfile.badgeNormal,
+        vipCardCount: 1,
+        vipCardExpireAt:
+            DateTime.now().add(const Duration(hours: 1)).toIso8601String(),
+      ));
+      final r = await RewardService.wearBadge(UserProfile.badgeVip);
+      expect(r.ok, isTrue);
+      expect((await UserStorage.load()).badge, UserProfile.badgeVip);
+    });
+
+    test('日卡生效期间可切走，切走后还能切回 VIP', () async {
+      writeProfile(UserProfile(
+        badge: UserProfile.badgeVip,
+        vipCardCount: 1,
+        vipCardExpireAt:
+            DateTime.now().add(const Duration(hours: 2)).toIso8601String(),
+      ));
+      final away = await RewardService.wearBadge(UserProfile.badgeNormal);
+      expect(away.ok, isTrue);
+
+      final back = await RewardService.wearBadge(UserProfile.badgeVip);
+      expect(back.ok, isTrue);
+      expect((await UserStorage.load()).badge, UserProfile.badgeVip);
+    });
+
+    test('到期后读档自动摘牌换回普通版', () async {
+      final json = UserProfile(badge: UserProfile.badgeNormal).toJson();
+      json['badge'] = 'vip';
+      json['vipCardCount'] = 1;
+      json['vipCardExpireAt'] =
+          DateTime.now().subtract(const Duration(minutes: 1)).toIso8601String();
+      File('${dir.path}/user_profile.json')
+          .writeAsStringSync(jsonEncode(json));
+
+      final p = await UserStorage.load();
+      expect(p.badge, UserProfile.badgeNormal, reason: '过期日卡应摘牌');
+      expect(p.owns(UserProfile.badgeVip), isFalse);
+    });
+
+    test('生效中的日卡读档不摘牌', () async {
+      final json = UserProfile(badge: UserProfile.badgeNormal).toJson();
+      json['badge'] = 'vip';
+      json['vipCardCount'] = 1;
+      json['vipCardExpireAt'] =
+          DateTime.now().add(const Duration(hours: 3)).toIso8601String();
+      File('${dir.path}/user_profile.json')
+          .writeAsStringSync(jsonEncode(json));
+
+      final p = await UserStorage.load();
+      expect(p.badge, UserProfile.badgeVip);
+      expect(p.vipCardActive, isTrue);
+    });
+
+    test('旧档案遗留的 VIP（无日卡痕迹）不受摘牌影响', () async {
+      final back = UserProfile.fromJson({'nickname': '小明', 'badge': 'vip'});
+      expect(back.badge, UserProfile.badgeVip);
+      expect(back.owns(UserProfile.badgeVip), isTrue);
+    });
+
+    testWidgets('商城展示 VIP日卡：价格、说明与剩余次数', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(600, 1600));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(MaterialApp(
+        home: PointsShopScreen(
+          loadOverride: () async => UserProfile(
+            points: 300,
+            vipCardCount: 2,
+          ),
+        ),
+      ));
+      await tester.pump();
+
+      expect(find.text('兑换后立即生效，24小时内佩戴VIP身份牌'), findsOneWidget);
+      expect(find.text('可兑换次数已用 2/30'), findsOneWidget);
+      expect(find.text('200 积分'), findsOneWidget);
+      // 300 分够买两件商品
+      expect(find.text('兑换'), findsNWidgets(2));
+      await tester.pump(const Duration(seconds: 2));
+    });
+
+    testWidgets('兑换 VIP日卡：确认弹窗 → 走日卡购买通道', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(600, 1600));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final boughtIds = <String>[];
+      await tester.pumpWidget(MaterialApp(
+        home: PointsShopScreen(
+          loadOverride: () async => UserProfile(points: 300),
+          buyOverride: (id) async {
+            boughtIds.add(id);
+            return const RedeemOutcome(true, '兑换成功，VIP身份牌生效24小时');
+          },
+        ),
+      ));
+      await tester.pump();
+
+      // 第二张商品卡是 VIP日卡
+      await tester.tap(find.text('兑换').last);
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('兑换VIP日卡'), findsOneWidget);
+      expect(find.textContaining('有效期24小时'), findsOneWidget);
+      expect(find.textContaining('剩余 100'), findsOneWidget);
+
+      await tester.tap(find.text('确认兑换'));
+      await _settle(tester);
+      expect(boughtIds, [UserProfile.badgeVip]);
       await tester.pump(const Duration(seconds: 2)); // 排空 toast 定时器
     });
   });

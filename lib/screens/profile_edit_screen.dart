@@ -56,6 +56,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   late int _points;
   late List<String> _ownedBadges;
 
+  /// VIP 日卡是否生效中（生效期间 VIP 也在可佩戴列表里）
+  late bool _vipActive;
+
 
   final GlobalKey<SaveDoneButtonState> _doneKey =
       GlobalKey<SaveDoneButtonState>();
@@ -81,6 +84,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     _badge = widget.profile.badge;
     _points = widget.profile.points;
     _ownedBadges = List<String>.from(widget.profile.ownedBadges);
+    _vipActive = widget.profile.vipCardActive;
     _initial = _snapshot();
   }
 
@@ -138,11 +142,17 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       _badge = p.badge;
       _points = p.points;
       _ownedBadges = List<String>.from(p.ownedBadges);
+      _vipActive = p.vipCardActive;
     });
   }
 
-  /// 选择身份牌：底部选项卡，只列出已拥有的牌（普通版恒在）
+  /// 选择身份牌：底部选项卡，列出可佩戴的牌
+  /// （已拥有的恒在；VIP日卡生效期间 VIP 也在列）
   Future<void> _pickBadge() async {
+    final options = List<String>.from(_ownedBadges);
+    if (_vipActive && !options.contains(UserProfile.badgeVip)) {
+      options.add(UserProfile.badgeVip);
+    }
     final picked = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: Colors.white,
@@ -165,7 +175,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                 ),
               ),
             ),
-            for (final id in _ownedBadges)
+            for (final id in options)
               InkWell(
                 key: ValueKey('badge_option_$id'),
                 onTap: () => Navigator.pop(ctx, id),

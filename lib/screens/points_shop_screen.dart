@@ -12,10 +12,10 @@ import '../widgets/pressable.dart';
 /// 积分商城：用积分兑换身份牌。
 ///
 /// 版式沿用全 App 的「页面底色 + 白色圆角卡 + 灰色节标题」节奏：
-/// 顶部是积分余额卡，下面按品类分组（当前只有身份牌一类）。
+/// 顶部是积分余额卡，下面按品类分组（永久身份牌与限时 VIP日卡）。
 ///
-/// 兑换规则：积分足够才能兑换，已拥有的商品不重复扣分；兑换成功后
-/// 自动佩戴，用户也可以回个人信息页切回其它已拥有的牌。
+/// 兑换规则：积分足够才能兑换；永久身份牌按「已拥有」判重，
+/// VIP日卡按次数上限判重；兑换成功后自动佩戴。
 class PointsShopScreen extends StatefulWidget {
   /// 仅测试使用：替换档案读取（避免 widget 测试里走真实文件 IO）
   @visibleForTesting
@@ -51,15 +51,20 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
     final profile = _profile;
     if (profile == null) return;
 
+    final isDayCard = item.kind == ShopItemKind.vipDayCard;
     // 二次确认：积分是不可逆消耗，跟删除一样走两段式
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('兑换身份牌', style: TextStyle(fontSize: 17)),
+        title: Text(
+          isDayCard ? '兑换VIP日卡' : '兑换身份牌',
+          style: const TextStyle(fontSize: 17),
+        ),
         content: Text(
-          '使用 ${item.price} 积分兑换「${item.name}」身份牌？\n'
+          '使用 ${item.price} 积分兑换「${item.name}」？\n'
+          '${isDayCard ? '兑换后立即生效，有效期24小时。\n' : ''}'
           '当前积分 ${profile.points}，兑换后剩余 ${profile.points - item.price}。',
           style: const TextStyle(fontSize: 13, height: 1.6),
         ),
@@ -89,8 +94,9 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
     );
     if (ok != true || !mounted) return;
 
-    final outcome =
-        await (widget.buyOverride ?? RewardService.buyBadge)(item.id);
+    final outcome = await (widget.buyOverride ??
+        (isDayCard ? RewardService.buyVipCard : RewardService.buyBadge))(
+        item.id);
     if (!mounted) return;
     if (outcome.ok) Haptics.light();
     AppToast.show(context, outcome.message);
@@ -133,8 +139,7 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 4),
                   child: Text(
-                    '积分可通过每日首次发布笔记、参与活动获得。\n'
-                    '身份牌兑换后会立即佩戴，可在个人信息页随时更换。',
+                    '积分可通过每日首次发布笔记、参与活动获得。',
                     style: TextStyle(
                       fontSize: 11,
                       height: 1.7,
@@ -197,10 +202,20 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
     );
   }
 
-  /// 商品卡：上方是身份牌大预览与价格，下方是整行按钮
+  /// 商品卡：上方是商品预览与价格，下方是整行按钮。
+  /// 永久身份牌按「已拥有」判重；VIP日卡按次数上限（30 次）判重。
   Widget _buildGoodsCard(UserProfile profile, ShopBadge item) {
-    final owned = profile.owns(item.id);
+    final isDayCard = item.kind == ShopItemKind.vipDayCard;
+    final remaining = RewardService.vipCardMaxCount - profile.vipCardCount;
+    final soldOut = isDayCard && remaining <= 0;
+    final owned = !isDayCard && profile.owns(item.id);
     final affordable = profile.points >= item.price;
+    final enabled = !owned && !soldOut && affordable;
+    final buttonText = owned
+        ? '已拥有'
+        : (soldOut
+            ? '已达兑换上限'
+            : (affordable ? '兑换' : '积分不足'));
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
@@ -226,20 +241,44 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            '佩戴后显示在昵称旁',
-            style: TextStyle(
-              fontSize: 12,
-              color: const Color(0xFF8FA09A),
+          // 预览牌文案与商品名不同时（如 VIP日卡），补一行商品名
+          if (item.name != (IdentityBadge.labelOf(item.id) ?? '')) ...[
+            const SizedBox(height: 12),
+            Text(
+              item.name,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF24382F),
+              ),
             ),
-          ),
+          ],
+          if (item.desc.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              item.desc,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF8FA09A),
+              ),
+            ),
+          ],
+          if (isDayCard) ...[
+            const SizedBox(height: 6),
+            Text(
+              '可兑换次数已用 ${profile.vipCardCount}/${RewardService.vipCardMaxCount}',
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF8FA09A),
+              ),
+            ),
+          ],
           const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
             height: 42,
             child: Material(
-              color: owned
+              color: owned || soldOut
                   ? const Color(0xFFF2F6F4)
                   : (affordable
                       ? const Color(0xFF3E8E6D)
@@ -247,18 +286,14 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
               borderRadius: BorderRadius.circular(12),
               child: InkWell(
                 borderRadius: BorderRadius.circular(12),
-                onTap: owned || !affordable ? null : () => _buy(item),
+                onTap: enabled ? () => _buy(item) : null,
                 child: Center(
                   child: Text(
-                    owned
-                        ? '已拥有'
-                        : (affordable ? '兑换' : '积分不足'),
+                    buttonText,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: owned || !affordable
-                          ? const Color(0xFF8FA09A)
-                          : Colors.white,
+                      color: enabled ? Colors.white : const Color(0xFF8FA09A),
                     ),
                   ),
                 ),
