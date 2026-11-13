@@ -1,12 +1,22 @@
 import '../models/user_profile.dart';
 import 'user_storage.dart';
 
-/// 兑换码 / 积分的统一入口。
+/// 积分商城在售的身份牌
+class ShopBadge {
+  final String id;
+  final String name;
+  final int price;
+
+  const ShopBadge({required this.id, required this.name, required this.price});
+}
+
+/// 兑换码 / 积分 / 商城的统一入口。
 ///
 /// 规则（产品约定）：
-/// - 每个兑换码在单台设备上只能兑换一次，重复输入返回「已使用过」；
+/// - 同一个用户 ID 下，每个兑换码只能使用一次，重复输入返回「已使用过」
+///   （用户 ID 即本机档案，记录在 [UserProfile.redeemedCodes] 里）；
 /// - 兑换码不区分大小写，前后空格自动忽略；
-/// - 积分用途后续规划，当前只累计余额。
+/// - 积分商城按「已拥有」判重，同一身份牌不重复扣分。
 class RewardService {
   RewardService._();
 
@@ -18,13 +28,30 @@ class RewardService {
     'ayouriji': 100,
   };
 
-  /// 铭牌兑换码 → 铭牌 id
+  /// 兑换码 → 身份牌 id
   static const Map<String, String> badgeCodes = {
     'neice': UserProfile.badgeBeta,
     'vip': UserProfile.badgeVip,
   };
 
-  /// 兑换结果。message 直接用于 AppToast 提示。
+  /// 积分商城在售商品（当前只有身份牌一类）
+  static const List<ShopBadge> shopBadges = [
+    ShopBadge(
+      id: UserProfile.badgeBirthday,
+      name: '诞生日',
+      price: 50,
+    ),
+  ];
+
+  /// 按 id 取在售商品（不在售返回 null）
+  static ShopBadge? shopBadgeOf(String id) {
+    for (final item in shopBadges) {
+      if (item.id == id) return item;
+    }
+    return null;
+  }
+
+  /// 兑换码兑换。message 直接用于 AppToast 提示。
   static Future<RedeemOutcome> redeem(String rawCode) async {
     final code = rawCode.trim().toLowerCase();
     if (code.isEmpty) return const RedeemOutcome(false, '请输入兑换码');
@@ -45,17 +72,49 @@ class RewardService {
     final badge = badgeCodes[code];
     if (badge != null) {
       profile.badge = badge;
+      if (!profile.ownedBadges.contains(badge)) profile.ownedBadges.add(badge);
       profile.redeemedCodes.add(code);
       await UserStorage.save(profile);
-      return RedeemOutcome(
-        true,
-        badge == UserProfile.badgeVip
-            ? '兑换成功，已获得「VIP」铭牌'
-            : '兑换成功，已获得「内测版」铭牌',
-      );
+      final name = _badgeName(badge);
+      return RedeemOutcome(true, '兑换成功，已获得「$name」身份牌');
     }
 
     return const RedeemOutcome(false, '兑换码无效，请检查后重试');
+  }
+
+  /// 用积分兑换身份牌：扣分 → 加入已拥有 → 立即佩戴。
+  static Future<RedeemOutcome> buyBadge(String badgeId) async {
+    final item = shopBadgeOf(badgeId);
+    if (item == null) return const RedeemOutcome(false, '商品不存在');
+
+    final profile = await UserStorage.load();
+    if (profile.owns(badgeId)) {
+      return const RedeemOutcome(false, '已拥有该身份牌');
+    }
+    if (profile.points < item.price) {
+      final lack = item.price - profile.points;
+      return RedeemOutcome(false, '积分不足，还差 $lack 积分');
+    }
+
+    profile.points -= item.price;
+    profile.ownedBadges.add(badgeId);
+    profile.badge = badgeId;
+    await UserStorage.save(profile);
+    return RedeemOutcome(true, '兑换成功，已佩戴「${item.name}」身份牌');
+  }
+
+  /// 切换当前佩戴的身份牌（只能在本用户已拥有的牌里切）。
+  static Future<RedeemOutcome> wearBadge(String badgeId) async {
+    final profile = await UserStorage.load();
+    if (!profile.owns(badgeId)) {
+      return const RedeemOutcome(false, '尚未拥有该身份牌');
+    }
+    if (profile.badge == badgeId) {
+      return const RedeemOutcome(false, '已是当前身份牌');
+    }
+    profile.badge = badgeId;
+    await UserStorage.save(profile);
+    return RedeemOutcome(true, '已切换为「${_badgeName(badgeId)}」');
   }
 
   /// 每日首次发布笔记：领取 20 积分。
@@ -73,6 +132,20 @@ class RewardService {
       return dailyWritePoints;
     } catch (_) {
       return 0;
+    }
+  }
+
+  static String _badgeName(String id) {
+    for (final item in shopBadges) {
+      if (item.id == id) return item.name;
+    }
+    switch (id) {
+      case UserProfile.badgeBeta:
+        return '内测版';
+      case UserProfile.badgeVip:
+        return 'VIP';
+      default:
+        return '普通版';
     }
   }
 

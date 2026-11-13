@@ -3,11 +3,15 @@ import '../widgets/app_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import '../utils/app_motion.dart';
 import '../utils/app_toast.dart';
+import '../utils/haptics.dart';
 import '../models/user_profile.dart';
+import '../services/reward_service.dart';
 import '../services/user_storage.dart';
 import '../widgets/avatar.dart';
 import '../widgets/identity_badge.dart';
+import 'points_shop_screen.dart';
 import '../widgets/unsaved_guard.dart';
 import '../widgets/pressable.dart';
 import '../widgets/save_done_button.dart';
@@ -15,8 +19,26 @@ import '../widgets/save_bar.dart';
 
 class ProfileEditScreen extends StatefulWidget {
   final UserProfile profile;
-  const ProfileEditScreen({Key? key, required this.profile})
-      : super(key: key);
+
+  /// 仅测试使用：替换真实切牌实现（避免 widget 测试里走真实文件 IO）
+  @visibleForTesting
+  final Future<RedeemOutcome> Function(String badgeId)? wearOverride;
+
+  /// 仅测试使用：替换积分商城页面（默认打开真实的 [PointsShopScreen]）
+  @visibleForTesting
+  final Widget Function()? shopBuilder;
+
+  /// 仅测试使用：替换档案读取（商城返回后刷新积分用）
+  @visibleForTesting
+  final Future<UserProfile> Function()? loadOverride;
+
+  const ProfileEditScreen({
+    Key? key,
+    required this.profile,
+    this.wearOverride,
+    this.shopBuilder,
+    this.loadOverride,
+  }) : super(key: key);
 
   @override
   State<ProfileEditScreen> createState() => _ProfileEditScreenState();
@@ -27,6 +49,12 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   late String _gender;
   late String _avatarPath;
   bool _saving = false;
+
+  /// 身份牌 / 积分是本页的即时状态：切换身份牌、商城消费后立即刷新，
+  /// 与昵称性别的「编辑后保存」互不干扰。
+  late String _badge;
+  late int _points;
+  late List<String> _ownedBadges;
 
 
   final GlobalKey<SaveDoneButtonState> _doneKey =
@@ -50,6 +78,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     _nicknameCtrl = TextEditingController(text: widget.profile.nickname);
     _gender = widget.profile.gender;
     _avatarPath = widget.profile.avatarPath;
+    _badge = widget.profile.badge;
+    _points = widget.profile.points;
+    _ownedBadges = List<String>.from(widget.profile.ownedBadges);
     _initial = _snapshot();
   }
 
@@ -87,16 +118,104 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   Future<void> _save() async {
     setState(() => _saving = true);
     final name = _nicknameCtrl.text.trim();
-    final profile = UserProfile(
-      // 清空后直接保存 = 恢复默认昵称
-      nickname: name.isEmpty ? UserProfile.defaultNickname : name,
-      gender: _gender,
-      avatarPath: _avatarPath,
-    );
+    // 以磁盘上的最新档案为基底，只覆盖本页编辑的三个字段：
+    // 直接 new UserProfile 会把积分、身份牌、兑换记录一起清空。
+    final profile = await UserStorage.load();
+    profile.nickname = name.isEmpty ? UserProfile.defaultNickname : name;
+    profile.gender = _gender;
+    profile.avatarPath = _avatarPath;
     await UserStorage.save(profile);
     if (!mounted) return;
     // 落盘完成：续播对勾 + 粒子，播完由 onDone 返回
     _doneKey.currentState?.finish();
+  }
+
+  /// 重读档案：商城消费后刷新本页展示
+  Future<void> _refresh() async {
+    final p = await (widget.loadOverride ?? UserStorage.load)();
+    if (!mounted) return;
+    setState(() {
+      _badge = p.badge;
+      _points = p.points;
+      _ownedBadges = List<String>.from(p.ownedBadges);
+    });
+  }
+
+  /// 选择身份牌：底部选项卡，只列出已拥有的牌（普通版恒在）
+  Future<void> _pickBadge() async {
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 18, 20, 6),
+              child: Text(
+                '选择身份牌',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF24382F),
+                ),
+              ),
+            ),
+            for (final id in _ownedBadges)
+              InkWell(
+                key: ValueKey('badge_option_$id'),
+                onTap: () => Navigator.pop(ctx, id),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  child: Row(
+                    children: [
+                      IdentityBadge(badge: id),
+                      const SizedBox(width: 10),
+                      Text(
+                        IdentityBadge.labelOf(id) ?? '',
+                        style: const TextStyle(
+                            fontSize: 14, color: Color(0xFF647A70)),
+                      ),
+                      const Spacer(),
+                      if (id == _badge)
+                        const AppIcon(AppIcons.check,
+                            size: 20, color: Color(0xFF3E8E6D)),
+                    ],
+                  ),
+                ),
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (picked == null || !mounted) return;
+    final outcome = await (widget.wearOverride ?? RewardService.wearBadge)(picked);
+    if (!mounted) return;
+    if (!outcome.ok) {
+      AppToast.show(context, outcome.message);
+      return;
+    }
+    Haptics.light();
+    AppToast.show(context, outcome.message);
+    // 切牌成功即当前牌已变，直接更新展示，无需再读盘
+    setState(() => _badge = picked);
+  }
+
+  /// 进入积分商城
+  Future<void> _openShop() async {
+    await Navigator.push(
+      context,
+      AppMotion.slide(
+        widget.shopBuilder?.call() ?? const PointsShopScreen(),
+      ),
+    );
+    if (mounted) await _refresh();
   }
 
   @override
@@ -182,9 +301,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   }
 
 
-  /// 身份铭牌与积分：只读展示，数据来自 user_profile.json（兑换码 / 发布奖励）。
+  /// 身份牌与积分：数据来自 user_profile.json（兑换码 / 发布奖励 / 商城消费）。
+  /// 两行都可点：身份牌行切佩戴、积分行进商城。
   Widget _buildIdentityCard() {
-    final profile = widget.profile;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -193,37 +312,20 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         children: [
-          SizedBox(
-            height: 48,
-            child: Row(
-              children: [
-                const Text(
-                  '身份铭牌',
-                  style: TextStyle(fontSize: 15, color: Color(0xFF24382F)),
-                ),
-                const Spacer(),
-                if (IdentityBadge.labelOf(profile.badge) == null)
-                  const Text(
-                    '暂无',
-                    style: TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
-                  )
-                else
-                  IdentityBadge(badge: profile.badge),
-              ],
-            ),
+          _buildIdentityRow(
+            label: '身份牌',
+            onTap: _pickBadge,
+            trailing: IdentityBadge(badge: _badge),
           ),
           const Divider(height: 1, color: Color(0xFFEEF4F0)),
-          SizedBox(
-            height: 48,
-            child: Row(
+          _buildIdentityRow(
+            label: '积分',
+            onTap: _openShop,
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  '积分',
-                  style: TextStyle(fontSize: 15, color: Color(0xFF24382F)),
-                ),
-                const Spacer(),
                 Text(
-                  '${profile.points}',
+                  '$_points',
                   style: const TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
@@ -239,6 +341,32 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// 一行「标题 — 值 ›」，右侧统一带箭头提示可点
+  Widget _buildIdentityRow({
+    required String label,
+    required VoidCallback onTap,
+    required Widget trailing,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: SizedBox(
+        height: 48,
+        child: Row(
+          children: [
+            Text(
+              label,
+              style: const TextStyle(fontSize: 15, color: Color(0xFF24382F)),
+            ),
+            const Spacer(),
+            trailing,
+            const SizedBox(width: 4),
+            const AppIcon(AppIcons.chevR, size: 16, color: Color(0xFFC6D6CD)),
+          ],
+        ),
       ),
     );
   }

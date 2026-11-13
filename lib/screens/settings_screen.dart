@@ -342,7 +342,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   padding: EdgeInsets.only(left: 4, bottom: 8),
                   child: Align(
                     alignment: Alignment.centerLeft,
-                    child: Text('兑换与积分',
+                    child: Text('活动',
                         style: TextStyle(
                             fontSize: 13,
                             color: Color(0xFF8FA09A),
@@ -358,7 +358,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     icon: AppIcons.gift,
                     iconColor: const Color(0xFF3E8E6D),
                     title: '兑换码',
-                    subtitle: '输入兑换码领取积分或身份铭牌',
+                    subtitle: '参与活动获得兑换码',
                     busy: false,
                     onTap: _redeemCode,
                   ),

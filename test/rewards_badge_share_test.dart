@@ -75,12 +75,20 @@ void main() {
       expect(back.lastWriteReward, '2026-11-13');
     });
 
-    test('旧档案缺字段时回落为 0 积分 / 无铭牌', () {
+    test('旧档案缺字段时回落为 0 积分 / 普通版身份牌', () {
       final back = UserProfile.fromJson({'nickname': '小明'});
       expect(back.points, 0);
-      expect(back.badge, '');
+      expect(back.badge, UserProfile.badgeNormal);
+      expect(back.ownedBadges, [UserProfile.badgeNormal]);
       expect(back.redeemedCodes, isEmpty);
       expect(back.lastWriteReward, '');
+    });
+
+    test('旧档案已佩戴的铭牌会补进已拥有列表', () {
+      final back = UserProfile.fromJson({'nickname': '小明', 'badge': 'vip'});
+      expect(back.badge, UserProfile.badgeVip);
+      expect(back.owns(UserProfile.badgeVip), isTrue);
+      expect(back.owns(UserProfile.badgeNormal), isTrue);
     });
   });
 
@@ -97,14 +105,17 @@ void main() {
       expect((await UserStorage.load()).points, 100, reason: '不能重复加分');
     });
 
-    test('neice：获得内测版铭牌', () async {
+    test('neice：获得内测版身份牌', () async {
       final r = await RewardService.redeem('neice');
       expect(r.ok, isTrue);
       expect(r.message, contains('内测版'));
-      expect((await UserStorage.load()).badge, UserProfile.badgeBeta);
+      final p = await UserStorage.load();
+      expect(p.badge, UserProfile.badgeBeta);
+      expect(p.owns(UserProfile.badgeBeta), isTrue);
+      expect(p.owns(UserProfile.badgeNormal), isTrue, reason: '普通版恒在');
     });
 
-    test('vip：获得 VIP 铭牌（覆盖已有铭牌）', () async {
+    test('vip：获得 VIP 身份牌（覆盖已有佩戴）', () async {
       await writeProfile(UserProfile(badge: UserProfile.badgeBeta));
       final r = await RewardService.redeem('vip');
       expect(r.ok, isTrue);
@@ -118,7 +129,7 @@ void main() {
       expect(r.message, contains('无效'));
       final p = await UserStorage.load();
       expect(p.points, 0);
-      expect(p.badge, '');
+      expect(p.badge, UserProfile.badgeNormal);
     });
 
     test('每次兑换都会通知档案更新（侧边栏铭牌即时刷新）', () async {
@@ -151,7 +162,29 @@ void main() {
     });
   });
 
-  group('身份铭牌组件', () {
+  group('身份牌组件', () {
+    testWidgets('普通版：灰底白字', (tester) async {
+      await tester.pumpWidget(const MaterialApp(
+        home: Center(child: IdentityBadge(badge: UserProfile.badgeNormal)),
+      ));
+      expect(find.text('普通版'), findsOneWidget);
+      final box = tester.widget<Container>(
+          find.ancestor(of: find.text('普通版'), matching: find.byType(Container)));
+      expect((box.decoration as BoxDecoration).color,
+          const Color(0xFF8FA09A));
+    });
+
+    testWidgets('诞生日：绿底白字', (tester) async {
+      await tester.pumpWidget(const MaterialApp(
+        home: Center(child: IdentityBadge(badge: UserProfile.badgeBirthday)),
+      ));
+      expect(find.text('诞生日'), findsOneWidget);
+      final box = tester.widget<Container>(find.ancestor(
+          of: find.text('诞生日'), matching: find.byType(Container)));
+      expect((box.decoration as BoxDecoration).color,
+          const Color(0xFF3E8E6D));
+    });
+
     testWidgets('内测版：橙底白字', (tester) async {
       await tester.pumpWidget(const MaterialApp(
         home: Center(child: IdentityBadge(badge: UserProfile.badgeBeta)),
@@ -174,16 +207,16 @@ void main() {
           const Color(0xFFCB5C50));
     });
 
-    testWidgets('无铭牌时不占位', (tester) async {
+    testWidgets('未知 id 不占位', (tester) async {
       await tester.pumpWidget(const MaterialApp(
-        home: Center(child: IdentityBadge(badge: '')),
+        home: Center(child: IdentityBadge(badge: 'unknown')),
       ));
       expect(find.byType(Container), findsNothing);
     });
   });
 
   group('个人信息页', () {
-    testWidgets('显示身份铭牌与积分', (tester) async {
+    testWidgets('显示身份牌与积分', (tester) async {
       await tester.binding.setSurfaceSize(const Size(600, 1200));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -194,14 +227,14 @@ void main() {
       ));
       await tester.pump();
 
-      expect(find.text('身份铭牌'), findsOneWidget);
+      expect(find.text('身份牌'), findsOneWidget);
       expect(find.text('VIP'), findsOneWidget);
       expect(find.text('积分'), findsOneWidget);
       expect(find.text('120'), findsOneWidget);
       expect(find.text('分'), findsOneWidget);
     });
 
-    testWidgets('无铭牌时显示「暂无」', (tester) async {
+    testWidgets('默认佩戴普通版身份牌', (tester) async {
       await tester.binding.setSurfaceSize(const Size(600, 1200));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -210,7 +243,7 @@ void main() {
       ));
       await tester.pump();
 
-      expect(find.text('暂无'), findsOneWidget);
+      expect(find.text('普通版'), findsOneWidget);
       expect(find.text('0'), findsOneWidget);
     });
   });
