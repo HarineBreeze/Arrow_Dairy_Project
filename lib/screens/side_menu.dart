@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/user_profile.dart';
-import '../utils/app_version.dart';
 import '../widgets/app_icons.dart';
 import '../widgets/avatar.dart';
+import '../widgets/identity_badge.dart';
 
 class SideMenu extends StatelessWidget {
   final UserProfile profile;
@@ -61,7 +61,7 @@ class SideMenu extends StatelessWidget {
     );
   }
 
-  /// 头像在左；昵称 / 内测版铭牌 / ID 在右，三行垂直居中。
+  /// 头像在左；昵称 / 身份铭牌 / ID 在右，三行垂直居中。
   ///
   /// 左右排版比上下排版省出约 1/3 高度，把纵向空间留给导航；
   /// 同时头像与文字在同一视觉基线上，扫视路径更短。
@@ -97,26 +97,10 @@ class SideMenu extends StatelessWidget {
                     color: Color(0xFF24382F),
                   ),
                 ),
-                if (AppVersion.isBeta) ...[
+                if (profile.badge.isNotEmpty) ...[
                   const SizedBox(height: 5),
-                  // 内测版铭牌：橙色底纹 + 白字
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF08C3A),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Text(
-                      '内测版',
-                      style: TextStyle(
-                        fontSize: 11,
-                        height: 1.2,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
+                  // 身份铭牌：内测版（橙底）/ VIP（红底），由兑换码获得
+                  IdentityBadge(badge: profile.badge),
                 ],
                 const SizedBox(height: 5),
                 // 用户 ID：暂用固定值，后续接入服务器后再按规则生成

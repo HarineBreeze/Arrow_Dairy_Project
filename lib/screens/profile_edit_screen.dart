@@ -7,6 +7,7 @@ import '../utils/app_toast.dart';
 import '../models/user_profile.dart';
 import '../services/user_storage.dart';
 import '../widgets/avatar.dart';
+import '../widgets/identity_badge.dart';
 import '../widgets/unsaved_guard.dart';
 import '../widgets/pressable.dart';
 import '../widgets/save_done_button.dart';
@@ -145,6 +146,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
               style: TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
             ),
             const SizedBox(height: 28),
+            _buildIdentityCard(),
+            const SizedBox(height: 16),
             _buildNicknameField(),
             const Divider(height: 1),
             const SizedBox(height: 20),
@@ -178,6 +181,67 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     );
   }
 
+
+  /// 身份铭牌与积分：只读展示，数据来自 user_profile.json（兑换码 / 发布奖励）。
+  Widget _buildIdentityCard() {
+    final profile = widget.profile;
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        children: [
+          SizedBox(
+            height: 48,
+            child: Row(
+              children: [
+                const Text(
+                  '身份铭牌',
+                  style: TextStyle(fontSize: 15, color: Color(0xFF24382F)),
+                ),
+                const Spacer(),
+                if (IdentityBadge.labelOf(profile.badge) == null)
+                  const Text(
+                    '暂无',
+                    style: TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
+                  )
+                else
+                  IdentityBadge(badge: profile.badge),
+              ],
+            ),
+          ),
+          const Divider(height: 1, color: Color(0xFFEEF4F0)),
+          SizedBox(
+            height: 48,
+            child: Row(
+              children: [
+                const Text(
+                  '积分',
+                  style: TextStyle(fontSize: 15, color: Color(0xFF24382F)),
+                ),
+                const Spacer(),
+                Text(
+                  '${profile.points}',
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF3E8E6D),
+                  ),
+                ),
+                const SizedBox(width: 3),
+                const Text(
+                  '分',
+                  style: TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildNicknameField() {
     return Row(

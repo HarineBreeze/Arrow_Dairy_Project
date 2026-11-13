@@ -106,6 +106,10 @@ class AppIcons {
   static const String tag =
       'M12 3.6l7.6 7.6a2 2 0 0 1 0 2.8l-5.6 5.6a2 2 0 0 1-2.8 0L3.6 12V3.6Z'
       ' M9.5 8.2a1.3 1.3 0 1 1-2.6 0 1.3 1.3 0 0 1 2.6 0Z';
+
+  /// 礼物盒（兑换码）
+  static const String gift =
+      'M4.4 9.2h15.2v10.2H4.4Z M4.4 9.2V6.4h15.2v2.8 M12 6.4v13';
   static const String todo =
       'M7.2 4.2h9.6a3 3 0 0 1 3 3v9.6a3 3 0 0 1-3 3H7.2a3 3 0 0 1-3-3V7.2'
       'a3 3 0 0 1 3-3Z M8.4 12.2l2.6 2.6 4.8-5.2';
@@ -240,6 +244,7 @@ class AppIcons {
     'restore': restore,
     'empty': empty,
     'tag': tag,
+    'gift': gift,
     'todo': todo,
     'camera': camera,
     'download': download,

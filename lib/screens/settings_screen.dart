@@ -7,13 +7,18 @@ import 'package:share_plus/share_plus.dart';
 import '../utils/app_toast.dart';
 import '../services/app_settings.dart';
 import '../services/backup_service.dart';
+import '../services/reward_service.dart';
 import '../utils/app_version.dart';
 import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
 import 'font_picker_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({Key? key}) : super(key: key);
+  /// 仅测试使用：替换真实的兑换实现（避免 widget 测试里走真实文件 IO）
+  @visibleForTesting
+  final Future<RedeemOutcome> Function(String code)? redeemOverride;
+
+  const SettingsScreen({Key? key, this.redeemOverride}) : super(key: key);
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -335,6 +340,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: 16),
                 const Padding(
                   padding: EdgeInsets.only(left: 4, bottom: 8),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text('兑换与积分',
+                        style: TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF8FA09A),
+                            fontWeight: FontWeight.w600)),
+                  ),
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: _buildItem(
+                    icon: AppIcons.gift,
+                    iconColor: const Color(0xFF3E8E6D),
+                    title: '兑换码',
+                    subtitle: '输入兑换码领取积分或身份铭牌',
+                    busy: false,
+                    onTap: _redeemCode,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Padding(
+                  padding: EdgeInsets.only(left: 4, bottom: 8),
                   child: Text('反馈',
                       style: TextStyle(
                           fontSize: 13,
@@ -377,6 +408,66 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ],
       ),
     );
+  }
+
+  /// 兑换码弹窗：输入 → 兑换 → 顶部提示结果。
+  ///
+  /// 预设码：
+  /// - `ayouriji` → +100 积分
+  /// - `neice`    → 内测版铭牌（橙底白字）
+  /// - `vip`      → VIP 铭牌（红底白字）
+  /// 每个码单设备只能兑换一次；无效码给可重试提示。
+  Future<void> _redeemCode() async {
+    final ctrl = TextEditingController();
+    final code = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('兑换码', style: TextStyle(fontSize: 17)),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          textInputAction: TextInputAction.done,
+          onSubmitted: (v) => Navigator.pop(ctx, v),
+          style: const TextStyle(fontSize: 15),
+          decoration: const InputDecoration(
+            hintText: '请输入兑换码',
+            hintStyle: TextStyle(color: Color(0xFF8FA09A)),
+          ),
+        ),
+        actions: [
+          Pressable(
+            enabled: true,
+            child: TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('取消'),
+            ),
+          ),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+              onPressed: () => Navigator.pop(ctx, ctrl.text),
+              child: const Text(
+                '兑换',
+                style: TextStyle(
+                  color: Color(0xFF3E8E6D),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+    ctrl.dispose();
+    if (code == null || !mounted) return;
+    if (code.trim().isEmpty) return;
+
+    final outcome = await (widget.redeemOverride ?? RewardService.redeem)(code);
+    if (!mounted) return;
+    Haptics.light();
+    AppToast.show(context, outcome.message);
   }
 
   /// 分组标题旁的蓝色圈叹号（提示入口）

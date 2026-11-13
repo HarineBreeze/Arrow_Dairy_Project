@@ -58,11 +58,11 @@ void main() {
         reason: '头像应与文字块垂直居中对齐');
   });
 
-  testWidgets('内测版铭牌夹在昵称与 ID 之间', (tester) async {
+  testWidgets('内测版铭牌夹在昵称与 ID 之间（兑换码获得）', (tester) async {
     await tester.binding.setSurfaceSize(const Size(400, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(host(UserProfile(nickname: '小明')));
+    await tester.pumpWidget(host(UserProfile(nickname: '小明', badge: 'beta')));
     await tester.pump();
 
     final nickRect = tester.getRect(find.text('小明'));
@@ -85,7 +85,7 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(400, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(host(UserProfile(nickname: '一二三四五六七八九十')));
+    await tester.pumpWidget(host(UserProfile(nickname: '一二三四五六七八九十', badge: 'beta')));
     await tester.pump();
 
     final screenW = tester.getSize(find.byType(SideMenu)).width;
@@ -99,7 +99,7 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(400, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(host(UserProfile(nickname: '一二三四五六七八九十')));
+    await tester.pumpWidget(host(UserProfile(nickname: '一二三四五六七八九十', badge: 'beta')));
     await tester.pump();
 
     final nick = tester.widget<Text>(find.text('一二三四五六七八九十'));

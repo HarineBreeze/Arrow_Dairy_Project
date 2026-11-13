@@ -2,21 +2,17 @@ import '../widgets/app_icons.dart';
 import '../widgets/entry_image.dart';
 import 'dart:io';
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../utils/app_motion.dart';
-import '../utils/app_toast.dart';
-import '../utils/share_image.dart';
+import '../utils/share_note.dart';
 import '../models/diary_entry.dart';
 import '../models/item.dart';
 import '../services/app_settings.dart';
 import '../services/diary_storage.dart';
 import '../services/item_storage.dart';
 import '../services/trash_storage.dart';
-import 'package:flutter/services.dart';
 import '../widgets/rich_note_text.dart';
 import '../widgets/todo_card.dart';
 import '../utils/text_format.dart';
@@ -25,10 +21,6 @@ import 'item_edit_screen.dart';
 import '../utils/haptics.dart';
 import '../utils/todo_text.dart';
 import '../widgets/pressable.dart';
-
-/// 分享图生成器签名（测试可注入替身，避免 real async 截图流程）
-typedef ShareCapture = Future<File?> Function(
-    BuildContext context, DiaryEntry entry, List<Item> items);
 
 class NoteViewScreen extends StatefulWidget {
   final DiaryEntry entry;
@@ -155,41 +147,13 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
   }
 
   /// 分享：把当前笔记渲染成带品牌落款的长图，调起系统分享面板。
-  ///
-  /// 生成期间挡一个不可关闭的进度弹窗；生成失败给可重试的提示。
-  Future<void> _share() async {
-    Haptics.light();
-    unawaited(showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const _ShareProgressDialog(),
-    ));
-    File? file;
-    try {
-      final capture = widget.shareCapture ?? captureShareCard;
-      file = await capture(context, _entry, _items);
-    } catch (_) {
-      file = null;
-    }
-    if (!mounted) return;
-    Navigator.of(context, rootNavigator: true).pop(); // 关闭进度弹窗
-    if (file == null) {
-      AppToast.show(context, '分享图生成失败，请重试');
-      return;
-    }
-    try {
-      await Share.shareXFiles(
-        [XFile(file.path, mimeType: 'image/png')],
-        text: _entry.title.isNotEmpty
-            ? '「阿尤日记」· ${_entry.title}'
-            : '来自「阿尤日记」',
-        sharePositionOrigin: const Rect.fromLTWH(0, 0, 10, 10),
+  /// 具体链路（进度弹窗 / 失败提示）与主页长按菜单共用 [shareEntryImage]。
+  Future<void> _share() => shareEntryImage(
+        context,
+        _entry,
+        items: _items,
+        capture: widget.shareCapture,
       );
-    } catch (_) {
-      if (!mounted) return;
-      AppToast.show(context, '分享失败，请重试');
-    }
-  }
 
   String _timeLabel() {
     final d = _entry.publishDate;
@@ -358,39 +322,6 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// 分享图生成期间的进度弹窗：不可点掉，生成完由调用方关闭。
-class _ShareProgressDialog extends StatelessWidget {
-  const _ShareProgressDialog();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 22),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: const [
-            SizedBox(
-              width: 26,
-              height: 26,
-              child: CircularProgressIndicator(strokeWidth: 2.6),
-            ),
-            SizedBox(height: 14),
-            Text(
-              '正在生成分享图…',
-              style: TextStyle(fontSize: 14, color: Color(0xFF24382F)),
-            ),
-          ],
-        ),
       ),
     );
   }

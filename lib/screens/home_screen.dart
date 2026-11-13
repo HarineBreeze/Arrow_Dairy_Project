@@ -15,6 +15,10 @@ import '../models/diary_entry.dart';
 import '../models/user_profile.dart';
 import '../services/diary_storage.dart';
 import '../services/user_storage.dart';
+import '../services/item_storage.dart';
+import '../services/reward_service.dart';
+import '../utils/share_note.dart';
+import '../models/item.dart';
 import '../utils/rich_text.dart';
 import 'edit_screen.dart';
 import 'side_menu.dart';
@@ -43,7 +47,11 @@ const Color kTextMid = Color(0xFF647A70);
 const Color kTextLight = Color(0xFF8FA09A);
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  /// 仅测试使用：替换「生成分享图 + 调起系统分享」的真实实现
+  @visibleForTesting
+  final Future<void> Function(BuildContext context, DiaryEntry entry)? onShare;
+
+  const HomeScreen({Key? key, this.onShare}) : super(key: key);
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -94,9 +102,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         CurvedAnimation(parent: _menuController, curve: Curves.easeOutCubic);
     _expandedKeys.addAll(_defaultExpandedKeys());
     _listCtrl.addListener(_onListScroll);
+    // 积分 / 铭牌在设置页兑换、发布奖励后更新：档案一变就重新读取，
+    // 侧边栏的铭牌与个人信息页的积分始终保持最新。
+    UserStorage.revision.addListener(_onProfileChanged);
     _load();
     _loadProfile();
     _initCountdown();
+  }
+
+  void _onProfileChanged() {
+    if (!mounted) return;
+    _loadProfile();
   }
 
   /// 事件：同步系统提醒 + 当天到期则弹出一次 App 内横幅
@@ -226,6 +242,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 onTap: () => Navigator.pop(ctx, 'edit'),
               ),
               ListTile(
+                key: const ValueKey('card_action_share'),
+                leading:
+                    const AppIcon(AppIcons.share, color: Color(0xFF3E8E6D)),
+                title: const Text('分享', style: TextStyle(fontSize: 15)),
+                onTap: () => Navigator.pop(ctx, 'share'),
+              ),
+              ListTile(
                 leading: const AppIcon(AppIcons.delete, color: Color(0xFFCB5C50)),
                 title: const Text('删除',
                     style: TextStyle(fontSize: 15, color: Color(0xFFCB5C50))),
@@ -253,17 +276,46 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       _load();
     } else if (action == 'edit') {
       _openEditor(entry);
+    } else if (action == 'share') {
+      _shareEntry(entry);
     } else if (action == 'delete') {
       _delete(entry);
     }
   }
 
+  /// 卡片长按菜单的「分享」：与浏览页顶栏分享完全同一条链路
+  /// （同一张长图、同一套进度弹窗与失败提示）。
+  Future<void> _shareEntry(DiaryEntry entry) async {
+    final override = widget.onShare;
+    if (override != null) {
+      await override(context, entry);
+      return;
+    }
+    // 物品名用于正文 @物品 高亮与待办归属，读失败就退化成交集为空
+    List<Item> items = const <Item>[];
+    try {
+      items = await ItemStorage.load();
+    } catch (_) {}
+    if (!mounted) return;
+    await shareEntryImage(context, entry, items: items);
+  }
+
   Future<void> _openEditor([DiaryEntry? entry]) async {
+    final isNew = entry == null;
     final result = await Navigator.push<bool>(
       context,
       _slideRoute(EditScreen(entry: entry, defaultDate: _selectedDate)),
     );
-    if (result == true) _load();
+    if (result == true) {
+      _load();
+      // 每日首次「发布笔记」奖励 20 积分（新建才算发布，编辑旧笔记不算）
+      if (isNew) {
+        final earned = await RewardService.awardDailyWrite();
+        if (earned > 0 && mounted) {
+          AppToast.show(context, '今日首次发布，+$earned 积分');
+        }
+      }
+    }
   }
 
   Future<void> _openNote(DiaryEntry entry) async {
@@ -758,6 +810,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void dispose() {
     _stillTimer?.cancel();
     _listCtrl.removeListener(_onListScroll);
+    UserStorage.revision.removeListener(_onProfileChanged);
     _listCtrl.dispose();
     _menuController.dispose();
     _searchCtrl.dispose();
