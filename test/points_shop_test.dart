@@ -164,17 +164,22 @@ void main() {
       expect(find.text('我的积分'), findsOneWidget);
       expect(find.text('120'), findsOneWidget);
 
+      // 分组标题与提示语
+      expect(find.text('道具兑换'), findsOneWidget);
+      expect(find.text('积分是兑换道具的货币，可通过参与活动的方式获得'),
+          findsOneWidget);
+
       // 诞生日
       expect(find.text('诞生日'), findsOneWidget);
       expect(find.text('纪念APP正式上线，1年后下架'), findsOneWidget);
       expect(find.text('50 积分'), findsOneWidget);
-      expect(find.text('每人限兑 1 次'), findsOneWidget);
+      expect(find.text('0/1'), findsOneWidget, reason: '次数改为「已兑/上限」');
 
       // VIP日卡
       expect(find.text('VIP日卡'), findsOneWidget);
       expect(find.text('兑换后可获得VIP权益1日'), findsOneWidget);
       expect(find.text('200 积分'), findsOneWidget);
-      expect(find.text('每人限兑 30 次 · 已兑 0 次'), findsOneWidget);
+      expect(find.text('0/30'), findsOneWidget, reason: '次数改为「已兑/上限」');
 
       // 卡片不再有独立按钮文案，也不再展示身份牌胶囊
       expect(find.text('兑换'), findsNothing);
@@ -183,7 +188,7 @@ void main() {
       expect(find.byType(IdentityBadge), findsNothing);
     });
 
-    testWidgets('提示语：仅保留「积分可通过参与活动的方式获得」', (tester) async {
+    testWidgets('提示语与分组标题：积分是兑换道具的货币 / 道具兑换', (tester) async {
       await tester.binding.setSurfaceSize(const Size(600, 1200));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -194,7 +199,11 @@ void main() {
       ));
       await tester.pump();
 
-      expect(find.text('积分可通过参与活动的方式获得'), findsOneWidget);
+      expect(find.text('积分是兑换道具的货币，可通过参与活动的方式获得'),
+          findsOneWidget);
+      expect(find.text('道具兑换'), findsOneWidget);
+      expect(find.text('积分可通过参与活动的方式获得'), findsNothing);
+      expect(find.text('身份牌'), findsNothing);
       expect(find.text('佩戴后显示在昵称旁'), findsNothing);
       expect(find.textContaining('兑换后会立即佩戴'), findsNothing);
       expect(find.textContaining('每日首次发布笔记'), findsNothing);
@@ -277,7 +286,8 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('shop-item-birthday')));
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.textContaining('是否要花费 50 积分兑换「诞生日」'), findsOneWidget);
-      expect(find.textContaining('兑换后剩余 70 积分'), findsOneWidget);
+      expect(find.textContaining('兑换后剩余'), findsNothing,
+          reason: '确认框不再提示兑换后剩余积分');
 
       await tester.tap(find.text('确认'));
       await _settle(tester);
@@ -405,7 +415,7 @@ void main() {
       await tester.pump();
 
       expect(find.text('兑换后可获得VIP权益1日'), findsOneWidget);
-      expect(find.text('每人限兑 30 次 · 已兑 2 次'), findsOneWidget);
+      expect(find.text('2/30'), findsOneWidget);
       expect(find.text('200 积分'), findsOneWidget);
       await tester.pump(const Duration(seconds: 2));
     });
@@ -430,7 +440,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.textContaining('是否要花费 200 积分兑换「VIP日卡」'), findsOneWidget);
       expect(find.textContaining('有效期24小时'), findsOneWidget);
-      expect(find.textContaining('兑换后剩余 100 积分'), findsOneWidget);
+      expect(find.textContaining('兑换后剩余'), findsNothing);
 
       await tester.tap(find.text('确认'));
       await _settle(tester);

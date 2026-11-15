@@ -893,9 +893,10 @@ class AssetScreenState extends State<AssetScreen> {
   /// 约 18px，字形只有 13px 左右），center 会把图标放到行盒中心，
   /// 而人眼看到的是字形中心偏下，结果就是图标位置不对。
   ///
-  /// [baseline] 越大图标越靠上、越小越靠下。真机中文字体下，15px 的
-  /// 小眼睛需要 11（往下沉），12px 的圈叹号需要 15（往上升），各自
-  /// 单独调 —— 两个图标的字形留白不同，同一个值对不齐。
+  /// [baseline] 越大图标越靠下、越小越靠上（1:1 位移）。像素标定下
+  /// 15px 的小眼睛取 18，圆心才与 13px 中文字形中心齐平。
+  /// 注意：只有自身能提供 alphabetic 基线的 child 才响应这个定位；
+  /// 右栏圈叹号外包了 SizedBox + OverflowBox，需改用 Transform 平移。
   Widget _baselineIcon(Widget icon, {double baseline = 13}) {
     return Baseline(
       baseline: baseline,
@@ -934,9 +935,8 @@ class AssetScreenState extends State<AssetScreen> {
                 },
                 behavior: HitTestBehavior.opaque,
                 child: _baselineIcon(
-                  // 眼睛圆心要与文字字形中心齐：13px 中文字形中心约在
-                  // baseline 上方 5px，15px 图标取 baseline 12.5
-                  //（图标圆心 = baseline - 7.5 ≈ 字形中心）
+                  // 像素标定：15px 眼睛取 baseline 18 时，圆心与 13px
+                  // 中文字形中心落在同一 y（Baseline 定位按 1:1 下移）。
                   AppIcon(
                     _hideNumbers
                         ? AppIcons.eyeOff
@@ -944,7 +944,7 @@ class AssetScreenState extends State<AssetScreen> {
                     size: 15,
                     color: const Color(0xFF8FA09A),
                   ),
-                  baseline: 12.5,
+                  baseline: 18,
                 ),
               ),
             ],
@@ -1002,8 +1002,13 @@ class AssetScreenState extends State<AssetScreen> {
               //
               // 点触区 36×36、视觉圆点 12px。外面套 18px 的 SizedBox +
               // OverflowBox，把大点触区溢出出去，不撑高标题行。
-              _baselineIcon(
-                // 圈叹号偏下 → baseline 加大让它上升
+              // 圈叹号：像素标定下比标题字形中心低 2px，显式上移对齐。
+              // 它外层是 SizedBox + OverflowBox，没有 alphabetic 基线，
+              // Baseline 定位对这类 child 不生效，所以用视觉平移
+              // （不改行高，点触区也跟着一起移）。
+              Transform.translate(
+                offset: const Offset(0, -2),
+                child: _baselineIcon(
                 SizedBox(
                   width: 18,
                   height: 18,
@@ -1048,7 +1053,8 @@ class AssetScreenState extends State<AssetScreen> {
                     ),
                   ),
                 ),
-                baseline: 14,
+                  baseline: 12,
+                ),
               ),
             ],
           ),

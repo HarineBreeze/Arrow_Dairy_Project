@@ -240,4 +240,45 @@ void main() {
     await input(tester, '\u3000a. 细节\n');
     expect(ctrl.text, '\u3000a. 细节\n\u3000b. ');
   });
+
+  // 真机中文输入法常把「提交拼音候选词」与「换行」合并成一次
+  // onChanged：拼音字母被替换成汉字，diff 不再是净增 1 个 \n，
+  // 旧版严格判定会整条漏掉 → 换行后不自动生成待办框 / 下一个标题。
+  testWidgets('输入法合并提交候选词+换行：仍自动续待办框', (tester) async {
+    final ctrl = await openEditor(tester);
+
+    tester.testTextInput.updateEditingValue(const TextEditingValue(
+      text: '☐ 买niunai',
+      selection: TextSelection.collapsed(offset: 9),
+      composing: TextRange(start: 3, end: 9),
+    ));
+    await tester.pump();
+
+    await input(tester, '☐ 买牛奶\n');
+    expect(ctrl.text, '☐ 买牛奶\n☐ ',
+        reason: '合并更新也必须识别成回车，自动补待办框');
+  });
+
+  testWidgets('输入法合并提交候选词+换行：仍自动续标题序号', (tester) async {
+    final ctrl = await openEditor(tester);
+
+    tester.testTextInput.updateEditingValue(const TextEditingValue(
+      text: '1. 今日xiaojie',
+      selection: TextSelection.collapsed(offset: 12),
+      composing: TextRange(start: 5, end: 12),
+    ));
+    await tester.pump();
+
+    await input(tester, '1. 今日小结\n');
+    expect(ctrl.text, '1. 今日小结\n2. ');
+  });
+
+  testWidgets('一次粘贴多行不会被误判成回车续行', (tester) async {
+    final ctrl = await openEditor(tester);
+
+    await input(tester, '☐ 买牛奶');
+    await input(tester, '☐ 买牛奶\n甲\n乙');
+    expect(ctrl.text, '☐ 买牛奶\n甲\n乙',
+        reason: '新增区间含多个换行时只按普通输入处理');
+  });
 }

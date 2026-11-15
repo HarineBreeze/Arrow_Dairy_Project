@@ -9,12 +9,14 @@ import 'package:path_provider_platform_interface/src/method_channel_path_provide
 import 'package:ayodiray/models/diary_entry.dart';
 import 'package:ayodiray/screens/trash_screen.dart';
 import 'package:ayodiray/services/trash_storage.dart';
+import 'package:ayodiray/widgets/app_icons.dart';
 
-/// v4.9.20 回收站交互回归：
+/// v4.9.21 回收站交互回归：
 /// 1. 卡片上不再有还原 / 彻底删除按钮，操作移到顶栏；
-/// 2. 顶栏「还原」进入选择模式，可单选 / 多选后确认还原；
+/// 2. 顶栏「还原」弹出菜单：选择性还原（选择模式）/ 全部还原；
 /// 3. 顶栏「删除」弹出菜单：选择性删除（含全选）/ 清空回收站；
-/// 4. 旧版本拼进副标题的 mood emoji 在读档时被清理。
+/// 4. 选择模式无提示语、勾选圆圈里的对勾居中；
+/// 5. 旧版本拼进副标题的 mood emoji 在读档时被清理。
 class _FakePathProvider extends PathProviderPlatform {
   final String path;
   _FakePathProvider(this.path);
@@ -163,12 +165,21 @@ void main() {
     await tester.pumpWidget(host());
     await _settle(tester);
 
-    // 卡片上不再有还原按钮
+    // 卡片上不再有还原按钮；顶栏还原键先弹二级菜单
     expect(find.text('还原'), findsNothing);
     await tester.tap(find.byKey(const ValueKey('trash-restore')));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('选择性还原'), findsOneWidget);
+    expect(find.text('全部还原'), findsOneWidget);
+
+    await tester.tap(
+        find.byKey(const ValueKey('trash-menu-restore-selective')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('已选 0 项'), findsOneWidget);
-    expect(find.text('选择要还原的内容，可多选'), findsOneWidget);
+    expect(find.textContaining('选择要还原'), findsNothing,
+        reason: '选择模式提示语已移除');
 
     await tester.tap(find.byKey(const ValueKey('trash-entry-t1')));
     await tester.pump();
@@ -214,7 +225,9 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('trash-menu-selective')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    expect(find.text('选择要彻底删除的内容，可多选或全选'), findsOneWidget);
+    expect(find.text('已选 0 项'), findsOneWidget);
+    expect(find.textContaining('选择要彻底删除'), findsNothing,
+        reason: '选择模式提示语已移除');
 
     await tester.tap(find.byKey(const ValueKey('trash-select-all')));
     await tester.pump();
@@ -260,5 +273,77 @@ void main() {
     await _settle(tester);
     expect(readTrashRaw(), isEmpty);
     await tester.pump(const Duration(seconds: 2));
+  });
+
+  testWidgets('全部还原：菜单 → 确认 → 全部条目回到日记列表', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(400, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    writeTrash([
+      trashItem(id: 't1', bizId: 'd1', title: '笔记一'),
+      trashItem(id: 't2', bizId: 'd2', title: '笔记二'),
+    ]);
+
+    await tester.pumpWidget(host());
+    await _settle(tester);
+
+    await tester.tap(find.byKey(const ValueKey('trash-restore')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(find.byKey(const ValueKey('trash-menu-restore-all')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('全部还原?'), findsOneWidget);
+    expect(find.text('共 2 项将恢复到原位置。'), findsOneWidget);
+
+    await tester.tap(find.text('还原'));
+    await _settle(tester);
+    await _until(tester, () => readDiaryTitles().length >= 2);
+    await _settle(tester);
+
+    expect(readDiaryTitles(), containsAll(['笔记一', '笔记二']));
+    await tester.pump(const Duration(seconds: 2)); // 排空 toast 定时器
+  });
+
+  testWidgets('选择态：对勾落在圆圈中心', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(400, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    writeTrash([
+      trashItem(id: 't1', bizId: 'd1', title: '笔记一'),
+    ]);
+
+    await tester.pumpWidget(host());
+    await _settle(tester);
+
+    await tester.tap(find.byKey(const ValueKey('trash-restore')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(
+        find.byKey(const ValueKey('trash-menu-restore-selective')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(find.byKey(const ValueKey('trash-entry-t1')));
+    await tester.pump();
+
+    final circle = find.descendant(
+      of: find.byKey(const ValueKey('trash-entry-t1')),
+      matching: find.byWidgetPredicate((w) =>
+          w is Container &&
+          w.decoration is BoxDecoration &&
+          (w.decoration as BoxDecoration).shape == BoxShape.circle),
+    );
+    expect(circle, findsOneWidget, reason: '选中卡片应显示圆形勾选框');
+    final check =
+        find.descendant(of: circle, matching: find.byType(AppIcon));
+    expect(check, findsOneWidget);
+
+    final c = tester.getCenter(circle);
+    final k = tester.getCenter(check);
+    expect((c.dx - k.dx).abs(), lessThan(0.6),
+        reason: '对勾水平方向必须在圆圈中心');
+    expect((c.dy - k.dy).abs(), lessThan(0.6),
+        reason: '对勾垂直方向必须在圆圈中心');
   });
 }

@@ -277,11 +277,21 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
             const SizedBox(height: 28),
             _buildIdentityCard(),
             const SizedBox(height: 16),
-            // 昵称 / 性别各自一张白卡：与上方「身份牌 / 积分」卡同款底色与圆角，
-            // 但两块互不合并，视觉上仍是独立信息块
-            _buildFieldCard(child: _buildNicknameField()),
-            const SizedBox(height: 12),
-            _buildFieldCard(child: _buildGenderRow()),
+            // 昵称 / 性别合为一张白卡：与上方「身份牌 / 积分」卡同款底色与圆角，
+            // 内部用一条分隔线分成两行，仍与上方卡片保持独立信息块
+            _buildFieldCard(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildNicknameField(),
+                  const SizedBox(height: 6),
+                  const Divider(height: 1, color: Color(0xFFEEF4F0)),
+                  const SizedBox(height: 10),
+                  _buildGenderRow(),
+                ],
+              ),
+            ),
           ],
         ),
       ),

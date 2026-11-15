@@ -10,7 +10,8 @@ import '../widgets/pressable.dart';
 /// 积分商城：用积分兑换身份牌 / 限时权益。
 ///
 /// 版式沿用全 App 的「页面底色 + 白色圆角卡 + 灰色节标题」节奏：
-/// 顶部是积分余额卡，下面是商品卡（名称 + 备注 + 价格 + 兑换次数）。
+/// 顶部是积分余额卡，下面是「道具兑换」分组里的商品卡
+/// （名称 + 备注 + 价格 + 已兑/上限）。
 ///
 /// 商品卡本身就是按钮（带按压缩放回弹）：
 /// - 已拥有 / 积分不足 / 达到兑换上限：卡片置灰，点击给出对应提示；
@@ -74,9 +75,10 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: Text(
-          '是否要花费 ${item.price} 积分兑换「${item.name}」？\n'
-          '${isDayCard ? '兑换后立即生效，有效期24小时。\n' : ''}'
-          '兑换后剩余 ${profile.points - item.price} 积分。',
+          isDayCard
+              ? '是否要花费 ${item.price} 积分兑换「${item.name}」？\n'
+                  '兑换后立即生效，有效期24小时。'
+              : '是否要花费 ${item.price} 积分兑换「${item.name}」？',
           style: const TextStyle(fontSize: 13, height: 1.7),
         ),
         actions: [
@@ -134,7 +136,7 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      '身份牌',
+                      '道具兑换',
                       style: TextStyle(
                         fontSize: 13,
                         color: Color(0xFF8FA09A),
@@ -152,7 +154,7 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 4),
                   child: Text(
-                    '积分可通过参与活动的方式获得',
+                    '积分是兑换道具的货币，可通过参与活动的方式获得',
                     style: TextStyle(
                       fontSize: 11,
                       height: 1.7,
@@ -211,12 +213,16 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
     final enabled = !soldOut && affordable;
     // 不可兑换时整卡置灰，只保留极淡的边界感
     final cardColor = enabled ? Colors.white : const Color(0xFFF2F6F4);
-    final titleColor = enabled ? const Color(0xFF24382F) : const Color(0xFF8FA09A);
-    final priceColor = enabled ? const Color(0xFF3E8E6D) : const Color(0xFFB2C2BA);
+    final titleColor =
+        enabled ? const Color(0xFF24382F) : const Color(0xFF8FA09A);
+    final priceColor =
+        enabled ? const Color(0xFF3E8E6D) : const Color(0xFFB2C2BA);
 
-    final countText = item.kind == ShopItemKind.vipDayCard
-        ? '每人限兑 ${item.limit} 次 · 已兑 ${profile.vipCardCount} 次'
-        : '每人限兑 ${item.limit} 次';
+    // 兑换次数用「已兑/上限」的紧凑数字（如 0/30），不再铺一句长文案。
+    // 永久牌只有一次，拥有即记 1；日卡按档案里的累计兑换次数计。
+    final used = item.kind == ShopItemKind.vipDayCard
+        ? profile.vipCardCount
+        : (profile.owns(item.id) ? 1 : 0);
 
     return Pressable(
       enabled: true,
@@ -259,23 +265,41 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
                 ],
               ),
               const SizedBox(height: 6),
-              Text(
-                item.note,
-                style: const TextStyle(
-                  fontSize: 12,
-                  height: 1.5,
-                  color: Color(0xFF8FA09A),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                countText,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: enabled
-                      ? const Color(0xFFB2C2BA)
-                      : const Color(0xFFC6D6CD),
-                ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Text(
+                      item.note,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        height: 1.5,
+                        color: Color(0xFF8FA09A),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: enabled
+                          ? const Color(0xFFF2F6F4)
+                          : const Color(0xFFE9F0EC),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '$used/${item.limit}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: enabled
+                            ? const Color(0xFF3E8E6D)
+                            : const Color(0xFFB2C2BA),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

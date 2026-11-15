@@ -1481,10 +1481,17 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     final deleted = so - p;
     final inserted = sn - p;
 
-    // 回车：待办续框 / 续号，或空条目退出
-    if (deleted == 0 && inserted == 1 && v[p] == '\n') {
-      if (_enterTodo(v, p)) return true;
-      if (_enterList(v, p)) return true;
+    // 回车：待办续框 / 续号，或空条目退出。
+    //
+    // 真机中文输入法常在「提交拼音候选词」的同一次 onChanged 里一并插入
+    // 换行：此时新旧文本的 diff 不再只是「净增 1 个 \n」（拼音字母被替换
+    // 成汉字，甚至整体变短），旧的严格判定会整条漏掉，表现为换行后不
+    // 自动生成待办框 / 下一个标题。这里改为定位「新增区间末尾的那个
+    // 唯一换行符」：严格单字符换行自然也在其中，行中换行同样覆盖。
+    final nlPos = _newlineAtEdit(v, p, sn);
+    if (nlPos != null) {
+      if (_enterTodo(v, nlPos)) return true;
+      if (_enterList(v, nlPos)) return true;
     }
     // 退格把标记删成裸序号：整段退回正文
     if (deleted == 1 && inserted == 0) {
@@ -1498,6 +1505,20 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
       return true;
     }
     return false;
+  }
+
+  /// 本次文本更新「新增区间」[v.substring(p, sn)] 是否以唯一的换行符
+  /// 结尾；是则返回该换行符在 v 中的位置，否则 null。
+  ///
+  /// p / sn 由 _handleListEdit 的「共同前缀 + 共同后缀」diff 得出，因此
+  /// 无论输入法在同一帧里替换了多少 composing 字符（拼音 → 汉字），
+  /// 只要最后一个新增字符是换行，就仍能识别出这是一次回车。
+  /// 要求区间内恰好一个换行，避免把「一次粘贴多行」误判成回车续行。
+  int? _newlineAtEdit(String v, int p, int sn) {
+    if (sn <= p || sn > v.length || v.codeUnitAt(sn - 1) != 0x0A) return null;
+    final added = v.substring(p, sn);
+    if ('\n'.allMatches(added).length != 1) return null;
+    return sn - 1;
   }
 
   /// 在待办行末回车：下一行自动补一个未勾选待办框；

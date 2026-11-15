@@ -13,7 +13,7 @@ import '../widgets/pressable.dart';
 /// 保存用户删除的笔记 / 物品 / 事件 / 资产，最长 7 天。
 ///
 /// 还原与删除都不再挂在每张卡片上：
-/// - 顶栏「还原」进入选择模式，单选 / 多选后确认还原；
+/// - 顶栏「还原」弹出菜单：选择性还原（选择模式，单选 / 多选）/ 全部还原；
 /// - 顶栏「删除」弹出菜单：选择性删除（选择模式）/ 清空回收站。
 class TrashScreen extends StatefulWidget {
   final VoidCallback onOpenMenu;
@@ -256,6 +256,102 @@ class TrashScreenState extends State<TrashScreen> {
     _toast('已清空');
   }
 
+  /// 还原按钮的二级菜单：选择性还原 / 全部还原
+  Future<void> _showRestoreMenu() async {
+    Haptics.light();
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 6),
+            _menuRow(
+              key: const ValueKey('trash-menu-restore-selective'),
+              icon: AppIcons.check,
+              label: '选择性还原',
+              hint: '勾选要还原的内容',
+              color: const Color(0xFF24382F),
+              onTap: () => Navigator.pop(ctx, 'selective'),
+            ),
+            const Divider(height: 1, indent: 56, color: Color(0xFFEFF5F1)),
+            _menuRow(
+              key: const ValueKey('trash-menu-restore-all'),
+              icon: AppIcons.restore,
+              label: '全部还原',
+              hint: _category == null
+                  ? '恢复回收站中的全部内容'
+                  : '恢复「${_category!.label}」分类下的内容',
+              color: const Color(0xFF3E8E6D),
+              onTap: () => Navigator.pop(ctx, 'all'),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+              child: SizedBox(
+                width: double.infinity,
+                height: 44,
+                child: TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('取消',
+                      style: TextStyle(fontSize: 14, color: Color(0xFF647A70))),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!mounted || action == null) return;
+    if (action == 'selective') {
+      _enterSelect(_SelectMode.restore);
+    } else {
+      await _restoreAll();
+    }
+  }
+
+  /// 全部还原：按当前分类范围一次性恢复，二次确认后批量还原
+  Future<void> _restoreAll() async {
+    final picked = _filtered;
+    if (picked.isEmpty) return;
+    Haptics.light();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('全部还原?', style: TextStyle(fontSize: 17)),
+        content: Text('共 ${picked.length} 项将恢复到原位置。',
+            style: const TextStyle(fontSize: 13, height: 1.6)),
+        actions: [
+          Pressable(
+            enabled: true,
+            child: TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('取消')),
+          ),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('还原',
+                    style: TextStyle(color: Color(0xFF3E8E6D)))),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final n = await TrashStorage.restoreMany(picked);
+    if (!mounted) return;
+    await _load();
+    if (!mounted) return;
+    _toast('已还原 $n 项');
+  }
+
   /// 删除按钮的二级菜单：选择性删除 / 清空回收站
   Future<void> _showDeleteMenu() async {
     Haptics.light();
@@ -426,7 +522,7 @@ class TrashScreenState extends State<TrashScreen> {
               tooltip: '还原',
               icon: const AppIcon(AppIcons.restore,
                   color: Colors.white, size: 21),
-              onPressed: () => _enterSelect(_SelectMode.restore),
+              onPressed: _showRestoreMenu,
             ),
             IconButton(
               key: const ValueKey('trash-delete'),
@@ -480,7 +576,9 @@ class TrashScreenState extends State<TrashScreen> {
     final list = _filtered;
     return Column(
       children: [
-        if (_mode == null) _buildFilterBar() else _buildModeHint(),
+        // 选择模式不再显示说明条：顶栏已有「已选 x 项 / 全选 / 确认」，
+        // 分类筛选栏在选择态一并隐藏，避免切换分类把已选内容弄乱。
+        if (_mode == null) _buildFilterBar(),
         Expanded(
           child: list.isEmpty
               ? Center(
@@ -491,7 +589,8 @@ class TrashScreenState extends State<TrashScreen> {
                   ),
                 )
               : ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
+                  padding: EdgeInsets.fromLTRB(
+                      16, _mode == null ? 6 : 14, 16, 24),
                   children: [
                     for (final e in list) ...[
                       _buildCard(e),
@@ -511,20 +610,6 @@ class TrashScreenState extends State<TrashScreen> {
                 ),
         ),
       ],
-    );
-  }
-
-  /// 选择模式下的说明条（替代分类筛选，避免切换分类把选择弄乱）
-  Widget _buildModeHint() {
-    final restoring = _mode == _SelectMode.restore;
-    return Container(
-      height: 52,
-      alignment: Alignment.centerLeft,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Text(
-        restoring ? '选择要还原的内容，可多选' : '选择要彻底删除的内容，可多选或全选',
-        style: const TextStyle(fontSize: 12, color: Color(0xFF8FA09A)),
-      ),
     );
   }
 
@@ -611,6 +696,9 @@ class TrashScreenState extends State<TrashScreen> {
                 child: Container(
                   width: 20,
                   height: 20,
+                  // Container 不给 alignment 时 child 会被 20×20 的紧约束撑开，
+                  // 13px 的对勾被拉到左上角而不是落在圆圈中心。
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: picked ? const Color(0xFF3E8E6D) : Colors.white,
                     shape: BoxShape.circle,
