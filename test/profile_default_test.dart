@@ -109,20 +109,22 @@ void main() {
     expect(saved?.nickname, 'AyoDiray');
   });
 
-  testWidgets('性别含「无」选项，昵称 / 性别各为白色卡片', (tester) async {
+  testWidgets('性别收拢到右箭头：页面只显示当前值，点开弹层含男/女/无', (tester) async {
     await tester.binding.setSurfaceSize(const Size(600, 1200));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(
-        MaterialApp(home: ProfileEditScreen(profile: UserProfile())));
+    await tester.pumpWidget(MaterialApp(
+      home: ProfileEditScreen(profile: UserProfile(gender: 'male')),
+    ));
     await tester.pump();
 
+    // 默认页只展示当前值「男」，三个胶囊选项已移除
     expect(find.text('男'), findsOneWidget);
-    expect(find.text('女'), findsOneWidget);
-    expect(find.text('无'), findsOneWidget, reason: '性别新增「无」');
+    expect(find.text('女'), findsNothing);
+    expect(find.byKey(const ValueKey('profile-gender-row')), findsOneWidget);
 
-    // 昵称 / 性别两块各自有一层白底圆角卡片
-    for (final label in ['昵称', '性别']) {
+    // 昵称 / 性别 / 用户ID / 使用时间在同一张白色圆角卡内
+    for (final label in ['昵称', '性别', '用户ID', '使用时间']) {
       final containers = tester
           .widgetList<Container>(
               find.ancestor(of: find.text(label), matching: find.byType(Container)))
@@ -135,9 +137,66 @@ void main() {
       });
       expect(hasWhiteCard, isTrue, reason: '「$label」应在白色圆角卡片内');
     }
+
+    // 点性别行 → 弹出选项（含「无」），当前项「男」打勾
+    await tester.tap(find.byKey(const ValueKey('profile-gender-row')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('选择性别'), findsOneWidget);
+    expect(find.byKey(const ValueKey('gender_option_male')), findsOneWidget);
+    expect(find.byKey(const ValueKey('gender_option_female')), findsOneWidget);
+    expect(find.byKey(const ValueKey('gender_option_none')), findsOneWidget);
+    expect(find.text('无'), findsOneWidget, reason: '弹层里仍有「无」选项');
+    await tester.pump(const Duration(seconds: 2));
   });
 
-  testWidgets('选择「无」后保存，性别落为空字符串', (tester) async {
+  testWidgets('用户ID 淡灰只读、使用时间显示天数', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(600, 1200));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final profile = UserProfile();
+    await tester.pumpWidget(
+        MaterialApp(home: ProfileEditScreen(profile: profile)));
+    await tester.pump();
+
+    expect(find.text('用户ID'), findsOneWidget);
+    expect(find.text(profile.userId), findsOneWidget);
+    final idText = tester.widget<Text>(find.text(profile.userId));
+    expect(idText.style?.color, const Color(0xFF8FA09A),
+        reason: '用户ID 字色为淡灰');
+    // 不可编辑：整页只有昵称一个输入框
+    expect(find.byType(TextField), findsOneWidget);
+    expect(find.textContaining('已使用 '), findsOneWidget);
+    expect(find.text('已使用 ${profile.usedDays} 天'), findsOneWidget);
+  });
+
+  testWidgets('点用户ID 复制的是档案里的 ID', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(600, 1200));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final profile = UserProfile();
+    String? copied;
+    await tester.pumpWidget(MaterialApp(
+      home: ProfileEditScreen(
+        profile: profile,
+        clipboardOverride: (text) async => copied = text,
+      ),
+    ));
+    await tester.pump();
+
+    expect(find.byKey(const ValueKey('profile-user-id-row')), findsOneWidget);
+    expect(find.text(profile.userId), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('profile-user-id-row')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(copied, profile.userId, reason: '点击应把用户ID写入剪贴板');
+    expect(find.text('已复制用户ID'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 2));
+  });
+
+  testWidgets('性别弹层选「无」后保存，性别落为空字符串', (tester) async {
     await tester.binding.setSurfaceSize(const Size(600, 1200));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -146,8 +205,16 @@ void main() {
     ));
     await tester.pump();
 
-    await tester.tap(find.text('无'));
+    await tester.tap(find.byKey(const ValueKey('profile-gender-row')));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(find.byKey(const ValueKey('gender_option_none')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('选择性别'), findsNothing, reason: '选完弹层应关闭');
+
     await tester.tap(find.text('完成'));
     for (var i = 0; i < 12; i++) {
       await tester

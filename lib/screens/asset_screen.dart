@@ -608,7 +608,7 @@ class AssetScreenState extends State<AssetScreen> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16)),
                     title: const Text('删除这张资产卡片?'),
-                    content: const Text('删除后可在「回收站」保留 7 天，期间可还原'),
+                    content: const Text('删除后可在「回收站」保留 7 天'),
                     actions: [
                       Pressable(
                         enabled: true,

@@ -412,11 +412,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   /// 兑换码弹窗：输入 → 兑换 → 顶部提示结果。
   ///
-  /// 预设码：
-  /// - `ayouriji` → +100 积分
-  /// - `neice`    → 内测版铭牌（橙底白字）
-  /// - `vip`      → VIP 铭牌（红底白字）
-  /// 每个码单设备只能兑换一次；无效码给可重试提示。
+  /// 码表见 `RewardService` 与 `docs/redeem_codes.md`：
+  /// - `ayouriji` → +100 积分（限 1 次）
+  /// - `neice` / `vip` → 身份牌（限 1 次）
+  /// - `17381113325` → +1000 积分（不限次数）
+  /// - `13031210237` → -1000 积分（不限次数，最低 0）
+  /// 限次码每用户只能用一次；无限次码不写已用记录。
   Future<void> _redeemCode() async {
     final ctrl = TextEditingController();
     final code = await showDialog<String>(

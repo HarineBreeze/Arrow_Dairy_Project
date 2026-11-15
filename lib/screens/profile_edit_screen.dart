@@ -1,6 +1,7 @@
 import 'dart:io';
 import '../widgets/app_icons.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import '../utils/app_motion.dart';
@@ -32,12 +33,17 @@ class ProfileEditScreen extends StatefulWidget {
   @visibleForTesting
   final Future<UserProfile> Function()? loadOverride;
 
+  /// 仅测试使用：替换剪贴板写入（避免 widget 测试里平台通道挂起）
+  @visibleForTesting
+  final Future<void> Function(String text)? clipboardOverride;
+
   const ProfileEditScreen({
     Key? key,
     required this.profile,
     this.wearOverride,
     this.shopBuilder,
     this.loadOverride,
+    this.clipboardOverride,
   }) : super(key: key);
 
   @override
@@ -58,6 +64,13 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
 
   /// VIP 日卡是否生效中（生效期间 VIP 也在可佩戴列表里）
   late bool _vipActive;
+
+  /// 当前生效的 VIP 日卡到期时间（用于选择页展示「剩余x天」）
+  late DateTime? _vipExpireAt;
+
+  /// 用户 ID / 使用天数（只读信息，来自档案）
+  late String _userId;
+  late int _usedDays;
 
 
   final GlobalKey<SaveDoneButtonState> _doneKey =
@@ -85,6 +98,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     _points = widget.profile.points;
     _ownedBadges = List<String>.from(widget.profile.ownedBadges);
     _vipActive = widget.profile.vipCardActive;
+    _vipExpireAt = widget.profile.vipCardExpireTime;
+    _userId = widget.profile.userId;
+    _usedDays = widget.profile.usedDays;
     _initial = _snapshot();
   }
 
@@ -143,6 +159,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       _points = p.points;
       _ownedBadges = List<String>.from(p.ownedBadges);
       _vipActive = p.vipCardActive;
+      _vipExpireAt = p.vipCardExpireTime;
+      _userId = p.userId;
+      _usedDays = p.usedDays;
     });
   }
 
@@ -184,17 +203,29 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                   child: Row(
                     children: [
+                      // 只保留身份牌胶囊本身，旁边不再重复放一份名称文字
                       IdentityBadge(badge: id),
-                      const SizedBox(width: 10),
-                      Text(
-                        IdentityBadge.labelOf(id) ?? '',
-                        style: const TextStyle(
-                            fontSize: 14, color: Color(0xFF647A70)),
-                      ),
                       const Spacer(),
+                      // 右侧显示有效期：永久拥有 →「永久」，限时牌 →「剩余x天」
+                      Text(
+                        UserProfile.validityLabel(
+                          id,
+                          owned: _ownedBadges.contains(id),
+                          expiresAt: id == UserProfile.badgeVip &&
+                                  !_ownedBadges.contains(id)
+                              ? _vipExpireAt
+                              : null,
+                        ),
+                        key: ValueKey('badge_validity_$id'),
+                        style: const TextStyle(
+                            fontSize: 13, color: Color(0xFF8FA09A)),
+                      ),
+                      const SizedBox(width: 10),
                       if (id == _badge)
                         const AppIcon(AppIcons.check,
-                            size: 20, color: Color(0xFF3E8E6D)),
+                            size: 20, color: Color(0xFF3E8E6D))
+                      else
+                        const SizedBox(width: 20),
                     ],
                   ),
                 ),
@@ -277,18 +308,20 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
             const SizedBox(height: 28),
             _buildIdentityCard(),
             const SizedBox(height: 16),
-            // 昵称 / 性别合为一张白卡：与上方「身份牌 / 积分」卡同款底色与圆角，
-            // 内部用一条分隔线分成两行，仍与上方卡片保持独立信息块
+            // 昵称 / 性别 / 用户ID / 使用时间合为一张白卡：
+            // 四行值统一从同一条竖线开始，性别选择、ID 复制都是行内点击
             _buildFieldCard(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildNicknameField(),
-                  const SizedBox(height: 6),
                   const Divider(height: 1, color: Color(0xFFEEF4F0)),
-                  const SizedBox(height: 10),
                   _buildGenderRow(),
+                  const Divider(height: 1, color: Color(0xFFEEF4F0)),
+                  _buildUserIdRow(),
+                  const Divider(height: 1, color: Color(0xFFEEF4F0)),
+                  _buildUsedDaysRow(),
                 ],
               ),
             ),
@@ -405,15 +438,21 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     );
   }
 
+  /// 四行信息共用的标签列：固定宽度，保证右侧的值都从同一条竖线起、
+  /// 性别的当前值与昵称输入内容左对齐。
+  Widget _buildFieldLabel(String text) => SizedBox(
+        width: 76,
+        child: Text(
+          text,
+          style: const TextStyle(fontSize: 15, color: Color(0xFF24382F)),
+        ),
+      );
+
   Widget _buildNicknameField() {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const Text(
-          '昵称',
-          style: TextStyle(fontSize: 15, color: Color(0xFF24382F)),
-        ),
-        const SizedBox(width: 20),
+        _buildFieldLabel('昵称'),
         Expanded(
           child: TextField(
             controller: _nicknameCtrl,
@@ -441,52 +480,148 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     );
   }
 
+  /// 性别：三个选项收拢到右侧右箭头里，当前值按昵称同款样式展示。
   Widget _buildGenderRow() {
-    return Row(
-      children: [
-        const Text(
-          '性别',
-          style: TextStyle(fontSize: 15, color: Color(0xFF24382F)),
+    return SizedBox(
+      height: 48,
+      child: InkWell(
+        key: const ValueKey('profile-gender-row'),
+        onTap: _pickGender,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            _buildFieldLabel('性别'),
+            Expanded(
+              child: Text(
+                _genderLabel(_gender),
+                style: const TextStyle(fontSize: 15, color: Color(0xFF24382F)),
+              ),
+            ),
+            const AppIcon(AppIcons.chevR, size: 16, color: Color(0xFFC6D6CD)),
+          ],
         ),
-        const SizedBox(width: 20),
-        Expanded(
-          child: Row(
-            children: [
-              _buildGenderOption('男', 'male'),
-              const SizedBox(width: 12),
-              _buildGenderOption('女', 'female'),
-              const SizedBox(width: 12),
-              // 「无」= 不展示性别（存空字符串），也是旧档案的默认值
-              _buildGenderOption('无', ''),
-            ],
-          ),
-        ),
-      ],
+      ),
     );
   }
 
-  Widget _buildGenderOption(String label, String value) {
-    final selected = _gender == value;
-    return GestureDetector(
-      onTap: () => setState(() => _gender = value),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? const Color(0xFF3E8E6D) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: selected
-                ? const Color(0xFF3E8E6D)
-                : const Color(0xFFE4F2EB),
-          ),
+  String _genderLabel(String value) {
+    switch (value) {
+      case 'male':
+        return '男';
+      case 'female':
+        return '女';
+      default:
+        return '无';
+    }
+  }
+
+  /// 性别选择弹层（与身份牌选择同款：标题 + 选项 + 当前项打勾）
+  Future<void> _pickGender() async {
+    const options = <String, String>{
+      '男': 'male',
+      '女': 'female',
+      '无': '',
+    };
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 18, 20, 6),
+              child: Text(
+                '选择性别',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF24382F),
+                ),
+              ),
+            ),
+            for (final entry in options.entries)
+              InkWell(
+                key: ValueKey(
+                    'gender_option_${entry.value.isEmpty ? 'none' : entry.value}'),
+                onTap: () => Navigator.pop(ctx, entry.value),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  child: Row(
+                    children: [
+                      Text(entry.key,
+                          style: const TextStyle(
+                              fontSize: 14, color: Color(0xFF647A70))),
+                      const Spacer(),
+                      if (_gender == entry.value)
+                        const AppIcon(AppIcons.check,
+                            size: 20, color: Color(0xFF3E8E6D)),
+                    ],
+                  ),
+                ),
+              ),
+            const SizedBox(height: 8),
+          ],
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            color: selected ? Colors.white : const Color(0xFF647A70),
-          ),
+      ),
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _gender = picked);
+  }
+
+  /// 用户 ID：淡灰只读文字，点击整行复制到剪贴板。
+  Widget _buildUserIdRow() {
+    return SizedBox(
+      height: 48,
+      child: InkWell(
+        key: const ValueKey('profile-user-id-row'),
+        onTap: _copyUserId,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            _buildFieldLabel('用户ID'),
+            Expanded(
+              child: Text(
+                _userId,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
+              ),
+            ),
+          ],
         ),
+      ),
+    );
+  }
+
+  Future<void> _copyUserId() async {
+    final copy = widget.clipboardOverride ??
+        (String t) => Clipboard.setData(ClipboardData(text: t));
+    await copy(_userId);
+    if (!mounted) return;
+    AppToast.show(context, '已复制用户ID');
+  }
+
+  /// 使用时间：自用户 ID 注册日起至今天共多少天（只读）。
+  Widget _buildUsedDaysRow() {
+    return SizedBox(
+      height: 48,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          _buildFieldLabel('使用时间'),
+          Expanded(
+            child: Text(
+              '已使用 $_usedDays 天',
+              style: const TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
+            ),
+          ),
+        ],
       ),
     );
   }

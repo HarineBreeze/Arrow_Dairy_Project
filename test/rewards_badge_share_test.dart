@@ -90,6 +90,78 @@ void main() {
       expect(back.owns(UserProfile.badgeVip), isTrue);
       expect(back.owns(UserProfile.badgeNormal), isTrue);
     });
+
+    test('用户ID / 注册日可往返序列化，新档案自动生成', () {
+      final p = UserProfile();
+      expect(p.userId, isNotEmpty);
+      expect(p.userId, startsWith('AYO-'));
+      expect(p.registeredAt, matches(RegExp(r'^\d{4}-\d{2}-\d{2}$')));
+      expect(p.usedDays, 1, reason: '注册当天记为第 1 天');
+
+      final back = UserProfile.fromJson(p.toJson());
+      expect(back.userId, p.userId, reason: 'ID 必须稳定不漂移');
+      expect(back.registeredAt, p.registeredAt);
+    });
+
+    test('不同用户生成不同 ID', () {
+      final a = UserProfile();
+      final b = UserProfile();
+      expect(a.userId, isNot(b.userId));
+    });
+
+    test('使用时间按自然日递增', () {
+      final old = UserProfile.dayKey(
+          DateTime.now().subtract(const Duration(days: 9)));
+      final p = UserProfile.fromJson({'registeredAt': old});
+      expect(p.usedDays, 10, reason: '9 天前注册 → 含当天共 10 天');
+    });
+
+    test('旧档案缺 ID / 注册日时读档会补齐并固化', () async {
+      // 模拟 v4.9.21 以前的档案（没有 userId / registeredAt）
+      File('${dir.path}/user_profile.json').writeAsStringSync(jsonEncode({
+        'nickname': '老用户',
+        'points': 50,
+      }));
+      final p = await UserStorage.load();
+      expect(p.userId, isNotEmpty);
+      expect(p.registeredAt, isNotEmpty);
+      // 回写固化：再读一次仍是同一个 ID
+      final again = await UserStorage.load();
+      expect(again.userId, p.userId);
+      expect(again.points, 50);
+    });
+
+    test('身份牌有效期文案：永久 / 剩余x天', () {
+      final vip = UserProfile.badgeVip;
+      // 永久拥有 → 永久
+      expect(UserProfile.validityLabel(vip, owned: true, expiresAt: null),
+          '永久');
+      expect(UserProfile.validityLabel(UserProfile.badgeNormal,
+          owned: true, expiresAt: null), '永久');
+      // 限时 VIP 日卡 → 剩余1天
+      expect(
+        UserProfile.validityLabel(vip,
+            owned: false,
+            expiresAt: DateTime.now().add(const Duration(hours: 20))),
+        '剩余1天',
+      );
+      // 多日有效期
+      expect(
+        UserProfile.validityLabel(vip,
+            owned: false,
+            expiresAt: DateTime.now().add(const Duration(days: 3))),
+        '剩余3天',
+      );
+      // 已过期 / 没有到期时间 → 回落永久
+      expect(UserProfile.validityLabel(vip, owned: false, expiresAt: null),
+          '永久');
+      expect(
+        UserProfile.validityLabel(vip,
+            owned: false,
+            expiresAt: DateTime.now().subtract(const Duration(hours: 1))),
+        '永久',
+      );
+    });
   });
 
   group('兑换码', () {
@@ -117,6 +189,37 @@ void main() {
       final p = await UserStorage.load();
       expect(p.points, 2000);
       expect(p.redeemedCodes, isEmpty, reason: '无限次码不写已使用记录');
+    });
+
+    test('13031210237：每次 -1000 积分，不限次数，最低为 0 不为负', () async {
+      // 先用加分码攒到 2500
+      await RewardService.redeem('17381113325');
+      await RewardService.redeem('17381113325');
+      await RewardService.redeem('ayouriji');
+      expect((await UserStorage.load()).points, 2100);
+
+      final first = await RewardService.redeem('13031210237');
+      expect(first.ok, isTrue);
+      expect(first.message, contains('-1000'));
+      expect((await UserStorage.load()).points, 1100);
+
+      // 无限次：第二次仍生效；不写已用记录
+      final second = await RewardService.redeem(' 13031210237 ');
+      expect(second.ok, isTrue);
+      var p = await UserStorage.load();
+      expect(p.points, 100);
+      expect(p.redeemedCodes, isNot(contains('13031210237')));
+
+      // 第三次余额不足 1000：只扣到 0，绝不为负
+      final third = await RewardService.redeem('13031210237');
+      expect(third.ok, isTrue);
+      expect(third.message, contains('-100'));
+      p = await UserStorage.load();
+      expect(p.points, 0, reason: '积分最低为 0');
+
+      // 已经是 0 再兑，仍为 0
+      await RewardService.redeem('13031210237');
+      expect((await UserStorage.load()).points, 0);
     });
 
     test('neice：获得内测版身份牌', () async {

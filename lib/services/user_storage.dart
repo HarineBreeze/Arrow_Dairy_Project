@@ -17,10 +17,22 @@ class UserStorage {
   static Future<UserProfile> load() async {
     try {
       final file = await _file();
-      if (!await file.exists()) return UserProfile();
+      // 首次启动：生成用户 ID 与注册日并立刻落盘，保证 ID 稳定不漂移
+      if (!await file.exists()) {
+        final fresh = UserProfile();
+        await file.writeAsString(jsonEncode(fresh.toJson()));
+        return fresh;
+      }
       final content = await file.readAsString();
-      return UserProfile.fromJson(
-          jsonDecode(content) as Map<String, dynamic>);
+      final json = jsonDecode(content) as Map<String, dynamic>;
+      final profile = UserProfile.fromJson(json);
+      // v4.9.21 及以前的档案没有 userId / registeredAt：首次读档时补上并
+      // 回写固化。否则每次 load 都会 fromJson 出一个新的随机 ID。
+      if ((json['userId'] as String? ?? '').isEmpty ||
+          (json['registeredAt'] as String? ?? '').isEmpty) {
+        await save(profile);
+      }
+      return profile;
     } catch (_) {
       return UserProfile();
     }

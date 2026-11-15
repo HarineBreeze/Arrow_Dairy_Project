@@ -54,6 +54,12 @@ class RewardService {
     '17381113325': 1000,
   };
 
+  /// 无限次使用的「扣分」兑换码 → 扣减数量（不记入已使用列表）。
+  /// 用于运营/测试回收积分：每次扣固定分值，积分最低为 0、不会变负。
+  static const Map<String, int> unlimitedDeductCodes = {
+    '13031210237': 1000,
+  };
+
   /// 兑换码 → 身份牌 id
   static const Map<String, String> badgeCodes = {
     'neice': UserProfile.badgeBeta,
@@ -64,7 +70,7 @@ class RewardService {
   static const List<ShopBadge> shopBadges = [
     ShopBadge(
       id: UserProfile.badgeBirthday,
-      name: '诞生日',
+      name: '诞生日-身份牌',
       price: 50,
       note: '纪念APP正式上线，1年后下架',
       limit: 1,
@@ -100,6 +106,17 @@ class RewardService {
       profile.points += unlimited;
       await UserStorage.save(profile);
       return RedeemOutcome(true, '兑换成功，+$unlimited 积分');
+    }
+
+    // 无限次扣分码：同样不查重、不记录；扣完最低为 0，绝不为负。
+    // 提示语里报告「实际扣减」而不是固定值，避免余额不足时显示不实数字。
+    final deduct = unlimitedDeductCodes[code];
+    if (deduct != null) {
+      final before = profile.points;
+      profile.points = before > deduct ? before - deduct : 0;
+      await UserStorage.save(profile);
+      final actual = before - profile.points;
+      return RedeemOutcome(true, '兑换成功，-$actual 积分');
     }
 
     if (profile.redeemedCodes.contains(code)) {

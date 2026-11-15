@@ -736,7 +736,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('确认要删除这篇日记吗?'),
-        content: const Text('删除后可在「回收站」保留 7 天，期间可还原。'),
+        content: const Text('删除后可在「回收站」保留 7 天'),
         actions: [
           Pressable(
             enabled: true,

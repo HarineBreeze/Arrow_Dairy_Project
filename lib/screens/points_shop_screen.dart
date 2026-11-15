@@ -279,24 +279,13 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: enabled
-                          ? const Color(0xFFF2F6F4)
-                          : const Color(0xFFE9F0EC),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      '$used/${item.limit}',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: enabled
-                            ? const Color(0xFF3E8E6D)
-                            : const Color(0xFFB2C2BA),
-                      ),
+                  // 兑换次数：无底纹，字色与商品备注同款淡灰
+                  Text(
+                    '$used/${item.limit}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF8FA09A),
                     ),
                   ),
                 ],

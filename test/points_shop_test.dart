@@ -169,8 +169,8 @@ void main() {
       expect(find.text('积分是兑换道具的货币，可通过参与活动的方式获得'),
           findsOneWidget);
 
-      // 诞生日
-      expect(find.text('诞生日'), findsOneWidget);
+      // 诞生日（商品名带「-身份牌」后缀）
+      expect(find.text('诞生日-身份牌'), findsOneWidget);
       expect(find.text('纪念APP正式上线，1年后下架'), findsOneWidget);
       expect(find.text('50 积分'), findsOneWidget);
       expect(find.text('0/1'), findsOneWidget, reason: '次数改为「已兑/上限」');
@@ -186,6 +186,24 @@ void main() {
       expect(find.text('已拥有'), findsNothing);
       expect(find.text('积分不足'), findsNothing);
       expect(find.byType(IdentityBadge), findsNothing);
+
+      // 兑换次数：无底纹（外层不该有带圆角色块的 Container 包着数字），
+      // 字色与商品备注同为淡灰 #8FA09A
+      final countText = tester.widget<Text>(find.text('0/30'));
+      expect(countText.style?.color, const Color(0xFF8FA09A));
+      final noteText = tester.widget<Text>(find.text('兑换后可获得VIP权益1日'));
+      expect(countText.style?.color, noteText.style?.color,
+          reason: '次数字色与商品简介一致');
+      final decorated = find.ancestor(
+        of: find.text('0/30'),
+        matching: find.byWidgetPredicate((w) =>
+            w is Container &&
+            w.decoration is BoxDecoration &&
+            (w.decoration as BoxDecoration).borderRadius ==
+                BorderRadius.circular(8)),
+      );
+      // 旧版次数胶囊（圆角 8 的小色块）应彻底移除；白卡是圆角 16，不匹配
+      expect(decorated, findsNothing, reason: '兑换次数不应再有独立底纹胶囊');
     });
 
     testWidgets('提示语与分组标题：积分是兑换道具的货币 / 道具兑换', (tester) async {
@@ -259,7 +277,7 @@ void main() {
 
       await tester.tap(find.byKey(const ValueKey('shop-item-birthday')));
       await tester.pump(const Duration(milliseconds: 300));
-      expect(find.textContaining('已拥有「诞生日」'), findsOneWidget);
+      expect(find.textContaining('已拥有「诞生日-身份牌」'), findsOneWidget);
       await tester.pump(const Duration(seconds: 2));
     });
 
@@ -285,7 +303,8 @@ void main() {
 
       await tester.tap(find.byKey(const ValueKey('shop-item-birthday')));
       await tester.pump(const Duration(milliseconds: 300));
-      expect(find.textContaining('是否要花费 50 积分兑换「诞生日」'), findsOneWidget);
+      expect(find.textContaining('是否要花费 50 积分兑换「诞生日-身份牌」'),
+          findsOneWidget);
       expect(find.textContaining('兑换后剩余'), findsNothing,
           reason: '确认框不再提示兑换后剩余积分');
 
@@ -519,6 +538,50 @@ void main() {
       expect(find.text('选择身份牌'), findsNothing, reason: '选完应关闭选项');
       expect(find.text('普通版'), findsOneWidget, reason: '页面应显示已切换的普通版');
       await tester.pump(const Duration(seconds: 2)); // 排空 toast 定时器
+    });
+
+    testWidgets('身份牌选择页：移除名称文字，右侧显示有效期（永久/剩余x天）',
+        (tester) async {
+      tester.binding.window.physicalSizeTestValue = const Size(600, 1200);
+      tester.binding.window.devicePixelRatioTestValue = 1.0;
+      addTearDown(tester.binding.window.clearPhysicalSizeTestValue);
+      addTearDown(tester.binding.window.clearDevicePixelRatioTestValue);
+
+      await tester.pumpWidget(MaterialApp(
+        home: ProfileEditScreen(
+          profile: UserProfile(
+            badge: UserProfile.badgeNormal,
+            vipCardCount: 1,
+            vipCardExpireAt: DateTime.now()
+                .add(const Duration(hours: 20))
+                .toIso8601String(),
+          ),
+          wearOverride: (id) async =>
+              const RedeemOutcome(true, '已切换'),
+        ),
+      ));
+      await tester.pump();
+
+      await tester.tap(find.text('身份牌'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump(const Duration(milliseconds: 400));
+
+      // 普通版（永久拥有）→「永久」
+      expect(
+        tester.widget<Text>(find.byKey(const ValueKey('badge_validity_normal')))
+            .data,
+        '永久',
+      );
+      // VIP 日卡（限时、非永久拥有）→「剩余1天」
+      expect(
+        tester.widget<Text>(find.byKey(const ValueKey('badge_validity_vip')))
+            .data,
+        '剩余1天',
+      );
+      // 选项里不再有单独的铭牌名称文字（只有胶囊本身）
+      expect(find.byKey(const ValueKey('badge_option_vip')), findsOneWidget);
+      await tester.pump(const Duration(seconds: 2));
     });
 
     testWidgets('点「积分」进入积分商城', (tester) async {

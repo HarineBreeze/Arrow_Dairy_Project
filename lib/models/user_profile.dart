@@ -1,3 +1,5 @@
+import 'dart:math';
+
 class UserProfile {
   /// 默认昵称：用户从未设置过昵称时展示这个名字。
   static const String defaultNickname = 'AyoDiray';
@@ -39,6 +41,13 @@ class UserProfile {
   /// 当前生效的 VIP 日卡到期时间（ISO 8601），空 = 没有生效中的日卡
   String vipCardExpireAt;
 
+  /// 用户 ID：首次启动生成后固化到档案，可在个人信息页复制。
+  /// 同一份档案（同一用户）下兑换码使用次数以此为准。
+  String userId;
+
+  /// 用户注册日（yyyy-MM-dd），即用户 ID 生成当天；「使用时间」由此计算。
+  String registeredAt;
+
   UserProfile({
     this.nickname = defaultNickname,
     this.gender = '',
@@ -50,8 +59,61 @@ class UserProfile {
     this.lastWriteReward = '',
     this.vipCardCount = 0,
     this.vipCardExpireAt = '',
+    String? initialUserId,
+    String? initialRegisteredAt,
   })  : ownedBadges = _normalizeOwned(ownedBadges, badge),
-        redeemedCodes = redeemedCodes ?? <String>[];
+        redeemedCodes = redeemedCodes ?? <String>[],
+        userId = (initialUserId == null || initialUserId.isEmpty)
+            ? newUserId()
+            : initialUserId,
+        registeredAt = (initialRegisteredAt == null ||
+                initialRegisteredAt.isEmpty)
+            ? dayKey(DateTime.now())
+            : initialRegisteredAt;
+
+  /// 生成一个新的用户 ID：`AYO-<时间戳36进制>-<4位随机码>`。
+  /// 去掉了易混淆的 0/O/1/I，方便用户手动抄写。
+  static String newUserId() {
+    final stamp =
+        DateTime.now().microsecondsSinceEpoch.toRadixString(36).toUpperCase();
+    const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+    final r = Random();
+    final tail =
+        List.generate(4, (_) => chars[r.nextInt(chars.length)]).join();
+    return 'AYO-$stamp-$tail';
+  }
+
+  /// `yyyy-MM-dd` 日期键
+  static String dayKey(DateTime t) =>
+      '${t.year}-${t.month.toString().padLeft(2, '0')}-'
+      '${t.day.toString().padLeft(2, '0')}';
+
+  /// 使用时间：自注册日起至今天共多少天（注册当天记为第 1 天）。
+  /// 只按自然日计算，避免时分秒导致显示差一天；解析失败时回落为 1。
+  int get usedDays {
+    final reg = DateTime.tryParse(registeredAt);
+    if (reg == null) return 1;
+    final now = DateTime.now();
+    final a = DateTime(reg.year, reg.month, reg.day);
+    final b = DateTime(now.year, now.month, now.day);
+    return b.difference(a).inDays + 1;
+  }
+
+  /// 身份牌在「选择身份牌」弹层里展示的有效期文案：
+  /// 永久拥有的牌显示「永久」；限时牌（VIP 日卡）显示「剩余x天」。
+  /// 不足 1 天按 1 天显示，避免刚兑换完就出现「剩余0天」。
+  static String validityLabel(String id,
+      {required bool owned, DateTime? expiresAt}) {
+    if (!owned &&
+        id == badgeVip &&
+        expiresAt != null &&
+        DateTime.now().isBefore(expiresAt)) {
+      final hours = expiresAt.difference(DateTime.now()).inHours;
+      final days = (hours / 24).ceil();
+      return '剩余${days < 1 ? 1 : days}天';
+    }
+    return '永久';
+  }
 
   /// 已拥有列表归一：普通版恒在首位、去重、当前佩戴的牌必须在列表里。
   static List<String> _normalizeOwned(List<String>? owned, String current) {
@@ -87,6 +149,8 @@ class UserProfile {
         'lastWriteReward': lastWriteReward,
         'vipCardCount': vipCardCount,
         'vipCardExpireAt': vipCardExpireAt,
+        'userId': userId,
+        'registeredAt': registeredAt,
       };
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -130,6 +194,8 @@ class UserProfile {
       lastWriteReward: json['lastWriteReward'] as String? ?? '',
       vipCardCount: (json['vipCardCount'] as num?)?.toInt() ?? 0,
       vipCardExpireAt: json['vipCardExpireAt'] as String? ?? '',
+      initialUserId: json['userId'] as String?,
+      initialRegisteredAt: json['registeredAt'] as String?,
     );
     if (vipCardWorn) {
       // 撤销构造器对「当前佩戴牌」的自动补入：日卡 VIP 只是临时佩戴，

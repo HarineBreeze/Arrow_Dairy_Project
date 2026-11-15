@@ -215,6 +215,85 @@ class TrashScreenState extends State<TrashScreen> {
     _toast('已彻底删除 ${picked.length} 项');
   }
 
+  /// 卡片长按菜单（与主页卡片长按同一套样式）：还原 / 彻底删除 单条。
+  /// 普通浏览态才可用；选择态下长按不弹菜单，避免与勾选冲突。
+  Future<void> _showCardActions(TrashEntry entry) async {
+    Haptics.mediumNow();
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 6),
+            ListTile(
+              key: const ValueKey('trash_card_action_restore'),
+              leading:
+                  const AppIcon(AppIcons.restore, color: Color(0xFF3E8E6D)),
+              title: const Text('还原', style: TextStyle(fontSize: 15)),
+              onTap: () => Navigator.pop(ctx, 'restore'),
+            ),
+            ListTile(
+              key: const ValueKey('trash_card_action_delete'),
+              leading:
+                  const AppIcon(AppIcons.delete, color: Color(0xFFCB5C50)),
+              title: const Text('彻底删除',
+                  style: TextStyle(fontSize: 15, color: Color(0xFFCB5C50))),
+              onTap: () => Navigator.pop(ctx, 'delete'),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (!mounted || action == null) return;
+    if (action == 'restore') {
+      await TrashStorage.restore(entry);
+      if (!mounted) return;
+      await _load();
+      if (!mounted) return;
+      _toast('已还原 1 项');
+      return;
+    }
+    // 彻底删除不可逆，与其他删除操作一样走二次确认
+    Haptics.light();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('彻底删除?', style: TextStyle(fontSize: 17)),
+        content: const Text('该内容将被永久删除，无法恢复。',
+            style: TextStyle(fontSize: 13, height: 1.6)),
+        actions: [
+          Pressable(
+            enabled: true,
+            child: TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('取消')),
+          ),
+          Pressable(
+            enabled: true,
+            child: TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('彻底删除',
+                    style: TextStyle(color: Color(0xFFCB5C50)))),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    await TrashStorage.remove(entry.id);
+    if (!mounted) return;
+    await _load();
+    if (!mounted) return;
+    _toast('已彻底删除 1 项');
+  }
+
   // ---------- 清空回收站 ----------
 
   Future<void> _clearAll() async {
@@ -289,19 +368,9 @@ class TrashScreenState extends State<TrashScreen> {
               color: const Color(0xFF3E8E6D),
               onTap: () => Navigator.pop(ctx, 'all'),
             ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-              child: SizedBox(
-                width: double.infinity,
-                height: 44,
-                child: TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('取消',
-                      style: TextStyle(fontSize: 14, color: Color(0xFF647A70))),
-                ),
-              ),
-            ),
+            // 抽屉不再放「取消」按钮：点遮罩 / 下滑即可关闭，
+            // 与其它主页的长按菜单保持一致
+            const SizedBox(height: 18),
           ],
         ),
       ),
@@ -385,19 +454,8 @@ class TrashScreenState extends State<TrashScreen> {
               color: const Color(0xFF24382F),
               onTap: () => Navigator.pop(ctx, 'clear'),
             ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-              child: SizedBox(
-                width: double.infinity,
-                height: 44,
-                child: TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('取消',
-                      style: TextStyle(fontSize: 14, color: Color(0xFF647A70))),
-                ),
-              ),
-            ),
+            // 抽屉不再放「取消」按钮：点遮罩 / 下滑即可关闭
+            const SizedBox(height: 18),
           ],
         ),
       ),
@@ -763,6 +821,8 @@ class TrashScreenState extends State<TrashScreen> {
       key: ValueKey('trash-entry-${e.id}'),
       behavior: HitTestBehavior.opaque,
       onTap: selecting ? () => _toggle(e) : null,
+      // 长按弹单条操作菜单；选择态下交给 onTap 勾选，不弹菜单
+      onLongPress: selecting ? null : () => _showCardActions(e),
       child: selecting ? card : Pressable(child: card),
     );
   }

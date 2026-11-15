@@ -306,6 +306,98 @@ void main() {
     await tester.pump(const Duration(seconds: 2)); // 排空 toast 定时器
   });
 
+  testWidgets('还原/删除抽屉不再有「取消」按钮', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(400, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    writeTrash([trashItem(id: 't1', bizId: 'd1', title: '笔记一')]);
+
+    await tester.pumpWidget(host());
+    await _settle(tester);
+
+    await tester.tap(find.byKey(const ValueKey('trash-restore')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('选择性还原'), findsOneWidget);
+    expect(find.text('取消'), findsNothing, reason: '还原抽屉移除取消按钮');
+    // 点遮罩关闭抽屉
+    await tester.tapAt(const Offset(200, 100));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    await tester.tap(find.byKey(const ValueKey('trash-delete')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('选择性删除'), findsOneWidget);
+    expect(find.text('取消'), findsNothing, reason: '删除抽屉移除取消按钮');
+    await tester.pump(const Duration(seconds: 2));
+  });
+
+  testWidgets('长按卡片：弹出还原 / 彻底删除选项，选中还原单条', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(400, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    writeTrash([
+      trashItem(id: 't1', bizId: 'd1', title: '笔记一'),
+      trashItem(id: 't2', bizId: 'd2', title: '笔记二'),
+    ]);
+
+    await tester.pumpWidget(host());
+    await _settle(tester);
+
+    await tester.longPress(find.byKey(const ValueKey('trash-entry-t1')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.byKey(const ValueKey('trash_card_action_restore')),
+        findsOneWidget);
+    expect(find.byKey(const ValueKey('trash_card_action_delete')),
+        findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('trash_card_action_restore')));
+    await _settle(tester);
+    await _until(tester, () => readDiaryTitles().contains('笔记一'));
+    await _until(tester, () => find.text('笔记一').evaluate().isEmpty);
+    await _settle(tester);
+
+    expect(readDiaryTitles(), contains('笔记一'));
+    expect(readDiaryTitles(), isNot(contains('笔记二')));
+    expect(find.text('笔记二'), findsOneWidget, reason: '未长按的条目仍在');
+    await tester.pump(const Duration(seconds: 2));
+  });
+
+  testWidgets('长按卡片：彻底删除单条带二次确认', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(400, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    writeTrash([
+      trashItem(id: 't1', bizId: 'd1', title: '笔记一'),
+      trashItem(id: 't2', bizId: 'd2', title: '笔记二'),
+    ]);
+
+    await tester.pumpWidget(host());
+    await _settle(tester);
+
+    await tester.longPress(find.byKey(const ValueKey('trash-entry-t1')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(find.byKey(const ValueKey('trash_card_action_delete')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('彻底删除?'), findsOneWidget);
+
+    await tester.tap(find.text('彻底删除').last);
+    await _settle(tester);
+    await _until(tester, () => readTrashRaw().length == 1);
+    await _settle(tester);
+
+    expect(readTrashRaw().length, 1);
+    expect(find.text('笔记二'), findsOneWidget);
+    expect(find.text('笔记一'), findsNothing);
+    await tester.pump(const Duration(seconds: 2));
+  });
+
   testWidgets('选择态：对勾落在圆圈中心', (tester) async {
     await tester.binding.setSurfaceSize(const Size(400, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
