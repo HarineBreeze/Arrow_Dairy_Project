@@ -1481,8 +1481,9 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     final deleted = so - p;
     final inserted = sn - p;
 
-    // 回车：续号，或空条目退出列表
+    // 回车：待办续框 / 续号，或空条目退出
     if (deleted == 0 && inserted == 1 && v[p] == '\n') {
+      if (_enterTodo(v, p)) return true;
       if (_enterList(v, p)) return true;
     }
     // 退格把标记删成裸序号：整段退回正文
@@ -1497,6 +1498,31 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
       return true;
     }
     return false;
+  }
+
+  /// 在待办行末回车：下一行自动补一个未勾选待办框；
+  /// 空待办（只有框、没有文字）再回车则退出待办，把这一行还原成正文。
+  bool _enterTodo(String v, int nlPos) {
+    final ls = nlPos == 0 ? 0 : ListText.lineStartOf(v, nlPos - 1);
+    final line = v.substring(ls, nlPos);
+    final todo = TodoText.parseLine(line, ls);
+    if (todo == null) return false;
+
+    // 行首缩进原样保留，标记从缩进后开始
+    final indent = line.length - line.trimLeft().length;
+    final markStart = ls + indent;
+
+    if (todo.text.trim().isEmpty) {
+      // 空待办再回车：清掉标记与整行剩余内容，光标落在行首
+      final work = v.replaceRange(markStart, todo.end, '');
+      _commitText(work, markStart);
+      return true;
+    }
+
+    final prefix = TodoText.uncheckedPrefix;
+    final work = v.replaceRange(nlPos + 1, nlPos + 1, prefix);
+    _commitText(work, nlPos + 1 + prefix.length);
+    return true;
   }
 
   /// 在 [nlPos] 处的换行后，为新行补上同类型前缀。

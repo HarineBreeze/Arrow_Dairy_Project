@@ -108,4 +108,55 @@ void main() {
     final saved = await tester.runAsync(() => UserStorage.load());
     expect(saved?.nickname, 'AyoDiray');
   });
+
+  testWidgets('性别含「无」选项，昵称 / 性别各为白色卡片', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(600, 1200));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+        MaterialApp(home: ProfileEditScreen(profile: UserProfile())));
+    await tester.pump();
+
+    expect(find.text('男'), findsOneWidget);
+    expect(find.text('女'), findsOneWidget);
+    expect(find.text('无'), findsOneWidget, reason: '性别新增「无」');
+
+    // 昵称 / 性别两块各自有一层白底圆角卡片
+    for (final label in ['昵称', '性别']) {
+      final containers = tester
+          .widgetList<Container>(
+              find.ancestor(of: find.text(label), matching: find.byType(Container)))
+          .toList();
+      final hasWhiteCard = containers.any((c) {
+        final d = c.decoration;
+        return d is BoxDecoration &&
+            d.color == Colors.white &&
+            d.borderRadius == BorderRadius.circular(16);
+      });
+      expect(hasWhiteCard, isTrue, reason: '「$label」应在白色圆角卡片内');
+    }
+  });
+
+  testWidgets('选择「无」后保存，性别落为空字符串', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(600, 1200));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(MaterialApp(
+      home: ProfileEditScreen(profile: UserProfile(gender: 'male')),
+    ));
+    await tester.pump();
+
+    await tester.tap(find.text('无'));
+    await tester.pump();
+    await tester.tap(find.text('完成'));
+    for (var i = 0; i < 12; i++) {
+      await tester
+          .runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await tester.pumpAndSettle();
+
+    final saved = await tester.runAsync(() => UserStorage.load());
+    expect(saved?.gender, '');
+  });
 }

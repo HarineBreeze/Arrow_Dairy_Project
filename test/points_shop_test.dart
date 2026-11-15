@@ -12,6 +12,7 @@ import 'package:ayodiray/screens/profile_edit_screen.dart';
 import 'package:ayodiray/screens/settings_screen.dart';
 import 'package:ayodiray/services/reward_service.dart';
 import 'package:ayodiray/services/user_storage.dart';
+import 'package:ayodiray/widgets/identity_badge.dart';
 
 /// 身份牌切换 / 积分商城 / 活动分组文案的回归测试。
 class _FakePathProvider extends PathProviderPlatform {
@@ -148,7 +149,7 @@ void main() {
   });
 
   group('积分商城页面', () {
-    testWidgets('显示余额与商品价格（诞生日 + VIP日卡）', (tester) async {
+    testWidgets('商品卡：名称 + 备注 + 价格 + 兑换次数，没有按钮', (tester) async {
       await tester.binding.setSurfaceSize(const Size(600, 1200));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -162,16 +163,27 @@ void main() {
       expect(find.text('积分商城'), findsOneWidget);
       expect(find.text('我的积分'), findsOneWidget);
       expect(find.text('120'), findsOneWidget);
+
+      // 诞生日
       expect(find.text('诞生日'), findsOneWidget);
+      expect(find.text('纪念APP正式上线，1年后下架'), findsOneWidget);
       expect(find.text('50 积分'), findsOneWidget);
+      expect(find.text('每人限兑 1 次'), findsOneWidget);
+
+      // VIP日卡
       expect(find.text('VIP日卡'), findsOneWidget);
+      expect(find.text('兑换后可获得VIP权益1日'), findsOneWidget);
       expect(find.text('200 积分'), findsOneWidget);
-      // 120 分够买诞生日、不够买 VIP日卡
-      expect(find.text('兑换'), findsOneWidget);
-      expect(find.text('积分不足'), findsOneWidget);
+      expect(find.text('每人限兑 30 次 · 已兑 0 次'), findsOneWidget);
+
+      // 卡片不再有独立按钮文案，也不再展示身份牌胶囊
+      expect(find.text('兑换'), findsNothing);
+      expect(find.text('已拥有'), findsNothing);
+      expect(find.text('积分不足'), findsNothing);
+      expect(find.byType(IdentityBadge), findsNothing);
     });
 
-    testWidgets('旧提示语已移除', (tester) async {
+    testWidgets('提示语：仅保留「积分可通过参与活动的方式获得」', (tester) async {
       await tester.binding.setSurfaceSize(const Size(600, 1200));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -182,13 +194,13 @@ void main() {
       ));
       await tester.pump();
 
+      expect(find.text('积分可通过参与活动的方式获得'), findsOneWidget);
       expect(find.text('佩戴后显示在昵称旁'), findsNothing);
       expect(find.textContaining('兑换后会立即佩戴'), findsNothing);
-      expect(find.text('积分可通过每日首次发布笔记、参与活动获得。'),
-          findsOneWidget);
+      expect(find.textContaining('每日首次发布笔记'), findsNothing);
     });
 
-    testWidgets('积分不足时按钮为「积分不足」且不可点', (tester) async {
+    testWidgets('积分不足：点击卡片提示差额，不弹确认框、不扣分', (tester) async {
       await tester.binding.setSurfaceSize(const Size(600, 1200));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -204,13 +216,15 @@ void main() {
       ));
       await tester.pump();
 
-      expect(find.text('积分不足'), findsNWidgets(2));
-      await tester.tap(find.text('积分不足').first);
+      await tester.tap(find.byKey(const ValueKey('shop-item-birthday')));
       await tester.pump(const Duration(milliseconds: 300));
+      expect(find.textContaining('积分不足'), findsOneWidget);
+      expect(find.textContaining('是否要花费'), findsNothing);
       expect(bought, 0);
+      await tester.pump(const Duration(seconds: 2)); // 排空 toast 定时器
     });
 
-    testWidgets('已拥有时显示「已拥有」', (tester) async {
+    testWidgets('已拥有：卡片置灰，点击提示已拥有', (tester) async {
       await tester.binding.setSurfaceSize(const Size(600, 1200));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -225,11 +239,22 @@ void main() {
       ));
       await tester.pump();
 
-      expect(find.text('已拥有'), findsOneWidget);
-      expect(find.text('兑换'), findsNothing);
+      // 卡片背景变灰
+      final card = tester.widget<Container>(find
+          .descendant(
+              of: find.byKey(const ValueKey('shop-item-birthday')),
+              matching: find.byType(Container))
+          .first);
+      expect((card.decoration as BoxDecoration).color,
+          const Color(0xFFF2F6F4));
+
+      await tester.tap(find.byKey(const ValueKey('shop-item-birthday')));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.textContaining('已拥有「诞生日」'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 2));
     });
 
-    testWidgets('确认兑换：调起对话 → 扣分并刷新余额', (tester) async {
+    testWidgets('可兑换：点卡片弹「是否要花费x积分兑换」→ 确认后扣分刷新', (tester) async {
       await tester.binding.setSurfaceSize(const Size(600, 1200));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -249,16 +274,15 @@ void main() {
       ));
       await tester.pump();
 
-      await tester.tap(find.text('兑换'));
+      await tester.tap(find.byKey(const ValueKey('shop-item-birthday')));
       await tester.pump(const Duration(milliseconds: 300));
-      expect(find.text('兑换身份牌'), findsOneWidget);
-      expect(find.textContaining('剩余 70'), findsOneWidget);
+      expect(find.textContaining('是否要花费 50 积分兑换「诞生日」'), findsOneWidget);
+      expect(find.textContaining('兑换后剩余 70 积分'), findsOneWidget);
 
-      await tester.tap(find.text('确认兑换'));
+      await tester.tap(find.text('确认'));
       await _settle(tester);
 
       expect(find.text('70'), findsOneWidget, reason: '余额应刷新为 70');
-      expect(find.text('已拥有'), findsOneWidget);
       await tester.pump(const Duration(seconds: 2)); // 排空 toast 定时器
     });
   });
@@ -366,7 +390,7 @@ void main() {
       expect(back.owns(UserProfile.badgeVip), isTrue);
     });
 
-    testWidgets('商城展示 VIP日卡：价格、说明与剩余次数', (tester) async {
+    testWidgets('商城展示 VIP日卡：备注、价格与已兑次数', (tester) async {
       await tester.binding.setSurfaceSize(const Size(600, 1600));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -380,15 +404,13 @@ void main() {
       ));
       await tester.pump();
 
-      expect(find.text('兑换后立即生效，24小时内佩戴VIP身份牌'), findsOneWidget);
-      expect(find.text('可兑换次数已用 2/30'), findsOneWidget);
+      expect(find.text('兑换后可获得VIP权益1日'), findsOneWidget);
+      expect(find.text('每人限兑 30 次 · 已兑 2 次'), findsOneWidget);
       expect(find.text('200 积分'), findsOneWidget);
-      // 300 分够买两件商品
-      expect(find.text('兑换'), findsNWidgets(2));
       await tester.pump(const Duration(seconds: 2));
     });
 
-    testWidgets('兑换 VIP日卡：确认弹窗 → 走日卡购买通道', (tester) async {
+    testWidgets('兑换 VIP日卡：点卡片 → 确认框 → 走日卡购买通道', (tester) async {
       await tester.binding.setSurfaceSize(const Size(600, 1600));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -404,17 +426,44 @@ void main() {
       ));
       await tester.pump();
 
-      // 第二张商品卡是 VIP日卡
-      await tester.tap(find.text('兑换').last);
+      await tester.tap(find.byKey(const ValueKey('shop-item-vip')));
       await tester.pump(const Duration(milliseconds: 300));
-      expect(find.text('兑换VIP日卡'), findsOneWidget);
+      expect(find.textContaining('是否要花费 200 积分兑换「VIP日卡」'), findsOneWidget);
       expect(find.textContaining('有效期24小时'), findsOneWidget);
-      expect(find.textContaining('剩余 100'), findsOneWidget);
+      expect(find.textContaining('兑换后剩余 100 积分'), findsOneWidget);
 
-      await tester.tap(find.text('确认兑换'));
+      await tester.tap(find.text('确认'));
       await _settle(tester);
       expect(boughtIds, [UserProfile.badgeVip]);
       await tester.pump(const Duration(seconds: 2)); // 排空 toast 定时器
+    });
+
+    testWidgets('日卡达到 30 次上限：卡片置灰，点击提示上限', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(600, 1600));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(MaterialApp(
+        home: PointsShopScreen(
+          loadOverride: () async => UserProfile(
+            points: 9999,
+            vipCardCount: 30,
+          ),
+        ),
+      ));
+      await tester.pump();
+
+      final card = tester.widget<Container>(find
+          .descendant(
+              of: find.byKey(const ValueKey('shop-item-vip')),
+              matching: find.byType(Container))
+          .first);
+      expect((card.decoration as BoxDecoration).color,
+          const Color(0xFFF2F6F4));
+
+      await tester.tap(find.byKey(const ValueKey('shop-item-vip')));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.textContaining('已达兑换上限'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 2));
     });
   });
 

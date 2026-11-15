@@ -154,4 +154,18 @@ void main() {
         reason: '设置项图标应与导航项图标左对齐');
   });
 
+  testWidgets('默认佩戴的「普通版」铭牌也显示在昵称下方', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(400, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(host(UserProfile(nickname: '小明')));
+    await tester.pump();
+
+    expect(find.text('普通版'), findsOneWidget);
+    final nickRect = tester.getRect(find.text('小明'));
+    final badgeRect = tester.getRect(find.text('普通版'));
+    expect(badgeRect.top, greaterThan(nickRect.bottom - 2),
+        reason: '铭牌应在昵称下方');
+  });
+
 }

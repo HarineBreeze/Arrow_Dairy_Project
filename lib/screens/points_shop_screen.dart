@@ -1,4 +1,3 @@
-import '../widgets/app_icons.dart';
 import 'package:flutter/material.dart';
 
 import '../models/user_profile.dart';
@@ -6,16 +5,16 @@ import '../services/reward_service.dart';
 import '../services/user_storage.dart';
 import '../utils/app_toast.dart';
 import '../utils/haptics.dart';
-import '../widgets/identity_badge.dart';
 import '../widgets/pressable.dart';
 
-/// 积分商城：用积分兑换身份牌。
+/// 积分商城：用积分兑换身份牌 / 限时权益。
 ///
 /// 版式沿用全 App 的「页面底色 + 白色圆角卡 + 灰色节标题」节奏：
-/// 顶部是积分余额卡，下面按品类分组（永久身份牌与限时 VIP日卡）。
+/// 顶部是积分余额卡，下面是商品卡（名称 + 备注 + 价格 + 兑换次数）。
 ///
-/// 兑换规则：积分足够才能兑换；永久身份牌按「已拥有」判重，
-/// VIP日卡按次数上限判重；兑换成功后自动佩戴。
+/// 商品卡本身就是按钮（带按压缩放回弹）：
+/// - 已拥有 / 积分不足 / 达到兑换上限：卡片置灰，点击给出对应提示；
+/// - 可兑换：点击弹确认框「是否要花费 x 积分兑换？」。
 class PointsShopScreen extends StatefulWidget {
   /// 仅测试使用：替换档案读取（避免 widget 测试里走真实文件 IO）
   @visibleForTesting
@@ -47,9 +46,25 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
     setState(() => _profile = p);
   }
 
-  Future<void> _buy(ShopBadge item) async {
-    final profile = _profile;
-    if (profile == null) return;
+  /// 商品是否已不可再兑（永久牌看已拥有；日卡看次数上限）
+  bool _soldOut(UserProfile p, ShopBadge item) {
+    if (item.kind == ShopItemKind.vipDayCard) {
+      return p.vipCardCount >= item.limit;
+    }
+    return p.owns(item.id);
+  }
+
+  Future<void> _onTapItem(UserProfile profile, ShopBadge item) async {
+    if (_soldOut(profile, item)) {
+      _toast(item.kind == ShopItemKind.vipDayCard
+          ? '已达兑换上限（${item.limit} 次）'
+          : '已拥有「${item.name}」');
+      return;
+    }
+    if (profile.points < item.price) {
+      _toast('积分不足，还差 ${item.price - profile.points} 积分');
+      return;
+    }
 
     final isDayCard = item.kind == ShopItemKind.vipDayCard;
     // 二次确认：积分是不可逆消耗，跟删除一样走两段式
@@ -58,15 +73,11 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          isDayCard ? '兑换VIP日卡' : '兑换身份牌',
-          style: const TextStyle(fontSize: 17),
-        ),
         content: Text(
-          '使用 ${item.price} 积分兑换「${item.name}」？\n'
+          '是否要花费 ${item.price} 积分兑换「${item.name}」？\n'
           '${isDayCard ? '兑换后立即生效，有效期24小时。\n' : ''}'
-          '当前积分 ${profile.points}，兑换后剩余 ${profile.points - item.price}。',
-          style: const TextStyle(fontSize: 13, height: 1.6),
+          '兑换后剩余 ${profile.points - item.price} 积分。',
+          style: const TextStyle(fontSize: 13, height: 1.7),
         ),
         actions: [
           Pressable(
@@ -81,7 +92,7 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
             child: TextButton(
               onPressed: () => Navigator.pop(ctx, true),
               child: const Text(
-                '确认兑换',
+                '确认',
                 style: TextStyle(
                   color: Color(0xFF3E8E6D),
                   fontWeight: FontWeight.w600,
@@ -99,10 +110,12 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
         item.id);
     if (!mounted) return;
     if (outcome.ok) Haptics.light();
-    AppToast.show(context, outcome.message);
-    // 无论成功与否都重读一次：成功时刷新余额与「已拥有」状态
+    _toast(outcome.message);
+    // 无论成功与否都重读一次：成功时刷新余额与已购状态
     await _load();
   }
+
+  void _toast(String msg) => AppToast.show(context, msg);
 
   @override
   Widget build(BuildContext context) {
@@ -139,7 +152,7 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 4),
                   child: Text(
-                    '积分可通过每日首次发布笔记、参与活动获得。',
+                    '积分可通过参与活动的方式获得',
                     style: TextStyle(
                       fontSize: 11,
                       height: 1.7,
@@ -152,28 +165,17 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
     );
   }
 
-  /// 积分余额卡：左侧说明、右侧大数字，与个人信息页的积分栏同款配色
+  /// 积分余额卡：左侧「我的积分」、右侧大数字。
+  /// 不加图标与底纹，文字与下方商品卡名称同一条左对齐线。
   Widget _buildBalanceCard(UserProfile profile) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE4F2EB),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Center(
-              child: AppIcon(AppIcons.gift, size: 20, color: Color(0xFF3E8E6D)),
-            ),
-          ),
-          const SizedBox(width: 12),
           const Expanded(
             child: Text(
               '我的积分',
@@ -202,105 +204,82 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
     );
   }
 
-  /// 商品卡：上方是商品预览与价格，下方是整行按钮。
-  /// 永久身份牌按「已拥有」判重；VIP日卡按次数上限（30 次）判重。
+  /// 商品卡：名称 + 备注 + 价格 + 兑换次数，整卡可点（按压缩放回弹）
   Widget _buildGoodsCard(UserProfile profile, ShopBadge item) {
-    final isDayCard = item.kind == ShopItemKind.vipDayCard;
-    final remaining = RewardService.vipCardMaxCount - profile.vipCardCount;
-    final soldOut = isDayCard && remaining <= 0;
-    final owned = !isDayCard && profile.owns(item.id);
+    final soldOut = _soldOut(profile, item);
     final affordable = profile.points >= item.price;
-    final enabled = !owned && !soldOut && affordable;
-    final buttonText = owned
-        ? '已拥有'
-        : (soldOut
-            ? '已达兑换上限'
-            : (affordable ? '兑换' : '积分不足'));
+    final enabled = !soldOut && affordable;
+    // 不可兑换时整卡置灰，只保留极淡的边界感
+    final cardColor = enabled ? Colors.white : const Color(0xFFF2F6F4);
+    final titleColor = enabled ? const Color(0xFF24382F) : const Color(0xFF8FA09A);
+    final priceColor = enabled ? const Color(0xFF3E8E6D) : const Color(0xFFB2C2BA);
 
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    final countText = item.kind == ShopItemKind.vipDayCard
+        ? '每人限兑 ${item.limit} 次 · 已兑 ${profile.vipCardCount} 次'
+        : '每人限兑 ${item.limit} 次';
+
+    return Pressable(
+      enabled: true,
+      child: GestureDetector(
+        key: ValueKey('shop-item-${item.id}'),
+        behavior: HitTestBehavior.opaque,
+        onTap: () => _onTapItem(profile, item),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 放大 1.6 倍的牌，作为商品预览（与佩戴时同一套配色）
-              IdentityBadge(badge: item.id, scale: 1.6),
-              const Spacer(),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      item.name,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: titleColor,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    '${item.price} 积分',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: priceColor,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
               Text(
-                '${item.price} 积分',
+                item.note,
                 style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF3E8E6D),
+                  fontSize: 12,
+                  height: 1.5,
+                  color: Color(0xFF8FA09A),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                countText,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: enabled
+                      ? const Color(0xFFB2C2BA)
+                      : const Color(0xFFC6D6CD),
                 ),
               ),
             ],
           ),
-          // 预览牌文案与商品名不同时（如 VIP日卡），补一行商品名
-          if (item.name != (IdentityBadge.labelOf(item.id) ?? '')) ...[
-            const SizedBox(height: 12),
-            Text(
-              item.name,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF24382F),
-              ),
-            ),
-          ],
-          if (item.desc.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Text(
-              item.desc,
-              style: const TextStyle(
-                fontSize: 12,
-                color: Color(0xFF8FA09A),
-              ),
-            ),
-          ],
-          if (isDayCard) ...[
-            const SizedBox(height: 6),
-            Text(
-              '可兑换次数已用 ${profile.vipCardCount}/${RewardService.vipCardMaxCount}',
-              style: const TextStyle(
-                fontSize: 12,
-                color: Color(0xFF8FA09A),
-              ),
-            ),
-          ],
-          const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            height: 42,
-            child: Material(
-              color: owned || soldOut
-                  ? const Color(0xFFF2F6F4)
-                  : (affordable
-                      ? const Color(0xFF3E8E6D)
-                      : const Color(0xFFF2F6F4)),
-              borderRadius: BorderRadius.circular(12),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: enabled ? () => _buy(item) : null,
-                child: Center(
-                  child: Text(
-                    buttonText,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: enabled ? Colors.white : const Color(0xFF8FA09A),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

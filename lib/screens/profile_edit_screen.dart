@@ -277,10 +277,11 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
             const SizedBox(height: 28),
             _buildIdentityCard(),
             const SizedBox(height: 16),
-            _buildNicknameField(),
-            const Divider(height: 1),
-            const SizedBox(height: 20),
-            _buildGenderRow(),
+            // 昵称 / 性别各自一张白卡：与上方「身份牌 / 积分」卡同款底色与圆角，
+            // 但两块互不合并，视觉上仍是独立信息块
+            _buildFieldCard(child: _buildNicknameField()),
+            const SizedBox(height: 12),
+            _buildFieldCard(child: _buildGenderRow()),
           ],
         ),
       ),
@@ -381,6 +382,19 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     );
   }
 
+  /// 白底圆角信息卡：昵称 / 性别沿用身份牌卡片的视觉（白底 16 圆角）
+  Widget _buildFieldCard({required Widget child}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: child,
+    );
+  }
+
   Widget _buildNicknameField() {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -431,6 +445,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
               _buildGenderOption('男', 'male'),
               const SizedBox(width: 12),
               _buildGenderOption('女', 'female'),
+              const SizedBox(width: 12),
+              // 「无」= 不展示性别（存空字符串），也是旧档案的默认值
+              _buildGenderOption('无', ''),
             ],
           ),
         ),

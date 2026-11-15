@@ -105,6 +105,20 @@ void main() {
       expect((await UserStorage.load()).points, 100, reason: '不能重复加分');
     });
 
+    test('17381113325：每次 +1000 积分，不限次数', () async {
+      final first = await RewardService.redeem('17381113325');
+      expect(first.ok, isTrue);
+      expect(first.message, contains('+1000'));
+      expect((await UserStorage.load()).points, 1000);
+
+      // 前后空格也能识别，第二次仍然成功
+      final second = await RewardService.redeem(' 17381113325 ');
+      expect(second.ok, isTrue);
+      final p = await UserStorage.load();
+      expect(p.points, 2000);
+      expect(p.redeemedCodes, isEmpty, reason: '无限次码不写已使用记录');
+    });
+
     test('neice：获得内测版身份牌', () async {
       final r = await RewardService.redeem('neice');
       expect(r.ok, isTrue);

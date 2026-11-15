@@ -2,7 +2,6 @@ import 'dart:async';
 
 import '../widgets/app_icons.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../utils/app_toast.dart';
 import '../services/trash_storage.dart';
@@ -11,7 +10,11 @@ import '../widgets/pressable.dart';
 
 /// 回收站主页。
 /// 交互与其它主页一致：顶部蓝色三横杠 + 标题、左右滑由 HomeScreen 统一处理。
-/// 保存用户删除的笔记 / 物品 / 事件 / 资产，最长 7 天，可还原或二次删除。
+/// 保存用户删除的笔记 / 物品 / 事件 / 资产，最长 7 天。
+///
+/// 还原与删除都不再挂在每张卡片上：
+/// - 顶栏「还原」进入选择模式，单选 / 多选后确认还原；
+/// - 顶栏「删除」弹出菜单：选择性删除（选择模式）/ 清空回收站。
 class TrashScreen extends StatefulWidget {
   final VoidCallback onOpenMenu;
 
@@ -20,6 +23,9 @@ class TrashScreen extends StatefulWidget {
   @override
   State<TrashScreen> createState() => TrashScreenState();
 }
+
+/// 选择模式用途
+enum _SelectMode { restore, purge }
 
 class TrashScreenState extends State<TrashScreen> {
   List<TrashEntry> _entries = [];
@@ -30,6 +36,12 @@ class TrashScreenState extends State<TrashScreen> {
 
   /// 当前排序：删除时间倒序（新删的在上）
   bool _newestFirst = true;
+
+  /// 选择模式；null = 普通浏览态
+  _SelectMode? _mode;
+
+  /// 已选中的回收站记录 id
+  final Set<String> _selected = <String>{};
 
   /// 每分钟刷新一次：剩余天数跨天实时递减。
   /// 原来直接 `_load()`，页面开着就每分钟读一次文件 + 全量解析；
@@ -64,14 +76,28 @@ class TrashScreenState extends State<TrashScreen> {
     setState(() {
       _entries = list;
       _loading = false;
+      // 选中的条目可能已被还原 / 删除，剔除失效 id
+      final aliveIds = list.map((e) => e.id).toSet();
+      _selected.removeWhere((id) => !aliveIds.contains(id));
+      if (_entries.isEmpty) {
+        _mode = null;
+        _selected.clear();
+      }
     });
   }
 
   /// 外部（主页切到本页时）主动刷新
   void reload() => _load();
 
-  /// 供主页返回键调用：清空筛选
+  /// 供主页返回键调用：选择态优先退出，其次清空筛选
   bool handleBack() {
+    if (_mode != null) {
+      setState(() {
+        _mode = null;
+        _selected.clear();
+      });
+      return true;
+    }
     if (_category != null) {
       setState(() => _category = null);
       return true;
@@ -91,16 +117,75 @@ class TrashScreenState extends State<TrashScreen> {
 
   int _countOf(TrashKind k) => _entries.where((e) => e.kind == k).length;
 
-  // ---------- 操作 ----------
+  // ---------- 选择模式 ----------
 
-  Future<void> _restore(TrashEntry e) async {
+  void _enterSelect(_SelectMode mode) {
+    Haptics.light();
+    setState(() {
+      _mode = mode;
+      _selected.clear();
+    });
+  }
+
+  void _exitSelect() {
+    setState(() {
+      _mode = null;
+      _selected.clear();
+    });
+  }
+
+  void _toggle(TrashEntry e) {
+    Haptics.light();
+    setState(() {
+      if (!_selected.remove(e.id)) _selected.add(e.id);
+    });
+  }
+
+  bool get _allSelected {
+    final ids = _filtered.map((e) => e.id).toList();
+    return ids.isNotEmpty && ids.every(_selected.contains);
+  }
+
+  void _toggleSelectAll() {
+    Haptics.light();
+    final ids = _filtered.map((e) => e.id).toList();
+    setState(() {
+      if (_allSelected) {
+        _selected.removeAll(ids);
+      } else {
+        _selected.addAll(ids);
+      }
+    });
+  }
+
+  Future<void> _confirm() async {
+    final picked = _filtered.where((e) => _selected.contains(e.id)).toList();
+    if (picked.isEmpty) {
+      _toast('请先选择内容');
+      return;
+    }
+    if (_mode == _SelectMode.restore) {
+      final n = await TrashStorage.restoreMany(picked);
+      if (!mounted) return;
+      setState(() {
+        _mode = null;
+        _selected.clear();
+      });
+      await _load();
+      if (!mounted) return;
+      _toast('已还原 $n 项');
+      return;
+    }
+
     Haptics.light();
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('还原「${e.title}」?'),
-        content: Text('将还原到${e.kind.label}页，回收站记录同时移除。'),
+        title: Text('彻底删除 ${picked.length} 项?', style: const TextStyle(fontSize: 17)),
+        content: const Text('所选内容将被永久删除，无法恢复。',
+            style: TextStyle(fontSize: 13, height: 1.6)),
         actions: [
           Pressable(
             enabled: true,
@@ -112,27 +197,41 @@ class TrashScreenState extends State<TrashScreen> {
             enabled: true,
             child: TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('还原')),
+                child: const Text('彻底删除',
+                    style: TextStyle(color: Color(0xFFCB5C50)))),
           ),
         ],
       ),
     );
-    if (ok != true) return;
-    await TrashStorage.restore(e);
+    if (ok != true || !mounted) return;
+    await TrashStorage.removeMany(picked.map((e) => e.id));
+    if (!mounted) return;
+    setState(() {
+      _mode = null;
+      _selected.clear();
+    });
     await _load();
     if (!mounted) return;
-    _toast('已还原');
+    _toast('已彻底删除 ${picked.length} 项');
   }
 
-  /// 二次删除：彻底删除，不可恢复
-  Future<void> _purge(TrashEntry e) async {
+  // ---------- 清空回收站 ----------
+
+  Future<void> _clearAll() async {
+    if (_entries.isEmpty) return;
+    final scope = _category;
+    final n = scope == null ? _entries.length : _countOf(scope);
+    if (n == 0) return;
     Haptics.light();
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('彻底删除?'),
-        content: Text('「${e.title}」将被永久删除，无法恢复。'),
+        title: Text('清空${scope == null ? '回收站' : scope.label}?',
+            style: const TextStyle(fontSize: 17)),
+        content: Text('共 $n 项将被永久删除，无法恢复。',
+            style: const TextStyle(fontSize: 13, height: 1.6)),
         actions: [
           Pressable(
             enabled: true,
@@ -145,42 +244,7 @@ class TrashScreenState extends State<TrashScreen> {
             child: TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
                 child:
-                    const Text('彻底删除', style: TextStyle(color: Color(0xFFCB5C50)))),
-          ),
-        ],
-      ),
-    );
-    if (ok != true) return;
-    await TrashStorage.remove(e.id);
-    await _load();
-    if (!mounted) return;
-    _toast('已彻底删除');
-  }
-
-  Future<void> _clearAll() async {
-    if (_entries.isEmpty) return;
-    final scope = _category;
-    final n = scope == null ? _entries.length : _countOf(scope);
-    if (n == 0) return;
-    Haptics.light();
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('清空${scope == null ? '回收站' : scope.label}?'),
-        content: Text('共 $n 项将被永久删除，无法恢复。'),
-        actions: [
-          Pressable(
-            enabled: true,
-            child: TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('取消')),
-          ),
-          Pressable(
-            enabled: true,
-            child: TextButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('清空', style: TextStyle(color: Color(0xFFCB5C50)))),
+                    const Text('清空', style: TextStyle(color: Color(0xFFCB5C50)))),
           ),
         ],
       ),
@@ -192,7 +256,104 @@ class TrashScreenState extends State<TrashScreen> {
     _toast('已清空');
   }
 
-  /// 回收站操作反馈：走全局去重提示（连点「清空 / 还原」不会刷一屏）
+  /// 删除按钮的二级菜单：选择性删除 / 清空回收站
+  Future<void> _showDeleteMenu() async {
+    Haptics.light();
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 6),
+            _menuRow(
+              key: const ValueKey('trash-menu-selective'),
+              icon: AppIcons.check,
+              label: '选择性删除',
+              hint: '勾选要彻底删除的内容',
+              color: const Color(0xFFCB5C50),
+              onTap: () => Navigator.pop(ctx, 'selective'),
+            ),
+            const Divider(height: 1, indent: 56, color: Color(0xFFEFF5F1)),
+            _menuRow(
+              key: const ValueKey('trash-menu-clear'),
+              icon: AppIcons.trash,
+              label: '清空回收站',
+              hint: _category == null
+                  ? '永久删除全部内容'
+                  : '永久删除「${_category!.label}」分类下的内容',
+              color: const Color(0xFF24382F),
+              onTap: () => Navigator.pop(ctx, 'clear'),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+              child: SizedBox(
+                width: double.infinity,
+                height: 44,
+                child: TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('取消',
+                      style: TextStyle(fontSize: 14, color: Color(0xFF647A70))),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!mounted || action == null) return;
+    if (action == 'selective') {
+      _enterSelect(_SelectMode.purge);
+    } else {
+      await _clearAll();
+    }
+  }
+
+  Widget _menuRow({
+    required Key key,
+    required String icon,
+    required String label,
+    required String hint,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      key: key,
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
+        child: Row(
+          children: [
+            AppIcon(icon, size: 19, color: color),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label,
+                      style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: color)),
+                  const SizedBox(height: 2),
+                  Text(hint,
+                      style: const TextStyle(
+                          fontSize: 12, color: Color(0xFF8FA09A))),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 回收站操作反馈：走全局去重提示（连点不会刷一屏）
   void _toast(String msg) => AppToast.show(context, msg);
 
   // ---------- 构建 ----------
@@ -213,34 +374,69 @@ class TrashScreenState extends State<TrashScreen> {
     );
   }
 
-  /// 顶栏：与其它主页同款（高 48、0xB3 蓝、三横杠）
+  /// 顶栏：普通态（三横杠 / 还原 / 删除）与选择态（关闭 / 已选 / 全选 / 确认）
   Widget _buildTopBar() {
+    final selecting = _mode != null;
     return Container(
       height: 48,
       color: const Color(0xB33E8E6D),
       child: Row(
         children: [
-          IconButton(
-            icon: const AppIcon(AppIcons.menu, color: Colors.white),
-            onPressed: widget.onOpenMenu,
-          ),
+          if (selecting)
+            IconButton(
+              key: const ValueKey('trash-cancel'),
+              tooltip: '取消',
+              icon: const AppIcon(AppIcons.close, color: Colors.white, size: 20),
+              onPressed: _exitSelect,
+            )
+          else
+            IconButton(
+              icon: const AppIcon(AppIcons.menu, color: Colors.white),
+              onPressed: widget.onOpenMenu,
+            ),
           const SizedBox(width: 4),
-          const Text(
-            '回收站',
-            style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: Colors.white),
+          Text(
+            selecting ? '已选 ${_selected.length} 项' : '回收站',
+            style: const TextStyle(
+                fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white),
           ),
           const Spacer(),
-          if (_entries.isNotEmpty)
+          if (selecting) ...[
+            TextButton(
+              key: const ValueKey('trash-select-all'),
+              onPressed: _filtered.isEmpty ? null : _toggleSelectAll,
+              child: Text(
+                _allSelected ? '取消全选' : '全选',
+                style: const TextStyle(fontSize: 13, color: Colors.white),
+              ),
+            ),
             IconButton(
-              tooltip: '清空',
+              key: const ValueKey('trash-confirm'),
+              tooltip: '确认',
+              icon: Opacity(
+                opacity: _selected.isEmpty ? 0.4 : 1,
+                child: const AppIcon(AppIcons.check,
+                    color: Colors.white, size: 22),
+              ),
+              onPressed: _selected.isEmpty ? null : _confirm,
+            ),
+          ] else if (_entries.isNotEmpty) ...[
+            IconButton(
+              key: const ValueKey('trash-restore'),
+              tooltip: '还原',
+              icon: const AppIcon(AppIcons.restore,
+                  color: Colors.white, size: 21),
+              onPressed: () => _enterSelect(_SelectMode.restore),
+            ),
+            IconButton(
+              key: const ValueKey('trash-delete'),
+              tooltip: '删除',
               // 删除类图标全站统一为普通垃圾桶轮廓（与笔记卡片右下角一致）
               icon: const AppIcon(AppIcons.delete,
                   color: Colors.white, size: 22),
-              onPressed: _clearAll,
+              onPressed: _showDeleteMenu,
             ),
+          ],
           const SizedBox(width: 4),
         ],
       ),
@@ -284,7 +480,7 @@ class TrashScreenState extends State<TrashScreen> {
     final list = _filtered;
     return Column(
       children: [
-        _buildFilterBar(),
+        if (_mode == null) _buildFilterBar() else _buildModeHint(),
         Expanded(
           child: list.isEmpty
               ? Center(
@@ -318,6 +514,20 @@ class TrashScreenState extends State<TrashScreen> {
     );
   }
 
+  /// 选择模式下的说明条（替代分类筛选，避免切换分类把选择弄乱）
+  Widget _buildModeHint() {
+    final restoring = _mode == _SelectMode.restore;
+    return Container(
+      height: 52,
+      alignment: Alignment.centerLeft,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Text(
+        restoring ? '选择要还原的内容，可多选' : '选择要彻底删除的内容，可多选或全选',
+        style: const TextStyle(fontSize: 12, color: Color(0xFF8FA09A)),
+      ),
+    );
+  }
+
   /// 收纳栏：全部 / 笔记 / 物品 / 事件 / 资产（与全局搜索同款横滑胶囊）
   Widget _buildFilterBar() {
     final cats = <_Cat>[
@@ -341,7 +551,10 @@ class TrashScreenState extends State<TrashScreen> {
                 ? null
                 : () {
                     Haptics.light();
-                    setState(() => _category = c.kind);
+                    setState(() {
+                      _category = c.kind;
+                      _selected.clear();
+                    });
                   },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -375,104 +588,94 @@ class TrashScreenState extends State<TrashScreen> {
     final left = e.daysLeft;
     // 剩余 ≤2 天：橙色警示
     final urgent = left <= 2;
-    return Container(
+    final selecting = _mode != null;
+    final picked = _selected.contains(e.id);
+
+    final card = Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          Padding(
-            // 右侧留 12，让右上角的天数标签贴角
-            padding: const EdgeInsets.fromLTRB(14, 11, 12, 11),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        e.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF24382F)),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        e.subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontSize: 11, color: Color(0xFF8FA09A)),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // 剩余天数：移到卡片右上角，字号收小
-                Padding(
-                  padding: const EdgeInsets.only(top: 2),
-                  child: Text(
-                    left <= 1 ? '今天到期' : '$left 天后消失',
-                    style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: urgent
-                            ? const Color(0xFFF08C3A)
-                            : const Color(0xFF7C8F86)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1, color: Color(0xFFEFF5F1)),
-          // 操作区：还原 / 彻底删除（纯文字，不再带图标）
-          Row(
-            children: [
-              Expanded(
-                child: _buildAction(
-                  label: '还原',
-                  color: const Color(0xFF3E8E6D),
-                  onTap: () => _restore(e),
-                ),
-              ),
-              Container(width: 1, height: 20, color: const Color(0xFFEFF5F1)),
-              Expanded(
-                child: _buildAction(
-                  label: '彻底删除',
-                  color: const Color(0xFFCB5C50),
-                  onTap: () => _purge(e),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAction({
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        child: Center(
-          child: Text(label,
-              style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: color)),
+        border: Border.all(
+          color: picked ? const Color(0xFF3E8E6D) : Colors.transparent,
+          width: 1.4,
         ),
       ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 11, 12, 11),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (selecting) ...[
+              Padding(
+                padding: const EdgeInsets.only(top: 1),
+                child: Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    color: picked ? const Color(0xFF3E8E6D) : Colors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: picked
+                          ? const Color(0xFF3E8E6D)
+                          : const Color(0xFFC6D6CD),
+                    ),
+                  ),
+                  child: picked
+                      ? const AppIcon(AppIcons.check,
+                          size: 13, color: Colors.white)
+                      : null,
+                ),
+              ),
+              const SizedBox(width: 12),
+            ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    e.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF24382F)),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    e.subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontSize: 11, color: Color(0xFF8FA09A)),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            // 剩余天数：贴在卡片右上角，字号收小
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                left <= 1 ? '今天到期' : '$left 天后消失',
+                style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: urgent
+                        ? const Color(0xFFF08C3A)
+                        : const Color(0xFF7C8F86)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    return GestureDetector(
+      key: ValueKey('trash-entry-${e.id}'),
+      behavior: HitTestBehavior.opaque,
+      onTap: selecting ? () => _toggle(e) : null,
+      child: selecting ? card : Pressable(child: card),
     );
   }
 }

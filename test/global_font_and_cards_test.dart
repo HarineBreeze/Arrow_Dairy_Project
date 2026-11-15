@@ -116,8 +116,11 @@ void main() {
     await _settle(tester);
 
     expect(find.text('被删的笔记'), findsOneWidget);
-    expect(find.text('还原'), findsOneWidget);
-    expect(find.text('彻底删除'), findsOneWidget);
+    // 卡片内不再有还原 / 彻底删除按钮：两个操作都移到顶栏
+    expect(find.text('还原'), findsNothing);
+    expect(find.text('彻底删除'), findsNothing);
+    expect(find.byKey(const ValueKey('trash-restore')), findsOneWidget);
+    expect(find.byKey(const ValueKey('trash-delete')), findsOneWidget);
 
     // 卡片内不再有类型图标，也没有还原/删除图标（顶栏「清空」不在卡片内）
     final card = find

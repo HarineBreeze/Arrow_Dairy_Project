@@ -133,6 +133,22 @@ class TrashStorage {
         }
         return TrashEntry.fromJson(m);
       }).toList();
+      // 旧版本把 mood 表情拼进了日记副标题（如「2026.11.10 · 😀」）。
+      // 表情功能已下线，读档时就地重算副标题并回写，避免历史记录继续显示。
+      for (var i = 0; i < entries.length; i++) {
+        final fixed = _fixedSubtitle(entries[i]);
+        if (fixed != null && fixed != entries[i].subtitle) {
+          entries[i] = TrashEntry(
+            id: entries[i].id,
+            kind: entries[i].kind,
+            data: entries[i].data,
+            deletedAt: entries[i].deletedAt,
+            title: entries[i].title,
+            subtitle: fixed,
+          );
+          changed = true;
+        }
+      }
       if (changed) await _write(entries);
       // 读取时顺带清理过期项（7 天到期即彻底消失）
       final alive = entries.where((e) => e.daysLeft > 0).toList();
@@ -144,6 +160,19 @@ class TrashStorage {
     } catch (_) {
       return [];
     }
+  }
+
+  /// 日记记录的规范副标题：日期（加密笔记再加「已加密」）。
+  /// 非日记记录返回 null 表示无需处理。
+  static String? _fixedSubtitle(TrashEntry e) {
+    if (e.kind != TrashKind.diary) return null;
+    final rawDate = e.data['publishDate'] as String?;
+    final d = rawDate != null
+        ? DateTime.tryParse(rawDate)
+        : DateTime.tryParse((e.data['createdAt'] as String?) ?? '');
+    if (d == null) return null;
+    final encrypted = e.data['encrypted'] == true;
+    return _dateLabel(d) + (encrypted ? ' · 已加密' : '');
   }
 
   static Future<void> _write(List<TrashEntry> entries) async {
@@ -162,9 +191,15 @@ class TrashStorage {
       title: e.encrypted
           ? (e.subtitle.isNotEmpty ? e.subtitle : '加密笔记')
           : (e.title.isNotEmpty ? e.title : '（无标题）'),
-      subtitle: e.encrypted ? '已加密' : '${e.publishDate.year}.${e.publishDate.month.toString().padLeft(2, '0')}.${e.publishDate.day.toString().padLeft(2, '0')} · ${e.mood}',
+      // 只显示日期：mood / weather 表情早已下线，旧笔记里残留的 emoji
+      // 不应再出现在回收站副标题里
+      subtitle: _dateLabel(e.publishDate) + (e.encrypted ? ' · 已加密' : ''),
     );
   }
+
+  /// `yyyy.MM.dd` 日期标签（回收站副标题统一格式）
+  static String _dateLabel(DateTime d) =>
+      '${d.year}.${d.month.toString().padLeft(2, '0')}.${d.day.toString().padLeft(2, '0')}';
 
   static Future<void> addItem(Item e) async {
     await _add(
@@ -230,6 +265,15 @@ class TrashStorage {
     await _write(list);
   }
 
+  /// 批量彻底删除（选择模式「确认删除」用）
+  static Future<void> removeMany(Iterable<String> trashIds) async {
+    final ids = trashIds.toSet();
+    if (ids.isEmpty) return;
+    final list = await load();
+    list.removeWhere((t) => ids.contains(t.id));
+    await _write(list);
+  }
+
   /// 清空全部（可限定某类）
   static Future<void> clear([TrashKind? kind]) async {
     if (kind == null) {
@@ -270,5 +314,20 @@ class TrashStorage {
         break;
     }
     await remove(entry.id);
+  }
+
+  /// 批量还原（选择模式「确认还原」用）。
+  /// 返回成功还原的条数（同 id 已存在时该条仍会移出回收站，计为已处理）。
+  static Future<int> restoreMany(List<TrashEntry> entries) async {
+    var done = 0;
+    for (final e in entries) {
+      try {
+        await restore(e);
+        done++;
+      } catch (_) {
+        // 单条失败不影响其余条目
+      }
+    }
+    return done;
   }
 }

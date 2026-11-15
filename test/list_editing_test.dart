@@ -190,4 +190,54 @@ void main() {
     await input(tester, '1. 甲\n3. 丙');
     expect(ctrl.text, '1. 甲\n2. 丙', reason: '断裂的序号应收拢成连续');
   });
+
+  testWidgets('待办行回车：下一行自动补未勾选待办框', (tester) async {
+    final ctrl = await openEditor(tester);
+
+    await input(tester, '☐ 买牛奶');
+    await input(tester, '☐ 买牛奶\n');
+    expect(ctrl.text, '☐ 买牛奶\n☐ ', reason: '回车后应自动续一个空待办');
+    expect(ctrl.selection.baseOffset, ctrl.text.length, reason: '光标应在待办框后');
+
+    // 继续输入内容，再回车又是新的待办
+    await input(tester, '☐ 买牛奶\n☐ 交电费');
+    await input(tester, '☐ 买牛奶\n☐ 交电费\n');
+    expect(ctrl.text, '☐ 买牛奶\n☐ 交电费\n☐ ');
+  });
+
+  testWidgets('已勾选待办回车：续行仍是未勾选框', (tester) async {
+    final ctrl = await openEditor(tester);
+
+    await input(tester, '☑ 已完成的事');
+    await input(tester, '☑ 已完成的事\n');
+    expect(ctrl.text, '☑ 已完成的事\n☐ ');
+  });
+
+  testWidgets('空待办再回车：退出待办，回到正文', (tester) async {
+    final ctrl = await openEditor(tester);
+
+    await input(tester, '☐ 买牛奶');
+    await input(tester, '☐ 买牛奶\n');
+    expect(ctrl.text, '☐ 买牛奶\n☐ ');
+
+    // 空待办（只有框）再回车 → 标记被清掉，留一个空行（与列表退出一致）
+    await input(tester, '☐ 买牛奶\n☐ \n');
+    expect(ctrl.text, '☐ 买牛奶\n\n');
+  });
+
+  testWidgets('一级标题（数字）回车：自动接下一个序号', (tester) async {
+    final ctrl = await openEditor(tester);
+
+    await input(tester, '1. 今日小结');
+    await input(tester, '1. 今日小结\n');
+    expect(ctrl.text, '1. 今日小结\n2. ');
+  });
+
+  testWidgets('二级标题（字母）回车：自动接下一个字母序号', (tester) async {
+    final ctrl = await openEditor(tester);
+
+    await input(tester, '\u3000a. 细节');
+    await input(tester, '\u3000a. 细节\n');
+    expect(ctrl.text, '\u3000a. 细节\n\u3000b. ');
+  });
 }

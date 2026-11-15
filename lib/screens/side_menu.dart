@@ -97,12 +97,10 @@ class SideMenu extends StatelessWidget {
                     color: Color(0xFF24382F),
                   ),
                 ),
-                // 普通版是所有人的默认牌，不必占一行；获得其它牌后才显示
-                if (!IdentityBadge.isNormal(profile.badge)) ...[
-                  const SizedBox(height: 5),
-                  // 身份牌：内测版（橙底）/ VIP（红底）/ 诞生日（绿底）
-                  IdentityBadge(badge: profile.badge),
-                ],
+                // 身份牌：普通版（灰）/ 内测版（橙）/ VIP（红）/ 诞生日（绿）
+                // v4.9.20 起普通版也常驻展示，佩戴什么就显示什么
+                const SizedBox(height: 5),
+                IdentityBadge(badge: profile.badge),
                 const SizedBox(height: 5),
                 // 用户 ID：暂用固定值，后续接入服务器后再按规则生成
                 const Text(

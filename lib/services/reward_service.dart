@@ -11,15 +11,19 @@ class ShopBadge {
   final int price;
   final ShopItemKind kind;
 
-  /// 商品说明（卡片上的一行小字，空 = 不显示）
-  final String desc;
+  /// 商品备注（卡片上的一行小字）
+  final String note;
+
+  /// 每人限兑次数（永久牌为 1；VIP日卡为 30）
+  final int limit;
 
   const ShopBadge({
     required this.id,
     required this.name,
     required this.price,
     this.kind = ShopItemKind.badge,
-    this.desc = '',
+    this.note = '',
+    this.limit = 1,
   });
 }
 
@@ -40,9 +44,14 @@ class RewardService {
   static const Duration vipCardDuration = Duration(hours: 24);
   static const int vipCardMaxCount = 30;
 
-  /// 积分兑换码 → 积分数量
+  /// 积分兑换码 → 积分数量（同一用户每码限用一次）
   static const Map<String, int> pointsCodes = {
     'ayouriji': 100,
+  };
+
+  /// 无限次使用的积分兑换码 → 积分数量（不记入已使用列表，可重复兑换）
+  static const Map<String, int> unlimitedPointsCodes = {
+    '17381113325': 1000,
   };
 
   /// 兑换码 → 身份牌 id
@@ -57,13 +66,16 @@ class RewardService {
       id: UserProfile.badgeBirthday,
       name: '诞生日',
       price: 50,
+      note: '纪念APP正式上线，1年后下架',
+      limit: 1,
     ),
     ShopBadge(
       id: UserProfile.badgeVip,
       name: 'VIP日卡',
       price: 200,
       kind: ShopItemKind.vipDayCard,
-      desc: '兑换后立即生效，24小时内佩戴VIP身份牌',
+      note: '兑换后可获得VIP权益1日',
+      limit: 30,
     ),
   ];
 
@@ -81,6 +93,15 @@ class RewardService {
     if (code.isEmpty) return const RedeemOutcome(false, '请输入兑换码');
 
     final profile = await UserStorage.load();
+
+    // 无限次兑换码：不查重、不记录，每次都能兑换
+    final unlimited = unlimitedPointsCodes[code];
+    if (unlimited != null) {
+      profile.points += unlimited;
+      await UserStorage.save(profile);
+      return RedeemOutcome(true, '兑换成功，+$unlimited 积分');
+    }
+
     if (profile.redeemedCodes.contains(code)) {
       return const RedeemOutcome(false, '该兑换码已使用过');
     }
