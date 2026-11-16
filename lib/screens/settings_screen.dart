@@ -414,7 +414,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   ///
   /// 码表见 `RewardService` 与 `docs/redeem_codes.md`：
   /// - `ayouriji` → +100 积分（限 1 次）
-  /// - `neice` / `vip` → 身份牌（限 1 次）
+  /// - `neice` / `vip` / `zhongshenvip` → 身份牌（限 1 次，后者为终身VIP）
   /// - `17381113325` → +1000 积分（不限次数）
   /// - `13031210237` → -1000 积分（不限次数，最低 0）
   /// 限次码每用户只能用一次；无限次码不写已用记录。

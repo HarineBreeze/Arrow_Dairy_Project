@@ -211,10 +211,10 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                         UserProfile.validityLabel(
                           id,
                           owned: _ownedBadges.contains(id),
-                          expiresAt: id == UserProfile.badgeVip &&
-                                  !_ownedBadges.contains(id)
-                              ? _vipExpireAt
-                              : null,
+                          // VIP 行只要档案里有生效中的限时权益就传到期时间，
+                          // 让「剩余x天」随日卡 / 周卡的实际购买天数增加。
+                          expiresAt:
+                              id == UserProfile.badgeVip ? _vipExpireAt : null,
                         ),
                         key: ValueKey('badge_validity_$id'),
                         style: const TextStyle(

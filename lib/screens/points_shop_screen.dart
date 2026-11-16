@@ -7,7 +7,7 @@ import '../utils/app_toast.dart';
 import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
 
-/// 积分商城：用积分兑换身份牌 / 限时权益。
+/// 积分商城：用积分兑换身份牌 / 限时 VIP 权益。
 ///
 /// 版式沿用全 App 的「页面底色 + 白色圆角卡 + 灰色节标题」节奏：
 /// 顶部是积分余额卡，下面是「道具兑换」分组里的商品卡
@@ -47,17 +47,15 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
     setState(() => _profile = p);
   }
 
-  /// 商品是否已不可再兑（永久牌看已拥有；日卡看次数上限）
+  /// 商品是否已不可再兑（限时 VIP 卡看次数上限；永久牌看已拥有）
   bool _soldOut(UserProfile p, ShopBadge item) {
-    if (item.kind == ShopItemKind.vipDayCard) {
-      return p.vipCardCount >= item.limit;
-    }
+    if (item.isVipTimeCard) return item.usedCount(p) >= item.limit;
     return p.owns(item.id);
   }
 
   Future<void> _onTapItem(UserProfile profile, ShopBadge item) async {
     if (_soldOut(profile, item)) {
-      _toast(item.kind == ShopItemKind.vipDayCard
+      _toast(item.isVipTimeCard
           ? '已达兑换上限（${item.limit} 次）'
           : '已拥有「${item.name}」');
       return;
@@ -67,7 +65,7 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
       return;
     }
 
-    final isDayCard = item.kind == ShopItemKind.vipDayCard;
+    final isTimeCard = item.isVipTimeCard;
     // 二次确认：积分是不可逆消耗，跟删除一样走两段式
     final ok = await showDialog<bool>(
       context: context,
@@ -75,9 +73,9 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: Text(
-          isDayCard
+          isTimeCard
               ? '是否要花费 ${item.price} 积分兑换「${item.name}」？\n'
-                  '兑换后立即生效，有效期24小时。'
+                  '兑换后立即生效，${item.effectLabel}。'
               : '是否要花费 ${item.price} 积分兑换「${item.name}」？',
           style: const TextStyle(fontSize: 13, height: 1.7),
         ),
@@ -108,7 +106,7 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
     if (ok != true || !mounted) return;
 
     final outcome = await (widget.buyOverride ??
-        (isDayCard ? RewardService.buyVipCard : RewardService.buyBadge))(
+        (isTimeCard ? RewardService.buyVipCard : RewardService.buyBadge))(
         item.id);
     if (!mounted) return;
     if (outcome.ok) Haptics.light();
@@ -218,11 +216,9 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
     final priceColor =
         enabled ? const Color(0xFF3E8E6D) : const Color(0xFFB2C2BA);
 
-    // 兑换次数用「已兑/上限」的紧凑数字（如 0/30），不再铺一句长文案。
-    // 永久牌只有一次，拥有即记 1；日卡按档案里的累计兑换次数计。
-    final used = item.kind == ShopItemKind.vipDayCard
-        ? profile.vipCardCount
-        : (profile.owns(item.id) ? 1 : 0);
+    // 兑换次数用「已兑/上限」的紧凑数字（如 0/6、2/30）。
+    // 永久牌只有一次，拥有即记 1；限时卡按各自累计次数计。
+    final used = item.usedCount(profile);
 
     return Pressable(
       enabled: true,

@@ -7,7 +7,7 @@ import '../models/user_profile.dart';
 /// 视觉规范（与侧边栏、个人信息页、积分商城共用一份实现）：
 /// - 普通版：灰底 `#8FA09A` + 白字（默认佩戴）
 /// - 内测版：橙底 `#F08C3A` + 白字
-/// - VIP：红底 `#CB5C50` + 白字
+/// - VIP / 终身VIP：红底 `#CB5C50` + 白字
 /// - 诞生日：绿底 `#3E8E6D` + 白字
 /// - 11px / w600 / 行高 1.2，左右 6px、上下 1.5px 内边距，圆角 8
 ///
@@ -35,6 +35,8 @@ class IdentityBadge extends StatelessWidget {
         return '内测版';
       case UserProfile.badgeVip:
         return 'VIP';
+      case UserProfile.badgeVipForever:
+        return '终身VIP';
       case UserProfile.badgeBirthday:
         return '诞生日';
       default:
@@ -51,6 +53,7 @@ class IdentityBadge extends StatelessWidget {
       case UserProfile.badgeBeta:
         return const Color(0xFFF08C3A);
       case UserProfile.badgeVip:
+      case UserProfile.badgeVipForever:
         return const Color(0xFFCB5C50);
       case UserProfile.badgeBirthday:
         return const Color(0xFF3E8E6D);

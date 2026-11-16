@@ -1,8 +1,8 @@
 import '../models/user_profile.dart';
 import 'user_storage.dart';
 
-/// 商城商品类型：永久身份牌 / 限时 VIP 日卡
-enum ShopItemKind { badge, vipDayCard }
+/// 商城商品类型：永久身份牌 / 限时 VIP 日卡 / 限时 VIP 周卡
+enum ShopItemKind { badge, vipDayCard, vipWeekCard }
 
 /// 积分商城在售商品
 class ShopBadge {
@@ -14,8 +14,14 @@ class ShopBadge {
   /// 商品备注（卡片上的一行小字）
   final String note;
 
-  /// 每人限兑次数（永久牌为 1；VIP日卡为 30）
+  /// 每人限兑次数（永久牌为 1；VIP日卡 30；VIP周卡 6）
   final int limit;
+
+  /// 限时卡每次兑换累加到 VIP 权益到期时间上的时长（永久牌为 Duration.zero）
+  final Duration duration;
+
+  /// 确认框里的「有效期xx」文案
+  final String effectLabel;
 
   const ShopBadge({
     required this.id,
@@ -24,7 +30,20 @@ class ShopBadge {
     this.kind = ShopItemKind.badge,
     this.note = '',
     this.limit = 1,
+    this.duration = Duration.zero,
+    this.effectLabel = '',
   });
+
+  /// 是否是「在原剩余时间上累加」的限时 VIP 道具
+  bool get isVipTimeCard =>
+      kind == ShopItemKind.vipDayCard || kind == ShopItemKind.vipWeekCard;
+
+  /// 该商品在本档案里已兑换的次数
+  int usedCount(UserProfile p) {
+    if (kind == ShopItemKind.vipDayCard) return p.vipCardCount;
+    if (kind == ShopItemKind.vipWeekCard) return p.vipWeekCardCount;
+    return p.owns(id) ? 1 : 0;
+  }
 }
 
 /// 兑换码 / 积分 / 商城的统一入口。
@@ -33,16 +52,22 @@ class ShopBadge {
 /// - 同一个用户 ID 下，每个兑换码只能使用一次，重复输入返回「已使用过」
 ///   （用户 ID 即本机档案，记录在 [UserProfile.redeemedCodes] 里）；
 /// - 兑换码不区分大小写，前后空格自动忽略；
-/// - 积分商城按「已拥有」判重，同一身份牌不重复扣分。
+/// - 积分商城按「已拥有」判重，同一身份牌不重复扣分；
+/// - 限时 VIP 道具（日卡 / 周卡）的时长累加到同一个到期时间上，
+///   不覆盖原有剩余时间。
 class RewardService {
   RewardService._();
 
   /// 每日首次发布笔记的积分奖励
   static const int dailyWritePoints = 20;
 
-  /// VIP 日卡：有效期与单用户兑换次数上限
+  /// VIP 日卡：每次累加 24 小时，单用户兑换次数上限
   static const Duration vipCardDuration = Duration(hours: 24);
   static const int vipCardMaxCount = 30;
+
+  /// VIP 周卡：每次累加 7 天，单用户兑换次数上限
+  static const Duration vipWeekCardDuration = Duration(days: 7);
+  static const int vipWeekCardMaxCount = 6;
 
   /// 积分兑换码 → 积分数量（同一用户每码限用一次）
   static const Map<String, int> pointsCodes = {
@@ -64,9 +89,10 @@ class RewardService {
   static const Map<String, String> badgeCodes = {
     'neice': UserProfile.badgeBeta,
     'vip': UserProfile.badgeVip,
+    'zhongshenvip': UserProfile.badgeVipForever,
   };
 
-  /// 积分商城在售商品（身份牌 + 限时卡）
+  /// 积分商城在售商品（永久身份牌 + 限时 VIP 道具）
   static const List<ShopBadge> shopBadges = [
     ShopBadge(
       id: UserProfile.badgeBirthday,
@@ -81,7 +107,19 @@ class RewardService {
       price: 200,
       kind: ShopItemKind.vipDayCard,
       note: '兑换后可获得VIP权益1日',
-      limit: 30,
+      limit: vipCardMaxCount,
+      duration: vipCardDuration,
+      effectLabel: '有效期24小时',
+    ),
+    ShopBadge(
+      id: 'vipWeekCard',
+      name: 'VIP周卡',
+      price: 1400,
+      kind: ShopItemKind.vipWeekCard,
+      note: '兑换后可获得VIP权益7日',
+      limit: vipWeekCardMaxCount,
+      duration: vipWeekCardDuration,
+      effectLabel: '有效期7天',
     ),
   ];
 
@@ -144,7 +182,7 @@ class RewardService {
     return const RedeemOutcome(false, '兑换码无效，请检查后重试');
   }
 
-  /// 用积分兑换身份牌：扣分 → 加入已拥有 → 立即佩戴。
+  /// 用积分兑换永久身份牌：扣分 → 加入已拥有 → 立即佩戴。
   static Future<RedeemOutcome> buyBadge(String badgeId) async {
     final item = shopBadgeOf(badgeId);
     if (item == null) return const RedeemOutcome(false, '商品不存在');
@@ -165,34 +203,44 @@ class RewardService {
     return RedeemOutcome(true, '兑换成功，已佩戴「${item.name}」身份牌');
   }
 
-  /// 用积分兑换 VIP 日卡：扣分 → 计次数 → 记 24 小时到期时间 → 立即佩戴。
+  /// 用积分兑换限时 VIP 道具（日卡 / 周卡）：
+  /// 扣分 → 计次数 → 在当前 VIP 剩余时间基础上累加时长 → 立即佩戴。
   /// VIP 不进已拥有列表（非永久），到期后由档案归一逻辑换回普通版。
-  static Future<RedeemOutcome> buyVipCard(String badgeId) async {
-    final item = shopBadgeOf(badgeId);
-    if (item == null || item.kind != ShopItemKind.vipDayCard) {
+  static Future<RedeemOutcome> buyVipCard(String itemId) async {
+    final item = shopBadgeOf(itemId);
+    if (item == null || !item.isVipTimeCard) {
       return const RedeemOutcome(false, '商品不存在');
     }
 
     final profile = await UserStorage.load();
-    if (profile.vipCardCount >= vipCardMaxCount) {
-      return const RedeemOutcome(false, '已达兑换上限（$vipCardMaxCount 次）');
+    if (item.usedCount(profile) >= item.limit) {
+      return RedeemOutcome(false, '已达兑换上限（${item.limit} 次）');
     }
     if (profile.points < item.price) {
       final lack = item.price - profile.points;
       return RedeemOutcome(false, '积分不足，还差 $lack 积分');
     }
 
+    final now = DateTime.now();
+    final base = profile.vipCardExpireTime;
+    // 剩余时间仍在生效 → 在它基础上累加；已过期 / 从未兑换 → 从现在起算。
+    final start = (base != null && base.isAfter(now)) ? base : now;
+
     profile.points -= item.price;
-    profile.vipCardCount += 1;
-    profile.vipCardExpireAt =
-        DateTime.now().add(vipCardDuration).toIso8601String();
+    profile.vipCardExpireAt = start.add(item.duration).toIso8601String();
+    if (item.kind == ShopItemKind.vipWeekCard) {
+      profile.vipWeekCardCount += 1;
+    } else {
+      profile.vipCardCount += 1;
+    }
     profile.badge = UserProfile.badgeVip;
     await UserStorage.save(profile);
-    return RedeemOutcome(true, '兑换成功，VIP身份牌生效24小时');
+    final gain = item.kind == ShopItemKind.vipWeekCard ? '7天' : '24小时';
+    return RedeemOutcome(true, '兑换成功，VIP有效期增加$gain');
   }
 
   /// 切换当前佩戴的身份牌（永久拥有的牌随时可切；
-  /// VIP 在日卡生效期间也可切换佩戴）。
+  /// VIP 在限时权益生效期间也可切换佩戴）。
   static Future<RedeemOutcome> wearBadge(String badgeId) async {
     final profile = await UserStorage.load();
     final canWear = profile.owns(badgeId) ||
@@ -233,6 +281,8 @@ class RewardService {
         return '内测版';
       case UserProfile.badgeVip:
         return 'VIP';
+      case UserProfile.badgeVipForever:
+        return '终身VIP';
     }
     for (final item in shopBadges) {
       if (item.id == id) return item.name;

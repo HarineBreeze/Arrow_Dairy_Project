@@ -38,12 +38,13 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(400, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(host(UserProfile(nickname: '小明')));
+    final profile = UserProfile(nickname: '小明');
+    await tester.pumpWidget(host(profile));
     await tester.pump();
 
     final avatarRect = tester.getRect(find.byType(CircleAvatar).first);
     final nickRect = tester.getRect(find.text('小明'));
-    final idRect = tester.getRect(find.text('ID：10001'));
+    final idRect = tester.getRect(find.text('ID：${profile.userId}'));
 
     // 昵称整体位于头像右边缘右侧
     expect(nickRect.left, greaterThan(avatarRect.right),
@@ -62,12 +63,13 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(400, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(host(UserProfile(nickname: '小明', badge: 'beta')));
+    final profile = UserProfile(nickname: '小明', badge: 'beta');
+    await tester.pumpWidget(host(profile));
     await tester.pump();
 
     final nickRect = tester.getRect(find.text('小明'));
     final badgeRect = tester.getRect(find.text('内测版'));
-    final idRect = tester.getRect(find.text('ID：10001'));
+    final idRect = tester.getRect(find.text('ID：${profile.userId}'));
 
     // 纵向顺序：昵称 → 铭牌 → ID，且三者不重叠
     expect(badgeRect.top, greaterThanOrEqualTo(nickRect.bottom - 1),

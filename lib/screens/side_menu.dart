@@ -102,12 +102,12 @@ class SideMenu extends StatelessWidget {
                 const SizedBox(height: 5),
                 IdentityBadge(badge: profile.badge),
                 const SizedBox(height: 5),
-                // 用户 ID：暂用固定值，后续接入服务器后再按规则生成
-                const Text(
-                  'ID：10001',
+                // 用户 ID：档案里的顺序号（从 10001 起，首次启动分配后固化）
+                Text(
+                  'ID：${profile.userId}',
                   textAlign: TextAlign.left,
                   maxLines: 1,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 13,
                     color: Color(0xFF8FA09A),
                   ),

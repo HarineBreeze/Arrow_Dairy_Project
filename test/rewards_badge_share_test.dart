@@ -94,7 +94,10 @@ void main() {
     test('用户ID / 注册日可往返序列化，新档案自动生成', () {
       final p = UserProfile();
       expect(p.userId, isNotEmpty);
-      expect(p.userId, startsWith('AYO-'));
+      expect(p.userId, matches(RegExp(r'^\d+$')),
+          reason: '用户ID 为纯数字顺序号');
+      expect(int.parse(p.userId),
+          greaterThanOrEqualTo(UserProfile.userIdStart));
       expect(p.registeredAt, matches(RegExp(r'^\d{4}-\d{2}-\d{2}$')));
       expect(p.usedDays, 1, reason: '注册当天记为第 1 天');
 
