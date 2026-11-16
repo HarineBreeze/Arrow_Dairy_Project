@@ -2,6 +2,7 @@ import 'app_icons.dart';
 import 'package:flutter/material.dart';
 import '../models/countdown_event.dart';
 
+import '../theme/app_palette.dart';
 /// 当天有事件到期时，在任意主页顶部滑出的一次性横幅。
 /// 动画：从屏幕上方平滑滑出，停在距顶部约 1/10 屏高处。
 /// 交互：上滑关闭、点击进入该事件编辑页。
@@ -97,12 +98,12 @@ class CountdownBannerHostState extends State<CountdownBannerHost>
     return Material(
       elevation: 12,
       borderRadius: BorderRadius.circular(16),
-      color: Colors.white,
+      color: AppPalette.c(0xFFFFFFFF),
       child: Container(
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE8EDF5)),
+          border: Border.all(color: AppPalette.c(0xFFE8EDF5)),
         ),
         child: Row(
           children: [
@@ -111,7 +112,7 @@ class CountdownBannerHostState extends State<CountdownBannerHost>
               height: 42,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: const Color(0xFFFDEEF3),
+                color: AppPalette.c(0xFFFDEEF3),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(e.icon, style: const TextStyle(fontSize: 22)),
@@ -124,21 +125,21 @@ class CountdownBannerHostState extends State<CountdownBannerHost>
                   Text(e.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF24382F))),
+                          color: AppPalette.c(0xFF24382F))),
                   const SizedBox(height: 2),
-                  const Text('不要忘记重要的日子哦～',
+                  Text('不要忘记重要的日子哦～',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style:
-                          TextStyle(fontSize: 13, color: Color(0xFF8FA09A))),
+                          TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
                 ],
               ),
             ),
             const SizedBox(width: 8),
-            const AppIcon(AppIcons.chevR, size: 20, color: Color(0xFFC6D6CD)),
+            AppIcon(AppIcons.chevR, size: 20, color: AppPalette.c(0xFFC6D6CD)),
           ],
         ),
       ),

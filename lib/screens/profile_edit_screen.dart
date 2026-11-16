@@ -18,6 +18,7 @@ import '../widgets/pressable.dart';
 import '../widgets/save_done_button.dart';
 import '../widgets/save_bar.dart';
 
+import '../theme/app_palette.dart';
 class ProfileEditScreen extends StatefulWidget {
   final UserProfile profile;
 
@@ -174,7 +175,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     }
     final picked = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppPalette.c(0xFFFFFFFF),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -183,14 +184,14 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Padding(
+            Padding(
               padding: EdgeInsets.fromLTRB(20, 18, 20, 6),
               child: Text(
                 '选择身份牌',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF24382F),
+                  color: AppPalette.c(0xFF24382F),
                 ),
               ),
             ),
@@ -217,8 +218,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                               id == UserProfile.badgeVip ? _vipExpireAt : null,
                         ),
                         key: ValueKey('badge_validity_$id'),
-                        style: const TextStyle(
-                            fontSize: 13, color: Color(0xFF8FA09A)),
+                        style: TextStyle(
+                            fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
                       ),
                       const SizedBox(width: 10),
                       if (id == _badge)
@@ -301,9 +302,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               '点击更换头像',
-              style: TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
+              style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
             ),
             const SizedBox(height: 28),
             _buildIdentityCard(),
@@ -316,11 +317,11 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildNicknameField(),
-                  const Divider(height: 1, color: Color(0xFFEEF4F0)),
+                  Divider(height: 1, color: AppPalette.c(0xFFEEF4F0)),
                   _buildGenderRow(),
-                  const Divider(height: 1, color: Color(0xFFEEF4F0)),
+                  Divider(height: 1, color: AppPalette.c(0xFFEEF4F0)),
                   _buildUserIdRow(),
-                  const Divider(height: 1, color: Color(0xFFEEF4F0)),
+                  Divider(height: 1, color: AppPalette.c(0xFFEEF4F0)),
                   _buildUsedDaysRow(),
                 ],
               ),
@@ -360,7 +361,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   Widget _buildIdentityCard() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppPalette.c(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(16),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -371,7 +372,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
             onTap: _pickBadge,
             trailing: IdentityBadge(badge: _badge),
           ),
-          const Divider(height: 1, color: Color(0xFFEEF4F0)),
+          Divider(height: 1, color: AppPalette.c(0xFFEEF4F0)),
           _buildIdentityRow(
             label: '积分',
             onTap: _openShop,
@@ -387,9 +388,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                   ),
                 ),
                 const SizedBox(width: 3),
-                const Text(
+                Text(
                   '分',
-                  style: TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
+                  style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
                 ),
               ],
             ),
@@ -413,12 +414,12 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
           children: [
             Text(
               label,
-              style: const TextStyle(fontSize: 15, color: Color(0xFF24382F)),
+              style: TextStyle(fontSize: 15, color: AppPalette.c(0xFF24382F)),
             ),
             const Spacer(),
             trailing,
             const SizedBox(width: 4),
-            const AppIcon(AppIcons.chevR, size: 16, color: Color(0xFFC6D6CD)),
+            AppIcon(AppIcons.chevR, size: 16, color: AppPalette.c(0xFFC6D6CD)),
           ],
         ),
       ),
@@ -431,7 +432,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppPalette.c(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(16),
       ),
       child: child,
@@ -444,7 +445,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         width: 76,
         child: Text(
           text,
-          style: const TextStyle(fontSize: 15, color: Color(0xFF24382F)),
+          style: TextStyle(fontSize: 15, color: AppPalette.c(0xFF24382F)),
         ),
       );
 
@@ -458,9 +459,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
             controller: _nicknameCtrl,
             maxLength: 10,
             style: const TextStyle(fontSize: 15),
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               hintText: UserProfile.defaultNickname,
-              hintStyle: TextStyle(color: Color(0xFF8FA09A)),
+              hintStyle: TextStyle(color: AppPalette.c(0xFF8FA09A)),
               border: InputBorder.none,
               counterText: '',
             ),
@@ -473,7 +474,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
           valueListenable: _nicknameCtrl,
           builder: (_, v, __) => Text(
             '${v.text.length}/10',
-            style: const TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
+            style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
           ),
         ),
       ],
@@ -494,10 +495,10 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
             Expanded(
               child: Text(
                 _genderLabel(_gender),
-                style: const TextStyle(fontSize: 15, color: Color(0xFF24382F)),
+                style: TextStyle(fontSize: 15, color: AppPalette.c(0xFF24382F)),
               ),
             ),
-            const AppIcon(AppIcons.chevR, size: 16, color: Color(0xFFC6D6CD)),
+            AppIcon(AppIcons.chevR, size: 16, color: AppPalette.c(0xFFC6D6CD)),
           ],
         ),
       ),
@@ -524,7 +525,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     };
     final picked = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppPalette.c(0xFFFFFFFF),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -533,14 +534,14 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Padding(
+            Padding(
               padding: EdgeInsets.fromLTRB(20, 18, 20, 6),
               child: Text(
                 '选择性别',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF24382F),
+                  color: AppPalette.c(0xFF24382F),
                 ),
               ),
             ),
@@ -555,8 +556,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                   child: Row(
                     children: [
                       Text(entry.key,
-                          style: const TextStyle(
-                              fontSize: 14, color: Color(0xFF647A70))),
+                          style: TextStyle(
+                              fontSize: 14, color: AppPalette.c(0xFF647A70))),
                       const Spacer(),
                       if (_gender == entry.value)
                         const AppIcon(AppIcons.check,
@@ -590,7 +591,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                 _userId,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
+                style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
               ),
             ),
           ],
@@ -618,7 +619,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
           Expanded(
             child: Text(
               '已使用 $_usedDays 天',
-              style: const TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
+              style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
             ),
           ),
         ],

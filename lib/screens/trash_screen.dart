@@ -8,6 +8,7 @@ import '../services/trash_storage.dart';
 import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
 
+import '../theme/app_palette.dart';
 /// 回收站主页。
 /// 交互与其它主页一致：顶部蓝色三横杠 + 标题、左右滑由 HomeScreen 统一处理。
 /// 保存用户删除的笔记 / 物品 / 事件 / 资产，最长 7 天。
@@ -181,7 +182,7 @@ class TrashScreenState extends State<TrashScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: AppPalette.c(0xFFFFFFFF),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text('彻底删除 ${picked.length} 项?', style: const TextStyle(fontSize: 17)),
         content: const Text('所选内容将被永久删除，无法恢复。',
@@ -221,7 +222,7 @@ class TrashScreenState extends State<TrashScreen> {
     Haptics.mediumNow();
     final action = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppPalette.c(0xFFFFFFFF),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -264,7 +265,7 @@ class TrashScreenState extends State<TrashScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: AppPalette.c(0xFFFFFFFF),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('彻底删除?', style: TextStyle(fontSize: 17)),
         content: const Text('该内容将被永久删除，无法恢复。',
@@ -305,7 +306,7 @@ class TrashScreenState extends State<TrashScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: AppPalette.c(0xFFFFFFFF),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text('清空${scope == null ? '回收站' : scope.label}?',
             style: const TextStyle(fontSize: 17)),
@@ -340,7 +341,7 @@ class TrashScreenState extends State<TrashScreen> {
     Haptics.light();
     final action = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppPalette.c(0xFFFFFFFF),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -354,10 +355,10 @@ class TrashScreenState extends State<TrashScreen> {
               icon: AppIcons.check,
               label: '选择性还原',
               hint: '勾选要还原的内容',
-              color: const Color(0xFF24382F),
+              color: AppPalette.c(0xFF24382F),
               onTap: () => Navigator.pop(ctx, 'selective'),
             ),
-            const Divider(height: 1, indent: 56, color: Color(0xFFEFF5F1)),
+            Divider(height: 1, indent: 56, color: AppPalette.c(0xFFEFF5F1)),
             _menuRow(
               key: const ValueKey('trash-menu-restore-all'),
               icon: AppIcons.restore,
@@ -391,7 +392,7 @@ class TrashScreenState extends State<TrashScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: AppPalette.c(0xFFFFFFFF),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('全部还原?', style: TextStyle(fontSize: 17)),
         content: Text('共 ${picked.length} 项将恢复到原位置。',
@@ -426,7 +427,7 @@ class TrashScreenState extends State<TrashScreen> {
     Haptics.light();
     final action = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppPalette.c(0xFFFFFFFF),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -443,7 +444,7 @@ class TrashScreenState extends State<TrashScreen> {
               color: const Color(0xFFCB5C50),
               onTap: () => Navigator.pop(ctx, 'selective'),
             ),
-            const Divider(height: 1, indent: 56, color: Color(0xFFEFF5F1)),
+            Divider(height: 1, indent: 56, color: AppPalette.c(0xFFEFF5F1)),
             _menuRow(
               key: const ValueKey('trash-menu-clear'),
               icon: AppIcons.trash,
@@ -451,7 +452,7 @@ class TrashScreenState extends State<TrashScreen> {
               hint: _category == null
                   ? '永久删除全部内容'
                   : '永久删除「${_category!.label}」分类下的内容',
-              color: const Color(0xFF24382F),
+              color: AppPalette.c(0xFF24382F),
               onTap: () => Navigator.pop(ctx, 'clear'),
             ),
             // 抽屉不再放「取消」按钮：点遮罩 / 下滑即可关闭
@@ -496,8 +497,8 @@ class TrashScreenState extends State<TrashScreen> {
                           color: color)),
                   const SizedBox(height: 2),
                   Text(hint,
-                      style: const TextStyle(
-                          fontSize: 12, color: Color(0xFF8FA09A))),
+                      style: TextStyle(
+                          fontSize: 12, color: AppPalette.c(0xFF8FA09A))),
                 ],
               ),
             ),
@@ -533,7 +534,7 @@ class TrashScreenState extends State<TrashScreen> {
     final selecting = _mode != null;
     return Container(
       height: 48,
-      color: const Color(0xB33E8E6D),
+      color: AppPalette.c(0xB33E8E6D),
       child: Row(
         children: [
           if (selecting)
@@ -606,14 +607,14 @@ class TrashScreenState extends State<TrashScreen> {
           children: [
             AppIcon(AppIcons.delete,
                 size: 54,
-                color: const Color(0xFF8FA09A).withOpacity(0.55)),
+                color: AppPalette.c(0xFF8FA09A).withOpacity(0.55)),
             const SizedBox(height: 14),
-            const Text(
+            Text(
               '回收站是空的',
               style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF647A70)),
+                  color: AppPalette.c(0xFF647A70)),
             ),
             const SizedBox(height: 8),
             Text(
@@ -622,7 +623,7 @@ class TrashScreenState extends State<TrashScreen> {
               style: TextStyle(
                   fontSize: 13,
                   height: 1.7,
-                  color: const Color(0xFF8FA09A).withOpacity(0.95)),
+                  color: AppPalette.c(0xFF8FA09A).withOpacity(0.95)),
             ),
           ],
         ),
@@ -642,8 +643,8 @@ class TrashScreenState extends State<TrashScreen> {
               ? Center(
                   child: Text(
                     '${_category?.label ?? ''}没有内容',
-                    style: const TextStyle(
-                        fontSize: 13, color: Color(0xFF8FA09A)),
+                    style: TextStyle(
+                        fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
                   ),
                 )
               : ListView(
@@ -661,7 +662,7 @@ class TrashScreenState extends State<TrashScreen> {
                         style: TextStyle(
                             fontSize: 11,
                             color:
-                                const Color(0xFF8FA09A).withOpacity(0.9)),
+                                AppPalette.c(0xFF8FA09A).withOpacity(0.9)),
                       ),
                     ),
                   ],
@@ -702,12 +703,12 @@ class TrashScreenState extends State<TrashScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: selected ? const Color(0xB33E8E6D) : Colors.white,
+                color: selected ? AppPalette.c(0xB33E8E6D) : AppPalette.c(0xFFFFFFFF),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                     color: selected
-                        ? const Color(0xB33E8E6D)
-                        : const Color(0xFFE8EDF5)),
+                        ? AppPalette.c(0xB33E8E6D)
+                        : AppPalette.c(0xFFE8EDF5)),
               ),
               child: Center(
                 child: Text('${c.name} ${c.count}',
@@ -717,8 +718,8 @@ class TrashScreenState extends State<TrashScreen> {
                         color: selected
                             ? Colors.white
                             : (disabled
-                                ? const Color(0xFFC6D6CD)
-                                : const Color(0xFF24382F)))),
+                                ? AppPalette.c(0xFFC6D6CD)
+                                : AppPalette.c(0xFF24382F)))),
               ),
             ),
           );
@@ -736,7 +737,7 @@ class TrashScreenState extends State<TrashScreen> {
 
     final card = Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppPalette.c(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: picked ? const Color(0xFF3E8E6D) : Colors.transparent,
@@ -758,12 +759,12 @@ class TrashScreenState extends State<TrashScreen> {
                   // 13px 的对勾被拉到左上角而不是落在圆圈中心。
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: picked ? const Color(0xFF3E8E6D) : Colors.white,
+                    color: picked ? const Color(0xFF3E8E6D) : AppPalette.c(0xFFFFFFFF),
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: picked
                           ? const Color(0xFF3E8E6D)
-                          : const Color(0xFFC6D6CD),
+                          : AppPalette.c(0xFFC6D6CD),
                     ),
                   ),
                   child: picked
@@ -782,18 +783,18 @@ class TrashScreenState extends State<TrashScreen> {
                     e.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF24382F)),
+                        color: AppPalette.c(0xFF24382F)),
                   ),
                   const SizedBox(height: 3),
                   Text(
                     e.subtitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        fontSize: 11, color: Color(0xFF8FA09A)),
+                    style: TextStyle(
+                        fontSize: 11, color: AppPalette.c(0xFF8FA09A)),
                   ),
                 ],
               ),
@@ -809,7 +810,7 @@ class TrashScreenState extends State<TrashScreen> {
                     fontWeight: FontWeight.w600,
                     color: urgent
                         ? const Color(0xFFF08C3A)
-                        : const Color(0xFF7C8F86)),
+                        : AppPalette.c(0xFF7C8F86)),
               ),
             ),
           ],

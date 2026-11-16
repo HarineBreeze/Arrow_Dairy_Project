@@ -20,6 +20,7 @@ import 'note_view_screen.dart';
 import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
 
+import '../theme/app_palette.dart';
 /// 全局搜索主页：一个搜索框同时检索 笔记标题 / 物品名称 / 事件名称 / 资产备注。
 /// 顶部搜索框持久保持；结果用「收纳栏」（笔记/物品/事件/资产 + 数量）+ 分区列表呈现。
 ///
@@ -155,7 +156,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
   Widget _buildSearchBar() {
     return Container(
       height: 56,
-      color: const Color(0xB33E8E6D),
+      color: AppPalette.c(0xB33E8E6D),
       padding: const EdgeInsets.fromLTRB(4, 6, 12, 6),
       child: Row(
         children: [
@@ -169,24 +170,24 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
               height: 36,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppPalette.c(0xFFFFFFFF),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 children: [
-                  const AppIcon(AppIcons.search, size: 18, color: Color(0xFF8FA09A)),
+                  AppIcon(AppIcons.search, size: 18, color: AppPalette.c(0xFF8FA09A)),
                   const SizedBox(width: 6),
                   Expanded(
                     child: TextField(
                       controller: _ctrl,
                       focusNode: _focus,
                       autofocus: false, // 进入页面不默认弹出输入法
-                      style: const TextStyle(
-                          fontSize: 15, color: Color(0xFF24382F)),
+                      style: TextStyle(
+                          fontSize: 15, color: AppPalette.c(0xFF24382F)),
                       textAlignVertical: TextAlignVertical.center,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: '搜索笔记 / 物品 / 事件 / 资产…',
-                        hintStyle: TextStyle(color: Color(0xFF8FA09A)),
+                        hintStyle: TextStyle(color: AppPalette.c(0xFF8FA09A)),
                         border: InputBorder.none,
                         isDense: true,
                       ),
@@ -199,8 +200,8 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                         _ctrl.clear();
                         setState(() {});
                       },
-                      child: const AppIcon(AppIcons.close,
-                          size: 16, color: Color(0xFF8FA09A)),
+                      child: AppIcon(AppIcons.close,
+                          size: 16, color: AppPalette.c(0xFF8FA09A)),
                     ),
                 ],
               ),
@@ -220,14 +221,14 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             AppIcon(AppIcons.search,
-                size: 56, color: const Color(0xFF8FA09A).withOpacity(0.6)),
+                size: 56, color: AppPalette.c(0xFF8FA09A).withOpacity(0.6)),
             const SizedBox(height: 14),
-            const Text(
+            Text(
               '输入关键词，即可检索对应内容',
               style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF647A70)),
+                  color: AppPalette.c(0xFF647A70)),
             ),
           ],
         ),
@@ -247,11 +248,11 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children: const [
-            AppIcon(AppIcons.searchX, size: 48, color: Color(0xFFC6D6CD)),
+          children: [
+            AppIcon(AppIcons.searchX, size: 48, color: AppPalette.c(0xFFC6D6CD)),
             SizedBox(height: 10),
             Text('没有匹配的内容',
-                style: TextStyle(fontSize: 13, color: Color(0xFF8FA09A))),
+                style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
           ],
         ),
       );
@@ -288,12 +289,12 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
-                    color: selected ? const Color(0xB33E8E6D) : Colors.white,
+                    color: selected ? AppPalette.c(0xB33E8E6D) : AppPalette.c(0xFFFFFFFF),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                         color: selected
-                            ? const Color(0xB33E8E6D)
-                            : const Color(0xFFE8EDF5)),
+                            ? AppPalette.c(0xB33E8E6D)
+                            : AppPalette.c(0xFFE8EDF5)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -305,8 +306,8 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                               color: selected
                                   ? Colors.white
                                   : (c.hasHit
-                                      ? const Color(0xFF24382F)
-                                      : const Color(0xFFC6D6CD)))),
+                                      ? AppPalette.c(0xFF24382F)
+                                      : AppPalette.c(0xFFC6D6CD)))),
                     ],
                   ),
                 ),
@@ -407,7 +408,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
               ? AppIcons.eyeOff
               : AppIcons.eyeOn,
           size: 16,
-          color: const Color(0xFF8FA09A),
+          color: AppPalette.c(0xFF8FA09A),
         ),
       ),
     );
@@ -422,15 +423,15 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           Padding(
             padding: const EdgeInsets.only(left: 2, bottom: 7),
             child: Text(title,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF7C8F86))),
+                    color: AppPalette.c(0xFF7C8F86))),
           ),
           Container(
             // 预览卡去描边：白底圆角 + 内部分隔线
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppPalette.c(0xFFFFFFFF),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Column(
@@ -496,21 +497,21 @@ class _ResultRow extends StatelessWidget {
                     Text(title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF24382F))),
+                            color: AppPalette.c(0xFF24382F))),
                     const SizedBox(height: 2),
                     Text(subtitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontSize: 11, color: Color(0xFF8FA09A))),
+                        style: TextStyle(
+                            fontSize: 11, color: AppPalette.c(0xFF8FA09A))),
                   ],
                 ),
               ),
               if (trailing != null) trailing!,
-              const AppIcon(AppIcons.chevR, size: 18, color: Color(0xFFC6D6CD)),
+              AppIcon(AppIcons.chevR, size: 18, color: AppPalette.c(0xFFC6D6CD)),
             ],
           ),
         ),

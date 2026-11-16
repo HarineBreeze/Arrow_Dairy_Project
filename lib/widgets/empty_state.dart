@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/pressable.dart';
 import '../widgets/entry_icon.dart';
 
+import '../theme/app_palette.dart';
 /// 全局统一的空状态引导组件。
 ///
 /// 所有主页（写日记 / 物品清单 / 事件 / 资产全景）在「一条数据都没有」或
@@ -52,9 +53,9 @@ class EmptyState extends StatelessWidget {
         Text(
           title,
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 15,
-            color: Color(0xFF24382F),
+            color: AppPalette.c(0xFF24382F),
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -62,9 +63,9 @@ class EmptyState extends StatelessWidget {
         Text(
           subtitle,
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
-            color: Color(0xFF8FA09A),
+            color: AppPalette.c(0xFF8FA09A),
             height: 1.7,
           ),
         ),

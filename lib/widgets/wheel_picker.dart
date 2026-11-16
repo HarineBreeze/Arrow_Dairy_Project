@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import '../theme/app_palette.dart';
 /// 滚轮式日期 / 时间选择器。
 ///
 /// 自带惯性减速、刻度吸附（松手后缓动停到最近的整值）与边缘惯性回弹
@@ -124,19 +125,19 @@ class _WheelLabel extends StatelessWidget {
         children: [
           Text(
             text,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 19,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF24382F),
+              color: AppPalette.c(0xFF24382F),
             ),
           ),
           if (unit.isNotEmpty)
             Text(
               unit,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
-                color: Color(0xFF647A70),
+                color: AppPalette.c(0xFF647A70),
               ),
             ),
         ],
@@ -155,7 +156,7 @@ Future<DateTime?> showWheelDatePicker(
 }) {
   return showModalBottomSheet<DateTime>(
     context: context,
-    backgroundColor: Colors.white,
+    backgroundColor: AppPalette.c(0xFFFFFFFF),
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
@@ -344,7 +345,7 @@ Future<TimeOfDay?> showWheelTimePicker(
   var minute = initial.minute;
   return showModalBottomSheet<TimeOfDay>(
     context: context,
-    backgroundColor: Colors.white,
+    backgroundColor: AppPalette.c(0xFFFFFFFF),
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
@@ -416,16 +417,16 @@ class _SheetHeader extends StatelessWidget {
         children: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('取消',
-                style: TextStyle(fontSize: 15, color: Color(0xFF647A70))),
+            child: Text('取消',
+                style: TextStyle(fontSize: 15, color: AppPalette.c(0xFF647A70))),
           ),
           Expanded(
             child: Center(
               child: Text(title,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF24382F))),
+                      color: AppPalette.c(0xFF24382F))),
             ),
           ),
           TextButton(

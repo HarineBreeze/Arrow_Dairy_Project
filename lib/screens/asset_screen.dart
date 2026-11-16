@@ -19,6 +19,7 @@ import '../widgets/pressable.dart';
 import '../widgets/asset_pie_card.dart';
 import '../widgets/app_icons.dart';
 
+import '../theme/app_palette.dart';
 /// 资产全景主页。默认无需密码即可查看；
 /// 开启「加密访问」后，进入本页需先输入密码解锁。
 /// 返回 true 表示确认完成（供外部回调刷新）。
@@ -114,7 +115,7 @@ class AssetScreenState extends State<AssetScreen> {
   void _openSettings() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppPalette.c(0xFFFFFFFF),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -139,8 +140,8 @@ class AssetScreenState extends State<AssetScreen> {
                   _hasPin
                       ? '已开启：进入资产全景需输入密码'
                       : '未开启：进入资产全景无需密码',
-                  style: const TextStyle(
-                      fontSize: 13, color: Color(0xFF8FA09A))),
+                  style: TextStyle(
+                      fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
               trailing: Switch(
                 value: _hasPin,
                 activeColor: const Color(0xFF3E8E6D),
@@ -167,17 +168,17 @@ class AssetScreenState extends State<AssetScreen> {
               leading: AppIcon(AppIcons.lock,
                   color: _hasPin
                       ? const Color(0xFF3E8E6D)
-                      : const Color(0xFFC2D4C9)),
+                      : AppPalette.c(0xFFC2D4C9)),
               enabled: _hasPin,
               title: Text('修改资产密码',
                   style: TextStyle(
                       color: _hasPin
-                          ? const Color(0xFF24382F)
-                          : const Color(0xFFB2C4BA))),
+                          ? AppPalette.c(0xFF24382F)
+                          : AppPalette.c(0xFFB2C4BA))),
               subtitle: Text(
                   _hasPin ? '可通过当前密码或密保问题验证' : '开启加密访问后可修改',
-                  style: const TextStyle(
-                      fontSize: 13, color: Color(0xFF8FA09A))),
+                  style: TextStyle(
+                      fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
               onTap: _hasPin
                   ? () {
                       Navigator.pop(ctx);
@@ -260,7 +261,7 @@ class AssetScreenState extends State<AssetScreen> {
   void _openFilterSheet() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppPalette.c(0xFFFFFFFF),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -273,9 +274,9 @@ class AssetScreenState extends State<AssetScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 13,
-                          color: Color(0xFF8FA09A),
+                          color: AppPalette.c(0xFF8FA09A),
                           fontWeight: FontWeight.w600)),
                   const SizedBox(height: 10),
                   Wrap(
@@ -293,7 +294,7 @@ class AssetScreenState extends State<AssetScreen> {
                           decoration: BoxDecoration(
                             color: sel
                                 ? const Color(0xFF3E8E6D)
-                                : const Color(0xFFF5FAF7),
+                                : AppPalette.c(0xFFF5FAF7),
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Text(o,
@@ -301,7 +302,7 @@ class AssetScreenState extends State<AssetScreen> {
                                 fontSize: 13,
                                 color: sel
                                     ? Colors.white
-                                    : const Color(0xFF647A70),
+                                    : AppPalette.c(0xFF647A70),
                               )),
                         ),
                       );
@@ -336,9 +337,9 @@ class AssetScreenState extends State<AssetScreen> {
                               enabled: true,
                               child: OutlinedButton(
                                 style: OutlinedButton.styleFrom(
-                                  primary: const Color(0xFF647A70),
-                                  side: const BorderSide(
-                                      color: Color(0xFFD5E2DB)),
+                                  primary: AppPalette.c(0xFF647A70),
+                                  side: BorderSide(
+                                      color: AppPalette.c(0xFFD5E2DB)),
                                   shape: RoundedRectangleBorder(
                                       borderRadius:
                                           BorderRadius.circular(12)),
@@ -579,7 +580,7 @@ class AssetScreenState extends State<AssetScreen> {
     Haptics.mediumNow(); // 长按菜单：同步触发，避免异步等待导致振动被丢弃
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppPalette.c(0xFFFFFFFF),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -648,7 +649,7 @@ class AssetScreenState extends State<AssetScreen> {
         // 顶栏：与物资清单同款
         Container(
           height: 48,
-          color: const Color(0xB33E8E6D),
+          color: AppPalette.c(0xB33E8E6D),
           child: Row(
             children: [
               IconButton(
@@ -769,16 +770,16 @@ class AssetScreenState extends State<AssetScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const AppIcon(AppIcons.lock, size: 44, color: Color(0xFFC2D4C9)),
+          AppIcon(AppIcons.lock, size: 44, color: AppPalette.c(0xFFC2D4C9)),
           const SizedBox(height: 12),
-          const Text('资产全景已加密',
+          Text('资产全景已加密',
               style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF24382F))),
+                  color: AppPalette.c(0xFF24382F))),
           const SizedBox(height: 6),
-          const Text('输入密码后查看',
-              style: TextStyle(fontSize: 13, color: Color(0xFF8FA09A))),
+          Text('输入密码后查看',
+              style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
           const SizedBox(height: 16),
           Pressable(
             enabled: true,
@@ -824,7 +825,7 @@ class AssetScreenState extends State<AssetScreen> {
       // 内容整体下移，底部留白（18px）与上方视觉一致。
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppPalette.c(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(
@@ -861,11 +862,11 @@ class AssetScreenState extends State<AssetScreen> {
           const SizedBox(height: 20),
           Row(
             children: [
-              _statItem('总资产', _totalAssets, const Color(0xFF24382F)),
+              _statItem('总资产', _totalAssets, AppPalette.c(0xFF24382F)),
               // 负资产红：#CB5C50 主题深红（与预览卡片负金额红一致）
               _statItem('负资产', _totalDebt, const Color(0xFFCB5C50)),
-              _statItem('现金流', _cashFlow, const Color(0xFF24382F)),
-              _statItem('理财资产', _investTotal, const Color(0xFF24382F)),
+              _statItem('现金流', _cashFlow, AppPalette.c(0xFF24382F)),
+              _statItem('理财资产', _investTotal, AppPalette.c(0xFF24382F)),
             ],
           ),
           // 正/负资产结构条（绿=正资产，红=负资产），无文字标注
@@ -923,8 +924,8 @@ class AssetScreenState extends State<AssetScreen> {
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              const Text('净资产',
-                  style: TextStyle(fontSize: 13, color: Color(0xFF647A70))),
+              Text('净资产',
+                  style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF647A70))),
               const SizedBox(width: 4),
               // 隐藏/显示看板数字（默认显示）
               GestureDetector(
@@ -942,7 +943,7 @@ class AssetScreenState extends State<AssetScreen> {
                         ? AppIcons.eyeOff
                         : AppIcons.eyeOn,
                     size: 15,
-                    color: const Color(0xFF8FA09A),
+                    color: AppPalette.c(0xFF8FA09A),
                   ),
                   baseline: 18,
                 ),
@@ -957,10 +958,10 @@ class AssetScreenState extends State<AssetScreen> {
           child: Text(
             _hideNumbers ? '****' : _money(net),
             maxLines: 1,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF24382F),
+                color: AppPalette.c(0xFF24382F),
                 height: 1.15),
           ),
         ),
@@ -994,8 +995,8 @@ class AssetScreenState extends State<AssetScreen> {
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              const Text('可使用',
-                  style: TextStyle(fontSize: 13, color: Color(0xFF647A70))),
+              Text('可使用',
+                  style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF647A70))),
               const SizedBox(width: 2),
               // 圈叹号：进入参数设置。始终显示，否则算不出数时用户
               // 找不到入口，只会看到一块空白。
@@ -1036,16 +1037,16 @@ class AssetScreenState extends State<AssetScreen> {
                           height: 12,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            border: Border.all(color: const Color(0xFF8FA09A), width: 1),
+                            border: Border.all(color: AppPalette.c(0xFF8FA09A), width: 1),
                           ),
                           alignment: Alignment.center,
-                          child: const Text(
+                          child: Text(
                             '!',
                             style: TextStyle(
                               fontSize: 8,
                               height: 1,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF8FA09A),
+                              color: AppPalette.c(0xFF8FA09A),
                             ),
                           ),
                         ),
@@ -1070,33 +1071,33 @@ class AssetScreenState extends State<AssetScreen> {
                   children: [
                     Text(
                       _hideNumbers ? '****' : UsableDays.format(days),
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF24382F),
+                          color: AppPalette.c(0xFF24382F),
                           height: 1.15),
                     ),
                     if (!_hideNumbers)
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.only(left: 2),
                         child: Text(
                           '天',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF647A70),
+                            color: AppPalette.c(0xFF647A70),
                           ),
                         ),
                       ),
                   ],
                 )
               // 算不出来时留一个占位，两栏数字行仍然齐平
-              : const Text(
+              : Text(
                   '—',
                   style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFFC2CFC8),
+                      color: AppPalette.c(0xFFC2CFC8),
                       height: 1.15),
                 ),
         ),
@@ -1152,7 +1153,7 @@ class AssetScreenState extends State<AssetScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label,
-              style: const TextStyle(fontSize: 11, color: Color(0xFF8FA09A)),
+              style: TextStyle(fontSize: 11, color: AppPalette.c(0xFF8FA09A)),
               maxLines: 1,
               overflow: TextOverflow.ellipsis),
           const SizedBox(height: 2),
@@ -1204,7 +1205,7 @@ class AssetScreenState extends State<AssetScreen> {
       child: IgnorePointer(
         child: Container(
           decoration: BoxDecoration(
-            color: const Color(0x1A3E8E6D),
+            color: AppPalette.c(0x1A3E8E6D),
             borderRadius: const BorderRadius.horizontal(
               left: Radius.circular(8),
               right: Radius.circular(16),
@@ -1214,7 +1215,7 @@ class AssetScreenState extends State<AssetScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color: const Color(0xE63E8E6D),
+              color: AppPalette.c(0xE63E8E6D),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Text('拖动排序 · 松手取消',
@@ -1237,7 +1238,7 @@ class AssetScreenState extends State<AssetScreen> {
             color: barColor,
             padding: const EdgeInsets.only(left: 4),
             child: Container(
-              color: Colors.white,
+              color: AppPalette.c(0xFFFFFFFF),
               padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
               child: Row(
                 children: [
@@ -1258,17 +1259,17 @@ class AssetScreenState extends State<AssetScreen> {
                   Text(a.note.isEmpty ? a.type : a.note,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF24382F))),
+                          color: AppPalette.c(0xFF24382F))),
                   if (a.note.isNotEmpty) ...[
                     const SizedBox(height: 2),
                     Text(a.type,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontSize: 13, color: Color(0xFF8FA09A))),
+                        style: TextStyle(
+                            fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
                   ],
                 ],
               ),
@@ -1285,7 +1286,7 @@ class AssetScreenState extends State<AssetScreen> {
                     fontWeight: FontWeight.w700,
                     color: negative
                         ? const Color(0xFFCB5C50)
-                        : const Color(0xFF24382F),
+                        : AppPalette.c(0xFF24382F),
                   ),
                 ),
               ],
@@ -1532,8 +1533,8 @@ class _PinSetupDialogState extends State<_PinSetupDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('开启后，进入资产全景需输入密码；密码仅保存在本机',
-                  style: TextStyle(fontSize: 13, color: Color(0xFF8FA09A))),
+              Text('开启后，进入资产全景需输入密码；密码仅保存在本机',
+                  style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
               const SizedBox(height: 14),
               TextField(
                 controller: _p1,
@@ -1565,8 +1566,8 @@ class _PinSetupDialogState extends State<_PinSetupDialog> {
                 onChanged: (_) => setState(() => _tip = null),
               ),
               const SizedBox(height: 14),
-              const Text('密保（忘记密码时用于重置）',
-                  style: TextStyle(fontSize: 13, color: Color(0xFF8FA09A))),
+              Text('密保（忘记密码时用于重置）',
+                  style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
               const SizedBox(height: 8),
               TextField(
                 controller: _qCtrl,
@@ -1612,8 +1613,8 @@ class _PinSetupDialogState extends State<_PinSetupDialog> {
             enabled: true,
             child: TextButton(
               onPressed: _saving ? null : () => Navigator.pop(context, false),
-              child: const Text('取消',
-                  style: TextStyle(color: Color(0xFF7C8F86))),
+              child: Text('取消',
+                  style: TextStyle(color: AppPalette.c(0xFF7C8F86))),
             ),
           ),
           Pressable(
@@ -1624,7 +1625,7 @@ class _PinSetupDialogState extends State<_PinSetupDialog> {
                   style: TextStyle(
                       color: _valid
                           ? const Color(0xFF3E8E6D)
-                          : const Color(0xFF8FA09A))),
+                          : AppPalette.c(0xFF8FA09A))),
             ),
           ),
         ],
@@ -1861,8 +1862,8 @@ class _PinUnlockDialogState extends State<_PinUnlockDialog> {
             enabled: true,
             child: TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('取消',
-                  style: TextStyle(color: Color(0xFF7C8F86))),
+              child: Text('取消',
+                  style: TextStyle(color: AppPalette.c(0xFF7C8F86))),
             ),
           ),
           Pressable(
@@ -1940,14 +1941,14 @@ class _DisablePinDialogState extends State<_DisablePinDialog> {
           height: 34,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: sel ? const Color(0xFF3E8E6D) : const Color(0xFFF5FAF7),
+            color: sel ? const Color(0xFF3E8E6D) : AppPalette.c(0xFFF5FAF7),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Text(label,
               style: TextStyle(
                   fontSize: 13,
                   fontWeight: sel ? FontWeight.w600 : FontWeight.w400,
-                  color: sel ? Colors.white : const Color(0xFF647A70))),
+                  color: sel ? Colors.white : AppPalette.c(0xFF647A70))),
         ),
       ),
     );
@@ -1965,8 +1966,8 @@ class _DisablePinDialogState extends State<_DisablePinDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('验证身份后，资产全景将不再需要密码即可进入',
-                  style: TextStyle(fontSize: 13, color: Color(0xFF8FA09A))),
+              Text('验证身份后，资产全景将不再需要密码即可进入',
+                  style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
               const SizedBox(height: 14),
               Row(
                 children: [
@@ -2034,8 +2035,8 @@ class _DisablePinDialogState extends State<_DisablePinDialog> {
             enabled: true,
             child: TextButton(
               onPressed: _busy ? null : () => Navigator.pop(context, false),
-              child: const Text('取消',
-                  style: TextStyle(color: Color(0xFF7C8F86))),
+              child: Text('取消',
+                  style: TextStyle(color: AppPalette.c(0xFF7C8F86))),
             ),
           ),
           Pressable(
@@ -2169,14 +2170,14 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
           height: 34,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: sel ? const Color(0xFF3E8E6D) : const Color(0xFFF5FAF7),
+            color: sel ? const Color(0xFF3E8E6D) : AppPalette.c(0xFFF5FAF7),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Text(label,
               style: TextStyle(
                   fontSize: 13,
                   fontWeight: sel ? FontWeight.w600 : FontWeight.w400,
-                  color: sel ? Colors.white : const Color(0xFF647A70))),
+                  color: sel ? Colors.white : AppPalette.c(0xFF647A70))),
         ),
       ),
     );
@@ -2221,9 +2222,9 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
                       onChanged: (_) => setState(() => _error = null),
                     ),
                     const SizedBox(height: 14),
-                    const Text('如需同时修改密保，可填写下面两项（选填）',
+                    Text('如需同时修改密保，可填写下面两项（选填）',
                         style:
-                            TextStyle(fontSize: 13, color: Color(0xFF8FA09A))),
+                            TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
                     const SizedBox(height: 8),
                     FutureBuilder<String>(
                       future: _question,
@@ -2302,8 +2303,8 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
             enabled: true,
             child: TextButton(
               onPressed: _saving ? null : () => Navigator.pop(context, false),
-              child: const Text('取消',
-                  style: TextStyle(color: Color(0xFF7C8F86))),
+              child: Text('取消',
+                  style: TextStyle(color: AppPalette.c(0xFF7C8F86))),
             ),
           ),
           Pressable(

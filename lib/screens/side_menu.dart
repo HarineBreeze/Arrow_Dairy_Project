@@ -4,6 +4,7 @@ import '../widgets/app_icons.dart';
 import '../widgets/avatar.dart';
 import '../widgets/identity_badge.dart';
 
+import '../theme/app_palette.dart';
 class SideMenu extends StatelessWidget {
   final UserProfile profile;
   final VoidCallback onClose;
@@ -44,7 +45,7 @@ class SideMenu extends StatelessWidget {
           // 头部：头像 / 昵称 / UID（固定不滚动）
           _buildHeader(nickname),
           const SizedBox(height: 16),
-          const Divider(height: 1, color: Color(0xFFE8EDF5)),
+          Divider(height: 1, color: AppPalette.c(0xFFE8EDF5)),
           const SizedBox(height: 8),
           // 导航区：条目较多（全局搜索 + 4 个主页 + 回收站），
           // 小屏或大字体下可滚动，避免纵向溢出
@@ -54,7 +55,7 @@ class SideMenu extends StatelessWidget {
               child: _buildNavStack(),
             ),
           ),
-          const Divider(height: 1, color: Color(0xFFE8EDF5)),
+          Divider(height: 1, color: AppPalette.c(0xFFE8EDF5)),
           _buildSettingsButton(),
         ],
       ),
@@ -91,10 +92,10 @@ class SideMenu extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.left,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF24382F),
+                    color: AppPalette.c(0xFF24382F),
                   ),
                 ),
                 // 身份牌：普通版（灰）/ 内测版（橙）/ VIP（红）/ 诞生日（绿）
@@ -107,9 +108,9 @@ class SideMenu extends StatelessWidget {
                   'ID：${profile.userId}',
                   textAlign: TextAlign.left,
                   maxLines: 1,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
-                    color: Color(0xFF8FA09A),
+                    color: AppPalette.c(0xFF8FA09A),
                   ),
                 ),
               ],
@@ -151,7 +152,7 @@ class SideMenu extends StatelessWidget {
               height: tabHeight,
               child: Container(
                 decoration: BoxDecoration(
-                  color: const Color(0xB33E8E6D),
+                  color: AppPalette.c(0xB33E8E6D),
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
@@ -189,7 +190,7 @@ class SideMenu extends StatelessWidget {
       curve: Curves.easeOutCubic,
       builder: (context, t, child) {
         final iconColor = Color.lerp(const Color(0xFF3E8E6D), Colors.white, t)!;
-        final textColor = Color.lerp(const Color(0xFF24382F), Colors.white, t)!;
+        final textColor = Color.lerp(AppPalette.c(0xFF24382F), Colors.white, t)!;
         return SizedBox(
           height: height,
           child: Material(
@@ -232,11 +233,11 @@ class SideMenu extends StatelessWidget {
           child: SizedBox(
             height: 52,
             child: Row(
-              children: const [
+              children: [
                 SizedBox(width: 16),
-                AppIcon(AppIcons.settings, size: 22, color: Color(0xFF647A70)),
+                AppIcon(AppIcons.settings, size: 22, color: AppPalette.c(0xFF647A70)),
                 Spacer(),
-                AppIcon(AppIcons.chevR, size: 20, color: Color(0xFFC6D6CD)),
+                AppIcon(AppIcons.chevR, size: 20, color: AppPalette.c(0xFFC6D6CD)),
                 SizedBox(width: 12),
               ],
             ),

@@ -12,6 +12,7 @@ import '../widgets/save_bar.dart';
 import '../widgets/wheel_picker.dart';
 import '../widgets/entry_icon.dart';
 
+import '../theme/app_palette.dart';
 const List<String> kCategories = ['数码设备', '衣物', '配饰', '家具'];
 const Map<String, List<String>> kCategoryIcons = {
   '数码设备': ['📱', '💻', '📷', '🎧', '⌚', '🖥️', '🎮'],
@@ -324,7 +325,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
       appBar: AppBar(
         backgroundColor: _wishlist
             ? const Color(0xFFE58BA0)
-            : const Color(0xCC3E8E6D),
+            : AppPalette.c(0xCC3E8E6D),
         foregroundColor: Colors.white,
         elevation: 0,
         title: Text(_isNew ? '添加物品' : '编辑物品'),
@@ -440,14 +441,14 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
         decoration: BoxDecoration(
-          color: sel ? accent : Colors.white,
+          color: sel ? accent : AppPalette.c(0xFFFFFFFF),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: 13,
-            color: sel ? Colors.white : const Color(0xFF647A70),
+            color: sel ? Colors.white : AppPalette.c(0xFF647A70),
           ),
         ),
       ),
@@ -515,12 +516,12 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
                 fontWeight: FontWeight.w600,
                 color: _savePerTime > 0
                     ? const Color(0xFF3E8E6D)
-                    : const Color(0xFF8FA09A),
+                    : AppPalette.c(0xFF8FA09A),
               ),
             ),
             const Spacer(),
-            const AppIcon(AppIcons.chevR,
-                size: 18, color: Color(0xFFC6D6CD)),
+            AppIcon(AppIcons.chevR,
+                size: 18, color: AppPalette.c(0xFFC6D6CD)),
           ],
         ),
       ),
@@ -565,7 +566,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
             ),
           ),
           const SizedBox(width: 4),
-          const AppIcon(AppIcons.chevR, size: 18, color: Color(0xFFC6D6CD)),
+          AppIcon(AppIcons.chevR, size: 18, color: AppPalette.c(0xFFC6D6CD)),
         ],
       ),
     );
@@ -589,7 +590,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
               height: 16,
               child: Stack(
                 children: [
-                  Container(color: const Color(0xFFDFEAE5)),
+                  Container(color: AppPalette.c(0xFFDFEAE5)),
                   FractionallySizedBox(
                     widthFactor: ratio,
                     child: Container(color: const Color(0xFF3E8E6D)),
@@ -627,15 +628,15 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
   Widget _sectionLabel(String text) => Padding(
         padding: const EdgeInsets.only(left: 4, bottom: 8),
         child: Text(text,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 13,
-                color: Color(0xFF8FA09A),
+                color: AppPalette.c(0xFF8FA09A),
                 fontWeight: FontWeight.w600)),
       );
 
   /// 白色圆角内容块：与事件编辑页同一套
   BoxDecoration _box() => BoxDecoration(
-        color: Colors.white,
+        color: AppPalette.c(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(12),
       );
 
@@ -647,9 +648,9 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         controller: _nameCtrl,
         maxLength: 20,
         style: const TextStyle(fontSize: 15),
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           hintText: '请输入物品名',
-          hintStyle: TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
+          hintStyle: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
           border: InputBorder.none,
           counterText: '',
           contentPadding: EdgeInsets.symmetric(vertical: 14),
@@ -674,14 +675,14 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
               padding:
                   const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
               decoration: BoxDecoration(
-                color: sel ? _accent : Colors.white,
+                color: sel ? _accent : AppPalette.c(0xFFFFFFFF),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text(
                 c,
                 style: TextStyle(
                   fontSize: 13,
-                  color: sel ? Colors.white : const Color(0xFF647A70),
+                  color: sel ? Colors.white : AppPalette.c(0xFF647A70),
                 ),
               ),
             ),
@@ -692,12 +693,12 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppPalette.c(0xFFFFFFFF),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Text(
+            child: Text(
               '自定义',
-              style: TextStyle(fontSize: 13, color: Color(0xFF647A70)),
+              style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF647A70)),
             ),
           ),
         ),
@@ -727,13 +728,13 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         height: 32,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: sel ? _accent.withOpacity(0.15) : Colors.white,
+          color: sel ? _accent.withOpacity(0.15) : AppPalette.c(0xFFFFFFFF),
           borderRadius: BorderRadius.circular(12),
         ),
         child: isCustom
             // 自定义入口（…）保持灰色文本；预设值走 Lucide 细线图标
-            ? const Text('…',
-                style: TextStyle(fontSize: 17, color: Color(0xFF8FA09A)))
+            ? Text('…',
+                style: TextStyle(fontSize: 17, color: AppPalette.c(0xFF8FA09A)))
             : EntryIcon(value, size: 18),
       ),
     );
@@ -832,7 +833,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppPalette.c(0xFFFFFFFF),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -849,8 +850,8 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
                 style: TextStyle(
                   fontSize: 13,
                   color: d == null
-                      ? const Color(0xFF8FA09A)
-                      : const Color(0xFF24382F),
+                      ? AppPalette.c(0xFF8FA09A)
+                      : AppPalette.c(0xFF24382F),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -858,8 +859,8 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
             if (onClear != null)
               GestureDetector(
                 onTap: onClear,
-                child: const AppIcon(AppIcons.close,
-                    size: 16, color: Color(0xFF8FA09A)),
+                child: AppIcon(AppIcons.close,
+                    size: 16, color: AppPalette.c(0xFF8FA09A)),
               ),
           ],
         ),
@@ -879,14 +880,14 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: sel ? _accent : Colors.white,
+              color: sel ? _accent : AppPalette.c(0xFFFFFFFF),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Text(
               labels[i],
               style: TextStyle(
                 fontSize: 13,
-                color: sel ? Colors.white : const Color(0xFF647A70),
+                color: sel ? Colors.white : AppPalette.c(0xFF647A70),
               ),
             ),
           ),
@@ -923,8 +924,8 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
           const SizedBox(width: 8),
           _buildStepButton(AppIcons.plus, () => _changeUsage(1)),
           const SizedBox(width: 6),
-          const Text('次',
-              style: TextStyle(fontSize: 13, color: Color(0xFF8FA09A))),
+          Text('次',
+              style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
         ],
       ),
     );

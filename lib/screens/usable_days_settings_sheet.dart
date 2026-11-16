@@ -8,6 +8,7 @@ import '../utils/usable_days.dart';
 import '../widgets/app_icons.dart';
 import '../widgets/pressable.dart';
 
+import '../theme/app_palette.dart';
 /// 「可使用天数」参数设置弹窗。
 ///
 /// 由看板卡片「净资产」旁的圈叹号按钮打开。五个参数：
@@ -152,8 +153,8 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
     return Padding(
       padding: EdgeInsets.only(bottom: bottom),
       child: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFFF5FAF7),
+        decoration: BoxDecoration(
+          color: AppPalette.c(0xFFF5FAF7),
           borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
         ),
         child: SafeArea(
@@ -167,7 +168,7 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
                 width: 38,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFD5DDEA),
+                  color: AppPalette.c(0xFFD5DDEA),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -175,20 +176,20 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
                 padding: const EdgeInsets.fromLTRB(20, 8, 12, 4),
                 child: Row(
                   children: [
-                    const Text('可使用天数',
+                    Text('可使用天数',
                         style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF24382F))),
+                            color: AppPalette.c(0xFF24382F))),
                     const SizedBox(width: 6),
-                    const Text('参数',
+                    Text('参数',
                         style: TextStyle(
-                            fontSize: 13, color: Color(0xFF8FA09A))),
+                            fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
                     const Spacer(),
                     IconButton(
                       onPressed: () => Navigator.pop(context, false),
-                      icon: const AppIcon(AppIcons.close,
-                          size: 20, color: Color(0xFF8FA09A)),
+                      icon: AppIcon(AppIcons.close,
+                          size: 20, color: AppPalette.c(0xFF8FA09A)),
                     ),
                   ],
                 ),
@@ -281,7 +282,7 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
     Color color;
     if (totalText.isEmpty) {
       body = '填写总资产后即可算出「可使用 x 天」';
-      color = const Color(0xFF8FA09A);
+      color = AppPalette.c(0xFF8FA09A);
     } else if (d == null) {
       body = _parse(_cost) <= 0
           ? '每月预算需大于 0 才能计算'
@@ -318,9 +319,9 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
-                const Text('可使用 ',
+                Text('可使用 ',
                     style:
-                        TextStyle(fontSize: 13, color: Color(0xFF7C8F86))),
+                        TextStyle(fontSize: 13, color: AppPalette.c(0xFF7C8F86))),
                 Text(UsableDays.format(dd),
                     style: TextStyle(
                         fontSize: 22,
@@ -329,8 +330,8 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
                 if (UsableDays.formatYears(dd).isNotEmpty) ...[
                   const SizedBox(width: 6),
                   Text('（${UsableDays.formatYears(dd)}）',
-                      style: const TextStyle(
-                          fontSize: 13, color: Color(0xFF8FA09A))),
+                      style: TextStyle(
+                          fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
                 ],
               ],
             ),
@@ -354,17 +355,17 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
           SizedBox(
             width: 84,
             child: Text(label,
-                style: const TextStyle(
-                    fontSize: 13, color: Color(0xFF24382F))),
+                style: TextStyle(
+                    fontSize: 13, color: AppPalette.c(0xFF24382F))),
           ),
           Expanded(
             child: Container(
               height: 44,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppPalette.c(0xFFFFFFFF),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE8EDF5)),
+                border: Border.all(color: AppPalette.c(0xFFE8EDF5)),
               ),
               child: Row(
                 children: [
@@ -380,21 +381,21 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
                               : RegExp(r'[0-9]'),
                         ),
                       ],
-                      style: const TextStyle(
-                          fontSize: 13, color: Color(0xFF24382F)),
+                      style: TextStyle(
+                          fontSize: 13, color: AppPalette.c(0xFF24382F)),
                       decoration: InputDecoration(
                         isDense: true,
                         border: InputBorder.none,
                         hintText: hint,
-                        hintStyle: const TextStyle(
-                            fontSize: 13, color: Color(0xFFC6D6CD)),
+                        hintStyle: TextStyle(
+                            fontSize: 13, color: AppPalette.c(0xFFC6D6CD)),
                       ),
                     ),
                   ),
                   if (suffix != null)
                     Text(suffix,
-                        style: const TextStyle(
-                            fontSize: 13, color: Color(0xFF8FA09A))),
+                        style: TextStyle(
+                            fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
                 ],
               ),
             ),

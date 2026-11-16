@@ -25,6 +25,7 @@ import '../widgets/wheel_picker.dart';
 import '../utils/todo_text.dart';
 import 'image_crop_screen.dart';
 
+import '../theme/app_palette.dart';
 /// 封面图抽屉动作
 enum _ImageAction { gallery, camera, crop }
 
@@ -672,18 +673,18 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
         titlePadding: const EdgeInsets.fromLTRB(24, 22, 24, 0),
         contentPadding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-        title: const Text('移除封面图',
+        title: Text('移除封面图',
             style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF24382F))),
-        content: const Text('移除后本篇笔记将不再显示封面图',
-            style: TextStyle(fontSize: 15, color: Color(0xFF647A70))),
+                color: AppPalette.c(0xFF24382F))),
+        content: Text('移除后本篇笔记将不再显示封面图',
+            style: TextStyle(fontSize: 15, color: AppPalette.c(0xFF647A70))),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('取消',
-                style: TextStyle(fontSize: 15, color: Color(0xFF647A70))),
+            child: Text('取消',
+                style: TextStyle(fontSize: 15, color: AppPalette.c(0xFF647A70))),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -713,18 +714,18 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
           titlePadding: const EdgeInsets.fromLTRB(24, 22, 24, 0),
           contentPadding: const EdgeInsets.fromLTRB(0, 12, 0, 4),
           actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-          title: const Text('可见度',
+          title: Text('可见度',
               style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF24382F))),
+                  color: AppPalette.c(0xFF24382F))),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               RadioListTile<String>(
-                title: const Text('公开',
+                title: Text('公开',
                     style: TextStyle(
-                        fontSize: 15, color: Color(0xFF24382F))),
+                        fontSize: 15, color: AppPalette.c(0xFF24382F))),
                 value: 'public',
                 groupValue: choice,
                 dense: true,
@@ -733,9 +734,9 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                 onChanged: (v) => setState(() => choice = v!),
               ),
               RadioListTile<String>(
-                title: const Text('加密',
+                title: Text('加密',
                     style: TextStyle(
-                        fontSize: 15, color: Color(0xFF24382F))),
+                        fontSize: 15, color: AppPalette.c(0xFF24382F))),
                 value: 'encrypted',
                 groupValue: choice,
                 dense: true,
@@ -750,9 +751,9 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
               enabled: true,
               child: TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('取消',
+                child: Text('取消',
                     style: TextStyle(
-                        fontSize: 15, color: Color(0xFF647A70))),
+                        fontSize: 15, color: AppPalette.c(0xFF647A70))),
               ),
             ),
             Pressable(
@@ -801,10 +802,10 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                 decoration: const InputDecoration(hintText: '请输入密码'),
               ),
               const SizedBox(height: 10),
-              const Align(
+              Align(
                 alignment: Alignment.centerLeft,
                 child: Text('密保问题（选填）',
-                    style: TextStyle(fontSize: 13, color: Color(0xFF8FA09A))),
+                    style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
               ),
               TextField(
                 controller: hintCtrl,
@@ -815,10 +816,10 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                 ),
               ),
               const SizedBox(height: 6),
-              const Align(
+              Align(
                 alignment: Alignment.centerLeft,
                 child: Text('密保问题答案',
-                    style: TextStyle(fontSize: 13, color: Color(0xFF8FA09A))),
+                    style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
               ),
               TextField(
                 controller: ansCtrl,
@@ -874,16 +875,16 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
         alignment: Alignment.centerLeft,
         padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppPalette.c(0xFFFFFFFF),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
-          children: const [
-            AppIcon(AppIcons.moreH, size: 16, color: Color(0xFF24382F)),
+          children: [
+            AppIcon(AppIcons.moreH, size: 16, color: AppPalette.c(0xFF24382F)),
             SizedBox(width: 6),
             Text(
               '更多',
-              style: TextStyle(fontSize: 13, color: Color(0xFF24382F)),
+              style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF24382F)),
             ),
           ],
         ),
@@ -907,16 +908,16 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                 width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDFEAE5),
+                  color: AppPalette.c(0xFFDFEAE5),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
               ListTile(
                 // 标题离屏幕边缘太近，两侧各加 8 的内缩（默认 16）
                 contentPadding: const EdgeInsets.only(left: 24, right: 16),
-                title: const Text('可见度',
+                title: Text('可见度',
                     style:
-                        TextStyle(fontSize: 13, color: Color(0xFF24382F))),
+                        TextStyle(fontSize: 13, color: AppPalette.c(0xFF24382F))),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -929,8 +930,8 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                       ),
                     ),
                     const SizedBox(width: 4),
-                    const AppIcon(AppIcons.chevR,
-                        size: 18, color: Color(0xFF8FA09A)),
+                    AppIcon(AppIcons.chevR,
+                        size: 18, color: AppPalette.c(0xFF8FA09A)),
                   ],
                 ),
                 onTap: () {
@@ -940,9 +941,9 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
               ),
               SwitchListTile(
                 contentPadding: const EdgeInsets.only(left: 24, right: 16),
-                title: const Text('置顶',
+                title: Text('置顶',
                     style:
-                        TextStyle(fontSize: 13, color: Color(0xFF24382F))),
+                        TextStyle(fontSize: 13, color: AppPalette.c(0xFF24382F))),
                 value: _pinned,
                 activeColor: const Color(0xFF3E8E6D),
                 onChanged: (v) {
@@ -1010,7 +1011,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
       onWillPop: _handleLeave,
       child: Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xCC3E8E6D),
+        backgroundColor: AppPalette.c(0xCC3E8E6D),
         foregroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
@@ -1079,10 +1080,10 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                         decoration: InputDecoration(
                           // 标题为空时随机展示一条写作话题作为引导
                           hintText: _titleCtrl.text.isEmpty ? _prompt : '标题',
-                          hintStyle: const TextStyle(
+                          hintStyle: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w400,
-                            color: Color(0xFFB2C4BA),
+                            color: AppPalette.c(0xFFB2C4BA),
                           ),
                           border: InputBorder.none,
                           counterText: '',
@@ -1095,17 +1096,17 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                       InkWell(
                         onTap: _shufflePrompt,
                         borderRadius: BorderRadius.circular(16),
-                        child: const Padding(
+                        child: Padding(
                           padding: EdgeInsets.symmetric(
                               horizontal: 6, vertical: 4),
                           child: AppIcon(AppIcons.restore,
-                              size: 18, color: Color(0xFF8FA09A)),
+                              size: 18, color: AppPalette.c(0xFF8FA09A)),
                         ),
                       ),
                     Text(
                       '${_titleCtrl.text.length}/15',
-                      style: const TextStyle(
-                          fontSize: 13, color: Color(0xFF8FA09A)),
+                      style: TextStyle(
+                          fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
                     ),
                   ],
                 ),
@@ -1118,12 +1119,12 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                         child: TextField(
                           controller: _subtitleCtrl,
                           maxLength: 15,
-                          style: const TextStyle(
-                              fontSize: 15, color: Color(0xFF24382F)),
-                          decoration: const InputDecoration(
+                          style: TextStyle(
+                              fontSize: 15, color: AppPalette.c(0xFF24382F)),
+                          decoration: InputDecoration(
                             hintText: '此处标题会公开显示哦～',
                             hintStyle: TextStyle(
-                                fontSize: 13, color: Color(0xFF8FA09A)),
+                                fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
                             border: InputBorder.none,
                             counterText: '',
                           ),
@@ -1132,8 +1133,8 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                       ),
                       Text(
                         '${_subtitleCtrl.text.length}/15',
-                        style: const TextStyle(
-                            fontSize: 13, color: Color(0xFF8FA09A)),
+                        style: TextStyle(
+                            fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
                       ),
                     ],
                   ),
@@ -1153,7 +1154,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppPalette.c(0xFFFFFFFF),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Stack(
@@ -1218,8 +1219,8 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                       bottom: 8,
                       child: Text(
                         '${_contentCtrl.text.length}/2000',
-                        style: const TextStyle(
-                            fontSize: 13, color: Color(0xFF8FA09A)),
+                        style: TextStyle(
+                            fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
                       ),
                     ),
                   ],
@@ -1607,7 +1608,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
         alignment: Alignment.centerLeft,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppPalette.c(0xFFFFFFFF),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -1622,9 +1623,9 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                 child: Text(
                   label,
                   maxLines: 1,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
-                    color: Color(0xFF24382F),
+                    color: AppPalette.c(0xFF24382F),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -1695,7 +1696,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                         )
                       : Container(
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppPalette.c(0xFFFFFFFF),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
@@ -1752,7 +1753,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     final hasImage = _imagePath.isNotEmpty && File(_imagePath).existsSync();
     final action = await showModalBottomSheet<_ImageAction>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppPalette.c(0xFFFFFFFF),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -1765,7 +1766,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: const Color(0xFFE4EDE8),
+                color: AppPalette.c(0xFFE4EDE8),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1773,15 +1774,15 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
             ListTile(
               leading: const AppIcon(AppIcons.image,
                   size: 20, color: Color(0xFF3E8E6D)),
-              title: const Text('从相册选择',
-                  style: TextStyle(fontSize: 15, color: Color(0xFF24382F))),
+              title: Text('从相册选择',
+                  style: TextStyle(fontSize: 15, color: AppPalette.c(0xFF24382F))),
               onTap: () => Navigator.pop(ctx, _ImageAction.gallery),
             ),
             ListTile(
               leading: const AppIcon(AppIcons.camera,
                   size: 20, color: Color(0xFF3E8E6D)),
-              title: const Text('拍照',
-                  style: TextStyle(fontSize: 15, color: Color(0xFF24382F))),
+              title: Text('拍照',
+                  style: TextStyle(fontSize: 15, color: AppPalette.c(0xFF24382F))),
               onTap: () => Navigator.pop(ctx, _ImageAction.camera),
             ),
             // 自由裁剪：仅已选封面图时可用，对当前图固定 4:3 裁剪
@@ -1789,8 +1790,8 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
               ListTile(
                 leading: const AppIcon(AppIcons.crop,
                     size: 20, color: Color(0xFF3E8E6D)),
-                title: const Text('自由裁剪（4:3）',
-                    style: TextStyle(fontSize: 15, color: Color(0xFF24382F))),
+                title: Text('自由裁剪（4:3）',
+                    style: TextStyle(fontSize: 15, color: AppPalette.c(0xFF24382F))),
                 onTap: () => Navigator.pop(ctx, _ImageAction.crop),
               ),
             const SizedBox(height: 8),

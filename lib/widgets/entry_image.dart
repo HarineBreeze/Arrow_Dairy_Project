@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'app_icons.dart';
 
+import '../theme/app_palette.dart';
 /// 本地封面图（列表/浏览页/编辑页统一入口）。
 ///
 /// 关键点：`cacheWidth` 按「逻辑显示宽 × 设备像素比」解码，
@@ -69,9 +70,9 @@ class EntryImage extends StatelessWidget {
   /// 解码中 / 文件缺失 / 损坏 时的浅色占位
   Widget _placeholder() {
     return ColoredBox(
-      color: const Color(0xFFE4F2EB),
+      color: AppPalette.c(0xFFE4F2EB),
       child: Center(
-        child: AppIcon(AppIcons.image, size: iconSize, color: const Color(0xFF8FA09A)),
+        child: AppIcon(AppIcons.image, size: iconSize, color: AppPalette.c(0xFF8FA09A)),
       ),
     );
   }

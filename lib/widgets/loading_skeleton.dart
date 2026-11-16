@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_palette.dart';
 /// 全局统一的骨架屏组件。
 ///
 /// 所有主页（写日记 / 物品清单 / 事件 / 资产全景）首屏加载时都用 [ListSkeleton]，
@@ -11,7 +12,7 @@ import 'package:flutter/material.dart';
 /// - 不接收手势，全部为 [NeverScrollableScrollPhysics]，加载态下不可滚动。
 
 /// 骨架块的颜色（随呼吸系数变化）
-const Color _kSkeletonBase = Color(0xFFE1ECE6);
+Color get _kSkeletonBase => AppPalette.c(0xFFE1ECE6);
 
 /// 呼吸动画驱动的骨架容器：内部所有 [SkeletonBlock] 共享同一个透明度。
 class SkeletonShimmer extends StatefulWidget {
@@ -116,7 +117,7 @@ class SkeletonCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppPalette.c(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(

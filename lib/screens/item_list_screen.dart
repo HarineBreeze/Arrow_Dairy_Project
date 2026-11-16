@@ -15,6 +15,7 @@ import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
 import '../widgets/entry_icon.dart';
 
+import '../theme/app_palette.dart';
 enum _ItemFilter { all, owning, lost, wishlist }
 
 enum _ItemSortField { usage, days, price, avgCost, acquired }
@@ -79,7 +80,7 @@ class ItemListScreenState extends State<ItemListScreen> {
     Haptics.mediumNow(); // 长按菜单：同步触发，避免异步等待导致振动被丢弃
     final action = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppPalette.c(0xFFFFFFFF),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -284,7 +285,7 @@ class ItemListScreenState extends State<ItemListScreen> {
   void _showSortSheet() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppPalette.c(0xFFFFFFFF),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -298,11 +299,11 @@ class ItemListScreenState extends State<ItemListScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('排序方式',
+                    Text('排序方式',
                         style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF24382F))),
+                            color: AppPalette.c(0xFF24382F))),
                     const SizedBox(height: 10),
                     Wrap(
                       spacing: 8,
@@ -316,12 +317,12 @@ class ItemListScreenState extends State<ItemListScreen> {
                                 horizontal: 14, vertical: 8),
                             decoration: BoxDecoration(
                               color:
-                                  sel ? const Color(0xFF3E8E6D) : Colors.white,
+                                  sel ? const Color(0xFF3E8E6D) : AppPalette.c(0xFFFFFFFF),
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
                                 color: sel
                                     ? const Color(0xFF3E8E6D)
-                                    : const Color(0xFFE4F2EB),
+                                    : AppPalette.c(0xFFE4F2EB),
                               ),
                             ),
                             child: Text(
@@ -330,7 +331,7 @@ class ItemListScreenState extends State<ItemListScreen> {
                                 fontSize: 13,
                                 color: sel
                                     ? Colors.white
-                                    : const Color(0xFF647A70),
+                                    : AppPalette.c(0xFF647A70),
                               ),
                             ),
                           ),
@@ -382,9 +383,9 @@ class ItemListScreenState extends State<ItemListScreen> {
           const Expanded(child: ListSkeleton(count: 4, withAvatar: false))
         else ...[
           _buildFilterBar(),
-          const Divider(height: 1, color: Color(0xFFE8EDF5)),
+          Divider(height: 1, color: AppPalette.c(0xFFE8EDF5)),
           _buildDataView(),
-          const Divider(height: 1, color: Color(0xFFE8EDF5)),
+          Divider(height: 1, color: AppPalette.c(0xFFE8EDF5)),
           Expanded(
             child: RefreshIndicator(
               color: const Color(0xFF3E8E6D),
@@ -435,7 +436,7 @@ class ItemListScreenState extends State<ItemListScreen> {
   Widget _buildTopBar() {
     return Container(
       height: 48,
-      color: const Color(0xB33E8E6D),
+      color: AppPalette.c(0xB33E8E6D),
       child: Row(
         children: [
           IconButton(
@@ -458,18 +459,18 @@ class ItemListScreenState extends State<ItemListScreen> {
                     height: 36,
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppPalette.c(0xFFFFFFFF),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: TextField(
                       controller: _searchCtrl,
                       autofocus: false,
-                      style: const TextStyle(
-                          fontSize: 15, color: Color(0xFF24382F)),
+                      style: TextStyle(
+                          fontSize: 15, color: AppPalette.c(0xFF24382F)),
                       textAlignVertical: TextAlignVertical.center,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: '搜索物品…',
-                        hintStyle: TextStyle(color: Color(0xFF8FA09A)),
+                        hintStyle: TextStyle(color: AppPalette.c(0xFF8FA09A)),
                         isDense: true,
                         border: InputBorder.none,
                       ),
@@ -506,7 +507,7 @@ class ItemListScreenState extends State<ItemListScreen> {
 
   Widget _buildDataView() {
     return Container(
-      color: Colors.white,
+      color: AppPalette.c(0xFFFFFFFF),
       padding: const EdgeInsets.symmetric(vertical: 14),
       child: Row(
         children: [
@@ -545,10 +546,10 @@ class ItemListScreenState extends State<ItemListScreen> {
                 Text(
                   label,
                   style:
-                      const TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
+                      TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
                 ),
                 const SizedBox(width: 2),
-                const AppIcon(AppIcons.swapV, size: 14, color: Color(0xFF8FA09A)),
+                AppIcon(AppIcons.swapV, size: 14, color: AppPalette.c(0xFF8FA09A)),
               ],
             ),
           ],
@@ -572,7 +573,7 @@ class ItemListScreenState extends State<ItemListScreen> {
           const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
+            style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
           ),
         ],
       ),
@@ -596,7 +597,7 @@ class ItemListScreenState extends State<ItemListScreen> {
         final left = index * cellW + (cellW - 40) / 2;
         return Container(
           height: 48,
-          color: Colors.white,
+          color: AppPalette.c(0xFFFFFFFF),
           child: Stack(
             children: [
               Row(
@@ -619,7 +620,7 @@ class ItemListScreenState extends State<ItemListScreen> {
                                 : FontWeight.w400,
                             color: selected
                                 ? const Color(0xFF3E8E6D)
-                                : const Color(0xFF647A70),
+                                : AppPalette.c(0xFF647A70),
                           ),
                         ),
                       ),
@@ -649,7 +650,7 @@ class ItemListScreenState extends State<ItemListScreen> {
   }
 
   Widget _buildDivider() =>
-      Container(width: 1, height: 30, color: const Color(0xFFE8EDF5));
+      Container(width: 1, height: 30, color: AppPalette.c(0xFFE8EDF5));
 }
 
 class _ItemCard extends StatefulWidget {
@@ -720,8 +721,8 @@ class _ItemCardState extends State<_ItemCard> {
         margin: EdgeInsets.zero,
         decoration: BoxDecoration(
           color: item.wishlist
-              ? const Color(0xFFFBE9EC) // 低饱和度淡粉色
-              : (item.lostDate != null ? const Color(0xFFE1ECE6) : Colors.white),
+              ? AppPalette.c(0xFFFBE9EC) // 低饱和度淡粉色
+              : (item.lostDate != null ? AppPalette.c(0xFFE1ECE6) : AppPalette.c(0xFFFFFFFF)),
           borderRadius: BorderRadius.circular(16),
           // 愿望单物品：红色描边
           border: item.wishlist
@@ -767,10 +768,10 @@ class _ItemCardState extends State<_ItemCard> {
                 item.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF24382F),
+                  color: AppPalette.c(0xFF24382F),
                 ),
               ),
               const SizedBox(height: 4),
@@ -814,7 +815,7 @@ class _ItemCardState extends State<_ItemCard> {
         child: Stack(
           alignment: Alignment.centerLeft,
           children: [
-            Container(color: const Color(0xFFDFEAE5)),
+            Container(color: AppPalette.c(0xFFDFEAE5)),
             // 绿色完成块从左侧往右侧增加（与编辑页进度条一致）
             FractionallySizedBox(
               alignment: Alignment.centerLeft,
@@ -875,7 +876,7 @@ class _ItemCardState extends State<_ItemCard> {
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                   color:
-                      lost ? const Color(0xFF8FA09A) : const Color(0xFF24382F),
+                      lost ? AppPalette.c(0xFF8FA09A) : AppPalette.c(0xFF24382F),
                 ),
               ),
               const SizedBox(height: 4),
@@ -884,7 +885,7 @@ class _ItemCardState extends State<_ItemCard> {
                 style: TextStyle(
                   fontSize: 13,
                   color:
-                      lost ? const Color(0xFFAFBFB8) : const Color(0xFF3E8E6D),
+                      lost ? AppPalette.c(0xFFAFBFB8) : const Color(0xFF3E8E6D),
                 ),
               ),
               const SizedBox(height: 2),
@@ -896,8 +897,8 @@ class _ItemCardState extends State<_ItemCard> {
                   style: TextStyle(
                     fontSize: 13,
                     color: lost
-                        ? const Color(0xFFAFBFB8)
-                        : const Color(0xFF8FA09A),
+                        ? AppPalette.c(0xFFAFBFB8)
+                        : AppPalette.c(0xFF8FA09A),
                   ),
                 ),
               ),
@@ -911,7 +912,7 @@ class _ItemCardState extends State<_ItemCard> {
             '¥${item.actualPrice.toStringAsFixed(0)}',
             style: TextStyle(
               fontSize: 11,
-              color: lost ? const Color(0xFFAFBFB8) : const Color(0xFF8FA09A),
+              color: lost ? AppPalette.c(0xFFAFBFB8) : AppPalette.c(0xFF8FA09A),
             ),
           ),
         ),

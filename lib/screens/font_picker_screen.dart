@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../utils/app_toast.dart';
 import '../services/app_settings.dart';
 
+import '../theme/app_palette.dart';
 /// 字体选择页：预览文字直接以对应字体渲染（字体均打包在 APK 内）。
 class FontPickerScreen extends StatefulWidget {
   const FontPickerScreen({Key? key}) : super(key: key);
@@ -27,13 +28,13 @@ class _FontPickerScreenState extends State<FontPickerScreen> {
           final previewStyle = TextStyle(
             fontSize: 17,
             height: 1.5,
-            color: const Color(0xFF24382F),
+            color: AppPalette.c(0xFF24382F),
             fontFamily: id.isEmpty ? null : id,
           );
           return Padding(
             padding: const EdgeInsets.only(bottom: 10),
             child: Material(
-              color: selected ? const Color(0xFFE4F2EB) : Colors.white,
+              color: selected ? AppPalette.c(0xFFE4F2EB) : AppPalette.c(0xFFFFFFFF),
               borderRadius: BorderRadius.circular(16),
               child: InkWell(
                 borderRadius: BorderRadius.circular(16),
@@ -53,7 +54,7 @@ class _FontPickerScreenState extends State<FontPickerScreen> {
                     border: Border.all(
                       color: selected
                           ? const Color(0xFF3E8E6D)
-                          : const Color(0xFFE8EDF5),
+                          : AppPalette.c(0xFFE8EDF5),
                       width: selected ? 1.5 : 1,
                     ),
                   ),
@@ -69,10 +70,10 @@ class _FontPickerScreenState extends State<FontPickerScreen> {
                                   ? '默认字体 · 跟随系统'
                                   : '${f['name']} · ${f['desc']}',
                               style: id.isEmpty
-                                  ? const TextStyle(
+                                  ? TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w600,
-                                      color: Color(0xFF24382F))
+                                      color: AppPalette.c(0xFF24382F))
                                   : previewStyle.copyWith(
                                       fontWeight: FontWeight.w600),
                             ),
@@ -91,8 +92,8 @@ class _FontPickerScreenState extends State<FontPickerScreen> {
                         const AppIcon(AppIcons.success,
                             color: Color(0xFF3E8E6D), size: 22)
                       else
-                        const AppIcon(AppIcons.radioOff,
-                            color: Color(0xFFC6D6CD), size: 22),
+                        AppIcon(AppIcons.radioOff,
+                            color: AppPalette.c(0xFFC6D6CD), size: 22),
                     ],
                   ),
                 ),

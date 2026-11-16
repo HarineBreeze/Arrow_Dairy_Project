@@ -6,6 +6,7 @@ import 'package:flutter/rendering.dart';
 import '../models/asset.dart';
 import '../utils/haptics.dart';
 
+import '../theme/app_palette.dart';
 /// 资产全景页顶部的「数据看板」卡片堆叠。
 ///
 /// ## 交互
@@ -415,7 +416,7 @@ class OverviewStackState extends State<OverviewStack>
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                          color: const Color(0x593E8E6D), width: 1.2),
+                          color: AppPalette.c(0x593E8E6D), width: 1.2),
                     ),
                   ),
               ],
@@ -457,7 +458,7 @@ class OverviewStackState extends State<OverviewStack>
               width: double.infinity,
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDFEAE5),
+                  color: AppPalette.c(0xFFDFEAE5),
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
@@ -721,7 +722,7 @@ class _AssetPieCardState extends State<AssetPieCard>
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppPalette.c(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(
@@ -735,21 +736,21 @@ class _AssetPieCardState extends State<AssetPieCard>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: const [
+            children: [
               Text('资产细分',
                   style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF24382F))),
+                      color: AppPalette.c(0xFF24382F))),
             ],
           ),
           const SizedBox(height: 10),
           if (widget.slices.isEmpty)
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: 26),
               child: Center(
                 child: Text('还没有金额为正的资产',
-                    style: TextStyle(fontSize: 13, color: Color(0xFF8FA09A))),
+                    style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
               ),
             )
           else
@@ -772,16 +773,16 @@ class _AssetPieCardState extends State<AssetPieCard>
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Text('正资产',
+                              Text('正资产',
                                   style: TextStyle(
-                                      fontSize: 9.5, color: Color(0xFF8FA09A))),
+                                      fontSize: 9.5, color: AppPalette.c(0xFF8FA09A))),
                               const SizedBox(height: 1),
                               Text(
                                 widget.hideNumbers ? '****' : _short(total),
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w700,
-                                    color: Color(0xFF24382F)),
+                                    color: AppPalette.c(0xFF24382F)),
                               ),
                             ],
                           ),
@@ -836,7 +837,7 @@ class _AssetPieCardState extends State<AssetPieCard>
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style:
-                      const TextStyle(fontSize: 13, color: Color(0xFF24382F)),
+                      TextStyle(fontSize: 13, color: AppPalette.c(0xFF24382F)),
                 ),
               ),
               Text(
@@ -855,7 +856,7 @@ class _AssetPieCardState extends State<AssetPieCard>
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style:
-                      const TextStyle(fontSize: 11, color: Color(0xFF8FA09A)),
+                      TextStyle(fontSize: 11, color: AppPalette.c(0xFF8FA09A)),
                 ),
               ),
             ],

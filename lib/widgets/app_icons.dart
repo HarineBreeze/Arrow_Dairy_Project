@@ -76,6 +76,17 @@ class AppIcons {
   static const String swapV =
       'M8 19.4V4.6 M4.8 8L8 4.6 11.2 8 M16 4.6v14.8 M12.8 16L16 19.4 19.2 16';
 
+  // ---------------- 主题（深色模式） ----------------
+  /// 弯月：深色模式。外弧 + 内弧构成月牙，细线圆头，落在 20×20 安全区。
+  static const String moon =
+      'M19 14.2A7.6 7.6 0 0 1 9.8 4.9 7.6 7.6 0 1 0 19 14.2Z';
+  /// 太阳：跟随系统（自动亮度）。圆 + 8 向短射线，两个部件。
+  static const String sun =
+      'M15.1 12a3.1 3.1 0 1 1-6.2 0 3.1 3.1 0 0 1 6.2 0Z'
+      ' M12 3.2v2.2 M12 18.6v2.2 M20.8 12h-2.2 M5.4 12H3.2'
+      ' M18.2 5.8l-1.6 1.6 M7.4 16.6l-1.6 1.6 M18.2 18.2l-1.6-1.6'
+      ' M7.4 7.4 5.8 5.8';
+
   // ---------------- 功能 ----------------
   static const String filter = 'M3.8 5.6h16.4l-6.3 7.6v6.2l-3.8 2.2v-8.4Z';
   static const String sort =
@@ -259,6 +270,8 @@ class AppIcons {
     'radioOff': radioOff,
     'radioOn': radioOn,
     'fontType': fontType,
+    'moon': moon,
+    'sun': sun,
     'vibrate': vibrate,
     'mapPin': mapPin,
     'undo': undo,

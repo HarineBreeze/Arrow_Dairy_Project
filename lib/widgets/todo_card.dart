@@ -5,6 +5,7 @@ import '../utils/haptics.dart';
 import '../utils/rich_text.dart';
 import '../utils/todo_text.dart';
 
+import '../theme/app_palette.dart';
 /// 笔记浏览页里的「待办清单」卡片。
 ///
 /// 正文中的 `[ ] xxx` / `[x] xxx` 会被解析成一条条可勾选的待办，
@@ -44,7 +45,7 @@ class TodoCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppPalette.c(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(12),
         boxShadow: const [
           BoxShadow(
@@ -62,11 +63,11 @@ class TodoCard extends StatelessWidget {
               const AppIcon(AppIcons.todo,
                   size: 16, color: Color(0xFF3E8E6D)),
               const SizedBox(width: 6),
-              const Text('待办清单',
+              Text('待办清单',
                   style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF24382F))),
+                      color: AppPalette.c(0xFF24382F))),
               const Spacer(),
               Text('$done / $total',
                   style: const TextStyle(
@@ -81,7 +82,7 @@ class TodoCard extends StatelessWidget {
             child: LinearProgressIndicator(
               value: total == 0 ? 0 : done / total,
               minHeight: 3,
-              backgroundColor: const Color(0xFFECF2EE),
+              backgroundColor: AppPalette.c(0xFFECF2EE),
               valueColor:
                   const AlwaysStoppedAnimation(Color(0xFF3E8E6D)),
             ),
@@ -147,7 +148,7 @@ class _TodoRow extends StatelessWidget {
                     border: Border.all(
                       color: todo.done
                           ? const Color(0xFF3E8E6D)
-                          : const Color(0xFFC2D4C9),
+                          : AppPalette.c(0xFFC2D4C9),
                       width: 1.6,
                     ),
                   ),
@@ -191,7 +192,7 @@ class _TodoRow extends StatelessWidget {
             : base.copyWith(
                 decoration:
                     todo.done ? TextDecoration.lineThrough : null,
-                color: todo.done ? const Color(0xFF8FA09A) : null,
+                color: todo.done ? AppPalette.c(0xFF8FA09A) : null,
               ),
       ));
     }

@@ -5,6 +5,7 @@ import '../utils/list_text.dart';
 import '../utils/text_format.dart';
 import '../utils/haptics.dart';
 
+import '../theme/app_palette.dart';
 /// 富文本格式工具栏：选中文字后点击即可应用样式。
 /// 颜色 / 字号用「内嵌展开行」而非 PopupMenu，避免菜单抢焦点导致选区丢失。
 class FormatToolbar extends StatefulWidget {
@@ -221,7 +222,7 @@ class FormatToolbarState extends State<FormatToolbar> {
         child: Text(
           label,
           style: (style ?? const TextStyle(fontSize: 13)).copyWith(
-            color: active ? Colors.white : const Color(0xFF24382F),
+            color: active ? Colors.white : AppPalette.c(0xFF24382F),
           ),
         ),
       ),
@@ -249,7 +250,7 @@ class FormatToolbarState extends State<FormatToolbar> {
           child: AppIcon(
             up ? AppIcons.chevU : AppIcons.chevD,
             size: 18,
-            color: const Color(0xFF24382F),
+            color: AppPalette.c(0xFF24382F),
           ),
         ),
       ),
@@ -260,7 +261,7 @@ class FormatToolbarState extends State<FormatToolbar> {
         width: 1,
         height: 18,
         margin: const EdgeInsets.symmetric(horizontal: 4),
-        color: const Color(0xFFE8EDF5),
+        color: AppPalette.c(0xFFE8EDF5),
       );
 
   static Color _hex(String c) {
@@ -280,8 +281,8 @@ class FormatToolbarState extends State<FormatToolbar> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: const Border(top: BorderSide(color: Color(0xFFE8EDF5))),
+        color: AppPalette.c(0xFFFFFFFF),
+        border: Border(top: BorderSide(color: AppPalette.c(0xFFE8EDF5))),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -370,12 +371,12 @@ class FormatToolbarState extends State<FormatToolbar> {
                       alignment: Alignment.center,
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
-                        children: const [
+                        children: [
                           AppIcon(AppIcons.plus,
-                              size: 15, color: Color(0xFF24382F)),
+                              size: 15, color: AppPalette.c(0xFF24382F)),
                           SizedBox(width: 2),
                           AppIcon(AppIcons.todo,
-                              size: 16, color: Color(0xFF24382F)),
+                              size: 16, color: AppPalette.c(0xFF24382F)),
                         ],
                       ),
                     ),
@@ -414,14 +415,14 @@ class FormatToolbarState extends State<FormatToolbar> {
                       padding: const EdgeInsets.symmetric(horizontal: 10),
                       decoration: BoxDecoration(
                         color: _panel == 1
-                            ? const Color(0xFFE4F2EB)
+                            ? AppPalette.c(0xFFE4F2EB)
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         children: [
-                          const AppIcon(AppIcons.edit,
-                              size: 18, color: Color(0xFF24382F)),
+                          AppIcon(AppIcons.edit,
+                              size: 18, color: AppPalette.c(0xFF24382F)),
                           const SizedBox(width: 3),
                           Container(
                             width: 12,
@@ -430,7 +431,7 @@ class FormatToolbarState extends State<FormatToolbar> {
                               color: _hex(_highlights.first),
                               borderRadius: BorderRadius.circular(8),
                               border:
-                                  Border.all(color: const Color(0xFFD5E2DB)),
+                                  Border.all(color: AppPalette.c(0xFFD5E2DB)),
                             ),
                           ),
                         ],
@@ -447,16 +448,16 @@ class FormatToolbarState extends State<FormatToolbar> {
                       padding: const EdgeInsets.symmetric(horizontal: 10),
                       decoration: BoxDecoration(
                         color: _panel == 2
-                            ? const Color(0xFFE4F2EB)
+                            ? AppPalette.c(0xFFE4F2EB)
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
-                        children: const [
+                        children: [
                           Text('A', style: TextStyle(fontSize: 13)),
                           Text('A', style: TextStyle(fontSize: 17)),
                           AppIcon(AppIcons.chevD,
-                              size: 16, color: Color(0xFF8FA09A)),
+                              size: 16, color: AppPalette.c(0xFF8FA09A)),
                         ],
                       ),
                     ),
@@ -480,8 +481,8 @@ class FormatToolbarState extends State<FormatToolbar> {
               height: 36,
               padding: const EdgeInsets.symmetric(horizontal: 10),
               alignment: Alignment.center,
-              child: const AppIcon(AppIcons.keyboardHide,
-                  size: 20, color: Color(0xFF8FA09A)),
+              child: AppIcon(AppIcons.keyboardHide,
+                  size: 20, color: AppPalette.c(0xFF8FA09A)),
             ),
           ),
         ],
@@ -497,13 +498,13 @@ class FormatToolbarState extends State<FormatToolbar> {
     ).highlight;
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: Color(0xFFEFF5F1))),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: AppPalette.c(0xFFEFF5F1))),
       ),
       child: Row(
         children: [
-          const Text('高亮',
-              style: TextStyle(fontSize: 13, color: Color(0xFF8FA09A))),
+          Text('高亮',
+              style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
           const SizedBox(width: 10),
           ...List.generate(_highlights.length, (i) {
             final c = _highlights[i];
@@ -524,13 +525,13 @@ class FormatToolbarState extends State<FormatToolbar> {
                     border: Border.all(
                       color: active
                           ? const Color(0xFF3E8E6D)
-                          : const Color(0xFFDFEAE5),
+                          : AppPalette.c(0xFFDFEAE5),
                       width: active ? 2 : 1,
                     ),
                   ),
                   child: active
-                      ? const AppIcon(AppIcons.check,
-                          size: 16, color: Color(0xFF24382F))
+                      ? AppIcon(AppIcons.check,
+                          size: 16, color: AppPalette.c(0xFF24382F))
                       : null,
                 ),
               ),
@@ -545,11 +546,11 @@ class FormatToolbarState extends State<FormatToolbar> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                border: Border.all(color: const Color(0xFFDFEAE5)),
+                border: Border.all(color: AppPalette.c(0xFFDFEAE5)),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Text('清除',
-                  style: TextStyle(fontSize: 13, color: Color(0xFF647A70))),
+              child: Text('清除',
+                  style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF647A70))),
             ),
           ),
         ],
@@ -560,13 +561,13 @@ class FormatToolbarState extends State<FormatToolbar> {
   Widget _buildSizePanel(double current) {
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: Color(0xFFEFF5F1))),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: AppPalette.c(0xFFEFF5F1))),
       ),
       child: Row(
         children: [
-          const Text('字号',
-              style: TextStyle(fontSize: 13, color: Color(0xFF8FA09A))),
+          Text('字号',
+              style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
           const SizedBox(width: 10),
           ...List.generate(_sizes.length, (i) {
             final sz = _sizes[i];
@@ -584,14 +585,14 @@ class FormatToolbarState extends State<FormatToolbar> {
                   decoration: BoxDecoration(
                     color: active
                         ? const Color(0xFF3E8E6D)
-                        : const Color(0xFFF5FAF7),
+                        : AppPalette.c(0xFFF5FAF7),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     _sizeLabels[i],
                     style: TextStyle(
                       fontSize: 13,
-                      color: active ? Colors.white : const Color(0xFF24382F),
+                      color: active ? Colors.white : AppPalette.c(0xFF24382F),
                       fontWeight: active ? FontWeight.w600 : FontWeight.normal,
                     ),
                   ),

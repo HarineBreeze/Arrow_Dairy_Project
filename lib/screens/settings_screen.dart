@@ -13,6 +13,7 @@ import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
 import 'font_picker_screen.dart';
 
+import '../theme/app_palette.dart';
 class SettingsScreen extends StatefulWidget {
   /// 仅测试使用：替换真实的兑换实现（避免 widget 测试里走真实文件 IO）
   @visibleForTesting
@@ -79,10 +80,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             title: const Text('确认完全覆盖?'),
-            content: const Text(
+            content: Text(
               '导入后将覆盖当前手机上的全部数据，原有内容无法恢复。',
               style: TextStyle(
-                  fontSize: 13, color: Color(0xFF647A70), height: 1.6),
+                  fontSize: 13, color: AppPalette.c(0xFF647A70), height: 1.6),
             ),
             actions: [
               Pressable(
@@ -150,8 +151,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               Text(
                 '该备份包含 ${data.entries.length} 条笔记、${data.items.length} 件物资、${data.assets.length} 笔资产、${data.countdowns.length} 个事件。',
-                style: const TextStyle(
-                    fontSize: 13, color: Color(0xFF7C8F86), height: 1.6),
+                style: TextStyle(
+                    fontSize: 13, color: AppPalette.c(0xFF7C8F86), height: 1.6),
               ),
               const SizedBox(height: 12),
               _modeTile(
@@ -180,7 +181,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: TextButton(
                 onPressed: () => Navigator.pop(ctx),
                 child:
-                    const Text('取消', style: TextStyle(color: Color(0xFF7C8F86))),
+                    Text('取消', style: TextStyle(color: AppPalette.c(0xFF7C8F86))),
               ),
             ),
             Pressable(
@@ -213,7 +214,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: sel ? const Color(0xFFE4F2EB) : const Color(0xFFF5FAF7),
+          color: sel ? AppPalette.c(0xFFE4F2EB) : AppPalette.c(0xFFF5FAF7),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -222,7 +223,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             AppIcon(
               sel ? AppIcons.radioOn : AppIcons.radioOff,
               size: 18,
-              color: sel ? const Color(0xFF3E8E6D) : const Color(0xFFC6D6CD),
+              color: sel ? const Color(0xFF3E8E6D) : AppPalette.c(0xFFC6D6CD),
             ),
             const SizedBox(width: 8),
             Expanded(
@@ -235,11 +236,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           fontWeight: FontWeight.w600,
                           color: sel
                               ? const Color(0xFF3E8E6D)
-                              : const Color(0xFF24382F))),
+                              : AppPalette.c(0xFF24382F))),
                   const SizedBox(height: 2),
                   Text(desc,
-                      style: const TextStyle(
-                          fontSize: 13, color: Color(0xFF7C8F86), height: 1.5)),
+                      style: TextStyle(
+                          fontSize: 13, color: AppPalette.c(0xFF7C8F86), height: 1.5)),
                 ],
               ),
             ),
@@ -260,14 +261,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
               children: [
+                _buildAppearanceSection(context),
+                const SizedBox(height: 16),
                 Padding(
                   padding: const EdgeInsets.only(left: 4, bottom: 8),
                   child: Row(
                     children: [
-                      const Text('数据备份',
+                      Text('数据备份',
                           style: TextStyle(
                               fontSize: 13,
-                              color: Color(0xFF8FA09A),
+                              color: AppPalette.c(0xFF8FA09A),
                               fontWeight: FontWeight.w600)),
                       const SizedBox(width: 6),
                       // 教程入口：标题旁的蓝色圈叹号，点击弹出换机/导入说明
@@ -277,7 +280,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppPalette.c(0xFFFFFFFF),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Column(
@@ -303,20 +306,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Padding(
+                Padding(
                   padding: EdgeInsets.only(left: 4, bottom: 8),
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: Text('字体',
                         style: TextStyle(
                             fontSize: 13,
-                            color: Color(0xFF8FA09A),
+                            color: AppPalette.c(0xFF8FA09A),
                             fontWeight: FontWeight.w600)),
                   ),
                 ),
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppPalette.c(0xFFFFFFFF),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: _buildItem(
@@ -338,20 +341,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Padding(
+                Padding(
                   padding: EdgeInsets.only(left: 4, bottom: 8),
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: Text('活动',
                         style: TextStyle(
                             fontSize: 13,
-                            color: Color(0xFF8FA09A),
+                            color: AppPalette.c(0xFF8FA09A),
                             fontWeight: FontWeight.w600)),
                   ),
                 ),
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppPalette.c(0xFFFFFFFF),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: _buildItem(
@@ -364,17 +367,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Padding(
+                Padding(
                   padding: EdgeInsets.only(left: 4, bottom: 8),
                   child: Text('反馈',
                       style: TextStyle(
                           fontSize: 13,
-                          color: Color(0xFF8FA09A),
+                          color: AppPalette.c(0xFF8FA09A),
                           fontWeight: FontWeight.w600)),
                 ),
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppPalette.c(0xFFFFFFFF),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: _buildItem(
@@ -392,14 +395,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           // 底部居中版本号（灰字，随发版同步更新 AppVersion.displayVersion）
-          const Padding(
+          Padding(
             padding: EdgeInsets.only(top: 6, bottom: 10),
             child: Center(
               child: Text(
                 AppVersion.displayVersion,
                 style: TextStyle(
                   fontSize: 11,
-                  color: Color(0xFFB2C2BA),
+                  color: AppPalette.c(0xFFB2C2BA),
                   letterSpacing: 0.4,
                 ),
               ),
@@ -423,7 +426,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final code = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: AppPalette.c(0xFFFFFFFF),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('兑换码', style: TextStyle(fontSize: 17)),
         content: TextField(
@@ -432,9 +435,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           textInputAction: TextInputAction.done,
           onSubmitted: (v) => Navigator.pop(ctx, v),
           style: const TextStyle(fontSize: 15),
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             hintText: '请输入兑换码',
-            hintStyle: TextStyle(color: Color(0xFF8FA09A)),
+            hintStyle: TextStyle(color: AppPalette.c(0xFF8FA09A)),
           ),
         ),
         actions: [
@@ -607,6 +610,129 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  /// 「外观」分组：深色模式。
+  ///
+  /// 两行开关表达「手动 / 跟随系统」两种取向：
+  /// - 「跟随系统」开：主题由系统亮度决定，「深色模式」行置灰显示当前系统值；
+  /// - 「跟随系统」关：「深色模式」开关可手动控制浅/深。
+  /// 用 ValueListenableBuilder 监听 themeModeNotifier，切换后立即刷新开关状态。
+  Widget _buildAppearanceSection(BuildContext context) {
+    return ValueListenableBuilder<AppThemeMode>(
+      valueListenable: AppSettings.themeModeNotifier,
+      builder: (context, mode, _) {
+        final followSystem = mode == AppThemeMode.system;
+        // 跟随系统时，深色开关显示系统当前亮度解析出的值，且不可操作
+        final systemDark = MediaQuery.platformBrightnessOf(context) ==
+            Brightness.dark;
+        final darkOn = followSystem
+            ? systemDark
+            : mode == AppThemeMode.dark;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 4, bottom: 8),
+              child: Text('外观',
+                  style: TextStyle(
+                      fontSize: 13,
+                      color: AppPalette.c(0xFF8FA09A),
+                      fontWeight: FontWeight.w600)),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                color: AppPalette.c(0xFFFFFFFF),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                children: [
+                  _buildThemeSwitchItem(
+                    icon: AppIcons.moon,
+                    title: '深色模式',
+                    subtitle: followSystem
+                        ? '跟随系统（当前：${systemDark ? '深色' : '浅色'}）'
+                        : (darkOn ? '已开启' : '已关闭'),
+                    value: darkOn,
+                    enabled: !followSystem,
+                    onChanged: (v) => AppSettings.setThemeMode(
+                        v ? AppThemeMode.dark : AppThemeMode.light),
+                  ),
+                  Divider(
+                      height: 1,
+                      indent: 52,
+                      color: AppPalette.c(0xFFE8EDF5)),
+                  _buildThemeSwitchItem(
+                    icon: AppIcons.sun,
+                    title: '跟随系统',
+                    subtitle: '开启后随系统深浅模式自动切换',
+                    value: followSystem,
+                    enabled: true,
+                    onChanged: (v) => AppSettings.setThemeMode(
+                        v ? AppThemeMode.system : (darkOn
+                            ? AppThemeMode.dark
+                            : AppThemeMode.light)),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildThemeSwitchItem({
+    required String icon,
+    required String title,
+    required String subtitle,
+    required bool value,
+    required bool enabled,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 36,
+            height: 36,
+            child: Center(
+              child: AppIcon(icon,
+                  size: 22,
+                  color: enabled
+                      ? const Color(0xFF3E8E6D)
+                      : AppPalette.c(0xFFC6D6CD)),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: enabled
+                            ? AppPalette.c(0xFF24382F)
+                            : AppPalette.c(0xFF8FA09A))),
+                const SizedBox(height: 2),
+                Text(subtitle,
+                    style: TextStyle(
+                        fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
+              ],
+            ),
+          ),
+          Switch(
+            value: value,
+            onChanged: enabled ? onChanged : null,
+            activeColor: const Color(0xFF3E8E6D),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildItem({
     required String icon,
     required Color iconColor,
@@ -635,14 +761,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF24382F))),
+                          color: AppPalette.c(0xFF24382F))),
                   const SizedBox(height: 2),
                   Text(subtitle,
-                      style: const TextStyle(
-                          fontSize: 13, color: Color(0xFF8FA09A))),
+                      style: TextStyle(
+                          fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
                 ],
               ),
             ),
@@ -653,7 +779,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
             else
-              const AppIcon(AppIcons.chevR, color: Color(0xFFC6D6CD)),
+              AppIcon(AppIcons.chevR, color: AppPalette.c(0xFFC6D6CD)),
           ],
         ),
       ),

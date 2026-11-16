@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import '../models/user_profile.dart';
 
+import '../theme/app_palette.dart';
 /// 未设置头像时的默认头像（App 内置资源：蓝色书本 + 爱心书签）。
 const String kDefaultAvatarAsset = 'assets/images/default_avatar.png';
 
@@ -12,13 +13,13 @@ Widget buildAppAvatar(UserProfile profile, {double radius = 40}) {
       radius: radius,
       // 不设 backgroundColor 时 CircleAvatar 默认用 primaryColorLight，
       // 头像图加载中/加载失败会露出底色，这里钉成白色避免露蓝
-      backgroundColor: Colors.white,
+      backgroundColor: AppPalette.c(0xFFFFFFFF),
       backgroundImage: FileImage(File(profile.avatarPath)),
     );
   }
   return CircleAvatar(
     radius: radius,
-    backgroundColor: Colors.white,
+    backgroundColor: AppPalette.c(0xFFFFFFFF),
     backgroundImage: const AssetImage(kDefaultAvatarAsset),
   );
 }

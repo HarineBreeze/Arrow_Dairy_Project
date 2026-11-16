@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart' show Brightness;
 import 'package:path_provider/path_provider.dart';
+import '../theme/app_palette.dart';
 
 /// 可选字体目录（id 即 Flutter family 名）。
 /// 全部为开源 OFL 授权，已裁剪至常用字集并打包进 APK，离线可用。
@@ -34,6 +36,35 @@ class AppSettings {
   /// 值为当前字体 family（null = 默认字体）。
   static final ValueNotifier<String?> fontNotifier =
       ValueNotifier<String?>(null);
+
+  // ---------------- 深色模式 ----------------
+
+  /// 主题模式偏好，默认跟随系统。持久化到 app_settings.json 的 themeMode。
+  static AppThemeMode _themeMode = AppThemeMode.system;
+  static AppThemeMode get themeMode => _themeMode;
+
+  /// 主题模式变更通知：MaterialApp 监听后重建，实现全局换肤。
+  static final ValueNotifier<AppThemeMode> themeModeNotifier =
+      ValueNotifier<AppThemeMode>(AppThemeMode.system);
+
+  /// 按「模式 + 当前系统亮度」解析出实际是否深色。
+  /// 跟随系统时由调用方传入 platformBrightness；手动模式忽略系统亮度。
+  static bool resolveDark(AppThemeMode mode, Brightness platformBrightness) {
+    switch (mode) {
+      case AppThemeMode.light:
+        return false;
+      case AppThemeMode.dark:
+        return true;
+      case AppThemeMode.system:
+        return platformBrightness == Brightness.dark;
+    }
+  }
+
+  static Future<void> setThemeMode(AppThemeMode mode) async {
+    _themeMode = mode;
+    themeModeNotifier.value = mode;
+    await _persist();
+  }
 
   // ---------------- 「可使用天数」参数 ----------------
 
@@ -76,8 +107,20 @@ class AppSettings {
     return File('${dir.path}/app_settings.json');
   }
 
+  /// 持久化写入的注入替身（仅供测试）。
+  ///
+  /// widget test 跑在 FakeAsync 环境里，任何真实文件 IO 都会让 `await`
+  /// 永久挂起；测试把它设成内存 no-op 即可绕开落盘，同时保留内存状态、
+  /// `toJson()` 快照与 notifier 通知的完整逻辑。生产环境恒为 null。
+  static Future<void> Function()? persistOverride;
+
   /// 读取后写回：统一走这里，避免各 setter 互相覆盖字段
   static Future<void> _persist() async {
+    final override = persistOverride;
+    if (override != null) {
+      await override();
+      return;
+    }
     try {
       final file = await _file();
       await file.writeAsString(jsonEncode(toJson()));
@@ -92,6 +135,7 @@ class AppSettings {
         'usableDaysPerMonth': _usableDaysPerMonth,
         'annualRate': _annualRate,
         'inflationRate': _inflationRate,
+        'themeMode': _themeMode.name,
       };
 
   static Future<void> load() async {
@@ -123,11 +167,19 @@ class AppSettings {
       if (rate is num) _annualRate = rate.toDouble();
       final infl = map['inflationRate'];
       if (infl is num) _inflationRate = infl.toDouble();
+
+      // 主题模式：兼容旧档缺字段（默认跟随系统）；非法值回落 system
+      final tm = map['themeMode'];
+      _themeMode = AppThemeMode.values.firstWhere(
+        (m) => m.name == tm,
+        orElse: () => AppThemeMode.system,
+      );
     } catch (_) {
       _fontFamily = null;
     }
     // 启动时也要同步一次，避免首帧与已存设置不一致
     fontNotifier.value = fontFamily;
+    themeModeNotifier.value = _themeMode;
   }
 
   static Future<void> setFontFamily(String id) async {

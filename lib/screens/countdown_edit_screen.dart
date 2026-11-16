@@ -11,6 +11,7 @@ import '../widgets/save_bar.dart';
 import '../widgets/wheel_picker.dart';
 import '../widgets/entry_icon.dart';
 
+import '../theme/app_palette.dart';
 /// 新增 / 编辑事件。
 class CountdownEditScreen extends StatefulWidget {
   final CountdownEvent? event; // null = 新增
@@ -218,7 +219,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
     return WillPopScope(
       onWillPop: _handleLeave,
       child: Scaffold(
-      backgroundColor: const Color(0xFFF5FAF7),
+      backgroundColor: AppPalette.c(0xFFF5FAF7),
       appBar: AppBar(
         backgroundColor: const Color(0xFF3E8E6D),
         foregroundColor: Colors.white,
@@ -264,9 +265,9 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                 controller: _nameCtrl,
                 maxLength: 20,
                 style: const TextStyle(fontSize: 15),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: '纪念日/生日/表白日/节日...',
-                  hintStyle: TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
+                  hintStyle: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
                   counterText: '',
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(vertical: 14),
@@ -284,9 +285,9 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                 controller: _noteCtrl,
                 maxLength: 15,
                 style: const TextStyle(fontSize: 15),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: '写点什么…（选填）',
-                  hintStyle: TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
+                  hintStyle: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
                   counterText: '',
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(vertical: 14),
@@ -317,7 +318,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                           AppIcon(AppIcons.event,
                               size: 17,
                               color: _target == null
-                                  ? const Color(0xFF8FA09A)
+                                  ? AppPalette.c(0xFF8FA09A)
                                   : const Color(0xFF3E8E6D)),
                           const SizedBox(width: 6),
                           Expanded(
@@ -332,8 +333,8 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                                 style: TextStyle(
                                   fontSize: _target == null ? 13 : 14,
                                   color: _target == null
-                                      ? const Color(0xFF8FA09A)
-                                      : const Color(0xFF24382F),
+                                      ? AppPalette.c(0xFF8FA09A)
+                                      : AppPalette.c(0xFF24382F),
                                 ),
                               ),
                             ),
@@ -360,7 +361,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                           AppIcon(AppIcons.clock,
                               size: 17,
                               color: _target == null
-                                  ? const Color(0xFF8FA09A)
+                                  ? AppPalette.c(0xFF8FA09A)
                                   : const Color(0xFF3E8E6D)),
                           const SizedBox(width: 6),
                           Expanded(
@@ -376,8 +377,8 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                                       ? FontWeight.normal
                                       : FontWeight.w600,
                                   color: _target == null
-                                      ? const Color(0xFF8FA09A)
-                                      : const Color(0xFF24382F),
+                                      ? AppPalette.c(0xFF8FA09A)
+                                      : AppPalette.c(0xFF24382F),
                                 ),
                               ),
                             ),
@@ -397,10 +398,10 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: _target == null
-                          ? const Color(0xFFF5FAF7)
+                          ? AppPalette.c(0xFFF5FAF7)
                           : (_isCountdown
-                              ? const Color(0xFFE4F2EB)
-                              : const Color(0xFFFDEEF3)),
+                              ? AppPalette.c(0xFFE4F2EB)
+                              : AppPalette.c(0xFFFDEEF3)),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: FittedBox(
@@ -414,7 +415,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: _target == null
-                              ? const Color(0xFFB2C4BA)
+                              ? AppPalette.c(0xFFB2C4BA)
                               : (_isCountdown
                                   ? const Color(0xFF3E8E6D)
                                   : const Color(0xFFD9738F)),
@@ -555,7 +556,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 4),
           decoration: BoxDecoration(
             // 选中态用浅绿底 + 绿描边表达，不再额外加圆圈图标（重复表述）
-            color: selected ? const Color(0xFFE4F2EB) : Colors.transparent,
+            color: selected ? AppPalette.c(0xFFE4F2EB) : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: selected ? const Color(0xFF3E8E6D) : Colors.transparent,
@@ -574,7 +575,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                 fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
                 color: selected
                     ? const Color(0xFF3E8E6D)
-                    : const Color(0xFF24382F),
+                    : AppPalette.c(0xFF24382F),
               ),
             ),
           ),
@@ -586,14 +587,14 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
   Widget _sectionLabel(String text) => Padding(
         padding: const EdgeInsets.only(left: 4, bottom: 8),
         child: Text(text,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 13,
-                color: Color(0xFF8FA09A),
+                color: AppPalette.c(0xFF8FA09A),
                 fontWeight: FontWeight.w600)),
       );
 
   BoxDecoration _box() => BoxDecoration(
-        color: Colors.white,
+        color: AppPalette.c(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(12),
       );
 
@@ -620,7 +621,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             // 图标底纹移除：未选中透明，选中保留浅绿强调
-            color: sel ? const Color(0xFFE4F2EB) : Colors.transparent,
+            color: sel ? AppPalette.c(0xFFE4F2EB) : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: sel ? const Color(0xFF3E8E6D) : Colors.transparent,
@@ -628,8 +629,8 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
             ),
           ),
           child: isMore
-              ? const AppIcon(AppIcons.moreH,
-                  size: 22, color: Color(0xFF647A70))
+              ? AppIcon(AppIcons.moreH,
+                  size: 22, color: AppPalette.c(0xFF647A70))
               : EntryIcon(icon!, size: 22),
         ),
       ),
@@ -640,7 +641,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
     final tmpCtrl = TextEditingController(text: _iconCtrl.text.trim());
     await showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppPalette.c(0xFFFFFFFF),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -673,7 +674,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                         decoration: BoxDecoration(
                           // 图标底纹移除：未选中透明，选中保留浅绿强调
                           color: sel
-                              ? const Color(0xFFE4F2EB)
+                              ? AppPalette.c(0xFFE4F2EB)
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(

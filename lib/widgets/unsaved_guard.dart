@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/pressable.dart';
 
+import '../theme/app_palette.dart';
 /// 全局「未保存修改」拦截。
 ///
 /// 用法：编辑页把 [WillPopScope.onWillPop] 与 AppBar 返回按钮都指向
@@ -23,23 +24,23 @@ Future<bool> confirmLeaveIfDirty(
     context: context,
     barrierDismissible: false,
     builder: (ctx) => AlertDialog(
-      backgroundColor: Colors.white,
+      backgroundColor: AppPalette.c(0xFFFFFFFF),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: const Text(
+      title: Text(
         '有未保存的修改哦，确认返回吗?',
-        style: TextStyle(fontSize: 15, color: Color(0xFF24382F)),
+        style: TextStyle(fontSize: 15, color: AppPalette.c(0xFF24382F)),
       ),
-      content: const Text(
+      content: Text(
         '返回后本次修改不会保存。',
-        style: TextStyle(fontSize: 13, color: Color(0xFF7C8F86), height: 1.6),
+        style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF7C8F86), height: 1.6),
       ),
       actions: [
         Pressable(
           enabled: true,
           child: TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('取消',
-                style: TextStyle(color: Color(0xFF7C8F86), fontSize: 13)),
+            child: Text('取消',
+                style: TextStyle(color: AppPalette.c(0xFF7C8F86), fontSize: 13)),
           ),
         ),
         Pressable(

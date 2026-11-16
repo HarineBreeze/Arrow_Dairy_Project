@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'app_icons.dart';
 import 'lucide_icons.dart';
 
+import '../theme/app_palette.dart';
 /// 统一渲染「图标值」：全站存储的图标字符串（资产/物品/日记心情天气/事件）。
 ///
 /// 存储值有三种来源，[EntryIcon] 全部兼容：
@@ -36,7 +37,7 @@ class EntryIcon extends StatelessWidget {
     final path = Lucide.pathFor(value);
     if (path != null) {
       return AppIcon(path,
-          size: size, color: color ?? const Color(0xFF24382F));
+          size: size, color: color ?? AppPalette.c(0xFF24382F));
     }
     return Text(value, style: TextStyle(fontSize: size, height: 1.0));
   }

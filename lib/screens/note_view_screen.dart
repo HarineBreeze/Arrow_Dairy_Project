@@ -22,6 +22,7 @@ import '../utils/haptics.dart';
 import '../utils/todo_text.dart';
 import '../widgets/pressable.dart';
 
+import '../theme/app_palette.dart';
 class NoteViewScreen extends StatefulWidget {
   final DiaryEntry entry;
 
@@ -169,7 +170,7 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
     final String? fontFamily = AppSettings.fontFamily;
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xCC3E8E6D),
+        backgroundColor: AppPalette.c(0xCC3E8E6D),
         foregroundColor: Colors.white,
         elevation: 0,
         // 顺序固定为：编辑、删除、分享（分享在最右）
@@ -229,7 +230,7 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppPalette.c(0xFFFFFFFF),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -238,7 +239,7 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                           fontSize: 22,
                           height: 1.35,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF24382F),
+                          color: AppPalette.c(0xFF24382F),
                           fontFamily: fontFamily,
                         ),
                       ),
@@ -250,7 +251,7 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppPalette.c(0xFFFFFFFF),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: RichNoteText(
@@ -264,7 +265,7 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                         style: TextStyle(
                           fontSize: 15,
                           height: 1.8,
-                          color: const Color(0xFF24382F),
+                          color: AppPalette.c(0xFF24382F),
                           fontFamily: fontFamily,
                         ),
                       ),
@@ -280,7 +281,7 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                       style: TextStyle(
                         fontSize: 15,
                         height: 1.5,
-                        color: const Color(0xFF24382F),
+                        color: AppPalette.c(0xFF24382F),
                         fontFamily: fontFamily,
                       ),
                       // 传回的是切换后的整篇正文，行号在卡片内部已算好，
@@ -300,21 +301,21 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
               children: [
                 Text(
                   _timeLabel(),
-                  style: const TextStyle(
-                      fontSize: 13, color: Color(0xFF8FA09A)),
+                  style: TextStyle(
+                      fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
                 ),
                 if (_entry.location.isNotEmpty) ...[
                   const SizedBox(width: 10),
-                  const AppIcon(AppIcons.mapPin,
-                      size: 14, color: Color(0xFF8FA09A)),
+                  AppIcon(AppIcons.mapPin,
+                      size: 14, color: AppPalette.c(0xFF8FA09A)),
                   const SizedBox(width: 4),
                   Flexible(
                     child: Text(
                       _entry.location,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                          fontSize: 13, color: Color(0xFF8FA09A)),
+                      style: TextStyle(
+                          fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
                     ),
                   ),
                 ],

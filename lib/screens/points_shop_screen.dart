@@ -7,6 +7,7 @@ import '../utils/app_toast.dart';
 import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
 
+import '../theme/app_palette.dart';
 /// 积分商城：用积分兑换身份牌 / 限时 VIP 权益。
 ///
 /// 版式沿用全 App 的「页面底色 + 白色圆角卡 + 灰色节标题」节奏：
@@ -70,7 +71,7 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: AppPalette.c(0xFFFFFFFF),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: Text(
           isTimeCard
@@ -129,7 +130,7 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
               children: [
                 _buildBalanceCard(profile),
                 const SizedBox(height: 20),
-                const Padding(
+                Padding(
                   padding: EdgeInsets.only(left: 4, bottom: 8),
                   child: Align(
                     alignment: Alignment.centerLeft,
@@ -137,7 +138,7 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
                       '道具兑换',
                       style: TextStyle(
                         fontSize: 13,
-                        color: Color(0xFF8FA09A),
+                        color: AppPalette.c(0xFF8FA09A),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -149,14 +150,14 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
                     child: _buildGoodsCard(profile, item),
                   ),
                 const SizedBox(height: 4),
-                const Padding(
+                Padding(
                   padding: EdgeInsets.symmetric(horizontal: 4),
                   child: Text(
                     '积分是兑换道具的货币，可通过参与活动的方式获得',
                     style: TextStyle(
                       fontSize: 11,
                       height: 1.7,
-                      color: Color(0xFFB2C2BA),
+                      color: AppPalette.c(0xFFB2C2BA),
                     ),
                   ),
                 ),
@@ -171,18 +172,18 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppPalette.c(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
-          const Expanded(
+          Expanded(
             child: Text(
               '我的积分',
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF24382F),
+                color: AppPalette.c(0xFF24382F),
               ),
             ),
           ),
@@ -195,9 +196,9 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
             ),
           ),
           const SizedBox(width: 3),
-          const Text(
+          Text(
             '分',
-            style: TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
+            style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
           ),
         ],
       ),
@@ -210,11 +211,11 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
     final affordable = profile.points >= item.price;
     final enabled = !soldOut && affordable;
     // 不可兑换时整卡置灰，只保留极淡的边界感
-    final cardColor = enabled ? Colors.white : const Color(0xFFF2F6F4);
+    final cardColor = enabled ? AppPalette.c(0xFFFFFFFF) : AppPalette.c(0xFFF2F6F4);
     final titleColor =
-        enabled ? const Color(0xFF24382F) : const Color(0xFF8FA09A);
+        enabled ? AppPalette.c(0xFF24382F) : AppPalette.c(0xFF8FA09A);
     final priceColor =
-        enabled ? const Color(0xFF3E8E6D) : const Color(0xFFB2C2BA);
+        enabled ? const Color(0xFF3E8E6D) : AppPalette.c(0xFFB2C2BA);
 
     // 兑换次数用「已兑/上限」的紧凑数字（如 0/6、2/30）。
     // 永久牌只有一次，拥有即记 1；限时卡按各自累计次数计。
@@ -267,10 +268,10 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
                   Expanded(
                     child: Text(
                       item.note,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         height: 1.5,
-                        color: Color(0xFF8FA09A),
+                        color: AppPalette.c(0xFF8FA09A),
                       ),
                     ),
                   ),
@@ -278,10 +279,10 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
                   // 兑换次数：无底纹，字色与商品备注同款淡灰
                   Text(
                     '$used/${item.limit}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF8FA09A),
+                      color: AppPalette.c(0xFF8FA09A),
                     ),
                   ),
                 ],

@@ -40,11 +40,12 @@ import '../widgets/loading_skeleton.dart';
 import '../widgets/empty_state.dart';
 import '../utils/menu_gesture_gate.dart';
 
+import '../theme/app_palette.dart';
 const Color kPrimaryBlue = Color(0xFF3E8E6D);
-const Color kLightBlue = Color(0xFFE4F2EB);
-const Color kTextDark = Color(0xFF24382F);
-const Color kTextMid = Color(0xFF647A70);
-const Color kTextLight = Color(0xFF8FA09A);
+Color get kLightBlue => AppPalette.c(0xFFE4F2EB);
+Color get kTextDark => AppPalette.c(0xFF24382F);
+Color get kTextMid => AppPalette.c(0xFF647A70);
+Color get kTextLight => AppPalette.c(0xFF8FA09A);
 
 class HomeScreen extends StatefulWidget {
   /// 仅测试使用：替换「生成分享图 + 调起系统分享」的真实实现
@@ -214,7 +215,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Future<void> _showNoteActions(DiaryEntry entry) async {
     final action = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppPalette.c(0xFFFFFFFF),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -383,9 +384,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 enabled: true,
                 child: TextButton(
                   onPressed: () => _showAnswerDialog(entry),
-                  child: const Text(
+                  child: Text(
                     '忘记密码',
-                    style: TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
+                    style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
                   ),
                 ),
               ),
@@ -414,15 +415,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (entry.passwordHint.isEmpty)
-                  const Text(
+                  Text(
                     '这条笔记没有设置密保问题哦～',
-                    style: TextStyle(fontSize: 13, color: Color(0xFF647A70)),
+                    style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF647A70)),
                   )
                 else ...[
                   Text(
                     'Q：${entry.passwordHint}',
-                    style: const TextStyle(
-                        fontSize: 13, height: 1.5, color: Color(0xFF24382F)),
+                    style: TextStyle(
+                        fontSize: 13, height: 1.5, color: AppPalette.c(0xFF24382F)),
                   ),
                   const SizedBox(height: 10),
                   TextField(
@@ -445,7 +446,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE4F2EB),
+                        color: AppPalette.c(0xFFE4F2EB),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -854,12 +855,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         child: WillPopScope(
           onWillPop: _handleBack,
           child: Scaffold(
-            backgroundColor: const Color(0xFFF5FAF7),
+            backgroundColor: AppPalette.c(0xFFF5FAF7),
             // Stack 覆盖整个 body（含状态栏区域）：这样菜单能从屏幕最顶端
             // 贯通到低端（顶部白色与状态栏区连成一体），遮罩也能盖住状态栏
             // 区域跟随变暗。主页内容自行用 SafeArea 避开状态栏。
             body: Container(
-              color: const Color(0xB33E8E6D),
+              color: AppPalette.c(0xB33E8E6D),
               child: AnimatedBuilder(
                 animation: _menuAnim,
                 builder: (context, child) {
@@ -871,7 +872,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         offset: Offset(offset, 0),
                         child: SafeArea(
                           child: Container(
-                            color: const Color(0xFFF5FAF7),
+                            color: AppPalette.c(0xFFF5FAF7),
                             child: child!,
                           ),
                         ),
@@ -898,7 +899,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         child: Transform.translate(
                           offset: Offset(-menuWidth * (1 - _menuAnim.value), 0),
                           child: Material(
-                            color: Colors.white,
+                            color: AppPalette.c(0xFFFFFFFF),
                             elevation: 8,
                             child: SizedBox(
                               width: menuWidth,
@@ -1094,7 +1095,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 : const SizedBox(width: double.infinity),
           ),
         ),
-        const Divider(height: 1, color: Color(0xFFE8EDF5)),
+        Divider(height: 1, color: AppPalette.c(0xFFE8EDF5)),
         Expanded(
           child: Stack(
             children: [
@@ -1127,7 +1128,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       height: 42,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppPalette.c(0xFFFFFFFF),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
@@ -1251,7 +1252,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         final left = index * cellW + (cellW - 40) / 2;
         return Container(
           height: 48,
-          color: Colors.white,
+          color: AppPalette.c(0xFFFFFFFF),
           child: Stack(
             children: [
               Row(
@@ -1274,7 +1275,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                 selected ? FontWeight.w600 : FontWeight.w400,
                             color: selected
                                 ? const Color(0xFF3E8E6D)
-                                : const Color(0xFF647A70),
+                                : AppPalette.c(0xFF647A70),
                           ),
                         ),
                       ),
@@ -1388,8 +1389,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             AnimatedRotation(
               turns: expanded ? 0 : -0.25,
               duration: const Duration(milliseconds: 180),
-              child: const AppIcon(AppIcons.chevD,
-                  size: 13, color: Color(0xFFB2C4BA)),
+              child: AppIcon(AppIcons.chevD,
+                  size: 13, color: AppPalette.c(0xFFB2C4BA)),
             ),
             const SizedBox(width: 3),
             Text(
@@ -1404,13 +1405,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               const SizedBox(width: 5),
               Text(
                 _weekdayLabel(group.date),
-                style: const TextStyle(fontSize: 11, color: kTextLight),
+                style: TextStyle(fontSize: 11, color: kTextLight),
               ),
             ],
             const SizedBox(width: 6),
             Text(
               '${group.entries.length} 篇',
-              style: const TextStyle(fontSize: 11, color: kTextLight),
+              style: TextStyle(fontSize: 11, color: kTextLight),
             ),
             const Spacer(),
           ],
@@ -1441,26 +1442,26 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return Container(
       key: const ValueKey('search_bar'),
       height: 48,
-      color: const Color(0xB33E8E6D),
+      color: AppPalette.c(0xB33E8E6D),
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         children: [
           Expanded(
             child: TextField(
               controller: _searchCtrl,
-              style: const TextStyle(fontSize: 15, color: Color(0xFF24382F)),
+              style: TextStyle(fontSize: 15, color: AppPalette.c(0xFF24382F)),
               textAlignVertical: TextAlignVertical.center,
               decoration: InputDecoration(
                 hintText: '搜索标题关键词…',
-                hintStyle: const TextStyle(color: Color(0xFF8FA09A)),
-                prefixIcon: const AppIcon(AppIcons.search,
-                    size: 18, color: Color(0xFF8FA09A)),
+                hintStyle: TextStyle(color: AppPalette.c(0xFF8FA09A)),
+                prefixIcon: AppIcon(AppIcons.search,
+                    size: 18, color: AppPalette.c(0xFF8FA09A)),
                 prefixIconConstraints:
                     const BoxConstraints(minWidth: 32, minHeight: 32),
                 isDense: true,
                 contentPadding: const EdgeInsets.symmetric(vertical: 6),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: AppPalette.c(0xFFFFFFFF),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -1497,7 +1498,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return Container(
       key: const ValueKey('normal_bar'),
       height: 48,
-      color: const Color(0xB33E8E6D),
+      color: AppPalette.c(0xB33E8E6D),
       child: Stack(
         children: [
           Row(
@@ -1559,7 +1560,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     final topics = _allTopics;
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppPalette.c(0xFFFFFFFF),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -1573,12 +1574,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               children: [
                 Row(
                   children: [
-                    const Text(
+                    Text(
                       '按话题筛选',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF24382F),
+                        color: AppPalette.c(0xFF24382F),
                       ),
                     ),
                     const Spacer(),
@@ -1589,9 +1590,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           setState(() => _activeTopic = null);
                           Navigator.pop(ctx);
                         },
-                        child: const Text(
+                        child: Text(
                           '取消',
-                          style: TextStyle(color: Color(0xFF8FA09A)),
+                          style: TextStyle(color: AppPalette.c(0xFF8FA09A)),
                         ),
                       ),
                     ),
@@ -1599,14 +1600,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 ),
                 const SizedBox(height: 6),
                 if (topics.isEmpty)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.symmetric(vertical: 24),
                     child: Center(
                       child: Text(
                         '还没有话题\n在日记正文输入 #话题词 即可创建',
                         textAlign: TextAlign.center,
                         style:
-                            TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
+                            TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
                       ),
                     ),
                   )
@@ -1635,12 +1636,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
                             color:
-                                active ? const Color(0xFF3E8E6D) : Colors.white,
+                                active ? const Color(0xFF3E8E6D) : AppPalette.c(0xFFFFFFFF),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
                               color: active
                                   ? const Color(0xFF3E8E6D)
-                                  : const Color(0xFFE4F2EB),
+                                  : AppPalette.c(0xFFE4F2EB),
                             ),
                           ),
                           child: Text(
@@ -1649,7 +1650,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               fontSize: 13,
                               color: active
                                   ? Colors.white
-                                  : const Color(0xFF647A70),
+                                  : AppPalette.c(0xFF647A70),
                             ),
                           ),
                         ),
@@ -1667,7 +1668,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Widget _buildTopicBar() {
     return Container(
       width: double.infinity,
-      color: const Color(0xFFE4F2EB),
+      color: AppPalette.c(0xFFE4F2EB),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
@@ -1690,7 +1691,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   Widget _buildCalendar() {
     return Container(
-      color: Colors.white,
+      color: AppPalette.c(0xFFFFFFFF),
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       child: Column(
         children: [
@@ -1708,7 +1709,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       children: [
         // ◀◀ 按年翻页
         IconButton(
-          icon: const AppIcon(AppIcons.dblChevL,
+          icon: AppIcon(AppIcons.dblChevL,
               size: 20, color: kTextMid),
           tooltip: '上一年',
           visualDensity: VisualDensity.compact,
@@ -1717,26 +1718,26 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               DateTime(_visibleMonth.year - 1, _visibleMonth.month, 1)),
         ),
         IconButton(
-          icon: const AppIcon(AppIcons.chevL, color: kTextMid),
+          icon: AppIcon(AppIcons.chevL, color: kTextMid),
           onPressed: () => setState(() => _visibleMonth =
               DateTime(_visibleMonth.year, _visibleMonth.month - 1, 1)),
         ),
         Text(
           '${_visibleMonth.year}年${_visibleMonth.month}月',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w600,
             color: kTextDark,
           ),
         ),
         IconButton(
-          icon: const AppIcon(AppIcons.chevR, color: kTextMid),
+          icon: AppIcon(AppIcons.chevR, color: kTextMid),
           onPressed: () => setState(() => _visibleMonth =
               DateTime(_visibleMonth.year, _visibleMonth.month + 1, 1)),
         ),
         // ▶▶ 按年翻页
         IconButton(
-          icon: const AppIcon(AppIcons.dblChevR,
+          icon: AppIcon(AppIcons.dblChevR,
               size: 20, color: kTextMid),
           tooltip: '下一年',
           visualDensity: VisualDensity.compact,
@@ -1770,7 +1771,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 child: Center(
                   child: Text(
                     w,
-                    style: const TextStyle(fontSize: 13, color: kTextLight),
+                    style: TextStyle(fontSize: 13, color: kTextLight),
                   ),
                 ),
               ))
@@ -1898,9 +1899,9 @@ class _PinnedMiniCard extends StatelessWidget {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: CustomPaint(
-                painter: encrypted ? const _GridTexturePainter() : null,
+                painter: encrypted ? _GridTexturePainter() : null,
                 child: Container(
-                  color: encrypted ? Colors.transparent : Colors.white,
+                  color: encrypted ? Colors.transparent : AppPalette.c(0xFFFFFFFF),
                   padding: const EdgeInsets.fromLTRB(9, 8, 9, 8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1911,7 +1912,7 @@ class _PinnedMiniCard extends StatelessWidget {
                         title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: kTextDark,
@@ -1924,11 +1925,11 @@ class _PinnedMiniCard extends StatelessWidget {
                           Text(
                             '${d.year}/${d.month}/${d.day} $hh:$mm',
                             style:
-                                const TextStyle(fontSize: 9.5, color: kTextLight),
+                                TextStyle(fontSize: 9.5, color: kTextLight),
                           ),
                           if (encrypted) ...[
                             const SizedBox(width: 3),
-                            const AppIcon(AppIcons.lock,
+                            AppIcon(AppIcons.lock,
                                 size: 10, color: kTextLight),
                           ],
                         ],
@@ -1948,16 +1949,21 @@ class _PinnedMiniCard extends StatelessWidget {
 /// 加密卡斜向栅格纹理：与未置顶封条卡同一套 45° 斜纹（16px 周期、4px 线宽），
 /// 铺满整张卡并以白色渐变压暗，保证副标题可读。
 class _GridTexturePainter extends CustomPainter {
-  const _GridTexturePainter();
+  _GridTexturePainter() : dark = AppPalette.dark;
+
+  /// 构建时的主题快照：切换主题后 RenderCustomPaint 会因实例
+  /// 不同而询问 shouldRepaint，据此精确重绘，避免斜纹/底色
+  /// 残留上一个主题的颜色（const painter 会被 RenderObject 跳过）。
+  final bool dark;
 
   @override
   void paint(Canvas canvas, Size size) {
     // 同 _SealStripePainter：裁掉 4px 线宽向带子边界外的溢出
     canvas.clipRect(Offset.zero & size);
     canvas.drawRect(
-        Offset.zero & size, Paint()..color = const Color(0xFFEEF4F0));
+        Offset.zero & size, Paint()..color = AppPalette.c(0xFFEEF4F0));
     final paint = Paint()
-      ..color = const Color(0xFFE4EDE8)
+      ..color = AppPalette.c(0xFFE4EDE8)
       ..strokeWidth = 4
       ..style = PaintingStyle.stroke;
     for (double x = -size.height; x < size.width + size.height; x += 16) {
@@ -1966,20 +1972,21 @@ class _GridTexturePainter extends CustomPainter {
     }
     // 中央留白：让 🔒 + 副标题落在干净底色上
     final fade = Paint()
-      ..shader = const LinearGradient(
+      ..shader = LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          Color(0xCCFFFFFF),
-          Color(0xB3FFFFFF),
-          Color(0x99FFFFFF),
+          AppPalette.c(0xCCFFFFFF),
+          AppPalette.c(0xB3FFFFFF),
+          AppPalette.c(0x99FFFFFF),
         ],
       ).createShader(Offset.zero & size);
     canvas.drawRect(Offset.zero & size, fade);
   }
 
   @override
-  bool shouldRepaint(covariant _GridTexturePainter oldDelegate) => false;
+  bool shouldRepaint(covariant _GridTexturePainter oldDelegate) =>
+      dark != oldDelegate.dark;
 }
 
 class _DayCell extends StatelessWidget {
@@ -2073,7 +2080,7 @@ class _DiaryCard extends StatelessWidget {
               ? const BorderSide(color: Color(0xFF3E8E6D), width: 1.5)
               : BorderSide.none,
         ),
-        color: Colors.white,
+        color: AppPalette.c(0xFFFFFFFF),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: onTap,
@@ -2110,7 +2117,7 @@ class _DiaryCard extends StatelessWidget {
                   entry.title.isNotEmpty ? entry.title : '（无标题）',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: kTextDark,
@@ -2123,7 +2130,7 @@ class _DiaryCard extends StatelessWidget {
                     entry.content,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 13, color: kTextMid, height: 1.45),
                   ),
                 ],
@@ -2149,9 +2156,9 @@ class _DiaryCard extends StatelessWidget {
             width: 52,
             padding: const EdgeInsets.only(right: 10),
             margin: const EdgeInsets.symmetric(vertical: 4),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               border: Border(
-                right: BorderSide(color: Color(0xFFE8EDF5)),
+                right: BorderSide(color: AppPalette.c(0xFFE8EDF5)),
               ),
             ),
             child: Column(
@@ -2172,7 +2179,7 @@ class _DiaryCard extends StatelessWidget {
                       '${entry.publishDate.year}.${entry.publishDate.month.toString().padLeft(2, '0')}',
                       maxLines: 1,
                       softWrap: false,
-                      style: const TextStyle(fontSize: 11, color: kTextLight)),
+                      style: TextStyle(fontSize: 11, color: kTextLight)),
                 ),
               ],
             ),
@@ -2187,7 +2194,7 @@ class _DiaryCard extends StatelessWidget {
                   entry.title.isNotEmpty ? entry.title : '（无标题）',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: kTextDark,
@@ -2199,7 +2206,7 @@ class _DiaryCard extends StatelessWidget {
                     entry.content,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 13, color: kTextMid),
+                    style: TextStyle(fontSize: 13, color: kTextMid),
                   ),
                 ],
                 const SizedBox(height: 5),
@@ -2221,21 +2228,21 @@ class _DiaryCard extends StatelessWidget {
       children: [
         if (withDate) ...[
           Text('${d.year}/${d.month}/${d.day}',
-              style: const TextStyle(fontSize: 11, color: kTextLight)),
+              style: TextStyle(fontSize: 11, color: kTextLight)),
           const SizedBox(width: 5),
         ],
         Text(_timeLabel(entry.createdAt),
-            style: const TextStyle(fontSize: 11, color: kTextLight)),
+            style: TextStyle(fontSize: 11, color: kTextLight)),
         if (entry.location.isNotEmpty) ...[
           const SizedBox(width: 6),
-          const AppIcon(AppIcons.mapPin, size: 13, color: kTextLight),
+          AppIcon(AppIcons.mapPin, size: 13, color: kTextLight),
           const SizedBox(width: 1),
           Flexible(
             child: Text(
               entry.location,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 11, color: kTextLight),
+              style: TextStyle(fontSize: 11, color: kTextLight),
             ),
           ),
         ],
@@ -2255,14 +2262,14 @@ class _DiaryCard extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(16),
             child: ColoredBox(
-              color: const Color(0xFFFBE3E8),
+              color: AppPalette.c(0xFFFBE3E8),
               child: CustomPaint(
                 foregroundPainter: const _DashedRRectPainter(
                     color: Color(0xFFCB5C50), radius: 14),
                 child: CustomPaint(
-                  painter: const _PinnedStripePainter(),
+                  painter: _PinnedStripePainter(),
                   child: Material(
-                    color: const Color(0xE6FFFFFF),
+                    color: AppPalette.c(0xE6FFFFFF),
                     child: InkWell(
                       onTap: onTap,
                       child: Padding(
@@ -2280,17 +2287,17 @@ class _DiaryCard extends StatelessWidget {
                                   fontSize: 15,
                                   fontWeight: FontWeight.w500,
                                   color: entry.subtitle.isNotEmpty
-                                      ? const Color(0xFF647A70)
-                                      : const Color(0xFF8FA09A),
+                                      ? AppPalette.c(0xFF647A70)
+                                      : AppPalette.c(0xFF8FA09A),
                                 ),
                               ),
                             ),
                             const SizedBox(width: 8),
                             Text(_timeLabel(entry.createdAt),
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontSize: 11, color: kTextLight)),
                             const SizedBox(width: 4),
-                            const AppIcon(AppIcons.lock,
+                            AppIcon(AppIcons.lock,
                                 size: 12, color: kTextLight),
                           ],
                         ),
@@ -2313,7 +2320,7 @@ class _DiaryCard extends StatelessWidget {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(16),
           child: Material(
-            color: Colors.white,
+            color: AppPalette.c(0xFFFFFFFF),
             child: InkWell(
               onTap: onTap,
               child: Column(
@@ -2321,20 +2328,20 @@ class _DiaryCard extends StatelessWidget {
                 children: [
                   // 密封带：斜纹底 + 🔒已加密 / 月.日
                   CustomPaint(
-                    painter: const _SealStripePainter(),
+                    painter: _SealStripePainter(),
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(14, 6, 14, 6),
                       child: Row(
                         children: [
-                          const AppIcon(AppIcons.lock,
+                          AppIcon(AppIcons.lock,
                               size: 11, color: kTextLight),
                           const SizedBox(width: 4),
-                          const Text('已加密',
+                          Text('已加密',
                               style: TextStyle(
                                   fontSize: 11, color: kTextLight)),
                           const Spacer(),
                           Text('${d.month}月${d.day}日',
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 11, color: kTextLight)),
                         ],
                       ),
@@ -2356,14 +2363,14 @@ class _DiaryCard extends StatelessWidget {
                               fontSize: 15,
                               fontWeight: FontWeight.w500,
                               color: entry.subtitle.isNotEmpty
-                                  ? const Color(0xFF24382F)
-                                  : const Color(0xFF8FA09A),
+                                  ? AppPalette.c(0xFF24382F)
+                                  : AppPalette.c(0xFF8FA09A),
                             ),
                           ),
                         ),
                         const SizedBox(width: 8),
                         Text(_timeLabel(entry.createdAt),
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 11, color: kTextLight)),
                       ],
                     ),
@@ -2384,7 +2391,12 @@ class _DiaryCard extends StatelessWidget {
 /// 非置顶加密卡顶部「封条带」：淡灰底 + 45° 斜纹（16px 周期、4px 线宽），
 /// 与置顶卡 / 置顶迷你卡的斜纹同一语言，仅不做中央提亮（带内无正文）。
 class _SealStripePainter extends CustomPainter {
-  const _SealStripePainter();
+  _SealStripePainter() : dark = AppPalette.dark;
+
+  /// 构建时的主题快照：切换主题后 RenderCustomPaint 会因实例
+  /// 不同而询问 shouldRepaint，据此精确重绘，避免斜纹/底色
+  /// 残留上一个主题的颜色（const painter 会被 RenderObject 跳过）。
+  final bool dark;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -2393,9 +2405,9 @@ class _SealStripePainter extends CustomPainter {
     // Material），必须在 painter 内部自行裁剪到带子矩形内。
     canvas.clipRect(Offset.zero & size);
     canvas.drawRect(
-        Offset.zero & size, Paint()..color = const Color(0xFFEEF4F0));
+        Offset.zero & size, Paint()..color = AppPalette.c(0xFFEEF4F0));
     final paint = Paint()
-      ..color = const Color(0xFFE4EDE8)
+      ..color = AppPalette.c(0xFFE4EDE8)
       ..strokeWidth = 4
       ..style = PaintingStyle.stroke;
     for (double x = -size.height; x < size.width + size.height; x += 16) {
@@ -2405,23 +2417,29 @@ class _SealStripePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _SealStripePainter oldDelegate) => false;
+  bool shouldRepaint(covariant _SealStripePainter oldDelegate) =>
+      dark != oldDelegate.dark;
 }
 
 /// 虚线圆角边框（加密卡片的「档案袋」外框）
 /// 置顶加密卡底纹：45° 斜纹（16px 周期、4px 线宽）+ 淡粉底，
 /// 与未置顶封条卡的斜纹同一语言，仅色调改为置顶红系。
 class _PinnedStripePainter extends CustomPainter {
-  const _PinnedStripePainter();
+  _PinnedStripePainter() : dark = AppPalette.dark;
+
+  /// 构建时的主题快照：切换主题后 RenderCustomPaint 会因实例
+  /// 不同而询问 shouldRepaint，据此精确重绘，避免斜纹/底色
+  /// 残留上一个主题的颜色（const painter 会被 RenderObject 跳过）。
+  final bool dark;
 
   @override
   void paint(Canvas canvas, Size size) {
     // 同 _SealStripePainter：裁掉 4px 线宽向带子边界外的溢出
     canvas.clipRect(Offset.zero & size);
     canvas.drawRect(
-        Offset.zero & size, Paint()..color = const Color(0xFFFBE3E8));
+        Offset.zero & size, Paint()..color = AppPalette.c(0xFFFBE3E8));
     final paint = Paint()
-      ..color = const Color(0xFFF0CBD4)
+      ..color = AppPalette.c(0xFFF0CBD4)
       ..strokeWidth = 4
       ..style = PaintingStyle.stroke;
     for (double x = -size.height; x < size.width + size.height; x += 16) {
@@ -2430,16 +2448,20 @@ class _PinnedStripePainter extends CustomPainter {
     }
     // 中间提亮：封条与正文所在区域不被斜纹压花
     final fade = Paint()
-      ..shader = const LinearGradient(
+      ..shader = LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [Color(0xCCFFFFFF), Color(0xB3FFFFFF)],
+        colors: [
+          AppPalette.c(0xCCFFFFFF),
+          AppPalette.c(0xB3FFFFFF),
+        ],
       ).createShader(Offset.zero & size);
     canvas.drawRect(Offset.zero & size, fade);
   }
 
   @override
-  bool shouldRepaint(covariant _PinnedStripePainter oldDelegate) => false;
+  bool shouldRepaint(covariant _PinnedStripePainter oldDelegate) =>
+      dark != oldDelegate.dark;
 }
 
 class _DashedRRectPainter extends CustomPainter {
@@ -2484,16 +2506,21 @@ class _DashedRRectPainter extends CustomPainter {
 
 /// 斜纹保密封带：浅灰底 + 45° 斜线纹理
 class _StripeBandPainter extends CustomPainter {
-  const _StripeBandPainter();
+  _StripeBandPainter() : dark = AppPalette.dark;
+
+  /// 构建时的主题快照：切换主题后 RenderCustomPaint 会因实例
+  /// 不同而询问 shouldRepaint，据此精确重绘，避免斜纹/底色
+  /// 残留上一个主题的颜色（const painter 会被 RenderObject 跳过）。
+  final bool dark;
 
   @override
   void paint(Canvas canvas, Size size) {
     // 同 _SealStripePainter：裁掉 4px 线宽向带子边界外的溢出
     canvas.clipRect(Offset.zero & size);
     canvas.drawRect(
-        Offset.zero & size, Paint()..color = const Color(0xFFEEF4F0));
+        Offset.zero & size, Paint()..color = AppPalette.c(0xFFEEF4F0));
     final paint = Paint()
-      ..color = const Color(0xFFE4EDE8)
+      ..color = AppPalette.c(0xFFE4EDE8)
       ..strokeWidth = 4
       ..style = PaintingStyle.stroke;
     // 以 16px 为周期画 45° 斜线，覆盖整个矩形
@@ -2504,7 +2531,8 @@ class _StripeBandPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _StripeBandPainter oldDelegate) =>
+      dark != oldDelegate.dark;
 }
 
 class _EmptyState extends StatelessWidget {

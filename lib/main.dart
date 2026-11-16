@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'services/app_settings.dart';
 import 'screens/home_screen.dart';
+import 'theme/app_palette.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -10,7 +12,7 @@ void main() async {
   final cache = PaintingBinding.instance.imageCache;
   cache.maximumSize = 300;
   cache.maximumSizeBytes = 60 << 20;
-  await AppSettings.load(); // 提前读入手写体等设置
+  await AppSettings.load(); // 提前读入字体、主题模式等设置
   runApp(const DiaryApp());
 }
 
@@ -37,44 +39,114 @@ MaterialColor createBambooSwatch(Color color) {
   return MaterialColor(color.value, swatch);
 }
 
-class DiaryApp extends StatelessWidget {
+/// 应用根：同时监听「字体」与「主题模式」两个设置项，任一变化都整体重建
+/// MaterialApp，让 ThemeData 与全局语义色板 AppPalette 同步刷新。
+///
+/// 「跟随系统」时还要响应系统亮度变化：通过 WidgetsBindingObserver 的
+/// didChangePlatformBrightness 触发重建（仅跟随系统模式需要，但统一重建
+/// 更简单且无副作用）。系统亮度用 platformDispatcher.platformBrightness
+/// 读取，不依赖 context 里是否已挂 MediaQuery。
+class DiaryApp extends StatefulWidget {
   const DiaryApp({Key? key}) : super(key: key);
 
   @override
+  State<DiaryApp> createState() => _DiaryAppState();
+}
+
+class _DiaryAppState extends State<DiaryApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangePlatformBrightness() {
+    // 仅在跟随系统时才有实际影响，但统一 setState 让 themeMode 逻辑重算，
+    // 保证 AppPalette.dark 与 MaterialApp 选中的主题始终一致。
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // 字体在设置页切换后，主题整体重建 → 全 App 生效
-    return ValueListenableBuilder<String?>(
-      valueListenable: AppSettings.fontNotifier,
-      builder: (context, fontFamily, _) => MaterialApp(
-        title: '阿尤日记',
-        debugShowCheckedModeBanner: false,
-        theme: _buildTheme(fontFamily),
-        home: const HomeScreen(),
+    return ValueListenableBuilder<AppThemeMode>(
+      valueListenable: AppSettings.themeModeNotifier,
+      builder: (context, mode, _) => ValueListenableBuilder<String?>(
+        valueListenable: AppSettings.fontNotifier,
+        builder: (context, fontFamily, _) {
+          // 每次重建先算出实际亮度，写入全局色板；AppPalette.c 会在
+          // 之后各页面 build 时按此值取色，做到「一处切换，全局生效」。
+          final platformBrightness =
+              SchedulerBinding.instance.platformDispatcher.platformBrightness;
+          final dark = AppSettings.resolveDark(mode, platformBrightness);
+          AppPalette.dark = dark;
+
+          return MaterialApp(
+            title: '阿尤日记',
+            debugShowCheckedModeBanner: false,
+            theme: _buildTheme(fontFamily, Brightness.light),
+            darkTheme: _buildTheme(fontFamily, Brightness.dark),
+            // system 交给 Flutter 依系统亮度自动选 theme / darkTheme；
+            // light / dark 为手动强制。与上面 AppPalette.dark 的解析一致。
+            themeMode: _toThemeMode(mode),
+            home: const HomeScreen(),
+          );
+        },
       ),
     );
   }
 
-  ThemeData _buildTheme(String? fontFamily) {
+  ThemeMode _toThemeMode(AppThemeMode mode) {
+    switch (mode) {
+      case AppThemeMode.light:
+        return ThemeMode.light;
+      case AppThemeMode.dark:
+        return ThemeMode.dark;
+      case AppThemeMode.system:
+        return ThemeMode.system;
+    }
+  }
+
+  ThemeData _buildTheme(String? fontFamily, Brightness brightness) {
     const green = kPrimaryGreen;
     final swatch = createBambooSwatch(green);
-    return ThemeData(
+    final dark = brightness == Brightness.dark;
+
+    // 深色主题下：卡片/画布/弹窗走深灰绿，正文走浅色，分隔线走深灰，
+    // 顶栏走深墨绿；主色、开关、选框、文本选区仍保持竹青，跨主题一致。
+    final base = ThemeData(
+      brightness: brightness,
       // 字体设置全局生效：ThemeData 会把 fontFamily 合并进默认
       // TextTheme 的每一档，自定义的 bodyText1/2（未指定 family）
       // 在 merge 时也跟随继承
       fontFamily: fontFamily,
       primarySwatch: swatch,
       primaryColor: green,
-      scaffoldBackgroundColor: const Color(0xFFF5FAF7),
-      // AppIcon 默认跟随 IconTheme；此处钉死深墨色，
+      scaffoldBackgroundColor:
+          dark ? const Color(0xFF101613) : const Color(0xFFF5FAF7),
+      // AppIcon 默认跟随 IconTheme；浅色钉深墨色，深色改浅色，
       // AppBar.foregroundColor(白) 会在此基础上对顶栏图标覆写
-      iconTheme: const IconThemeData(color: Color(0xFF273830)),
-      colorScheme: const ColorScheme.light(
-        primary: green,
-        secondary: Color(0xFF4B9C7D),
-        surface: Color(0xFFFFFFFF),
-      ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: green,
+      iconTheme: IconThemeData(
+          color: dark ? const Color(0xFFDDE9E1) : const Color(0xFF273830)),
+      colorScheme: dark
+          ? const ColorScheme.dark(
+              primary: green,
+              secondary: Color(0xFF4B9C7D),
+              surface: Color(0xFF18221E),
+            )
+          : const ColorScheme.light(
+              primary: green,
+              secondary: Color(0xFF4B9C7D),
+              surface: Color(0xFFFFFFFF),
+            ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: dark ? const Color(0xFF22342C) : green,
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
@@ -82,6 +154,13 @@ class DiaryApp extends StatelessWidget {
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: green,
         foregroundColor: Colors.white,
+      ),
+      cardColor: dark ? const Color(0xFF18221E) : Colors.white,
+      canvasColor: dark ? const Color(0xFF18221E) : Colors.white,
+      dialogBackgroundColor: dark ? const Color(0xFF18221E) : Colors.white,
+      dividerColor: dark ? const Color(0xFF2A3830) : const Color(0xFFE8EDF5),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: dark ? const Color(0xFF18221E) : Colors.white,
       ),
       // 选框类控件：激活态统一竹青，未选中态走各自默认
       checkboxTheme: CheckboxThemeData(
@@ -98,7 +177,9 @@ class DiaryApp extends StatelessWidget {
         trackColor: MaterialStateProperty.resolveWith((states) =>
             states.contains(MaterialState.selected)
                 ? green
-                : const Color(0xFFC6D6CD)),
+                : (dark
+                    ? const Color(0xFF3A4C42)
+                    : const Color(0xFFC6D6CD))),
       ),
       // 文本选区/光标：Android 默认取 colorScheme.primary 已是绿，
       // 这里显式钉死，iOS 等平台也不会再出现默认蓝
@@ -107,17 +188,24 @@ class DiaryApp extends StatelessWidget {
         selectionColor: green.withOpacity(0.30),
         selectionHandleColor: green,
       ),
-      progressIndicatorTheme: const ProgressIndicatorThemeData(
+      progressIndicatorTheme: ProgressIndicatorThemeData(
         color: green,
-        linearTrackColor: Color(0xFFE4F2EB),
-        circularTrackColor: Color(0xFFE4F2EB),
+        linearTrackColor:
+            dark ? const Color(0xFF233A2F) : const Color(0xFFE4F2EB),
+        circularTrackColor:
+            dark ? const Color(0xFF233A2F) : const Color(0xFFE4F2EB),
       ),
-      textTheme: const TextTheme(
-        bodyText1:
-            TextStyle(color: Color(0xFF24382F), fontSize: 15, height: 1.6),
-        bodyText2:
-            TextStyle(color: Color(0xFF647A70), fontSize: 13, height: 1.6),
+      textTheme: TextTheme(
+        bodyText1: TextStyle(
+            color: dark ? const Color(0xFFE9F2EB) : const Color(0xFF24382F),
+            fontSize: 15,
+            height: 1.6),
+        bodyText2: TextStyle(
+            color: dark ? const Color(0xFFA8BCB0) : const Color(0xFF647A70),
+            fontSize: 13,
+            height: 1.6),
       ),
     );
+    return base;
   }
 }

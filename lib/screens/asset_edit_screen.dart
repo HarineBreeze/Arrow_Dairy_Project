@@ -9,6 +9,7 @@ import '../widgets/pressable.dart';
 import '../widgets/save_done_button.dart';
 import '../widgets/entry_icon.dart';
 
+import '../theme/app_palette.dart';
 /// 新增 / 编辑资产卡片。
 class AssetEditScreen extends StatefulWidget {
   final Asset? asset; // null = 新增
@@ -148,9 +149,9 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
     return WillPopScope(
       onWillPop: _handleLeave,
       child: Scaffold(
-      backgroundColor: const Color(0xFFF5FAF7),
+      backgroundColor: AppPalette.c(0xFFF5FAF7),
       appBar: AppBar(
-        backgroundColor: const Color(0xCC3E8E6D),
+        backgroundColor: AppPalette.c(0xCC3E8E6D),
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
@@ -203,14 +204,14 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                   children: [
                     Expanded(
                       child: Text(_type,
-                          style: const TextStyle(
-                              fontSize: 15, color: Color(0xFF24382F))),
+                          style: TextStyle(
+                              fontSize: 15, color: AppPalette.c(0xFF24382F))),
                     ),
                     AnimatedRotation(
                       turns: _typeOpen ? 0.5 : 0,
                       duration: const Duration(milliseconds: 200),
-                      child: const AppIcon(AppIcons.chevD,
-                          color: Color(0xFF647A70)),
+                      child: AppIcon(AppIcons.chevD,
+                          color: AppPalette.c(0xFF647A70)),
                     ),
                   ],
                 ),
@@ -251,7 +252,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                                 decoration: BoxDecoration(
                                   // 选中项底纹强调
                                   color: t == _type
-                                      ? const Color(0xFFE4F2EB)
+                                      ? AppPalette.c(0xFFE4F2EB)
                                       : Colors.transparent,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -266,7 +267,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                                                   : FontWeight.normal,
                                               color: t == _type
                                                   ? const Color(0xFF3E8E6D)
-                                                  : const Color(0xFF24382F))),
+                                                  : AppPalette.c(0xFF24382F))),
                                     ),
                                     if (t == _type)
                                       const AppIcon(AppIcons.check,
@@ -292,9 +293,9 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                 controller: _noteCtrl,
                 maxLength: 15,
                 style: const TextStyle(fontSize: 15),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: '如：工资卡、应急金、基金账户',
-                  hintStyle: TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
+                  hintStyle: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
                   counterText: '',
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(vertical: 14),
@@ -310,11 +311,11 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
               decoration: _box(),
               child: Row(
                 children: [
-                  const Text('¥',
+                  Text('¥',
                       style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF24382F))),
+                          color: AppPalette.c(0xFF24382F))),
                   const SizedBox(width: 6),
                   Expanded(
                     child: TextField(
@@ -325,8 +326,8 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                           fontSize: 17, fontWeight: FontWeight.w600),
                       decoration: InputDecoration(
                         hintText: _isLiability ? '输入欠款金额' : '输入资产金额',
-                        hintStyle: const TextStyle(
-                            fontSize: 13, color: Color(0xFF8FA09A)),
+                        hintStyle: TextStyle(
+                            fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
                         border: InputBorder.none,
                         contentPadding:
                             const EdgeInsets.symmetric(vertical: 14),
@@ -370,9 +371,9 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(text,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 13,
-                  color: Color(0xFF8FA09A),
+                  color: AppPalette.c(0xFF8FA09A),
                   fontWeight: FontWeight.w600)),
           if (required)
             const Text(' *',
@@ -408,12 +409,12 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             // 图标底纹移除：未选中透明，选中保留浅绿强调
-            color: sel ? const Color(0xFFE4F2EB) : Colors.transparent,
+            color: sel ? AppPalette.c(0xFFE4F2EB) : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
           ),
           child: isMore
-              ? const AppIcon(AppIcons.moreH,
-                  size: 22, color: Color(0xFF647A70))
+              ? AppIcon(AppIcons.moreH,
+                  size: 22, color: AppPalette.c(0xFF647A70))
               : EntryIcon(icon!, size: 22),
         ),
       ),
@@ -425,7 +426,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
     final tmpCtrl = TextEditingController(text: _iconCtrl.text.trim());
     await showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppPalette.c(0xFFFFFFFF),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -460,7 +461,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                             decoration: BoxDecoration(
                               // 图标底纹移除：未选中透明，选中保留浅绿强调
                               color: sel
-                                  ? const Color(0xFFE4F2EB)
+                                  ? AppPalette.c(0xFFE4F2EB)
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -474,16 +475,16 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                       controller: tmpCtrl,
                       maxLength: 4,
                       style: const TextStyle(fontSize: 15),
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: '自定义 emoji',
                         hintText: '如 🐷、🚀',
                         hintStyle:
-                            TextStyle(fontSize: 13, color: Color(0xFF8FA09A)),
+                            TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
                         counterText: '',
                         isDense: true,
                         // 与页面其它输入框统一：浅底填充替代描边
                         filled: true,
-                        fillColor: Color(0xFFF5FAF7),
+                        fillColor: AppPalette.c(0xFFF5FAF7),
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
                         focusedBorder: InputBorder.none,
@@ -528,7 +529,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
 
   BoxDecoration _box() {
     return BoxDecoration(
-      color: Colors.white,
+      color: AppPalette.c(0xFFFFFFFF),
       borderRadius: BorderRadius.circular(12),
     );
   }
