@@ -9,6 +9,7 @@ import '../widgets/app_icons.dart';
 import '../widgets/pressable.dart';
 
 import '../theme/app_palette.dart';
+import '../theme/app_theme_scope.dart';
 /// 「可使用天数」参数设置弹窗。
 ///
 /// 由看板卡片「净资产」旁的圈叹号按钮打开。五个参数：
@@ -149,6 +150,8 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
 
   @override
   Widget build(BuildContext context) {
+    // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
+    AppThemeScope.watch(context);
     final bottom = MediaQuery.of(context).viewInsets.bottom;
     return Padding(
       padding: EdgeInsets.only(bottom: bottom),

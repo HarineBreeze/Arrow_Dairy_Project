@@ -21,6 +21,7 @@ import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
 
 import '../theme/app_palette.dart';
+import '../theme/app_theme_scope.dart';
 /// 全局搜索主页：一个搜索框同时检索 笔记标题 / 物品名称 / 事件名称 / 资产备注。
 /// 顶部搜索框持久保持；结果用「收纳栏」（笔记/物品/事件/资产 + 数量）+ 分区列表呈现。
 ///
@@ -128,6 +129,8 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
+    AppThemeScope.watch(context);
     final diaries = _hitDiaries;
     final items = _hitItems;
     final events = _hitEvents;
@@ -482,6 +485,8 @@ class _ResultRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
+    AppThemeScope.watch(context);
     return Pressable(
       child:   InkWell(
         onTap: onTap,

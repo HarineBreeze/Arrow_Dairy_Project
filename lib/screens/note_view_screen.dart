@@ -23,6 +23,7 @@ import '../utils/todo_text.dart';
 import '../widgets/pressable.dart';
 
 import '../theme/app_palette.dart';
+import '../theme/app_theme_scope.dart';
 class NoteViewScreen extends StatefulWidget {
   final DiaryEntry entry;
 
@@ -166,6 +167,8 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
+    AppThemeScope.watch(context);
     // 字体选择（设置页切换后返回本页即生效）
     final String? fontFamily = AppSettings.fontFamily;
     return Scaffold(

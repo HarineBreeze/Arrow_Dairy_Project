@@ -16,6 +16,7 @@ import '../widgets/pressable.dart';
 import '../widgets/entry_icon.dart';
 
 import '../theme/app_palette.dart';
+import '../theme/app_theme_scope.dart';
 enum _ItemFilter { all, owning, lost, wishlist }
 
 enum _ItemSortField { usage, days, price, avgCost, acquired }
@@ -376,6 +377,8 @@ class ItemListScreenState extends State<ItemListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
+    AppThemeScope.watch(context);
     return Column(
       children: [
         _buildTopBar(),
@@ -682,6 +685,8 @@ class _ItemCardState extends State<_ItemCard> {
 
   @override
   Widget build(BuildContext context) {
+    // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
+    AppThemeScope.watch(context);
     final wishlist = item.wishlist;
     final child = wishlist
         ? _buildWishlistBody()

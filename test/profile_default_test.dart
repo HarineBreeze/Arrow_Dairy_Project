@@ -123,8 +123,8 @@ void main() {
     expect(find.text('女'), findsNothing);
     expect(find.byKey(const ValueKey('profile-gender-row')), findsOneWidget);
 
-    // 昵称 / 性别 / 用户ID / 使用时间在同一张白色圆角卡内
-    for (final label in ['昵称', '性别', '用户ID', '使用时间']) {
+    // 昵称 / 性别 / ID / 使用时间在同一张白色圆角卡内
+    for (final label in ['昵称', '性别', 'ID', '使用时间']) {
       final containers = tester
           .widgetList<Container>(
               find.ancestor(of: find.text(label), matching: find.byType(Container)))
@@ -151,7 +151,7 @@ void main() {
     await tester.pump(const Duration(seconds: 2));
   });
 
-  testWidgets('用户ID 淡灰只读、使用时间显示天数', (tester) async {
+  testWidgets('ID 淡灰只读、使用时间显示天数', (tester) async {
     await tester.binding.setSurfaceSize(const Size(600, 1200));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -160,11 +160,11 @@ void main() {
         MaterialApp(home: ProfileEditScreen(profile: profile)));
     await tester.pump();
 
-    expect(find.text('用户ID'), findsOneWidget);
+    expect(find.text('ID'), findsOneWidget);
     expect(find.text(profile.userId), findsOneWidget);
     final idText = tester.widget<Text>(find.text(profile.userId));
     expect(idText.style?.color, const Color(0xFF8FA09A),
-        reason: '用户ID 字色为淡灰');
+        reason: 'ID 字色为淡灰');
     // 不可编辑：整页只有昵称一个输入框
     expect(find.byType(TextField), findsOneWidget);
     expect(find.textContaining('已使用 '), findsOneWidget);

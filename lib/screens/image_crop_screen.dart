@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../utils/haptics.dart';
 import '../widgets/app_icons.dart';
+import '../theme/app_theme_scope.dart';
 
 /// 固定 4:3 比例（宽 / 高）
 const double kCropRatio = 4 / 3;
@@ -203,6 +204,8 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
+    AppThemeScope.watch(context);
     return Scaffold(
       backgroundColor: const Color(0xFF1A1A1A),
       appBar: AppBar(

@@ -3,6 +3,7 @@ import 'package:flutter/scheduler.dart';
 import 'services/app_settings.dart';
 import 'screens/home_screen.dart';
 import 'theme/app_palette.dart';
+import 'theme/app_theme_scope.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -95,6 +96,14 @@ class _DiaryAppState extends State<DiaryApp> with WidgetsBindingObserver {
             // system 交给 Flutter 依系统亮度自动选 theme / darkTheme；
             // light / dark 为手动强制。与上面 AppPalette.dark 的解析一致。
             themeMode: _toThemeMode(mode),
+            // v4.9.25：包一层主题重建作用域。所有页面 build 开头调用
+            // AppThemeScope.watch(context) 后，明暗切换会令本 widget 更新，
+            // 进而让全部页面重新 build —— 深色/浅色一次切换即全局到位，
+            // 不必再滑一次侧边栏。State 原地保留，不丢导航栈与编辑内容。
+            builder: (context, child) => AppThemeScope(
+              dark: dark,
+              child: child ?? const SizedBox.shrink(),
+            ),
             home: const HomeScreen(),
           );
         },

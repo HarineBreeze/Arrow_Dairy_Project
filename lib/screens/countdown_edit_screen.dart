@@ -12,6 +12,7 @@ import '../widgets/wheel_picker.dart';
 import '../widgets/entry_icon.dart';
 
 import '../theme/app_palette.dart';
+import '../theme/app_theme_scope.dart';
 /// 新增 / 编辑事件。
 class CountdownEditScreen extends StatefulWidget {
   final CountdownEvent? event; // null = 新增
@@ -216,6 +217,8 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
+    AppThemeScope.watch(context);
     return WillPopScope(
       onWillPop: _handleLeave,
       child: Scaffold(
@@ -397,11 +400,8 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                     height: 52,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: _target == null
-                          ? AppPalette.c(0xFFF5FAF7)
-                          : (_isCountdown
-                              ? AppPalette.c(0xFFE4F2EB)
-                              : AppPalette.c(0xFFFDEEF3)),
+                      // v4.9.25：「正数 / 倒数」不再用绿/粉特殊底纹标示，统一普通底
+                      color: AppPalette.c(0xFFF5FAF7),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: FittedBox(
@@ -416,9 +416,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                           fontWeight: FontWeight.w600,
                           color: _target == null
                               ? AppPalette.c(0xFFB2C4BA)
-                              : (_isCountdown
-                                  ? const Color(0xFF3E8E6D)
-                                  : const Color(0xFFD9738F)),
+                              : AppPalette.c(0xFF24382F),
                         ),
                       ),
                     ),

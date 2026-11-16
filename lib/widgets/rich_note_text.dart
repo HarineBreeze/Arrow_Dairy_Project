@@ -86,11 +86,13 @@ class _RichNoteTextState extends State<RichNoteText> {
 
   TextStyle? _styleAt(int pos) {
     TextStyle? st;
+    bool highlighted = false;
     for (final f in widget.formats) {
       if (pos < f.start || pos >= f.end) continue;
       final decos = <TextDecoration>[];
       if (f.underline == true) decos.add(TextDecoration.underline);
       if (f.strike == true) decos.add(TextDecoration.lineThrough);
+      if (f.highlight != null) highlighted = true;
       st = (st ?? const TextStyle()).copyWith(
         fontWeight: f.bold == true ? FontWeight.w700 : null,
         fontStyle: f.italic == true ? FontStyle.italic : null,
@@ -101,6 +103,11 @@ class _RichNoteTextState extends State<RichNoteText> {
             f.highlight != null ? _parseColor(f.highlight!) : null,
         fontSize: f.size,
       );
+    }
+    // v4.9.25：高亮文字字色固定为深墨色，深色模式下不随正文翻浅（浅底深字
+    // 才清晰）；优先级低于 @物品 / #话题 链接蓝。
+    if (highlighted) {
+      st = (st ?? const TextStyle()).copyWith(color: const Color(0xFF24382F));
     }
     // @物品 / #话题 统一蓝色（无论是否设置了自定义字体/排版）
     final link = _linkColorAt(pos);

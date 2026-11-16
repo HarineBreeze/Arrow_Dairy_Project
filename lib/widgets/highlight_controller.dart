@@ -147,7 +147,11 @@ class HighlightEditingController extends TextEditingController {
           : (decos.length == 1 ? decos.first : TextDecoration.combine(decos)),
       backgroundColor: highlight != null ? _parseColor(highlight) : null,
       fontSize: size,
-      color: isMark ? const Color(0xFF3E8E6D) : null,
+      // v4.9.25：高亮文字字色固定为深墨色，深色模式下不随正文翻浅（浅底深字
+      // 才清晰）；无高亮时列表标记仍用主色，其余继承父级主题色。
+      color: highlight != null
+          ? const Color(0xFF24382F)
+          : (isMark ? const Color(0xFF3E8E6D) : null),
     );
   }
 

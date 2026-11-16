@@ -13,6 +13,7 @@ import '../widgets/wheel_picker.dart';
 import '../widgets/entry_icon.dart';
 
 import '../theme/app_palette.dart';
+import '../theme/app_theme_scope.dart';
 const List<String> kCategories = ['数码设备', '衣物', '配饰', '家具'];
 const Map<String, List<String>> kCategoryIcons = {
   '数码设备': ['📱', '💻', '📷', '🎧', '⌚', '🖥️', '🎮'],
@@ -319,6 +320,8 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
+    AppThemeScope.watch(context);
     return WillPopScope(
       onWillPop: _handleLeave,
       child: Scaffold(

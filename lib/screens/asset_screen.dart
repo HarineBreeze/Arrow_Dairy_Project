@@ -20,6 +20,7 @@ import '../widgets/asset_pie_card.dart';
 import '../widgets/app_icons.dart';
 
 import '../theme/app_palette.dart';
+import '../theme/app_theme_scope.dart';
 /// 资产全景主页。默认无需密码即可查看；
 /// 开启「加密访问」后，进入本页需先输入密码解锁。
 /// 返回 true 表示确认完成（供外部回调刷新）。
@@ -644,6 +645,8 @@ class AssetScreenState extends State<AssetScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
+    AppThemeScope.watch(context);
     return Column(
       children: [
         // 顶栏：与物资清单同款
@@ -1399,6 +1402,8 @@ class _CardShellState extends State<_CardShell> {
 
   @override
   Widget build(BuildContext context) {
+    // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
+    AppThemeScope.watch(context);
     return ReorderableDelayedDragStartListener(
       index: widget.index,
       child: Listener(
@@ -1453,6 +1458,8 @@ class _HoldDetectorState extends State<_HoldDetector> {
 
   @override
   Widget build(BuildContext context) {
+    // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
+    AppThemeScope.watch(context);
     return Listener(
       onPointerDown: (_) => _start(),
       onPointerUp: (_) => _stop(),
@@ -1518,6 +1525,8 @@ class _PinSetupDialogState extends State<_PinSetupDialog> {
 
   @override
   Widget build(BuildContext context) {
+    // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
+    AppThemeScope.watch(context);
     return WillPopScope(
       // 侧滑 / 返回键一次即取消
       onWillPop: () async {
@@ -1737,6 +1746,8 @@ class _PinUnlockDialogState extends State<_PinUnlockDialog> {
 
   @override
   Widget build(BuildContext context) {
+    // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
+    AppThemeScope.watch(context);
     return WillPopScope(
       // 侧滑 / 返回键一次即取消，回笔记主页
       onWillPop: () async {
@@ -1956,6 +1967,8 @@ class _DisablePinDialogState extends State<_DisablePinDialog> {
 
   @override
   Widget build(BuildContext context) {
+    // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
+    AppThemeScope.watch(context);
     return WillPopScope(
       onWillPop: () async => !_busy,
       child: AlertDialog(
@@ -2185,6 +2198,8 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
 
   @override
   Widget build(BuildContext context) {
+    // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
+    AppThemeScope.watch(context);
     return WillPopScope(
       onWillPop: () async => !_saving,
       child: AlertDialog(

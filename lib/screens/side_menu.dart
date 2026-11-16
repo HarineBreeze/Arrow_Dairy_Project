@@ -5,6 +5,7 @@ import '../widgets/avatar.dart';
 import '../widgets/identity_badge.dart';
 
 import '../theme/app_palette.dart';
+import '../theme/app_theme_scope.dart';
 class SideMenu extends StatelessWidget {
   final UserProfile profile;
   final VoidCallback onClose;
@@ -35,6 +36,8 @@ class SideMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
+    AppThemeScope.watch(context);
     final nickname = profile.nickname.isEmpty
         ? UserProfile.defaultNickname
         : profile.nickname;

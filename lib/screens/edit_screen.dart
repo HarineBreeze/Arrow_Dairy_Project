@@ -26,6 +26,7 @@ import '../utils/todo_text.dart';
 import 'image_crop_screen.dart';
 
 import '../theme/app_palette.dart';
+import '../theme/app_theme_scope.dart';
 /// 封面图抽屉动作
 enum _ImageAction { gallery, camera, crop }
 
@@ -1007,6 +1008,8 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
+    AppThemeScope.watch(context);
     return WillPopScope(
       onWillPop: _handleLeave,
       child: Scaffold(

@@ -16,6 +16,7 @@ import '../widgets/pressable.dart';
 import '../widgets/entry_icon.dart';
 
 import '../theme/app_palette.dart';
+import '../theme/app_theme_scope.dart';
 /// 事件主页：顶栏（年月 + 搜索 + 筛选）、日历视图、
 /// 置顶组 / 纪念日 / 资产日 三个可折叠分组的长条卡片列表。
 class CountdownScreen extends StatefulWidget {
@@ -381,6 +382,8 @@ class CountdownScreenState extends State<CountdownScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
+    AppThemeScope.watch(context);
     return Column(
       children: [
         _buildTopBar(),

@@ -10,6 +10,7 @@ import '../widgets/save_done_button.dart';
 import '../widgets/entry_icon.dart';
 
 import '../theme/app_palette.dart';
+import '../theme/app_theme_scope.dart';
 /// 新增 / 编辑资产卡片。
 class AssetEditScreen extends StatefulWidget {
   final Asset? asset; // null = 新增
@@ -146,6 +147,8 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
+    AppThemeScope.watch(context);
     return WillPopScope(
       onWillPop: _handleLeave,
       child: Scaffold(

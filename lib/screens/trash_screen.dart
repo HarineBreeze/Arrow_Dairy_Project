@@ -9,6 +9,7 @@ import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
 
 import '../theme/app_palette.dart';
+import '../theme/app_theme_scope.dart';
 /// 回收站主页。
 /// 交互与其它主页一致：顶部蓝色三横杠 + 标题、左右滑由 HomeScreen 统一处理。
 /// 保存用户删除的笔记 / 物品 / 事件 / 资产，最长 7 天。
@@ -366,7 +367,7 @@ class TrashScreenState extends State<TrashScreen> {
               hint: _category == null
                   ? '恢复回收站中的全部内容'
                   : '恢复「${_category!.label}」分类下的内容',
-              color: const Color(0xFF3E8E6D),
+              color: AppPalette.c(0xFF24382F),
               onTap: () => Navigator.pop(ctx, 'all'),
             ),
             // 抽屉不再放「取消」按钮：点遮罩 / 下滑即可关闭，
@@ -441,7 +442,7 @@ class TrashScreenState extends State<TrashScreen> {
               icon: AppIcons.check,
               label: '选择性删除',
               hint: '勾选要彻底删除的内容',
-              color: const Color(0xFFCB5C50),
+              color: AppPalette.c(0xFF24382F),
               onTap: () => Navigator.pop(ctx, 'selective'),
             ),
             Divider(height: 1, indent: 56, color: AppPalette.c(0xFFEFF5F1)),
@@ -515,6 +516,8 @@ class TrashScreenState extends State<TrashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
+    AppThemeScope.watch(context);
     return Column(
       children: [
         _buildTopBar(),
@@ -747,31 +750,29 @@ class TrashScreenState extends State<TrashScreen> {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 11, 12, 11),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          // v4.9.25：圆圈选择器与右侧文字块、剩余天数垂直居中对齐
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             if (selecting) ...[
-              Padding(
-                padding: const EdgeInsets.only(top: 1),
-                child: Container(
-                  width: 20,
-                  height: 20,
-                  // Container 不给 alignment 时 child 会被 20×20 的紧约束撑开，
-                  // 13px 的对勾被拉到左上角而不是落在圆圈中心。
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: picked ? const Color(0xFF3E8E6D) : AppPalette.c(0xFFFFFFFF),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: picked
-                          ? const Color(0xFF3E8E6D)
-                          : AppPalette.c(0xFFC6D6CD),
-                    ),
+              Container(
+                width: 20,
+                height: 20,
+                // Container 不给 alignment 时 child 会被 20×20 的紧约束撑开，
+                // 13px 的对勾被拉到左上角而不是落在圆圈中心。
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: picked ? const Color(0xFF3E8E6D) : AppPalette.c(0xFFFFFFFF),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: picked
+                        ? const Color(0xFF3E8E6D)
+                        : AppPalette.c(0xFFC6D6CD),
                   ),
-                  child: picked
-                      ? const AppIcon(AppIcons.check,
-                          size: 13, color: Colors.white)
-                      : null,
                 ),
+                child: picked
+                    ? const AppIcon(AppIcons.check,
+                        size: 13, color: Colors.white)
+                    : null,
               ),
               const SizedBox(width: 12),
             ],
@@ -800,10 +801,8 @@ class TrashScreenState extends State<TrashScreen> {
               ),
             ),
             const SizedBox(width: 8),
-            // 剩余天数：贴在卡片右上角，字号收小
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Text(
+            // 剩余天数：居中对齐，字号收小
+            Text(
                 left <= 1 ? '今天到期' : '$left 天后消失',
                 style: TextStyle(
                     fontSize: 10,
@@ -811,7 +810,6 @@ class TrashScreenState extends State<TrashScreen> {
                     color: urgent
                         ? const Color(0xFFF08C3A)
                         : AppPalette.c(0xFF7C8F86)),
-              ),
             ),
           ],
         ),

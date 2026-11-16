@@ -14,6 +14,7 @@ import '../widgets/pressable.dart';
 import 'font_picker_screen.dart';
 
 import '../theme/app_palette.dart';
+import '../theme/app_theme_scope.dart';
 class SettingsScreen extends StatefulWidget {
   /// 仅测试使用：替换真实的兑换实现（避免 widget 测试里走真实文件 IO）
   @visibleForTesting
@@ -252,6 +253,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
+    AppThemeScope.watch(context);
     return Scaffold(
       appBar: AppBar(title: const Text('设置')),
       // 版本号固定在整个页面最底部（不随列表滚动），列表内容在其上方滚动
@@ -475,25 +478,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   /// 分组标题旁的蓝色圈叹号（提示入口）
+  /// v4.9.25：视觉圈缩小并与标题行居中对齐，外层点击热区不随之缩小
+  /// （仍保持约 20×20，满足最小点按面积），只缩小看得见的圈与叹号。
   Widget _buildInfoDot({required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: Container(
-        width: 16,
-        height: 16,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(color: const Color(0xFF3E8E6D), width: 1.2),
-        ),
-        alignment: Alignment.center,
-        child: const Text(
-          '!',
-          style: TextStyle(
-            fontSize: 11,
-            height: 1,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF3E8E6D),
+      child: SizedBox(
+        width: 20,
+        height: 20,
+        child: Center(
+          child: SizedBox(
+            width: 12,
+            height: 12,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFF3E8E6D), width: 1),
+              ),
+              child: Center(
+                child: Text(
+                  '!',
+                  style: TextStyle(
+                    fontSize: 9,
+                    height: 1,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF3E8E6D),
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),

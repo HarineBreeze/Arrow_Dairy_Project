@@ -8,6 +8,7 @@ import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
 
 import '../theme/app_palette.dart';
+import '../theme/app_theme_scope.dart';
 /// 积分商城：用积分兑换身份牌 / 限时 VIP 权益。
 ///
 /// 版式沿用全 App 的「页面底色 + 白色圆角卡 + 灰色节标题」节奏：
@@ -120,6 +121,8 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
+    AppThemeScope.watch(context);
     final profile = _profile;
     return Scaffold(
       appBar: AppBar(title: const Text('积分商城')),

@@ -19,6 +19,7 @@ import '../widgets/save_done_button.dart';
 import '../widgets/save_bar.dart';
 
 import '../theme/app_palette.dart';
+import '../theme/app_theme_scope.dart';
 class ProfileEditScreen extends StatefulWidget {
   final UserProfile profile;
 
@@ -262,6 +263,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
+    AppThemeScope.watch(context);
     return WillPopScope(
       onWillPop: _handleLeave,
       child: Scaffold(
@@ -585,7 +588,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            _buildFieldLabel('用户ID'),
+            _buildFieldLabel('ID'),
             Expanded(
               child: Text(
                 _userId,

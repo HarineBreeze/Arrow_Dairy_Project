@@ -41,6 +41,7 @@ import '../widgets/empty_state.dart';
 import '../utils/menu_gesture_gate.dart';
 
 import '../theme/app_palette.dart';
+import '../theme/app_theme_scope.dart';
 const Color kPrimaryBlue = Color(0xFF3E8E6D);
 Color get kLightBlue => AppPalette.c(0xFFE4F2EB);
 Color get kTextDark => AppPalette.c(0xFF24382F);
@@ -837,6 +838,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
+    AppThemeScope.watch(context);
     // 状态栏图标亮度随菜单开合切换：主页蓝底用浅色图标，
     // 菜单打开后顶部大部分为白色菜单区，改用深色图标。
     return AnimatedBuilder(
@@ -1870,6 +1873,8 @@ class _PinnedMiniCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
+    AppThemeScope.watch(context);
     final d = entry.publishDate;
     final t = entry.createdAt;
     final hh = t.hour.toString().padLeft(2, '0');
@@ -2007,6 +2012,8 @@ class _DayCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
+    AppThemeScope.watch(context);
     Color bg = Colors.transparent;
     Color fg = kTextDark;
     if (isSelected) {
@@ -2062,6 +2069,8 @@ class _DiaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
+    AppThemeScope.watch(context);
     final isEncrypted = entry.encrypted;
     // 加密笔记：封条风卡片（斜纹密封带 + 虚线边框），只外显副标题与日期时间
     if (isEncrypted) return _buildEncryptedCard();
@@ -2543,6 +2552,8 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
+    AppThemeScope.watch(context);
     String message = '还没有日记';
     String sub = '点击右下角 + 写下第一篇吧';
     if (hasQuery) {

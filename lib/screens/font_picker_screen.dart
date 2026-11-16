@@ -4,6 +4,7 @@ import '../utils/app_toast.dart';
 import '../services/app_settings.dart';
 
 import '../theme/app_palette.dart';
+import '../theme/app_theme_scope.dart';
 /// 字体选择页：预览文字直接以对应字体渲染（字体均打包在 APK 内）。
 class FontPickerScreen extends StatefulWidget {
   const FontPickerScreen({Key? key}) : super(key: key);
@@ -15,6 +16,8 @@ class FontPickerScreen extends StatefulWidget {
 class _FontPickerScreenState extends State<FontPickerScreen> {
   @override
   Widget build(BuildContext context) {
+    // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
+    AppThemeScope.watch(context);
     final current = AppSettings.fontFamilyId;
     return Scaffold(
       appBar: AppBar(title: const Text('字体')),
