@@ -42,6 +42,7 @@ import '../utils/menu_gesture_gate.dart';
 
 import '../theme/app_palette.dart';
 import '../theme/app_theme_scope.dart';
+import '../utils/app_sheet.dart';
 const Color kPrimaryBlue = Color(0xFF3E8E6D);
 Color get kLightBlue => AppPalette.c(0xFFE4F2EB);
 Color get kTextDark => AppPalette.c(0xFF24382F);
@@ -214,12 +215,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Future<void> _showNoteActions(DiaryEntry entry) async {
-    final action = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: AppPalette.c(0xFFFFFFFF),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
+    final action = await AppSheet.show<String>(
+      context,
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1566,12 +1563,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   void _showFilterSheet() {
     final topics = _allTopics;
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: AppPalette.c(0xFFFFFFFF),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
+    AppSheet.show<void>(
+      context,
       builder: (ctx) {
         return SafeArea(
           child: Padding(

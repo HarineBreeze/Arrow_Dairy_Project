@@ -32,6 +32,12 @@ class Haptics {
   /// 是否启用节流（测试里关掉，避免用例之间互相吞掉请求）
   static bool throttleEnabled = true;
 
+  /// 全局总开关（设置页「震动」）。
+  ///
+  /// 关闭后所有震动入口直接返回，不再触碰原生通道 —— 包括列表选择、
+  /// 长按弹菜单这类高频点位。持久化值由 [AppSettings] 启动时下发。
+  static bool enabled = true;
+
   /// 仅用于测试：重置节流状态
   @visibleForTesting
   static void resetThrottle() {
@@ -73,8 +79,9 @@ class Haptics {
     _fireAndForget(12, 90, medium: false);
   }
 
-  /// 统一的节流判定：太密的请求直接丢弃。
+  /// 统一的节流判定：总开关关闭或请求太密都直接丢弃。
   static bool _accept() {
+    if (!enabled) return false;
     if (!throttleEnabled) return true;
     final now = DateTime.now();
     if (now.difference(_lastAt) < _minGap) return false;

@@ -63,7 +63,8 @@ void main() {
       expect(find.text('字体'), findsOneWidget,
           reason: '字体分组标题已并入外观，全页只剩功能项一处');
       expect(find.text('外观'), findsOneWidget);
-      expect(find.byType(Switch), findsNWidgets(2));
+      // 外观 2 个（深色模式 / 跟随系统）+ 反馈 1 个（震动）
+      expect(find.byType(Switch), findsNWidgets(3));
     });
 
     testWidgets('点字体行进入字体选择页', (tester) async {

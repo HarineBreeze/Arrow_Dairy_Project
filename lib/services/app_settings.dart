@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' show Brightness;
 import 'package:path_provider/path_provider.dart';
 import '../theme/app_palette.dart';
+import '../utils/haptics.dart';
 
 /// 可选字体目录（id 即 Flutter family 名）。
 /// 全部为开源 OFL 授权，已裁剪至常用字集并打包进 APK，离线可用。
@@ -63,6 +64,23 @@ class AppSettings {
   static Future<void> setThemeMode(AppThemeMode mode) async {
     _themeMode = mode;
     themeModeNotifier.value = mode;
+    await _persist();
+  }
+
+  // ---------------- 震动反馈 ----------------
+
+  /// 全局震动开关，默认开启。持久化到 app_settings.json 的 hapticsEnabled。
+  static bool _hapticsEnabled = true;
+  static bool get hapticsEnabled => _hapticsEnabled;
+
+  /// 开关变更通知：设置页开关与 [Haptics.enabled] 同步。
+  static final ValueNotifier<bool> hapticsNotifier = ValueNotifier<bool>(true);
+
+  /// 切换全局震动，并立刻下发到 [Haptics]（无需重启 App）。
+  static Future<void> setHapticsEnabled(bool value) async {
+    _hapticsEnabled = value;
+    Haptics.enabled = value;
+    hapticsNotifier.value = value;
     await _persist();
   }
 
@@ -136,6 +154,7 @@ class AppSettings {
         'annualRate': _annualRate,
         'inflationRate': _inflationRate,
         'themeMode': _themeMode.name,
+        'hapticsEnabled': _hapticsEnabled,
       };
 
   static Future<void> load() async {
@@ -174,12 +193,17 @@ class AppSettings {
         (m) => m.name == tm,
         orElse: () => AppThemeMode.system,
       );
+
+      // 震动开关：旧档缺字段默认开启
+      _hapticsEnabled = map['hapticsEnabled'] != false;
     } catch (_) {
       _fontFamily = null;
     }
     // 启动时也要同步一次，避免首帧与已存设置不一致
     fontNotifier.value = fontFamily;
     themeModeNotifier.value = _themeMode;
+    Haptics.enabled = _hapticsEnabled;
+    hapticsNotifier.value = _hapticsEnabled;
   }
 
   static Future<void> setFontFamily(String id) async {

@@ -11,6 +11,7 @@ import '../widgets/entry_icon.dart';
 
 import '../theme/app_palette.dart';
 import '../theme/app_theme_scope.dart';
+import '../utils/app_sheet.dart';
 /// 新增 / 编辑资产卡片。
 class AssetEditScreen extends StatefulWidget {
   final Asset? asset; // null = 新增
@@ -421,12 +422,8 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
   /// 「...」→ 全部图标 + 自定义 emoji
   Future<void> _showMoreIcons() async {
     final tmpCtrl = TextEditingController(text: _iconCtrl.text.trim());
-    await showModalBottomSheet(
-      context: context,
-      backgroundColor: AppPalette.c(0xFFFFFFFF),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
+    await AppSheet.show(
+      context,
       builder: (ctx) {
         return StatefulBuilder(
           builder: (ctx, setSheetState) {

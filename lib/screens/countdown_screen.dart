@@ -17,6 +17,7 @@ import '../widgets/entry_icon.dart';
 
 import '../theme/app_palette.dart';
 import '../theme/app_theme_scope.dart';
+import '../utils/app_sheet.dart';
 /// 事件主页：顶栏（年月 + 搜索 + 筛选）、日历视图、
 /// 置顶组 / 纪念日 / 资产日 三个可折叠分组的长条卡片列表。
 class CountdownScreen extends StatefulWidget {
@@ -175,12 +176,8 @@ class CountdownScreenState extends State<CountdownScreen> {
   void _showCardMenu(CountdownEvent e) {
     Haptics.mediumNow(); // 长按菜单：同步触发，避免异步等待导致振动被丢弃
     Haptics.medium();
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppPalette.c(0xFFFFFFFF),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
+    AppSheet.show(
+      context,
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -260,12 +257,8 @@ class CountdownScreenState extends State<CountdownScreen> {
   }
 
   void _showFilterSheet() {
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: AppPalette.c(0xFFFFFFFF),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
+    AppSheet.show<void>(
+      context,
       builder: (ctx) {
         return StatefulBuilder(builder: (ctx, setSheet) {
           Widget option(String label, String? value) {

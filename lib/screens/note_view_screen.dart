@@ -17,6 +17,7 @@ import '../widgets/rich_note_text.dart';
 import '../widgets/todo_card.dart';
 import '../utils/text_format.dart';
 import 'edit_screen.dart';
+import 'image_viewer_screen.dart';
 import 'item_edit_screen.dart';
 import '../utils/haptics.dart';
 import '../utils/todo_text.dart';
@@ -257,6 +258,15 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
 
   /// 分享：把当前笔记渲染成带品牌落款的长图，调起系统分享面板。
   /// 具体链路（进度弹窗 / 失败提示）与主页长按菜单共用 [shareEntryImage]。
+  /// 打开全屏查看：Hero 共享元素 + 缩放/下拉/单击退出
+  void _openImage() {
+    if (!_hasImage) return;
+    Navigator.of(context).push(ImageViewerScreen.route(
+      path: _entry.imagePath,
+      heroTag: 'note_cover_${_entry.id}',
+    ));
+  }
+
   Future<void> _share() => shareEntryImage(
         context,
         _entry,
@@ -318,11 +328,18 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
             : _buildMatchBar(),
         actions: [
           // v4.9.27：编辑/删除/分享收进「更多」，点击从按钮处弹下拉选框
+          // v4.9.28：竖三点改为横三点；热区与左侧返回箭头一致（48×48）
           Builder(
             builder: (btnCtx) => IconButton(
               key: const ValueKey('note_action_more'),
               tooltip: '更多',
-              icon: const AppIcon(AppIcons.moreV),
+              padding: EdgeInsets.zero,
+              // AppBar 的返回键热区是 56×56（leadingWidth 默认值），
+              // 这里取同尺寸，避免右侧图标感觉「更难点」
+              constraints:
+                  const BoxConstraints.tightFor(width: 56, height: 56),
+              iconSize: 24,
+              icon: const AppIcon(AppIcons.moreH),
               onPressed: () => _showMoreMenu(btnCtx),
             ),
           ),
@@ -341,15 +358,23 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                   // 排版顺序：封面图 → 标题 → 正文；无图时标题直接从顶部开始
                   if (_hasImage) ...[
                     // 封面图只随页面滑入，不做跨页共享元素飞行
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: AspectRatio(
-                        aspectRatio: 4 / 3,
-                        // 页宽 - 左右各 16 边距；降采样解码后滚动更顺
-                        child: EntryImage(
-                          path: _entry.imagePath,
-                          displayWidth: MediaQuery.of(context).size.width - 32,
-                          iconSize: 24,
+                    // v4.9.28：点击进入全屏查看（双指缩放 / 下拉关闭 / 单击退出）
+                    GestureDetector(
+                      onTap: _openImage,
+                      child: Hero(
+                        tag: 'note_cover_${_entry.id}',
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: AspectRatio(
+                            aspectRatio: 4 / 3,
+                            // 页宽 - 左右各 16 边距；降采样解码后滚动更顺
+                            child: EntryImage(
+                              path: _entry.imagePath,
+                              displayWidth:
+                                  MediaQuery.of(context).size.width - 32,
+                              iconSize: 24,
+                            ),
+                          ),
                         ),
                       ),
                     ),

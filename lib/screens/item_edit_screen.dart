@@ -13,6 +13,7 @@ import '../widgets/entry_icon.dart';
 
 import '../theme/app_palette.dart';
 import '../theme/app_theme_scope.dart';
+import '../utils/app_sheet.dart';
 const List<String> kCategories = ['数码设备', '衣物', '配饰', '家具'];
 const Map<String, List<String>> kCategoryIcons = {
   '数码设备': ['📱', '💻', '📷', '🎧', '⌚', '🖥️', '🎮'],
@@ -682,12 +683,8 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
     required String current,
     required ValueChanged<String> onSelected,
   }) async {
-    final picked = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: AppPalette.c(0xFFFFFFFF),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
+    final picked = await AppSheet.show<String>(
+      context,
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -734,12 +731,8 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
     final options = List<String>.from(kCategories);
     if (!options.contains(_category)) options.add(_category);
     const custom = '自定义…';
-    final picked = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: AppPalette.c(0xFFFFFFFF),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
+    final picked = await AppSheet.show<String>(
+      context,
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,

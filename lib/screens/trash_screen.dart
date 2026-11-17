@@ -10,6 +10,7 @@ import '../widgets/pressable.dart';
 
 import '../theme/app_palette.dart';
 import '../theme/app_theme_scope.dart';
+import '../utils/app_sheet.dart';
 /// 回收站主页。
 /// 交互与其它主页一致：顶部蓝色三横杠 + 标题、左右滑由 HomeScreen 统一处理。
 /// 保存用户删除的笔记 / 物品 / 事件 / 资产，最长 7 天。
@@ -247,12 +248,8 @@ class TrashScreenState extends State<TrashScreen> {
   /// 普通浏览态才可用；选择态下长按不弹菜单，避免与勾选冲突。
   Future<void> _showCardActions(TrashEntry entry) async {
     Haptics.mediumNow();
-    final action = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: AppPalette.c(0xFFFFFFFF),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
+    final action = await AppSheet.show<String>(
+      context,
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -392,12 +389,8 @@ class TrashScreenState extends State<TrashScreen> {
   /// 还原按钮的二级菜单：选择性还原 / 全部还原
   Future<void> _showRestoreMenu() async {
     Haptics.light();
-    final action = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: AppPalette.c(0xFFFFFFFF),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
+    final action = await AppSheet.show<String>(
+      context,
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -478,12 +471,8 @@ class TrashScreenState extends State<TrashScreen> {
   /// 删除按钮的二级菜单：选择性删除 / 清空回收站
   Future<void> _showDeleteMenu() async {
     Haptics.light();
-    final action = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: AppPalette.c(0xFFFFFFFF),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
+    final action = await AppSheet.show<String>(
+      context,
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,

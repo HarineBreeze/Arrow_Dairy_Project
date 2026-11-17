@@ -12,6 +12,7 @@ import '../widgets/entry_icon.dart';
 
 import '../theme/app_palette.dart';
 import '../theme/app_theme_scope.dart';
+import '../utils/app_sheet.dart';
 /// 新增 / 编辑事件。
 class CountdownEditScreen extends StatefulWidget {
   final CountdownEvent? event; // null = 新增
@@ -573,12 +574,8 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
     required String current,
     required ValueChanged<String> onSelected,
   }) async {
-    final picked = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: AppPalette.c(0xFFFFFFFF),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
+    final picked = await AppSheet.show<String>(
+      context,
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -692,12 +689,8 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
 
   Future<void> _showMoreIcons() async {
     final tmpCtrl = TextEditingController(text: _iconCtrl.text.trim());
-    await showModalBottomSheet(
-      context: context,
-      backgroundColor: AppPalette.c(0xFFFFFFFF),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
+    await AppSheet.show(
+      context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setSheet) => SafeArea(
           child: Padding(

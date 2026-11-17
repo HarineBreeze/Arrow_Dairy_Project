@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/app_palette.dart';
+import '../utils/app_sheet.dart';
 /// 滚轮式日期 / 时间选择器。
 ///
 /// 自带惯性减速、刻度吸附（松手后缓动停到最近的整值）与边缘惯性回弹
@@ -154,13 +155,9 @@ Future<DateTime?> showWheelDatePicker(
   DateTime? maximum,
   String title = '选择日期',
 }) {
-  return showModalBottomSheet<DateTime>(
-    context: context,
-    backgroundColor: AppPalette.c(0xFFFFFFFF),
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-    ),
-    builder: (ctx) => _DateWheelSheet(
+  return AppSheet.show<DateTime>(
+    context,
+        builder: (ctx) => _DateWheelSheet(
       initial: initial,
       minimum: minimum ?? DateTime(2000),
       maximum: maximum ?? DateTime(2100),
@@ -343,13 +340,9 @@ Future<TimeOfDay?> showWheelTimePicker(
 }) {
   var hour = initial.hour;
   var minute = initial.minute;
-  return showModalBottomSheet<TimeOfDay>(
-    context: context,
-    backgroundColor: AppPalette.c(0xFFFFFFFF),
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-    ),
-    builder: (ctx) => _WheelSheet(
+  return AppSheet.show<TimeOfDay>(
+    context,
+        builder: (ctx) => _WheelSheet(
       title: title,
       child: SizedBox(
         height: kWheelHeight,

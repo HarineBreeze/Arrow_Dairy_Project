@@ -17,6 +17,7 @@ import '../widgets/entry_icon.dart';
 
 import '../theme/app_palette.dart';
 import '../theme/app_theme_scope.dart';
+import '../utils/app_sheet.dart';
 enum _ItemFilter { all, owning, lost, wishlist }
 
 enum _ItemSortField { usage, days, price, avgCost, acquired }
@@ -79,12 +80,8 @@ class ItemListScreenState extends State<ItemListScreen> {
   /// 长按物品卡片：编辑 / 删除
   Future<void> _showItemMenu(Item item) async {
     Haptics.mediumNow(); // 长按菜单：同步触发，避免异步等待导致振动被丢弃
-    final action = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: AppPalette.c(0xFFFFFFFF),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
+    final action = await AppSheet.show<String>(
+      context,
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -284,12 +281,8 @@ class ItemListScreenState extends State<ItemListScreen> {
   }
 
   void _showSortSheet() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppPalette.c(0xFFFFFFFF),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
+    AppSheet.show(
+      context,
       builder: (ctx) {
         return StatefulBuilder(
           builder: (ctx, setSheetState) {

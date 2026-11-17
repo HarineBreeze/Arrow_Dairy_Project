@@ -63,24 +63,6 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
   /// 当前选中的收纳栏分类；null = 全部
   String? _category;
 
-  /// v4.9.27：结果列表滚动 + 命中逐条定位
-  final ScrollController _resultCtrl = ScrollController();
-  final List<GlobalKey> _resultKeys = [];
-  int _hitIndex = 0;
-
-  int get _hitTotal {
-    final d = _hitDiaries.length;
-    final i = _hitItems.length;
-    final e = _hitEvents.length;
-    final a = _assetLocked ? 0 : _hitAssets.length;
-    // 分类过滤时只统计当前可见分区
-    if (_category == '笔记') return d;
-    if (_category == '物品') return i;
-    if (_category == '事件') return e;
-    if (_category == '资产') return a;
-    return d + i + e + a;
-  }
-
   @override
   void initState() {
     super.initState();
@@ -92,34 +74,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
   void dispose() {
     _ctrl.dispose();
     _focus.dispose();
-    _resultCtrl.dispose();
     super.dispose();
-  }
-
-  /// 清空命中 key 集合，按结果渲染顺序为每个结果行分配一个 GlobalKey。
-  GlobalKey _nextResultKey() {
-    final k = GlobalKey();
-    _resultKeys.add(k);
-    return k;
-  }
-
-  /// 上/下一条命中：更新索引并把对应结果行滚到可见区域。
-  void _gotoHit(int delta) {
-    final total = _hitTotal;
-    if (total <= 0) return;
-    setState(() => _hitIndex = (_hitIndex + delta + total) % total);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || _hitIndex >= _resultKeys.length) return;
-      final ctx = _resultKeys[_hitIndex].currentContext;
-      if (ctx != null) {
-        Scrollable.ensureVisible(
-          ctx,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-          alignment: 0.35,
-        );
-      }
-    });
   }
 
   Future<void> _loadAll() async {
@@ -194,7 +149,6 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
     return Column(
       children: [
         _buildSearchBar(),
-        if (!_loading && query.isNotEmpty) _buildMatchStrip(),
         Expanded(
           child: _loading
               ? const SizedBox()
@@ -203,61 +157,6 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                   : _buildResults(diaries, items, events, assets),
         ),
       ],
-    );
-  }
-
-  /// v4.9.27：命中条「当前/总数 处匹配」+ 上/下一条，位于搜索框下方。
-  Widget _buildMatchStrip() {
-    final total = _hitTotal;
-    return Container(
-      height: 34,
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      color: AppPalette.c(0xFFE4F2EB),
-      child: Row(
-        children: [
-          Text(
-            total == 0 ? '无匹配' : '${_hitIndex + 1}/$total 处匹配',
-            style: TextStyle(fontSize: 12, color: AppPalette.c(0xFF24382F)),
-          ),
-          const Spacer(),
-          if (total > 0) ...[
-            GestureDetector(
-              onTap: () => _gotoHit(-1),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                child: Row(
-                  children: [
-                    Text('↑',
-                        style: TextStyle(
-                            fontSize: 16, color: AppPalette.c(0xFF3E8E6D))),
-                    const SizedBox(width: 2),
-                    Text('上一个',
-                        style: TextStyle(
-                            fontSize: 12, color: AppPalette.c(0xFF3E8E6D))),
-                  ],
-                ),
-              ),
-            ),
-            GestureDetector(
-              onTap: () => _gotoHit(1),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                child: Row(
-                  children: [
-                    Text('↓',
-                        style: TextStyle(
-                            fontSize: 16, color: AppPalette.c(0xFF3E8E6D))),
-                    const SizedBox(width: 2),
-                    Text('下一个',
-                        style: TextStyle(
-                            fontSize: 12, color: AppPalette.c(0xFF3E8E6D))),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
     );
   }
 
@@ -302,7 +201,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                         border: InputBorder.none,
                         isDense: true,
                       ),
-                      onChanged: (_) => setState(() => _hitIndex = 0),
+                      onChanged: (_) => setState(() {}),
                     ),
                   ),
                   if (_ctrl.text.isNotEmpty)
@@ -355,11 +254,6 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
     List<Asset> assets,
   ) {
     final total = diaries.length + items.length + events.length + assets.length;
-    // 每次重建按渲染顺序重新分配命中 key（分类切换/输入变化都会走到这里）
-    _resultKeys.clear();
-    var rowCursor = 0;
-    GlobalKey rowKey() => _nextResultKey();
-    bool isCur() => _hitIndex == rowCursor++;
     final queryText = _ctrl.text.trim();
     if (total == 0) {
       return Center(
@@ -385,7 +279,6 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
     ];
 
     return ListView(
-      controller: _resultCtrl,
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
       children: [
         // 收纳栏：类似笔记页置顶收纳栏的横滑样式
@@ -441,9 +334,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
               '笔记',
               diaries
                   .map((e) => _ResultRow(
-                        key: rowKey(),
                         query: queryText,
-                        isCurrent: isCur(),
                         title: e.encrypted
                             ? (e.subtitle.isNotEmpty ? e.subtitle : '加密笔记')
                             : (e.title.isNotEmpty ? e.title : '（无标题）'),
@@ -460,9 +351,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
               '物品',
               items
                   .map((e) => _ResultRow(
-                        key: rowKey(),
                         query: queryText,
-                        isCurrent: isCur(),
                         title: e.name,
                         subtitle:
                             '${e.category} · ¥${e.price.toStringAsFixed(e.price.truncateToDouble() == e.price ? 0 : 2)}',
@@ -479,9 +368,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
               '事件',
               events
                   .map((e) => _ResultRow(
-                        key: rowKey(),
                         query: queryText,
-                        isCurrent: isCur(),
                         title: e.name,
                         subtitle:
                             '${e.target.year}.${e.target.month.toString().padLeft(2, '0')}.${e.target.day.toString().padLeft(2, '0')} · ${e.type}',
@@ -498,9 +385,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
               '资产',
               assets
                   .map((e) => _ResultRow(
-                        key: rowKey(),
                         query: queryText,
-                        isCurrent: isCur(),
                         title: e.note.isNotEmpty ? e.note : e.type,
                         subtitle: '${e.type} · ${_assetAmountLabel(e)}',
                         // 资产结果卡默认「关闭小眼睛」：金额打码；
@@ -641,8 +526,7 @@ class _ResultRow extends StatelessWidget {
   final String subtitle;
   final VoidCallback onTap;
   final Widget? trailing; // 行尾附加控件（如资产卡小眼睛）
-  final String query; // v4.9.27：命中高亮关键词
-  final bool isCurrent; // 当前定位命中的结果行
+  final String query; // 命中关键词高亮
 
   const _ResultRow({
     Key? key,
@@ -651,7 +535,6 @@ class _ResultRow extends StatelessWidget {
     required this.onTap,
     this.trailing,
     this.query = '',
-    this.isCurrent = false,
   }) : super(key: key);
 
   @override
@@ -659,19 +542,10 @@ class _ResultRow extends StatelessWidget {
     // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
     AppThemeScope.watch(context);
     return Pressable(
-      child:   InkWell(
+      child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        child: Container(
-          decoration: isCurrent
-              ? BoxDecoration(
-                  color: AppPalette.c(0xFFF0F7F3),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                      color: AppPalette.c(0xFF3E8E6D), width: 1.2),
-                )
-              : null,
-          child: Padding(
+        child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
           child: Row(
             children: [
@@ -694,8 +568,7 @@ class _ResultRow extends StatelessWidget {
             ],
           ),
         ),
-        ),
-      )
+      ),
     );
   }
 }

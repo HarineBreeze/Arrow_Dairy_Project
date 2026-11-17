@@ -21,6 +21,7 @@ import '../widgets/app_icons.dart';
 
 import '../theme/app_palette.dart';
 import '../theme/app_theme_scope.dart';
+import '../utils/app_sheet.dart';
 /// 资产全景主页。默认无需密码即可查看；
 /// 开启「加密访问」后，进入本页需先输入密码解锁。
 /// 返回 true 表示确认完成（供外部回调刷新）。
@@ -114,12 +115,8 @@ class AssetScreenState extends State<AssetScreen> {
 
   /// 齿轮 → 设置选项卡（底部弹层）
   void _openSettings() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppPalette.c(0xFFFFFFFF),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
+    AppSheet.show(
+      context,
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -260,12 +257,8 @@ class AssetScreenState extends State<AssetScreen> {
 
   /// 筛选器弹层（顶栏漏斗图标）
   void _openFilterSheet() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppPalette.c(0xFFFFFFFF),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
+    AppSheet.show(
+      context,
       builder: (ctx) {
         return StatefulBuilder(
           builder: (ctx, setSheetState) {
@@ -579,12 +572,8 @@ class AssetScreenState extends State<AssetScreen> {
   /// 长按（500ms 系统默认）弹出编辑/删除选框
   void _showCardMenu(Asset a) {
     Haptics.mediumNow(); // 长按菜单：同步触发，避免异步等待导致振动被丢弃
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppPalette.c(0xFFFFFFFF),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
+    AppSheet.show(
+      context,
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,

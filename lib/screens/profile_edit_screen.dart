@@ -20,6 +20,7 @@ import '../widgets/save_bar.dart';
 
 import '../theme/app_palette.dart';
 import '../theme/app_theme_scope.dart';
+import '../utils/app_sheet.dart';
 class ProfileEditScreen extends StatefulWidget {
   final UserProfile profile;
 
@@ -171,12 +172,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     if (_vipActive && !options.contains(UserProfile.badgeVip)) {
       options.add(UserProfile.badgeVip);
     }
-    final picked = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: AppPalette.c(0xFFFFFFFF),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
+    final picked = await AppSheet.show<String>(
+      context,
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -525,12 +522,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       '女': 'female',
       '无': '',
     };
-    final picked = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: AppPalette.c(0xFFFFFFFF),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
+    final picked = await AppSheet.show<String>(
+      context,
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,

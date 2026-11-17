@@ -348,14 +348,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     color: AppPalette.c(0xFFFFFFFF),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: _buildItem(
-                    icon: AppIcons.vibrate,
-                    // 与导出/导入等其它功能项同款主色（图标 + 0.1 透明度底纹）
-                    iconColor: const Color(0xFF3E8E6D),
-                    title: '振动测试',
-                    subtitle: '点击触发一次震动，并检测设备振动状态',
-                    busy: false,
-                    onTap: _testHaptics,
+                  // v4.9.28：「振动测试」改为「震动」开关，与深色模式同款
+                  // 开关交互；关闭后全局所有震点点位静默。
+                  child: ValueListenableBuilder<bool>(
+                    valueListenable: AppSettings.hapticsNotifier,
+                    builder: (context, on, _) => _buildSwitchItem(
+                      icon: AppIcons.vibrate,
+                      title: '震动',
+                      subtitle: on ? '已开启，操作时有触感反馈' : '已关闭，全局不再震动',
+                      value: on,
+                      enabled: true,
+                      onChanged: (v) {
+                        AppSettings.setHapticsEnabled(v);
+                        // 开启瞬间震一次，让用户当场确认已生效
+                        if (v) Haptics.medium();
+                      },
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -508,87 +516,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  /// 振动自检：触发一次震动，并把设备振动状态读出来展示。
-  ///
-  /// 震动在真机上「感觉不到」时，靠原生侧回报的真实状态能立刻区分
-  /// 是代码问题还是设备/系统设置问题——省电模式、静音、无振动马达
-  /// 这些是代码修不了的，继续盲改代码只会让问题永远定位不到。
-  Future<void> _testHaptics() async {
-    // 先触发一次中等震动，让用户当场感受
-    await Haptics.medium();
-
-    final info = await Haptics.diagnose();
-    if (!mounted) return;
-
-    if (info == null) {
-      // 原生通道没响应：这是代码/构建问题，不是设备问题
-      await showDialog<void>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('振动测试', style: TextStyle(fontSize: 17)),
-          content: const Text(
-            '原生振动通道没有响应。\n\n'
-            '这通常意味着安装包的原生代码未生效，'
-            '请尝试卸载后重新安装最新版本。',
-            style: TextStyle(fontSize: 13, height: 1.6),
-          ),
-          actions: [
-            Pressable(
-              enabled: true,
-              child: TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('知道了'),
-              ),
-            ),
-          ],
-        ),
-      );
-      return;
-    }
-
-    final hasVibrator = info['hasVibrator'] == true;
-    final powerSave = info['powerSaveMode'] == true;
-    final ringer = info['ringerMode'] ?? -1;
-
-    final List<String> issues = [];
-    if (!hasVibrator) {
-      issues.add('• 此设备没有振动马达（平板或模拟器），无法产生任何震动');
-    }
-    if (powerSave) {
-      issues.add('• 当前处于省电模式，系统会禁用振动');
-    }
-    if (ringer == 0) {
-      issues.add('• 当前为静音模式');
-    }
-
-    final String verdict = issues.isEmpty
-        ? '设备振动功能正常。\n\n'
-            '如果刚才没有感觉到震动，请检查系统「触感反馈」开关是否打开。'
-        : '${issues.join('\n')}\n\n请关闭相应设置后再试。';
-
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('振动测试', style: TextStyle(fontSize: 17)),
-        content: Text(
-          '刚才手机震动了一下。\n\n$verdict',
-          style: const TextStyle(fontSize: 13, height: 1.6),
-        ),
-        actions: [
-          Pressable(
-            enabled: true,
-            child: TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('知道了'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   /// 「外观」分组：深色模式 / 跟随系统 / 字体。
   ///
   /// 前两行开关表达「手动 / 跟随系统」两种取向：
@@ -626,7 +553,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               child: Column(
                 children: [
-                  _buildThemeSwitchItem(
+                  _buildSwitchItem(
                     icon: AppIcons.moon,
                     title: '深色模式',
                     subtitle: followSystem
@@ -641,7 +568,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       height: 1,
                       indent: 52,
                       color: AppPalette.c(0xFFE8EDF5)),
-                  _buildThemeSwitchItem(
+                  _buildSwitchItem(
                     icon: AppIcons.sun,
                     title: '跟随系统',
                     subtitle: '开启后随系统深浅模式自动切换',
@@ -683,7 +610,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildThemeSwitchItem({
+  Widget _buildSwitchItem({
     required String icon,
     required String title,
     required String subtitle,

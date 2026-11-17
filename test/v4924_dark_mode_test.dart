@@ -229,7 +229,8 @@ void main() {
           reason: '「跟随系统」作为独立设置项标题');
       expect(find.textContaining('跟随系统（当前'), findsOneWidget,
           reason: '深色模式副标题展示当前系统亮度');
-      expect(find.byType(Switch), findsNWidgets(2));
+      // 外观 2 个 + 反馈「震动」1 个
+      expect(find.byType(Switch), findsNWidgets(3));
     });
 
     testWidgets('默认跟随系统：深色模式开关禁用，关闭跟随系统后可手动切换',

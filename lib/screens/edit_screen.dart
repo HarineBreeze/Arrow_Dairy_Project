@@ -27,6 +27,7 @@ import 'image_crop_screen.dart';
 
 import '../theme/app_palette.dart';
 import '../theme/app_theme_scope.dart';
+import '../utils/app_sheet.dart';
 /// 封面图抽屉动作
 enum _ImageAction { gallery, camera, crop }
 
@@ -894,25 +895,13 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _showMoreSheet() async {
-    await showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
+    await AppSheet.show(
+      context,
       builder: (ctx) {
         return SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const SizedBox(height: 10),
-              Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppPalette.c(0xFFDFEAE5),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
               ListTile(
                 // 标题离屏幕边缘太近，两侧各加 8 的内缩（默认 16）
                 contentPadding: const EdgeInsets.only(left: 24, right: 16),
@@ -1754,26 +1743,12 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
 
   Future<void> _pickImage() async {
     final hasImage = _imagePath.isNotEmpty && File(_imagePath).existsSync();
-    final action = await showModalBottomSheet<_ImageAction>(
-      context: context,
-      backgroundColor: AppPalette.c(0xFFFFFFFF),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
+    final action = await AppSheet.show<_ImageAction>(
+      context,
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppPalette.c(0xFFE4EDE8),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 10),
             ListTile(
               leading: const AppIcon(AppIcons.image,
                   size: 20, color: Color(0xFF3E8E6D)),
