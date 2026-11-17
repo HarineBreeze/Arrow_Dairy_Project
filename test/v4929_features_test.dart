@@ -1,10 +1,12 @@
 import 'dart:convert';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:ayodiray/models/diary_entry.dart';
 import 'package:ayodiray/screens/asset_screen.dart';
 import 'package:ayodiray/screens/item_list_screen.dart';
 import 'package:ayodiray/screens/note_view_screen.dart';
+import 'package:ayodiray/widgets/entry_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
@@ -14,7 +16,7 @@ import 'package:path_provider_platform_interface/src/method_channel_path_provide
 /// 1. 筛选/排序弹层的「取消 / 确定 / 完成」按钮：取消去底纹描边，
 ///    按钮统一收至卡片右下角；
 /// 2. 排序方式选项 chip 去描边；
-/// 3. 笔记封面图不再包 Hero，全屏查看为纯淡入转场（无页面滑动观感）。
+/// 3. 笔记封面图仅展示：不包 Hero、不响应点击（无页面滑动/预览观感）。
 class _FakePathProvider extends PathProviderPlatform {
   final String path;
   _FakePathProvider(this.path);
@@ -44,6 +46,9 @@ Future<void> _settle(WidgetTester tester) async {
   }
   await tester.pump(const Duration(milliseconds: 300));
 }
+
+const String _pngBase64 =
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
 
 DiaryEntry _entry({String imagePath = ''}) {
   final t = DateTime(2026, 6, 25, 10, 30);
@@ -112,23 +117,35 @@ void main() {
       final doneRect = tester.getRect(find.text('完成'));
       expect(doneRect.right, greaterThan(700), reason: '完成应贴近右下角');
       final btnRect = tester.getRect(find.ancestor(
-          of: find.text('完成'), matching: find.byType(ElevatedButton)));
+          of: find.text('完成'), matching: find.byType(TextButton)));
       expect(btnRect.width, lessThan(400), reason: '完成按钮不应占满整行');
     });
   });
 
-  group('图片全屏查看：纯淡入转场', () {
-    testWidgets('笔记封面不再包 Hero，页面内无共享元素', (tester) async {
+  group('图片封面仅展示', () {
+    testWidgets('封面不包 Hero，点击不推入新页面', (tester) async {
       tester.binding.window.physicalSizeTestValue = const Size(400, 800);
       tester.binding.window.devicePixelRatioTestValue = 1.0;
       addTearDown(() => tester.binding.window.clearPhysicalSizeTestValue());
 
+      final imgDir = Directory(
+          '/tmp/v4929_img_${DateTime.now().microsecondsSinceEpoch}')
+        ..createSync(recursive: true);
+      final img = File('${imgDir.path}/cover.png')
+        ..writeAsBytesSync(base64Decode(_pngBase64));
+
       await tester.pumpWidget(
-          MaterialApp(home: NoteViewScreen(entry: _entry(imagePath: 'x'))));
+          MaterialApp(home: NoteViewScreen(entry: _entry(imagePath: img.path))));
       await _settle(tester);
 
       expect(find.byType(Hero), findsNothing,
           reason: '封面不应再包 Hero，避免打开查看器时整页滑动观感');
+      // v4.9.30：预览入口已移除，点击封面不推入新页面
+      await tester.tap(find.byType(EntryImage));
+      await tester.pumpAndSettle();
+      expect(find.byType(NoteViewScreen), findsOneWidget);
+      expect(find.byType(Scaffold), findsOneWidget,
+          reason: '导航栈不应出现第二页');
     });
   });
 }

@@ -329,17 +329,21 @@ class ItemListScreenState extends State<ItemListScreen> {
                       }).toList(),
                     ),
                     const SizedBox(height: 10),
-                    // v4.9.29：完成按钮收至右下角，不再占满整行
+                    // v4.9.30：完成按钮去底纹色块，与取消统一为主/次文字按钮
                     Align(
                       alignment: Alignment.centerRight,
                       child: Pressable(
                         enabled: true,
-                        child: ElevatedButton(
+                        child: TextButton(
                           onPressed: () {
                             Navigator.pop(ctx);
                             setState(() {});
                           },
-                          child: const Text('完成', style: TextStyle(fontSize: 15)),
+                          child: const Text('完成',
+                              style: TextStyle(
+                                  fontSize: 15,
+                                  color: Color(0xFF3E8E6D),
+                                  fontWeight: FontWeight.w600)),
                         ),
                       ),
                     ),

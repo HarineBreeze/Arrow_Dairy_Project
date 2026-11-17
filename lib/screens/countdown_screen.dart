@@ -314,12 +314,16 @@ class CountdownScreenState extends State<CountdownScreen> {
                     alignment: Alignment.centerRight,
                     child: Pressable(
                       enabled: true,
-                      child: ElevatedButton(
+                      // v4.9.30：确定按钮去底纹色块，统一为文字按钮
+                      child: TextButton(
                         onPressed: () {
                           Navigator.pop(ctx);
                           setState(() {});
                         },
-                        child: const Text('确定'),
+                        child: const Text('确定',
+                            style: TextStyle(
+                                color: Color(0xFF3E8E6D),
+                                fontWeight: FontWeight.w600)),
                       ),
                     ),
                   ),

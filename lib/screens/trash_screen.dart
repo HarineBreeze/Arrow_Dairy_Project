@@ -569,6 +569,15 @@ class TrashScreenState extends State<TrashScreen> {
                   ? _buildEmpty()
                   : _buildBody(),
         ),
+        // v4.9.30：提示语固定吸附页面最底部，不随列表滚动；空态也常驻
+        Center(
+          child: Text(
+            '超过7天的内容将彻底删除',
+            style: TextStyle(
+                fontSize: 11, color: AppPalette.c(0xFF8FA09A).withOpacity(0.9)),
+          ),
+        ),
+        const SizedBox(height: 10),
       ],
     );
   }
@@ -693,22 +702,12 @@ class TrashScreenState extends State<TrashScreen> {
                 )
               : ListView(
                   padding: EdgeInsets.fromLTRB(
-                      16, _mode == null ? 6 : 14, 16, 24),
+                      16, _mode == null ? 6 : 14, 16, 12),
                   children: [
                     for (final e in list) ...[
                       _buildCard(e),
                       const SizedBox(height: 8),
                     ],
-                    const SizedBox(height: 4),
-                    Center(
-                      child: Text(
-                        '超过7天的内容将彻底删除',
-                        style: TextStyle(
-                            fontSize: 11,
-                            color:
-                                AppPalette.c(0xFF8FA09A).withOpacity(0.9)),
-                      ),
-                    ),
                   ],
                 ),
         ),

@@ -340,14 +340,18 @@ class AssetScreenState extends State<AssetScreen> {
                           ),
                         ),
                         const SizedBox(width: 8),
+                        // v4.9.30：确定按钮去底纹色块，与取消统一为主/次文字按钮
                         Pressable(
                           enabled: true,
-                          child: ElevatedButton(
+                          child: TextButton(
                             onPressed: () {
                               Navigator.pop(ctx);
                               setState(() {});
                             },
-                            child: const Text('确定'),
+                            child: const Text('确定',
+                                style: TextStyle(
+                                    color: Color(0xFF3E8E6D),
+                                    fontWeight: FontWeight.w600)),
                           ),
                         ),
                       ],

@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:ayodiray/models/diary_entry.dart';
 import 'package:ayodiray/screens/global_search_screen.dart';
-import 'package:ayodiray/screens/image_viewer_screen.dart';
 import 'package:ayodiray/screens/note_view_screen.dart';
 import 'package:ayodiray/screens/settings_screen.dart';
 import 'package:ayodiray/services/app_settings.dart';
@@ -20,7 +19,7 @@ import 'package:path_provider_platform_interface/src/method_channel_path_provide
 /// v4.9.28 回归：
 /// 1. 全局搜索页移除命中条（x处匹配 / 上下切换）与结果选框；
 /// 2. 笔记浏览页「更多」改横三点，热区 48×48；
-/// 3. 图片全屏查看（缩放 / 关闭）；
+/// 3. 笔记封面仅展示，不响应点击（v4.9.30 移除全屏预览入口）；
 /// 4. 底部弹层统一 AppSheet（手柄 + 24 圆角）；
 /// 5. 设置页「震动」开关全局生效。
 class _FakePathProvider extends PathProviderPlatform {
@@ -172,8 +171,8 @@ void main() {
     });
   });
 
-  group('图片全屏查看', () {
-    testWidgets('点击封面进入全屏，关闭按钮可退出', (tester) async {
+  group('图片封面（v4.9.30 起仅展示）', () {
+    testWidgets('点击封面不再打开全屏预览', (tester) async {
       tester.binding.window.physicalSizeTestValue = const Size(400, 800);
       tester.binding.window.devicePixelRatioTestValue = 1.0;
       addTearDown(() => tester.binding.window.clearPhysicalSizeTestValue());
@@ -189,35 +188,10 @@ void main() {
       await tester.tap(find.byType(EntryImage));
       await tester.pumpAndSettle();
 
-      expect(find.byType(ImageViewerScreen), findsOneWidget);
-      expect(find.byKey(const ValueKey('image_viewer_close')), findsOneWidget);
-
-      await tester.tap(find.byKey(const ValueKey('image_viewer_close')));
-      await tester.pumpAndSettle();
-      expect(find.byType(ImageViewerScreen), findsNothing);
-    });
-
-    testWidgets('全屏页单击画面即可关闭', (tester) async {
-      tester.binding.window.physicalSizeTestValue = const Size(400, 800);
-      tester.binding.window.devicePixelRatioTestValue = 1.0;
-      addTearDown(() => tester.binding.window.clearPhysicalSizeTestValue());
-
-      final img = File('${dir.path}/cover2.png')
-        ..writeAsBytesSync(base64Decode(_pngBase64));
-
-      await tester.pumpWidget(MaterialApp(
-        home: NoteViewScreen(entry: _entry(imagePath: img.path)),
-      ));
-      await _settle(tester);
-
-      await tester.tap(find.byType(EntryImage));
-      await tester.pumpAndSettle();
-      expect(find.byType(ImageViewerScreen), findsOneWidget);
-
-      // 顶部左侧空白处单击（避开右上关闭按钮）
-      await tester.tapAt(const Offset(60, 60));
-      await tester.pumpAndSettle();
-      expect(find.byType(ImageViewerScreen), findsNothing);
+      // v4.9.30：预览入口已移除，点击封面不应推入任何新页面
+      expect(find.byType(NoteViewScreen), findsOneWidget);
+      expect(find.byType(Scaffold), findsOneWidget,
+          reason: '导航栈不应出现第二页');
     });
   });
 

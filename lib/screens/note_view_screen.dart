@@ -17,7 +17,6 @@ import '../widgets/rich_note_text.dart';
 import '../widgets/todo_card.dart';
 import '../utils/text_format.dart';
 import 'edit_screen.dart';
-import 'image_viewer_screen.dart';
 import 'item_edit_screen.dart';
 import '../utils/haptics.dart';
 import '../utils/todo_text.dart';
@@ -258,15 +257,6 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
 
   /// 分享：把当前笔记渲染成带品牌落款的长图，调起系统分享面板。
   /// 具体链路（进度弹窗 / 失败提示）与主页长按菜单共用 [shareEntryImage]。
-  /// 打开全屏查看：Hero 共享元素 + 缩放/下拉/单击退出
-  void _openImage() {
-    if (!_hasImage) return;
-    Navigator.of(context).push(ImageViewerScreen.route(
-      path: _entry.imagePath,
-      heroTag: 'note_cover_${_entry.id}',
-    ));
-  }
-
   Future<void> _share() => shareEntryImage(
         context,
         _entry,
@@ -357,21 +347,18 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                 children: [
                   // 排版顺序：封面图 → 标题 → 正文；无图时标题直接从顶部开始
                   if (_hasImage) ...[
-                    // v4.9.29：点击进入全屏查看改为纯淡入转场，
-                    // 不再包 Hero（共享元素飞行会产生整页滑动观感）
-                    GestureDetector(
-                      onTap: _openImage,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: AspectRatio(
-                          aspectRatio: 4 / 3,
-                          // 页宽 - 左右各 16 边距；降采样解码后滚动更顺
-                          child: EntryImage(
-                            path: _entry.imagePath,
-                            displayWidth:
-                                MediaQuery.of(context).size.width - 32,
-                            iconSize: 24,
-                          ),
+                    // v4.9.30：移除点击封面进入全屏预览的入口，
+                    // 封面图仅作展示，不响应点击
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: AspectRatio(
+                        aspectRatio: 4 / 3,
+                        // 页宽 - 左右各 16 边距；降采样解码后滚动更顺
+                        child: EntryImage(
+                          path: _entry.imagePath,
+                          displayWidth:
+                              MediaQuery.of(context).size.width - 32,
+                          iconSize: 24,
                         ),
                       ),
                     ),
