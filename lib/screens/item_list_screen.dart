@@ -309,15 +309,11 @@ class ItemListScreenState extends State<ItemListScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 14, vertical: 8),
+                            // v4.9.29：选项去掉描边，仅以底色区分选中态
                             decoration: BoxDecoration(
                               color:
                                   sel ? const Color(0xFF3E8E6D) : AppPalette.c(0xFFFFFFFF),
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: sel
-                                    ? const Color(0xFF3E8E6D)
-                                    : AppPalette.c(0xFFE4F2EB),
-                              ),
                             ),
                             child: Text(
                               _sortFieldLabel(f),
@@ -332,9 +328,10 @@ class ItemListScreenState extends State<ItemListScreen> {
                         );
                       }).toList(),
                     ),
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      width: double.infinity,
+                    const SizedBox(height: 10),
+                    // v4.9.29：完成按钮收至右下角，不再占满整行
+                    Align(
+                      alignment: Alignment.centerRight,
                       child: Pressable(
                         enabled: true,
                         child: ElevatedButton(
@@ -342,12 +339,6 @@ class ItemListScreenState extends State<ItemListScreen> {
                             Navigator.pop(ctx);
                             setState(() {});
                           },
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
                           child: const Text('完成', style: TextStyle(fontSize: 15)),
                         ),
                       ),

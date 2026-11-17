@@ -141,23 +141,22 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> {
               child: Center(
                 child: Transform.translate(
                   offset: Offset(0, _dragY),
-                  child: Hero(
-                    tag: widget.heroTag,
-                    child: InteractiveViewer(
-                      transformationController: _tc,
-                      minScale: 1,
-                      maxScale: 4,
-                      child: Image.file(
-                        File(widget.path),
-                        fit: BoxFit.contain,
-                        // 全屏查看用原图分辨率，不额外降采样
-                        errorBuilder: (_, __, ___) => Padding(
-                          padding: const EdgeInsets.all(32),
-                          child: AppIcon(
-                            AppIcons.image,
-                            size: 64,
-                            color: const Color(0xFF8FA09A),
-                          ),
+                  // v4.9.29：去掉 Hero 共享元素，转场只保留淡入淡出，
+                  // 避免打开时图片/页面从原位滑动的观感
+                  child: InteractiveViewer(
+                    transformationController: _tc,
+                    minScale: 1,
+                    maxScale: 4,
+                    child: Image.file(
+                      File(widget.path),
+                      fit: BoxFit.contain,
+                      // 全屏查看用原图分辨率，不额外降采样
+                      errorBuilder: (_, __, ___) => Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: AppIcon(
+                          AppIcons.image,
+                          size: 64,
+                          color: const Color(0xFF8FA09A),
                         ),
                       ),
                     ),

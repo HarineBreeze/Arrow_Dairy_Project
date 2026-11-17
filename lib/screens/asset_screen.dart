@@ -322,55 +322,32 @@ class AssetScreenState extends State<AssetScreen> {
                         _typeFilter, (v) => _typeFilter = v),
                     group('按资产性质', ['全部', '金额为正', '金额为负'],
                         _signFilter, (v) => _signFilter = v),
+                    // v4.9.29：取消不再带底纹描边，双按钮统一收至右下角
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        Expanded(
-                          child: SizedBox(
-                            height: 44,
-                            child: Pressable(
-                              enabled: true,
-                              child: OutlinedButton(
-                                style: OutlinedButton.styleFrom(
-                                  primary: AppPalette.c(0xFF647A70),
-                                  side: BorderSide(
-                                      color: AppPalette.c(0xFFD5E2DB)),
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius:
-                                          BorderRadius.circular(12)),
-                                ),
-                                onPressed: () {
-                                  // 取消 → 恢复默认筛选（全部）
-                                  _typeFilter = '全部';
-                                  _signFilter = '全部';
-                                  Navigator.pop(ctx);
-                                  setState(() {});
-                                },
-                                child: const Text('取消'),
-                              ),
-                            ),
+                        Pressable(
+                          enabled: true,
+                          child: TextButton(
+                            onPressed: () {
+                              // 取消 → 恢复默认筛选（全部）
+                              _typeFilter = '全部';
+                              _signFilter = '全部';
+                              Navigator.pop(ctx);
+                              setState(() {});
+                            },
+                            child: const Text('取消'),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: SizedBox(
-                            height: 44,
-                            child: Pressable(
-                              enabled: true,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  primary: const Color(0xFF3E8E6D),
-                                  onPrimary: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius:
-                                          BorderRadius.circular(12)),
-                                ),
-                                onPressed: () {
-                                  Navigator.pop(ctx);
-                                  setState(() {});
-                                },
-                                child: const Text('确定'),
-                              ),
-                            ),
+                        const SizedBox(width: 8),
+                        Pressable(
+                          enabled: true,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.pop(ctx);
+                              setState(() {});
+                            },
+                            child: const Text('确定'),
                           ),
                         ),
                       ],

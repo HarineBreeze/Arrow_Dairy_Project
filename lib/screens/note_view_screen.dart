@@ -357,23 +357,20 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                 children: [
                   // 排版顺序：封面图 → 标题 → 正文；无图时标题直接从顶部开始
                   if (_hasImage) ...[
-                    // 封面图只随页面滑入，不做跨页共享元素飞行
-                    // v4.9.28：点击进入全屏查看（双指缩放 / 下拉关闭 / 单击退出）
+                    // v4.9.29：点击进入全屏查看改为纯淡入转场，
+                    // 不再包 Hero（共享元素飞行会产生整页滑动观感）
                     GestureDetector(
                       onTap: _openImage,
-                      child: Hero(
-                        tag: 'note_cover_${_entry.id}',
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: AspectRatio(
-                            aspectRatio: 4 / 3,
-                            // 页宽 - 左右各 16 边距；降采样解码后滚动更顺
-                            child: EntryImage(
-                              path: _entry.imagePath,
-                              displayWidth:
-                                  MediaQuery.of(context).size.width - 32,
-                              iconSize: 24,
-                            ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: AspectRatio(
+                          aspectRatio: 4 / 3,
+                          // 页宽 - 左右各 16 边距；降采样解码后滚动更顺
+                          child: EntryImage(
+                            path: _entry.imagePath,
+                            displayWidth:
+                                MediaQuery.of(context).size.width - 32,
+                            iconSize: 24,
                           ),
                         ),
                       ),
