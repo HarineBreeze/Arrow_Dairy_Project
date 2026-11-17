@@ -188,6 +188,10 @@ void main() {
     expect(find.text('已选 2 项'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('trash-confirm')));
+    await tester.pump();
+    // v4.9.27：选择性还原新增二次确认弹窗
+    expect(find.text('确认要还原吗?'), findsOneWidget);
+    await tester.tap(find.widgetWithText(TextButton, '还原'));
     await _settle(tester);
     await _until(tester, () => readDiaryTitles().length >= 2);
     // 等页面自身重读回收站，把已还原的条目从列表里移除
@@ -355,6 +359,10 @@ void main() {
         findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('trash_card_action_restore')));
+    await tester.pump();
+    // v4.9.27：长按还原也新增二次确认弹窗
+    expect(find.text('确认要还原吗?'), findsOneWidget);
+    await tester.tap(find.widgetWithText(TextButton, '还原'));
     await _settle(tester);
     await _until(tester, () => readDiaryTitles().contains('笔记一'));
     await _until(tester, () => find.text('笔记一').evaluate().isEmpty);

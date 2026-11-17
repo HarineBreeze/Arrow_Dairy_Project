@@ -123,8 +123,8 @@ void main() {
     expect(find.text('女'), findsNothing);
     expect(find.byKey(const ValueKey('profile-gender-row')), findsOneWidget);
 
-    // 昵称 / 性别 / ID / 使用时间在同一张白色圆角卡内
-    for (final label in ['昵称', '性别', 'ID', '使用时间']) {
+    // 昵称 / 性别 / ID / 注册日在同一张白色圆角卡内
+    for (final label in ['昵称', '性别', 'ID', '注册日']) {
       final containers = tester
           .widgetList<Container>(
               find.ancestor(of: find.text(label), matching: find.byType(Container)))
@@ -151,7 +151,7 @@ void main() {
     await tester.pump(const Duration(seconds: 2));
   });
 
-  testWidgets('ID 淡灰只读、使用时间显示天数', (tester) async {
+  testWidgets('ID 淡灰只读、注册日显示日期', (tester) async {
     await tester.binding.setSurfaceSize(const Size(600, 1200));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -167,8 +167,11 @@ void main() {
         reason: 'ID 字色为淡灰');
     // 不可编辑：整页只有昵称一个输入框
     expect(find.byType(TextField), findsOneWidget);
-    expect(find.textContaining('已使用 '), findsOneWidget);
-    expect(find.text('已使用 ${profile.usedDays} 天'), findsOneWidget);
+    expect(find.text('使用时间'), findsNothing);
+    expect(find.text('注册日'), findsOneWidget);
+    final reg = profile.registeredAt.split('-');
+    final expectDate = '${int.parse(reg[0])}/${int.parse(reg[1])}/${int.parse(reg[2])}';
+    expect(find.text(expectDate), findsOneWidget);
   });
 
   testWidgets('点用户ID 复制的是档案里的 ID', (tester) async {

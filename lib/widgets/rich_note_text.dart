@@ -13,6 +13,13 @@ class RichNoteText extends StatefulWidget {
   final void Function(String itemName)? onTapMention;
   final TextStyle style;
 
+  /// v4.9.27：全局搜索带入的关键词，命中区间加浅底纹、深墨字（深色模式可见）。
+  /// 空字符串不产生任何高亮，兼容所有既有调用。
+  final String searchQuery;
+
+  /// 当前定位到第几个命中（-1 = 不高亮当前项）。仅影响底纹深浅。
+  final int currentHit;
+
   const RichNoteText({
     Key? key,
     required this.text,
@@ -20,7 +27,25 @@ class RichNoteText extends StatefulWidget {
     this.formats = const [],
     this.onTapMention,
     required this.style,
+    this.searchQuery = '',
+    this.currentHit = -1,
   }) : super(key: key);
+
+  /// 统计 text 中 query 的非重叠命中次数（大小写不敏感），供浏览页显示「N 处匹配」。
+  static int countHits(String text, String query) {
+    final q = query.trim().toLowerCase();
+    if (q.isEmpty) return 0;
+    final lower = text.toLowerCase();
+    var count = 0;
+    var from = 0;
+    while (true) {
+      final i = lower.indexOf(q, from);
+      if (i < 0) break;
+      count++;
+      from = i + q.length;
+    }
+    return count;
+  }
 
   @override
   State<RichNoteText> createState() => _RichNoteTextState();
@@ -28,6 +53,36 @@ class RichNoteText extends StatefulWidget {
 
 class _RichNoteTextState extends State<RichNoteText> {
   List<RichSegment> _segments = const [];
+
+  /// 搜索命中的原文区间（start, end），非重叠，按出现顺序排列。
+  List<_HitRange> _hits = const [];
+
+  /// 计算搜索命中区间。
+  void _computeHits() {
+    final q = widget.searchQuery.trim().toLowerCase();
+    if (q.isEmpty) {
+      _hits = const [];
+      return;
+    }
+    final lower = widget.text.toLowerCase();
+    final hits = <_HitRange>[];
+    var from = 0;
+    while (true) {
+      final i = lower.indexOf(q, from);
+      if (i < 0) break;
+      hits.add(_HitRange(i, i + q.length));
+      from = i + q.length;
+    }
+    _hits = hits;
+  }
+
+  /// 某原文位置落在第几个命中区间内；不在命中中返回 -1。
+  int _hitIndexAt(int pos) {
+    for (var i = 0; i < _hits.length; i++) {
+      if (pos >= _hits[i].start && pos < _hits[i].end) return i;
+    }
+    return -1;
+  }
 
   void _handleTapUp(TapUpDetails details) {
     final box = context.findRenderObject() as RenderBox?;
@@ -114,8 +169,23 @@ class _RichNoteTextState extends State<RichNoteText> {
     if (link != null) {
       st = (st ?? const TextStyle()).copyWith(color: link);
     }
+    // v4.9.27：搜索命中区间加浅底纹 + 深墨字；当前命中底纹加深。
+    // 字色固定 0xFF24382F（浅底深字），深色模式下同样清晰；
+    // 链接蓝优先级更高——命中落在链接上时保留蓝字、仅叠加底纹。
+    final hit = _hitIndexAt(pos);
+    if (hit >= 0) {
+      final isCurrent = hit == widget.currentHit;
+      st = (st ?? const TextStyle()).copyWith(
+        backgroundColor:
+            isCurrent ? _searchCurrentBg : _searchHitBg,
+        color: link ?? const Color(0xFF24382F),
+      );
+    }
     return st;
   }
+
+  static const Color _searchHitBg = Color(0xFFFFF0B3); // 命中：浅黄
+  static const Color _searchCurrentBg = Color(0xFFFFD866); // 当前命中：深黄
 
   static Color _parseColor(String hex) {
     var h = hex.replaceAll('#', '');
@@ -198,6 +268,7 @@ class _RichNoteTextState extends State<RichNoteText> {
   Widget build(BuildContext context) {
     _segments = RichTextParser.parse(widget.text, widget.itemNames);
     if (widget.text.isEmpty) return const SizedBox.shrink();
+    _computeHits();
 
     final lines = _buildRenderLines();
     final widgets = <Widget>[
@@ -218,6 +289,13 @@ class _RichNoteTextState extends State<RichNoteText> {
       ),
     );
   }
+}
+
+/// 一个搜索命中区间在原文中的 [start, end)，end 不含。
+class _HitRange {
+  final int start;
+  final int end;
+  const _HitRange(this.start, this.end);
 }
 
 /// 一条渲染行：spans + 它在原文 / 渲染文本中的起始偏移

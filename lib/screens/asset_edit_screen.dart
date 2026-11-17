@@ -340,12 +340,6 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                 ],
               ),
             ),
-            if (_isLiability)
-              const Padding(
-                padding: EdgeInsets.only(left: 4, top: 6),
-                child: Text('该类型会计入负资产，金额请填正数',
-                    style: TextStyle(fontSize: 13, color: Color(0xFFCB5C50))),
-              ),
             const SizedBox(height: 28),
 
             // 保存：点击后收缩成圆形 + 打勾 + 粒子，播完再返回

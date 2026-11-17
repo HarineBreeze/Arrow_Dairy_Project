@@ -2,7 +2,6 @@ import '../widgets/app_icons.dart';
 import 'package:flutter/material.dart';
 
 import '../utils/app_motion.dart';
-import 'package:flutter/services.dart';
 
 import '../utils/app_toast.dart';
 import '../models/asset.dart';
@@ -31,8 +30,15 @@ import '../theme/app_theme_scope.dart';
 class GlobalSearchScreen extends StatefulWidget {
   final VoidCallback onOpenMenu;
 
-  const GlobalSearchScreen({Key? key, required this.onOpenMenu})
-      : super(key: key);
+  /// 仅测试/截图使用：进入时预填的搜索词。
+  @visibleForTesting
+  final String initialQuery;
+
+  const GlobalSearchScreen({
+    Key? key,
+    required this.onOpenMenu,
+    this.initialQuery = '',
+  }) : super(key: key);
 
   @override
   State<GlobalSearchScreen> createState() => _GlobalSearchScreenState();
@@ -57,9 +63,28 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
   /// 当前选中的收纳栏分类；null = 全部
   String? _category;
 
+  /// v4.9.27：结果列表滚动 + 命中逐条定位
+  final ScrollController _resultCtrl = ScrollController();
+  final List<GlobalKey> _resultKeys = [];
+  int _hitIndex = 0;
+
+  int get _hitTotal {
+    final d = _hitDiaries.length;
+    final i = _hitItems.length;
+    final e = _hitEvents.length;
+    final a = _assetLocked ? 0 : _hitAssets.length;
+    // 分类过滤时只统计当前可见分区
+    if (_category == '笔记') return d;
+    if (_category == '物品') return i;
+    if (_category == '事件') return e;
+    if (_category == '资产') return a;
+    return d + i + e + a;
+  }
+
   @override
   void initState() {
     super.initState();
+    if (widget.initialQuery.isNotEmpty) _ctrl.text = widget.initialQuery;
     _loadAll();
   }
 
@@ -67,7 +92,34 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
   void dispose() {
     _ctrl.dispose();
     _focus.dispose();
+    _resultCtrl.dispose();
     super.dispose();
+  }
+
+  /// 清空命中 key 集合，按结果渲染顺序为每个结果行分配一个 GlobalKey。
+  GlobalKey _nextResultKey() {
+    final k = GlobalKey();
+    _resultKeys.add(k);
+    return k;
+  }
+
+  /// 上/下一条命中：更新索引并把对应结果行滚到可见区域。
+  void _gotoHit(int delta) {
+    final total = _hitTotal;
+    if (total <= 0) return;
+    setState(() => _hitIndex = (_hitIndex + delta + total) % total);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _hitIndex >= _resultKeys.length) return;
+      final ctx = _resultKeys[_hitIndex].currentContext;
+      if (ctx != null) {
+        Scrollable.ensureVisible(
+          ctx,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+          alignment: 0.35,
+        );
+      }
+    });
   }
 
   Future<void> _loadAll() async {
@@ -142,6 +194,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
     return Column(
       children: [
         _buildSearchBar(),
+        if (!_loading && query.isNotEmpty) _buildMatchStrip(),
         Expanded(
           child: _loading
               ? const SizedBox()
@@ -150,6 +203,61 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                   : _buildResults(diaries, items, events, assets),
         ),
       ],
+    );
+  }
+
+  /// v4.9.27：命中条「当前/总数 处匹配」+ 上/下一条，位于搜索框下方。
+  Widget _buildMatchStrip() {
+    final total = _hitTotal;
+    return Container(
+      height: 34,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      color: AppPalette.c(0xFFE4F2EB),
+      child: Row(
+        children: [
+          Text(
+            total == 0 ? '无匹配' : '${_hitIndex + 1}/$total 处匹配',
+            style: TextStyle(fontSize: 12, color: AppPalette.c(0xFF24382F)),
+          ),
+          const Spacer(),
+          if (total > 0) ...[
+            GestureDetector(
+              onTap: () => _gotoHit(-1),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Row(
+                  children: [
+                    Text('↑',
+                        style: TextStyle(
+                            fontSize: 16, color: AppPalette.c(0xFF3E8E6D))),
+                    const SizedBox(width: 2),
+                    Text('上一个',
+                        style: TextStyle(
+                            fontSize: 12, color: AppPalette.c(0xFF3E8E6D))),
+                  ],
+                ),
+              ),
+            ),
+            GestureDetector(
+              onTap: () => _gotoHit(1),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Row(
+                  children: [
+                    Text('↓',
+                        style: TextStyle(
+                            fontSize: 16, color: AppPalette.c(0xFF3E8E6D))),
+                    const SizedBox(width: 2),
+                    Text('下一个',
+                        style: TextStyle(
+                            fontSize: 12, color: AppPalette.c(0xFF3E8E6D))),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 
@@ -194,7 +302,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                         border: InputBorder.none,
                         isDense: true,
                       ),
-                      onChanged: (_) => setState(() {}),
+                      onChanged: (_) => setState(() => _hitIndex = 0),
                     ),
                   ),
                   if (_ctrl.text.isNotEmpty)
@@ -247,13 +355,19 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
     List<Asset> assets,
   ) {
     final total = diaries.length + items.length + events.length + assets.length;
+    // 每次重建按渲染顺序重新分配命中 key（分类切换/输入变化都会走到这里）
+    _resultKeys.clear();
+    var rowCursor = 0;
+    GlobalKey rowKey() => _nextResultKey();
+    bool isCur() => _hitIndex == rowCursor++;
+    final queryText = _ctrl.text.trim();
     if (total == 0) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             AppIcon(AppIcons.searchX, size: 48, color: AppPalette.c(0xFFC6D6CD)),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Text('没有匹配的内容',
                 style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
           ],
@@ -271,6 +385,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
     ];
 
     return ListView(
+      controller: _resultCtrl,
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
       children: [
         // 收纳栏：类似笔记页置顶收纳栏的横滑样式
@@ -326,6 +441,9 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
               '笔记',
               diaries
                   .map((e) => _ResultRow(
+                        key: rowKey(),
+                        query: queryText,
+                        isCurrent: isCur(),
                         title: e.encrypted
                             ? (e.subtitle.isNotEmpty ? e.subtitle : '加密笔记')
                             : (e.title.isNotEmpty ? e.title : '（无标题）'),
@@ -342,6 +460,9 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
               '物品',
               items
                   .map((e) => _ResultRow(
+                        key: rowKey(),
+                        query: queryText,
+                        isCurrent: isCur(),
                         title: e.name,
                         subtitle:
                             '${e.category} · ¥${e.price.toStringAsFixed(e.price.truncateToDouble() == e.price ? 0 : 2)}',
@@ -358,6 +479,9 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
               '事件',
               events
                   .map((e) => _ResultRow(
+                        key: rowKey(),
+                        query: queryText,
+                        isCurrent: isCur(),
                         title: e.name,
                         subtitle:
                             '${e.target.year}.${e.target.month.toString().padLeft(2, '0')}.${e.target.day.toString().padLeft(2, '0')} · ${e.type}',
@@ -374,6 +498,9 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
               '资产',
               assets
                   .map((e) => _ResultRow(
+                        key: rowKey(),
+                        query: queryText,
+                        isCurrent: isCur(),
                         title: e.note.isNotEmpty ? e.note : e.type,
                         subtitle: '${e.type} · ${_assetAmountLabel(e)}',
                         // 资产结果卡默认「关闭小眼睛」：金额打码；
@@ -458,8 +585,48 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
       AppToast.show(context, '加密笔记请在笔记主页中打开，以验证密码');
       return;
     }
-    _push(NoteViewScreen(entry: e));
+    _push(NoteViewScreen(entry: e, searchQuery: _ctrl.text.trim()));
   }
+}
+
+/// 通用：把标题里命中 query 的片段加浅黄底 + 深墨字（深色模式同样可见）。
+Widget buildHighlightedTitle(String title, String query) {
+  if (query.trim().isEmpty) {
+    return Text(title,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: AppPalette.c(0xFF24382F)));
+  }
+  final spans = <TextSpan>[];
+  final lower = title.toLowerCase();
+  final needle = query.trim().toLowerCase();
+  var from = 0;
+  while (true) {
+    final i = lower.indexOf(needle, from);
+    if (i < 0) break;
+    if (i > from) spans.add(TextSpan(text: title.substring(from, i)));
+    spans.add(TextSpan(
+      text: title.substring(i, i + needle.length),
+      style: const TextStyle(
+          backgroundColor: Color(0xFFFFF0B3), color: Color(0xFF24382F)),
+    ));
+    from = i + needle.length;
+  }
+  if (from < title.length) spans.add(TextSpan(text: title.substring(from)));
+  return Text.rich(
+    TextSpan(
+      style: TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          color: AppPalette.c(0xFF24382F)),
+      children: spans,
+    ),
+    maxLines: 1,
+    overflow: TextOverflow.ellipsis,
+  );
 }
 
 class _SearchCategory {
@@ -474,6 +641,8 @@ class _ResultRow extends StatelessWidget {
   final String subtitle;
   final VoidCallback onTap;
   final Widget? trailing; // 行尾附加控件（如资产卡小眼睛）
+  final String query; // v4.9.27：命中高亮关键词
+  final bool isCurrent; // 当前定位命中的结果行
 
   const _ResultRow({
     Key? key,
@@ -481,6 +650,8 @@ class _ResultRow extends StatelessWidget {
     required this.subtitle,
     required this.onTap,
     this.trailing,
+    this.query = '',
+    this.isCurrent = false,
   }) : super(key: key);
 
   @override
@@ -491,7 +662,16 @@ class _ResultRow extends StatelessWidget {
       child:   InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        child: Padding(
+        child: Container(
+          decoration: isCurrent
+              ? BoxDecoration(
+                  color: AppPalette.c(0xFFF0F7F3),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                      color: AppPalette.c(0xFF3E8E6D), width: 1.2),
+                )
+              : null,
+          child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
           child: Row(
             children: [
@@ -499,13 +679,7 @@ class _ResultRow extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: AppPalette.c(0xFF24382F))),
+                    buildHighlightedTitle(title, query),
                     const SizedBox(height: 2),
                     Text(subtitle,
                         maxLines: 1,
@@ -520,7 +694,8 @@ class _ResultRow extends StatelessWidget {
             ],
           ),
         ),
+        ),
       )
-    );;
+    );
   }
 }

@@ -109,7 +109,7 @@ class RewardService {
       note: '兑换后可获得VIP权益1日',
       limit: vipCardMaxCount,
       duration: vipCardDuration,
-      effectLabel: '有效期24小时',
+      effectLabel: '有效期1天',
     ),
     ShopBadge(
       id: 'vipWeekCard',
@@ -235,7 +235,7 @@ class RewardService {
     }
     profile.badge = UserProfile.badgeVip;
     await UserStorage.save(profile);
-    final gain = item.kind == ShopItemKind.vipWeekCard ? '7天' : '24小时';
+    final gain = item.kind == ShopItemKind.vipWeekCard ? '7天' : '1天';
     return RedeemOutcome(true, '兑换成功，VIP有效期增加$gain');
   }
 

@@ -25,6 +25,10 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
   late final TextEditingController _nameCtrl;
   late final TextEditingController _noteCtrl;
   late final TextEditingController _iconCtrl;
+
+  /// v4.9.27：智能回车——单行输入回车跳下一栏，末栏收起键盘。
+  final FocusNode _nameFocus = FocusNode();
+  final FocusNode _noteFocus = FocusNode();
   DateTime? _target;
   late String _type;
   late RepeatRule _repeat;
@@ -130,6 +134,8 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
     _nameCtrl.dispose();
     _noteCtrl.dispose();
     _iconCtrl.dispose();
+    _nameFocus.dispose();
+    _noteFocus.dispose();
     super.dispose();
   }
 
@@ -265,6 +271,9 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
               decoration: _box(),
               child: TextField(
                 controller: _nameCtrl,
+                focusNode: _nameFocus,
+                textInputAction: TextInputAction.next,
+                onSubmitted: (_) => _noteFocus.requestFocus(),
                 maxLength: 20,
                 style: const TextStyle(fontSize: 15),
                 decoration: InputDecoration(
@@ -272,7 +281,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                   hintStyle: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
                   counterText: '',
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(vertical: 14),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
                 ),
               ),
             ),
@@ -285,6 +294,9 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
               decoration: _box(),
               child: TextField(
                 controller: _noteCtrl,
+                focusNode: _noteFocus,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => FocusScope.of(context).unfocus(),
                 maxLength: 15,
                 style: const TextStyle(fontSize: 15),
                 decoration: InputDecoration(
@@ -292,7 +304,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                   hintStyle: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
                   counterText: '',
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(vertical: 14),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
                 ),
               ),
             ),
@@ -733,6 +745,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                 const SizedBox(height: 16),
                 TextField(
                   controller: tmpCtrl,
+                  textInputAction: TextInputAction.done,
                   maxLength: 4,
                   decoration: const InputDecoration(
                     labelText: '自定义 emoji',

@@ -27,12 +27,20 @@ import '../theme/app_theme_scope.dart';
 class NoteViewScreen extends StatefulWidget {
   final DiaryEntry entry;
 
+  /// v4.9.27：从全局搜索带入的关键词，正文命中高亮 + 顶栏逐条定位。
+  /// 空字符串（默认）表示普通浏览，不显示匹配条。
+  final String searchQuery;
+
   /// 仅测试使用：替换真实的「截图 + 落盘」实现
   @visibleForTesting
   final ShareCapture? shareCapture;
 
-  const NoteViewScreen({Key? key, required this.entry, this.shareCapture})
-      : super(key: key);
+  const NoteViewScreen({
+    Key? key,
+    required this.entry,
+    this.searchQuery = '',
+    this.shareCapture,
+  }) : super(key: key);
 
   @override
   State<NoteViewScreen> createState() => _NoteViewScreenState();
@@ -42,11 +50,110 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
   late DiaryEntry _entry;
   List<Item> _items = [];
 
+  /// v4.9.27：正文滚动控制 + 搜索命中逐条定位
+  final ScrollController _bodyCtrl = ScrollController();
+  final GlobalKey _bodyKey = GlobalKey();
+  int _hitIndex = 0;
+
+  int get _hitCount =>
+      RichNoteText.countHits(_entry.content, widget.searchQuery);
+
   @override
   void initState() {
     super.initState();
     _entry = widget.entry;
     _loadItems();
+    if (_hitCount > 1) _hitIndex = 0;
+  }
+
+  @override
+  void dispose() {
+    _bodyCtrl.dispose();
+    super.dispose();
+  }
+
+  /// 在上/下箭头点击时切换当前命中，并把正文滚动到该命中所在行附近。
+  void _gotoHit(int delta) {
+    final n = _hitCount;
+    if (n <= 0) return;
+    setState(() => _hitIndex = (_hitIndex + delta + n) % n);
+    _scrollToCurrentHit();
+  }
+
+  void _scrollToCurrentHit() {
+    final q = widget.searchQuery.trim().toLowerCase();
+    if (q.isEmpty) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_bodyCtrl.hasClients) return;
+      final ctx = _bodyKey.currentContext;
+      if (ctx == null) return;
+      final box = ctx.findRenderObject() as RenderBox?;
+      if (box == null || !box.hasSize) return;
+      // 估算命中所在行的 Y：按命中字符在正文中的位置比例推算。
+      // 仅作"大致滚到附近"，精确高亮由 RichNoteText 的 currentHit 负责。
+      final lower = _entry.content.toLowerCase();
+      var from = 0;
+      var hitStart = 0;
+      for (var k = 0; k <= _hitIndex; k++) {
+        final i = lower.indexOf(q, from);
+        if (i < 0) break;
+        hitStart = i;
+        from = i + q.length;
+      }
+      final ratio = _entry.content.isEmpty
+          ? 0.0
+          : (hitStart / _entry.content.length).clamp(0.0, 1.0);
+      final target = (box.size.height * ratio - 120).clamp(
+        0.0,
+        _bodyCtrl.position.maxScrollExtent,
+      );
+      _bodyCtrl.animateTo(
+        target.toDouble(),
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    });
+  }
+
+  /// 顶栏「更多」：从按钮位置弹出下拉选框（编辑 / 删除 / 分享）。
+  Future<void> _showMoreMenu(BuildContext btnCtx) async {
+    final box = btnCtx.findRenderObject() as RenderBox;
+    final overlay =
+        Overlay.of(context)!.context.findRenderObject() as RenderBox;
+    final pos = RelativeRect.fromRect(
+      Rect.fromPoints(
+        box.localToGlobal(Offset.zero, ancestor: overlay),
+        box.localToGlobal(box.size.bottomRight(Offset.zero), ancestor: overlay),
+      ),
+      Offset.zero & overlay.size,
+    );
+    final menuTextStyle =
+        TextStyle(fontSize: 14, color: AppPalette.c(0xFF24382F));
+    final choice = await showMenu<String>(
+      context: context,
+      position: pos,
+      color: AppPalette.c(0xFFFFFFFF),
+      items: [
+        PopupMenuItem<String>(
+            value: 'edit', child: Text('编辑', style: menuTextStyle)),
+        PopupMenuItem<String>(
+            value: 'delete', child: Text('删除', style: menuTextStyle)),
+        PopupMenuItem<String>(
+            value: 'share', child: Text('分享', style: menuTextStyle)),
+      ],
+    );
+    if (!mounted || choice == null) return;
+    switch (choice) {
+      case 'edit':
+        _openEditor();
+        break;
+      case 'delete':
+        _delete();
+        break;
+      case 'share':
+        _share();
+        break;
+    }
   }
 
   Future<void> _loadItems() async {
@@ -165,6 +272,35 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
     return '${d.year}/${d.month}/${d.day} $h:$m';
   }
 
+  /// 顶栏命中条：「N 处匹配」+ 上/下一条，数字跟随当前命中。
+  Widget _buildMatchBar() {
+    final n = _hitCount;
+    if (n <= 0) {
+      return const Text('无匹配',
+          style: TextStyle(fontSize: 15, color: Colors.white));
+    }
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text('${_hitIndex + 1}/$n 处匹配',
+            style: const TextStyle(fontSize: 14, color: Colors.white)),
+        const SizedBox(width: 2),
+        IconButton(
+          key: const ValueKey('match_prev'),
+          tooltip: '上一个匹配',
+          icon: const Icon(Icons.keyboard_arrow_up, size: 22, color: Colors.white),
+          onPressed: () => _gotoHit(-1),
+        ),
+        IconButton(
+          key: const ValueKey('match_next'),
+          tooltip: '下一个匹配',
+          icon: const Icon(Icons.keyboard_arrow_down, size: 22, color: Colors.white),
+          onPressed: () => _gotoHit(1),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
@@ -176,29 +312,19 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
         backgroundColor: AppPalette.c(0xCC3E8E6D),
         foregroundColor: Colors.white,
         elevation: 0,
-        // 顺序固定为：编辑、删除、分享（分享在最右）
+        // v4.9.27：搜索进入时顶栏显示「N 处匹配」+ 上/下一条定位
+        title: widget.searchQuery.trim().isEmpty
+            ? null
+            : _buildMatchBar(),
         actions: [
-          IconButton(
-            key: const ValueKey('note_action_edit'),
-            tooltip: '编辑',
-            // 编辑笔路径重心比垃圾桶高约 1.8px，绘制下移补齐基线
-            icon: Transform.translate(
-              offset: const Offset(0, 1.8),
-              child: const AppIcon(AppIcons.edit),
+          // v4.9.27：编辑/删除/分享收进「更多」，点击从按钮处弹下拉选框
+          Builder(
+            builder: (btnCtx) => IconButton(
+              key: const ValueKey('note_action_more'),
+              tooltip: '更多',
+              icon: const AppIcon(AppIcons.moreV),
+              onPressed: () => _showMoreMenu(btnCtx),
             ),
-            onPressed: _openEditor,
-          ),
-          IconButton(
-            key: const ValueKey('note_action_delete'),
-            tooltip: '删除',
-            icon: const AppIcon(AppIcons.delete),
-            onPressed: _delete,
-          ),
-          IconButton(
-            key: const ValueKey('note_action_share'),
-            tooltip: '分享',
-            icon: const AppIcon(AppIcons.share),
-            onPressed: _share,
           ),
         ],
       ),
@@ -206,6 +332,8 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
         children: [
           Expanded(
             child: SingleChildScrollView(
+              key: _bodyKey,
+              controller: _bodyCtrl,
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -265,6 +393,10 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                             .where((n) => n.isNotEmpty)
                             .toSet(),
                         onTapMention: _openItem,
+                        searchQuery: widget.searchQuery,
+                        currentHit: widget.searchQuery.trim().isEmpty
+                            ? -1
+                            : _hitIndex,
                         style: TextStyle(
                           fontSize: 15,
                           height: 1.8,

@@ -167,6 +167,32 @@ class TrashScreenState extends State<TrashScreen> {
       return;
     }
     if (_mode == _SelectMode.restore) {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: AppPalette.c(0xFFFFFFFF),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('确认要还原吗?', style: TextStyle(fontSize: 17)),
+          content: Text('将还原所选的 ${picked.length} 项内容。',
+              style: const TextStyle(fontSize: 13, height: 1.6)),
+          actions: [
+            Pressable(
+              enabled: true,
+              child: TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text('取消')),
+            ),
+            Pressable(
+              enabled: true,
+              child: TextButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: const Text('还原',
+                      style: TextStyle(color: Color(0xFF3E8E6D)))),
+            ),
+          ],
+        ),
+      );
+      if (ok != true || !mounted) return;
       final n = await TrashStorage.restoreMany(picked);
       if (!mounted) return;
       setState(() {
@@ -254,6 +280,32 @@ class TrashScreenState extends State<TrashScreen> {
     );
     if (!mounted || action == null) return;
     if (action == 'restore') {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: AppPalette.c(0xFFFFFFFF),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('确认要还原吗?', style: TextStyle(fontSize: 17)),
+          content: const Text('将还原这条内容。',
+              style: TextStyle(fontSize: 13, height: 1.6)),
+          actions: [
+            Pressable(
+              enabled: true,
+              child: TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text('取消')),
+            ),
+            Pressable(
+              enabled: true,
+              child: TextButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: const Text('还原',
+                      style: TextStyle(color: Color(0xFF3E8E6D)))),
+            ),
+          ],
+        ),
+      );
+      if (ok != true || !mounted) return;
       await TrashStorage.restore(entry);
       if (!mounted) return;
       await _load();

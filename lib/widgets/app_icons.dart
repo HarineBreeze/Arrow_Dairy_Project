@@ -182,6 +182,9 @@ class AppIcons {
   /// 更多（横排三点）
   static const String moreH = 'M6.4 12v.01 M12 12v.01 M17.6 12v.01';
 
+  /// 更多（竖排三点，顶栏「更多」按钮）
+  static const String moreV = 'M12 6.4v.01 M12 12v.01 M12 17.6v.01';
+
   /// 裁剪（封面图 4:3 自由裁剪）
   static const String crop =
       'M6 2v14a2 2 0 0 0 2 2h14 M18 22V8a2 2 0 0 0-2-2H2';
@@ -277,6 +280,7 @@ class AppIcons {
     'undo': undo,
     'redo': redo,
     'moreH': moreH,
+    'moreV': moreV,
     'crop': crop,
     'searchX': searchX,
     'clock': clock,

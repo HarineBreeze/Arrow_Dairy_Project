@@ -1424,20 +1424,25 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildTopBar() {
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 400),
-      switchInCurve: Curves.easeOutCubic,
-      switchOutCurve: Curves.easeInCubic,
-      transitionBuilder: (child, animation) {
-        return SlideTransition(
-          position: Tween<Offset>(
-            begin: const Offset(1, 0),
-            end: Offset.zero,
-          ).animate(animation),
-          child: child,
-        );
-      },
-      child: _searching ? _buildSearchBar() : _buildNormalBar(),
+    // v4.9.27：双击顶栏一键回顶（列表翻到底后不必手动滚回）。
+    // 包在 AnimatedSwitcher 外层，普通栏与搜索栏都生效；不影响栏内按钮点按。
+    return GestureDetector(
+      onDoubleTap: _scrollToTop,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 400),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        transitionBuilder: (child, animation) {
+          return SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(1, 0),
+              end: Offset.zero,
+            ).animate(animation),
+            child: child,
+          );
+        },
+        child: _searching ? _buildSearchBar() : _buildNormalBar(),
+      ),
     );
   }
 

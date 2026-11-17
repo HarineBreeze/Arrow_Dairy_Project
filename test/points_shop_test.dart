@@ -317,11 +317,11 @@ void main() {
   });
 
   group('VIP日卡', () {
-    test('兑换：扣 200 分 → 计次数 → 立即佩戴且 24 小时内生效', () async {
+    test('兑换：扣 200 分 → 计次数 → 立即佩戴且 1 天内生效', () async {
       writeProfile(UserProfile(points: 260));
       final r = await RewardService.buyVipCard(UserProfile.badgeVip);
       expect(r.ok, isTrue);
-      expect(r.message, contains('24小时'));
+      expect(r.message, contains('1天'));
 
       final p = await UserStorage.load();
       expect(p.points, 60);
@@ -449,7 +449,7 @@ void main() {
           loadOverride: () async => UserProfile(points: 300),
           buyOverride: (id) async {
             boughtIds.add(id);
-            return const RedeemOutcome(true, '兑换成功，VIP身份牌生效24小时');
+            return const RedeemOutcome(true, '兑换成功，VIP身份牌生效1天');
           },
         ),
       ));
@@ -458,7 +458,7 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('shop-item-vip')));
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.textContaining('是否要花费 200 积分兑换「VIP日卡」'), findsOneWidget);
-      expect(find.textContaining('有效期24小时'), findsOneWidget);
+      expect(find.textContaining('有效期1天'), findsOneWidget);
       expect(find.textContaining('兑换后剩余'), findsNothing);
 
       await tester.tap(find.text('确认'));

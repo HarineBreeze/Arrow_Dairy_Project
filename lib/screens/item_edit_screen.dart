@@ -35,6 +35,13 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
   late final TextEditingController _priceCtrl;
   late final TextEditingController _extraCtrl;
   late final TextEditingController _usageCtrl;
+
+  /// v4.9.27：智能回车——名称→价格→附加价→用量逐栏跳转，末栏收起键盘。
+  final FocusNode _nameFocus = FocusNode();
+  final FocusNode _priceFocus = FocusNode();
+  final FocusNode _extraFocus = FocusNode();
+  final FocusNode _usageFocus = FocusNode();
+
   late String _category;
   late String _icon;
   DateTime? _acquiredDate; // 拥有日：需手动选择后才能创建已拥有物品
@@ -108,6 +115,10 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
     _priceCtrl.dispose();
     _extraCtrl.dispose();
     _usageCtrl.dispose();
+    _nameFocus.dispose();
+    _priceFocus.dispose();
+    _extraFocus.dispose();
+    _usageFocus.dispose();
     super.dispose();
   }
 
@@ -252,6 +263,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         content: TextField(
           controller: ctrl,
           autofocus: true,
+          textInputAction: TextInputAction.done,
           maxLength: 8,
           decoration: const InputDecoration(hintText: '输入类型名（最多8字）'),
         ),
@@ -291,6 +303,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         content: TextField(
           controller: ctrl,
           autofocus: true,
+          textInputAction: TextInputAction.done,
           decoration: const InputDecoration(hintText: '输入一个emoji，如 🎸'),
         ),
         actions: [
@@ -386,8 +399,10 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
               _sectionLabel('日期'),
               _buildDateRow(),
               const SizedBox(height: 16),
+              _sectionLabel('计算方式'),
+              const SizedBox(height: 8),
               _selectRow(
-                label: '计算方式',
+                label: '方式',
                 value: _calcMethod == 0 ? '价格/天数' : '价格/使用次数',
                 onTap: () => _pickOptionSheet(
                   title: '计算方式',
@@ -454,6 +469,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
           controller: ctrl,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           autofocus: true,
+          textInputAction: TextInputAction.done,
           decoration: const InputDecoration(
             hintText: '0.00',
             prefixText: '¥ ',
@@ -794,6 +810,9 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
       decoration: _box(),
       child: TextField(
         controller: _nameCtrl,
+        focusNode: _nameFocus,
+        textInputAction: TextInputAction.next,
+        onSubmitted: (_) => _priceFocus.requestFocus(),
         maxLength: 20,
         style: const TextStyle(fontSize: 15),
         decoration: InputDecoration(
@@ -801,7 +820,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
           hintStyle: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
           border: InputBorder.none,
           counterText: '',
-          contentPadding: EdgeInsets.symmetric(vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(vertical: 14),
         ),
       ),
     );
@@ -847,6 +866,9 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
       decoration: _box(),
       child: TextField(
         controller: _priceCtrl,
+        focusNode: _priceFocus,
+        textInputAction: TextInputAction.next,
+        onSubmitted: (_) => _extraFocus.requestFocus(),
         keyboardType: TextInputType.number,
         style: const TextStyle(fontSize: 15),
         decoration: const InputDecoration(
@@ -871,6 +893,9 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
           Expanded(
             child: TextField(
               controller: _extraCtrl,
+              focusNode: _extraFocus,
+              textInputAction: TextInputAction.next,
+              onSubmitted: (_) => _usageFocus.requestFocus(),
               keyboardType: const TextInputType.numberWithOptions(
                   decimal: true, signed: true),
               style: const TextStyle(fontSize: 15),
@@ -982,6 +1007,9 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
             width: 52,
             child: TextField(
               controller: _usageCtrl,
+              focusNode: _usageFocus,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => FocusScope.of(context).unfocus(),
               keyboardType: TextInputType.number,
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 15),

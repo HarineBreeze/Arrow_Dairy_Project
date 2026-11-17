@@ -64,21 +64,30 @@ void main() {
     await tmp.delete(recursive: true);
   });
 
-  group('浏览页顶栏按钮顺序', () {
-    testWidgets('顺序为：编辑、删除、分享（分享在最右）', (tester) async {
+  group('浏览页顶栏「更多」下拉选框', () {
+    testWidgets('三按钮收进更多，点按从锚点弹出编辑/删除/分享', (tester) async {
       await tester.pumpWidget(
         MaterialApp(home: NoteViewScreen(entry: _entry())),
       );
       await tester.pump(const Duration(milliseconds: 200));
 
-      final editX =
-          tester.getCenter(find.byKey(const ValueKey('note_action_edit'))).dx;
-      final delX =
-          tester.getCenter(find.byKey(const ValueKey('note_action_delete'))).dx;
-      final shareX =
-          tester.getCenter(find.byKey(const ValueKey('note_action_share'))).dx;
-      expect(editX, lessThan(delX));
-      expect(delX, lessThan(shareX));
+      // 顶栏不再常驻编辑/删除/分享三个独立按钮
+      expect(find.byKey(const ValueKey('note_action_edit')), findsNothing);
+      expect(find.byKey(const ValueKey('note_action_delete')), findsNothing);
+      expect(find.byKey(const ValueKey('note_action_share')), findsNothing);
+      expect(find.byKey(const ValueKey('note_action_more')), findsOneWidget);
+
+      // 点「更多」弹下拉选框，三项顺序：编辑、删除、分享
+      await tester.tap(find.byKey(const ValueKey('note_action_more')));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('编辑'), findsOneWidget);
+      expect(find.text('删除'), findsOneWidget);
+      expect(find.text('分享'), findsOneWidget);
+      final editY = tester.getCenter(find.text('编辑')).dy;
+      final delY = tester.getCenter(find.text('删除')).dy;
+      final shareY = tester.getCenter(find.text('分享')).dy;
+      expect(editY, lessThan(delY));
+      expect(delY, lessThan(shareY));
     });
   });
 
@@ -178,8 +187,11 @@ void main() {
       ));
       await tester.pump(const Duration(milliseconds: 200));
 
-      await tester.tap(find.byKey(const ValueKey('note_action_share')));
-      await tester.pump(const Duration(milliseconds: 50)); // 弹窗入场
+      await tester.tap(find.byKey(const ValueKey('note_action_more')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('分享'));
+      await tester.pump(const Duration(milliseconds: 200)); // 菜单退出 + 弹窗入场
+      await tester.pump(const Duration(milliseconds: 50));
       expect(find.text('正在生成分享图…'), findsOneWidget,
           reason: '生成期间应显示进度弹窗');
 
@@ -215,7 +227,9 @@ void main() {
       ));
       await tester.pump(const Duration(milliseconds: 200));
 
-      await tester.tap(find.byKey(const ValueKey('note_action_share')));
+      await tester.tap(find.byKey(const ValueKey('note_action_more')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('分享'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));

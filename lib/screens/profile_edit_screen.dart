@@ -70,9 +70,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   /// 当前生效的 VIP 日卡到期时间（用于选择页展示「剩余x天」）
   late DateTime? _vipExpireAt;
 
-  /// 用户 ID / 使用天数（只读信息，来自档案）
+  /// 用户 ID（只读信息，来自档案）
   late String _userId;
-  late int _usedDays;
 
 
   final GlobalKey<SaveDoneButtonState> _doneKey =
@@ -102,7 +101,6 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     _vipActive = widget.profile.vipCardActive;
     _vipExpireAt = widget.profile.vipCardExpireTime;
     _userId = widget.profile.userId;
-    _usedDays = widget.profile.usedDays;
     _initial = _snapshot();
   }
 
@@ -163,7 +161,6 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       _vipActive = p.vipCardActive;
       _vipExpireAt = p.vipCardExpireTime;
       _userId = p.userId;
-      _usedDays = p.usedDays;
     });
   }
 
@@ -460,6 +457,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         Expanded(
           child: TextField(
             controller: _nicknameCtrl,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => FocusScope.of(context).unfocus(),
             maxLength: 10,
             style: const TextStyle(fontSize: 15),
             decoration: InputDecoration(
@@ -611,17 +610,27 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     AppToast.show(context, '已复制用户ID');
   }
 
-  /// 使用时间：自用户 ID 注册日起至今天共多少天（只读）。
+  /// 注册日：把档案里的 registeredAt（yyyy-MM-dd）显示为 yyyy/M/d（只读）。
+  String _formatRegisteredAt(String raw) {
+    final parts = raw.split('-');
+    if (parts.length != 3) return raw;
+    final y = int.tryParse(parts[0]);
+    final m = int.tryParse(parts[1]);
+    final d = int.tryParse(parts[2]);
+    if (y == null || m == null || d == null) return raw;
+    return '$y/$m/$d';
+  }
+
   Widget _buildUsedDaysRow() {
     return SizedBox(
       height: 48,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          _buildFieldLabel('使用时间'),
+          _buildFieldLabel('注册日'),
           Expanded(
             child: Text(
-              '已使用 $_usedDays 天',
+              _formatRegisteredAt(widget.profile.registeredAt),
               style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
             ),
           ),
