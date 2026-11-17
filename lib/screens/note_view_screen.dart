@@ -309,7 +309,9 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
     final String? fontFamily = AppSettings.fontFamily;
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: AppPalette.c(0xCC3E8E6D),
+        toolbarHeight: 48, // v4.9.31：与笔记主页顶栏同高
+        leadingWidth: 48, // v4.9.31：返回键与右侧图标同为 48×48 热区
+        backgroundColor: AppPalette.c(0xB33E8E6D), // v4.9.31：与笔记主页顶栏同色
         foregroundColor: Colors.white,
         elevation: 0,
         // v4.9.27：搜索进入时顶栏显示「N 处匹配」+ 上/下一条定位
@@ -324,10 +326,10 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
               key: const ValueKey('note_action_more'),
               tooltip: '更多',
               padding: EdgeInsets.zero,
-              // AppBar 的返回键热区是 56×56（leadingWidth 默认值），
-              // 这里取同尺寸，避免右侧图标感觉「更难点」
+              // v4.9.31：顶栏统一为 48 高（与各主页一致），
+              // 图标热区同步为 48×48，与返回键一致
               constraints:
-                  const BoxConstraints.tightFor(width: 56, height: 56),
+                  const BoxConstraints.tightFor(width: 48, height: 48),
               iconSize: 24,
               icon: const AppIcon(AppIcons.moreH),
               onPressed: () => _showMoreMenu(btnCtx),

@@ -1003,7 +1003,8 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
       onWillPop: _handleLeave,
       child: Scaffold(
       appBar: AppBar(
-        backgroundColor: AppPalette.c(0xCC3E8E6D),
+        toolbarHeight: 48, // v4.9.31：与笔记主页顶栏同高
+        backgroundColor: AppPalette.c(0xB33E8E6D), // v4.9.31：与笔记主页顶栏同色
         foregroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(

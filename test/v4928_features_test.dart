@@ -131,7 +131,7 @@ void main() {
   });
 
   group('笔记浏览页更多按钮', () {
-    testWidgets('使用横三点图标，热区与返回键一致', (tester) async {
+    testWidgets('使用横三点图标，热区与返回键一致(48)', (tester) async {
       tester.binding.window.physicalSizeTestValue = const Size(400, 800);
       tester.binding.window.devicePixelRatioTestValue = 1.0;
       addTearDown(() => tester.binding.window.clearPhysicalSizeTestValue());
@@ -164,7 +164,7 @@ void main() {
       expect(icon.path, AppIcons.moreH, reason: '竖三点改横三点');
       expect(
           btn.constraints,
-          const BoxConstraints.tightFor(width: 56, height: 56));
+          const BoxConstraints.tightFor(width: 48, height: 48));
 
       final backSize = tester.getSize(find.byType(BackButton));
       expect(tester.getSize(more), backSize, reason: '热区与返回键一致');

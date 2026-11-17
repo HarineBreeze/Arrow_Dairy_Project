@@ -339,9 +339,10 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
       onWillPop: _handleLeave,
       child: Scaffold(
       appBar: AppBar(
+        toolbarHeight: 48, // v4.9.31：与物品主页顶栏同高
         backgroundColor: _wishlist
             ? const Color(0xFFE58BA0)
-            : AppPalette.c(0xCC3E8E6D),
+            : AppPalette.c(0xB33E8E6D), // v4.9.31：与物品主页顶栏同色
         foregroundColor: Colors.white,
         elevation: 0,
         title: Text(_isNew ? '添加物品' : '编辑物品'),

@@ -230,7 +230,9 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
       child: Scaffold(
       backgroundColor: AppPalette.c(0xFFF5FAF7),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF3E8E6D),
+        // v4.9.31：与事件主页顶栏同色同高
+        backgroundColor: AppPalette.c(0xB33E8E6D),
+        toolbarHeight: 48,
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
