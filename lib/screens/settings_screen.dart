@@ -313,41 +313,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   padding: EdgeInsets.only(left: 4, bottom: 8),
                   child: Align(
                     alignment: Alignment.centerLeft,
-                    child: Text('字体',
-                        style: TextStyle(
-                            fontSize: 13,
-                            color: AppPalette.c(0xFF8FA09A),
-                            fontWeight: FontWeight.w600)),
-                  ),
-                ),
-                Container(
-                  decoration: BoxDecoration(
-                    color: AppPalette.c(0xFFFFFFFF),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: _buildItem(
-                    icon: AppIcons.fontType,
-                    iconColor: const Color(0xFF3E8E6D),
-                    title: '字体',
-                    subtitle:
-                        '当前：${FontCatalog.nameOf(AppSettings.fontFamilyId.isEmpty ? null : AppSettings.fontFamilyId) ?? '默认字体'}',
-                    busy: false,
-                    onTap: () async {
-                      await Navigator.push(
-                        context,
-                        AppMotion.slide(
-                          const FontPickerScreen(),
-                        ),
-                      );
-                      if (mounted) setState(() {});
-                    },
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Padding(
-                  padding: EdgeInsets.only(left: 4, bottom: 8),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
                     child: Text('活动',
                         style: TextStyle(
                             fontSize: 13,
@@ -624,11 +589,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  /// 「外观」分组：深色模式。
+  /// 「外观」分组：深色模式 / 跟随系统 / 字体。
   ///
-  /// 两行开关表达「手动 / 跟随系统」两种取向：
+  /// 前两行开关表达「手动 / 跟随系统」两种取向：
   /// - 「跟随系统」开：主题由系统亮度决定，「深色模式」行置灰显示当前系统值；
   /// - 「跟随系统」关：「深色模式」开关可手动控制浅/深。
+  /// 第三行「字体」点击进入字体选择页（v4.9.26 从独立分组并入本卡）。
   /// 用 ValueListenableBuilder 监听 themeModeNotifier，切换后立即刷新开关状态。
   Widget _buildAppearanceSection(BuildContext context) {
     return ValueListenableBuilder<AppThemeMode>(
@@ -685,6 +651,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         v ? AppThemeMode.system : (darkOn
                             ? AppThemeMode.dark
                             : AppThemeMode.light)),
+                  ),
+                  Divider(
+                      height: 1,
+                      indent: 52,
+                      color: AppPalette.c(0xFFE8EDF5)),
+                  // v4.9.26：字体并入「外观」分组，作为本卡第三行
+                  _buildItem(
+                    icon: AppIcons.fontType,
+                    iconColor: const Color(0xFF3E8E6D),
+                    title: '字体',
+                    subtitle:
+                        '当前：${FontCatalog.nameOf(AppSettings.fontFamilyId.isEmpty ? null : AppSettings.fontFamilyId) ?? '默认字体'}',
+                    busy: false,
+                    onTap: () async {
+                      await Navigator.push(
+                        context,
+                        AppMotion.slide(
+                          const FontPickerScreen(),
+                        ),
+                      );
+                      if (mounted) setState(() {});
+                    },
                   ),
                 ],
               ),

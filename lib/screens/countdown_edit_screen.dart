@@ -1,6 +1,5 @@
 import '../widgets/app_icons.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../models/countdown_event.dart';
 import '../services/trash_storage.dart';
 import '../widgets/unsaved_guard.dart';
@@ -426,82 +425,52 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
             ),
             const SizedBox(height: 16),
 
-            // 事件类型（单选）
-            _sectionLabel('事件类型'),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: _box(),
-              child: Row(
-                children: CountdownEvent.types
-                    .map((t) => _radioTile(
-                          label: t,
-                          selected: _type == t,
-                          onTap: () {
-                            Haptics.light();
-                            // 顺序很关键：必须在改 _type 之前判断，
-                            // 否则比较的是「新类型的默认图标」，导致永远命中
-                            // 或永远不命中。
-                            final prevType = _type;
-                            final cur = _iconCtrl.text.trim();
-                            final oldDefault =
-                                CountdownEvent.defaultIconFor(prevType);
-                            final newDefault = CountdownEvent.defaultIconFor(t);
-                            final followType = !_iconTouched ||
-                                cur.isEmpty ||
-                                cur == oldDefault ||
-                                // 旧数据可能已经是另一类型的默认值
-                                cur == newDefault;
-                            setState(() {
-                              _type = t;
-                              if (followType) _iconCtrl.text = newDefault;
-                            });
-                          },
-                        ))
-                    .toList(),
+            // v4.9.26：三组单选收进「当前值 + 右箭头」行，点整行弹底部选择层。
+            // 事件类型
+            _selectRow(
+              label: '事件类型',
+              value: _type,
+              onTap: () => _pickOptionSheet(
+                title: '事件类型',
+                options: CountdownEvent.types,
+                current: _type,
+                onSelected: _applyType,
               ),
             ),
             const SizedBox(height: 16),
 
-            // 重复规则（单排胶囊：不重复 / 每年 / 每月 / 每周）
-            _sectionLabel('重复规则'),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: _box(),
-              child: Row(
-                children: [
-                  for (final r in RepeatRule.values) ...[
-                    _radioTile(
-                      label: r.label,
-                      selected: _repeat == r,
-                      onTap: () {
-                        Haptics.light();
-                        setState(() => _repeat = r);
-                      },
-                    ),
-                  ],
-                ],
+            // 重复规则（不重复 / 每年 / 每月 / 每周）
+            _selectRow(
+              label: '重复规则',
+              value: _repeat.label,
+              onTap: () => _pickOptionSheet(
+                title: '重复规则',
+                options: RepeatRule.values.map((r) => r.label).toList(),
+                current: _repeat.label,
+                onSelected: (label) => setState(() => _repeat = RepeatRule.values
+                    .firstWhere((r) => r.label == label)),
               ),
             ),
             const SizedBox(height: 16),
 
             // 提醒时间（0 = 当天）
-            _sectionLabel('提醒时间'),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: _box(),
-              child: Row(
-                children: [
-                  for (final d in const [0, 1, 3, 7]) ...[
-                    _radioTile(
-                      label: d == 0 ? '当天' : '提前 $d 天',
-                      selected: _remindBeforeDays == d,
-                      onTap: () {
-                        Haptics.light();
-                        setState(() => _remindBeforeDays = d);
-                      },
-                    ),
-                  ],
-                ],
+            _selectRow(
+              label: '提醒时间',
+              value: _remindBeforeDays == 0
+                  ? '当天'
+                  : '提前 $_remindBeforeDays 天',
+              onTap: () => _pickOptionSheet(
+                title: '提醒时间',
+                options: const [0, 1, 3, 7]
+                    .map((d) => d == 0 ? '当天' : '提前 $d 天')
+                    .toList(),
+                current: _remindBeforeDays == 0
+                    ? '当天'
+                    : '提前 $_remindBeforeDays 天',
+                onSelected: (label) => setState(() => _remindBeforeDays =
+                    label == '当天'
+                        ? 0
+                        : int.parse(label.replaceAll(RegExp(r'[^0-9]'), ''))),
               ),
             ),
           ],
@@ -538,48 +507,122 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
   }
 
 
-  Widget _radioTile({
+  /// v4.9.26：个人信息页同款「标签 — 当前值 ›」行，点整行弹底部选择层。
+  Widget _selectRow({
     required String label,
-    required bool selected,
+    required String value,
     required VoidCallback onTap,
   }) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: Container(
-          // 去掉左侧小圆圈后改为单行文字，高度由 56 收到 38
-          height: 38,
-          margin: const EdgeInsets.symmetric(horizontal: 3),
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          decoration: BoxDecoration(
-            // 选中态用浅绿底 + 绿描边表达，不再额外加圆圈图标（重复表述）
-            color: selected ? AppPalette.c(0xFFE4F2EB) : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: selected ? const Color(0xFF3E8E6D) : Colors.transparent,
-              width: 1.5,
-            ),
-          ),
-          alignment: Alignment.center,
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              label,
-              maxLines: 1,
-              softWrap: false,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
-                color: selected
-                    ? const Color(0xFF3E8E6D)
-                    : AppPalette.c(0xFF24382F),
-              ),
+    return Container(
+      decoration: _box(),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          Haptics.light();
+          onTap();
+        },
+        child: SizedBox(
+          height: 48,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 76,
+                  child: Text(label,
+                      style: TextStyle(
+                          fontSize: 15, color: AppPalette.c(0xFF24382F))),
+                ),
+                Expanded(
+                  child: Text(
+                    value,
+                    textAlign: TextAlign.right,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        fontSize: 14, color: AppPalette.c(0xFF647A70)),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                AppIcon(AppIcons.chevR,
+                    size: 16, color: AppPalette.c(0xFFC6D6CD)),
+              ],
             ),
           ),
         ),
       ),
     );
+  }
+
+  /// 通用底部选择层：标题 + 选项列表 + 当前项打勾（个人信息页性别弹层同款）。
+  Future<void> _pickOptionSheet({
+    required String title,
+    required List<String> options,
+    required String current,
+    required ValueChanged<String> onSelected,
+  }) async {
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppPalette.c(0xFFFFFFFF),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 6),
+              child: Text('选择$title',
+                  style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: AppPalette.c(0xFF24382F))),
+            ),
+            for (final opt in options)
+              InkWell(
+                onTap: () => Navigator.pop(ctx, opt),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  child: Row(
+                    children: [
+                      Text(opt,
+                          style: TextStyle(
+                              fontSize: 14, color: AppPalette.c(0xFF647A70))),
+                      const Spacer(),
+                      if (opt == current)
+                        const AppIcon(AppIcons.check,
+                            size: 20, color: Color(0xFF3E8E6D)),
+                    ],
+                  ),
+                ),
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (picked == null || !mounted) return;
+    onSelected(picked);
+  }
+
+  /// 应用事件类型：保留原「切换类型时图标跟随」判定逻辑。
+  void _applyType(String t) {
+    // 顺序很关键：必须在改 _type 之前判断，否则比较的是新类型的默认图标。
+    final prevType = _type;
+    final cur = _iconCtrl.text.trim();
+    final oldDefault = CountdownEvent.defaultIconFor(prevType);
+    final newDefault = CountdownEvent.defaultIconFor(t);
+    final followType = !_iconTouched ||
+        cur.isEmpty ||
+        cur == oldDefault ||
+        cur == newDefault;
+    setState(() {
+      _type = t;
+      if (followType) _iconCtrl.text = newDefault;
+    });
   }
 
   Widget _sectionLabel(String text) => Padding(

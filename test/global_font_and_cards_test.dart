@@ -71,12 +71,12 @@ void main() {
     await _settle(tester);
 
     expect(find.text('笔记字体'), findsNothing, reason: '旧名称应全部替换');
-    // 分组标题 + 功能项标题，两处都叫「字体」
-    expect(find.text('字体'), findsNWidgets(2));
+    // v4.9.26：字体已从独立分组并入「外观」分组，只剩功能项一处「字体」
+    expect(find.text('字体'), findsOneWidget);
 
-    // 「字体」分组标题旁不再有圈叹号提示：全页只剩数据备份分组那一个
+    // 全页只剩数据备份分组那一个圈叹号提示
     expect(find.text('!'), findsOneWidget,
-        reason: '「字体」分组标题旁的提示符号应已移除');
+        reason: '字体行无圈叹号提示，全页应只剩数据备份分组那一个');
   });
 
   testWidgets('字体设置经主题全局生效', (tester) async {

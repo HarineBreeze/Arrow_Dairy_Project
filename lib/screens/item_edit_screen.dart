@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../models/item.dart';
 import '../services/item_storage.dart';
 import '../services/trash_storage.dart';
-import 'package:flutter/services.dart';
 import '../widgets/unsaved_guard.dart';
 import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
@@ -352,8 +351,16 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _sectionLabel('物品状态'),
-            _buildStatusRow(),
+            _selectRow(
+              label: '物品状态',
+              value: _wishlist ? '愿望单' : '已拥有',
+              onTap: () => _pickOptionSheet(
+                title: '物品状态',
+                options: const ['已拥有', '愿望单'],
+                current: _wishlist ? '愿望单' : '已拥有',
+                onSelected: (v) => setState(() => _wishlist = v == '愿望单'),
+              ),
+            ),
             const SizedBox(height: 16),
             _sectionLabel('物品名称'),
             _buildNameField(),
@@ -366,8 +373,11 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
               _buildExtraPriceField(),
             ],
             const SizedBox(height: 16),
-            _sectionLabel('物品类型'),
-            _buildCategoryRow(),
+            _selectRow(
+              label: '物品类型',
+              value: _category,
+              onTap: () => _pickCategorySheet(),
+            ),
             const SizedBox(height: 16),
             _sectionLabel('物品图标'),
             _buildIconRow(),
@@ -376,8 +386,17 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
               _sectionLabel('日期'),
               _buildDateRow(),
               const SizedBox(height: 16),
-              _sectionLabel('计算方式'),
-              _buildCalcMethodRow(),
+              _selectRow(
+                label: '计算方式',
+                value: _calcMethod == 0 ? '价格/天数' : '价格/使用次数',
+                onTap: () => _pickOptionSheet(
+                  title: '计算方式',
+                  options: const ['价格/天数', '价格/使用次数'],
+                  current: _calcMethod == 0 ? '价格/天数' : '价格/使用次数',
+                  onSelected: (v) =>
+                      setState(() => _calcMethod = v == '价格/天数' ? 0 : 1),
+                ),
+              ),
               if (_calcMethod == 1) ...[
                 const SizedBox(height: 16),
                 _sectionLabel('使用次数'),
@@ -423,40 +442,6 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
     );
   }
 
-
-  Widget _buildStatusRow() {
-    return Row(
-      children: [
-        _buildStatusChip('已拥有', false),
-        const SizedBox(width: 8),
-        _buildStatusChip('愿望单', true),
-      ],
-    );
-  }
-
-  Widget _buildStatusChip(String label, bool wishlistValue) {
-    final sel = _wishlist == wishlistValue;
-    final accent = wishlistValue
-        ? const Color(0xFFE58BA0)
-        : const Color(0xFF3E8E6D);
-    return GestureDetector(
-      onTap: () => setState(() => _wishlist = wishlistValue),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
-        decoration: BoxDecoration(
-          color: sel ? accent : AppPalette.c(0xFFFFFFFF),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            color: sel ? Colors.white : AppPalette.c(0xFF647A70),
-          ),
-        ),
-      ),
-    );
-  }
 
   Future<double?> _inputAmountDialog(String title, double initial) async {
     final ctrl = TextEditingController(
@@ -627,6 +612,166 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
   double get price =>
       double.tryParse(_priceCtrl.text.trim()) ?? 0;
 
+  /// v4.9.26：个人信息页同款「标签 — 当前值 ›」行，点整行弹底部选择层。
+  Widget _selectRow({
+    required String label,
+    required String value,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      decoration: _box(),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          Haptics.light();
+          onTap();
+        },
+        child: SizedBox(
+          height: 48,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 76,
+                  child: Text(label,
+                      style: TextStyle(
+                          fontSize: 15, color: AppPalette.c(0xFF24382F))),
+                ),
+                Expanded(
+                  child: Text(
+                    value,
+                    textAlign: TextAlign.right,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        fontSize: 14, color: AppPalette.c(0xFF647A70)),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                AppIcon(AppIcons.chevR,
+                    size: 16, color: AppPalette.c(0xFFC6D6CD)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 通用底部选择层：标题 + 选项列表 + 当前项打勾（个人信息页性别弹层同款）。
+  Future<void> _pickOptionSheet({
+    required String title,
+    required List<String> options,
+    required String current,
+    required ValueChanged<String> onSelected,
+  }) async {
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppPalette.c(0xFFFFFFFF),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 6),
+              child: Text('选择$title',
+                  style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: AppPalette.c(0xFF24382F))),
+            ),
+            for (final opt in options)
+              InkWell(
+                onTap: () => Navigator.pop(ctx, opt),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  child: Row(
+                    children: [
+                      Text(opt,
+                          style: TextStyle(
+                              fontSize: 14, color: AppPalette.c(0xFF647A70))),
+                      const Spacer(),
+                      if (opt == current)
+                        const AppIcon(AppIcons.check,
+                            size: 20, color: Color(0xFF3E8E6D)),
+                    ],
+                  ),
+                ),
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (picked == null || !mounted) return;
+    onSelected(picked);
+  }
+
+  /// 物品类型选择层：已有分类 + 当前自定义分类 + 「自定义」入口。
+  Future<void> _pickCategorySheet() async {
+    final options = List<String>.from(kCategories);
+    if (!options.contains(_category)) options.add(_category);
+    const custom = '自定义…';
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppPalette.c(0xFFFFFFFF),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 6),
+              child: Text('选择物品类型',
+                  style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: AppPalette.c(0xFF24382F))),
+            ),
+            for (final opt in [...options, custom])
+              InkWell(
+                onTap: () => Navigator.pop(ctx, opt),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  child: Row(
+                    children: [
+                      Text(opt,
+                          style: TextStyle(
+                              fontSize: 14, color: AppPalette.c(0xFF647A70))),
+                      const Spacer(),
+                      if (opt != custom && opt == _category)
+                        const AppIcon(AppIcons.check,
+                            size: 20, color: Color(0xFF3E8E6D)),
+                    ],
+                  ),
+                ),
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (picked == null || !mounted) return;
+    if (picked == custom) {
+      await _addCustomCategory();
+      return;
+    }
+    setState(() {
+      _category = picked;
+      _icon = kCategoryIcons[picked]?.first ?? kFallbackIcons.first;
+    });
+  }
+
   /// 小节标题：与事件编辑页同一套（灰色小字、加粗、左侧留 4px）
   Widget _sectionLabel(String text) => Padding(
         padding: const EdgeInsets.only(left: 4, bottom: 8),
@@ -659,53 +804,6 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
           contentPadding: EdgeInsets.symmetric(vertical: 14),
         ),
       ),
-    );
-  }
-
-  Widget _buildCategoryRow() {
-    return Wrap(
-      spacing: 6,
-      runSpacing: 6,
-      children: [
-        ...kCategories.map((c) {
-          final sel = c == _category;
-          return GestureDetector(
-            onTap: () => setState(() {
-              _category = c;
-              _icon = kCategoryIcons[c]!.first;
-            }),
-            child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-              decoration: BoxDecoration(
-                color: sel ? _accent : AppPalette.c(0xFFFFFFFF),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Text(
-                c,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: sel ? Colors.white : AppPalette.c(0xFF647A70),
-                ),
-              ),
-            ),
-          );
-        }),
-        GestureDetector(
-          onTap: _addCustomCategory,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-            decoration: BoxDecoration(
-              color: AppPalette.c(0xFFFFFFFF),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Text(
-              '自定义',
-              style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF647A70)),
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -868,34 +966,6 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildCalcMethodRow() {
-    final methods = [0, 1];
-    final labels = ['价格/天数', '价格/使用次数'];
-    return Wrap(
-      spacing: 8,
-      children: List.generate(methods.length, (i) {
-        final sel = _calcMethod == methods[i];
-        return GestureDetector(
-          onTap: () => setState(() => _calcMethod = methods[i]),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: sel ? _accent : AppPalette.c(0xFFFFFFFF),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Text(
-              labels[i],
-              style: TextStyle(
-                fontSize: 13,
-                color: sel ? Colors.white : AppPalette.c(0xFF647A70),
-              ),
-            ),
-          ),
-        );
-      }),
     );
   }
 
