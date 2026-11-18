@@ -8,7 +8,6 @@ import 'package:path_provider_platform_interface/src/method_channel_path_provide
 
 import 'package:ayodiray/models/diary_entry.dart';
 import 'package:ayodiray/screens/trash_screen.dart';
-import 'package:ayodiray/services/trash_storage.dart';
 import 'package:ayodiray/widgets/app_icons.dart';
 
 /// v4.9.21 回收站交互回归：
@@ -16,7 +15,7 @@ import 'package:ayodiray/widgets/app_icons.dart';
 /// 2. 顶栏「还原」弹出菜单：选择性还原（选择模式）/ 全部还原；
 /// 3. 顶栏「删除」弹出菜单：选择性删除（含全选）/ 清空回收站；
 /// 4. 选择模式无提示语、勾选圆圈里的对勾居中；
-/// 5. 旧版本拼进副标题的 mood emoji 在读档时被清理。
+/// 5. 旧版本拼进副标题的 mood emoji 在读档时被清理，残留的废弃字段被无视。
 class _FakePathProvider extends PathProviderPlatform {
   final String path;
   _FakePathProvider(this.path);
@@ -54,8 +53,7 @@ void main() {
     PathProviderPlatform.instance = MethodChannelPathProvider();
   });
 
-  Map<String, dynamic> diaryJson(String id, String title,
-      {String mood = ''}) {
+  Map<String, dynamic> diaryJson(String id, String title) {
     final now = DateTime(2026, 11, 10, 9, 30);
     return DiaryEntry(
       id: id,
@@ -64,7 +62,6 @@ void main() {
       createdAt: now,
       updatedAt: now,
       publishDate: now,
-      mood: mood,
     ).toJson();
   }
 
@@ -138,7 +135,10 @@ void main() {
         bizId: 'd1',
         title: '带表情的旧笔记',
         subtitle: '2026.11.10 · 😄',
-        data: diaryJson('d1', '带表情的旧笔记', mood: '😄'),
+        // 模拟旧备份：data 里残留 mood / weather 字段，读取时应被无视
+        data: diaryJson('d1', '带表情的旧笔记')
+          ..['mood'] = '😄'
+          ..['weather'] = '☀️',
       ),
     ]);
 
@@ -147,9 +147,13 @@ void main() {
 
     expect(find.text('2026.11.10'), findsOneWidget);
     expect(find.textContaining('😄'), findsNothing);
-    // 回写落盘：记录的 subtitle 字段不再带表情（data 里保留原始 mood 字段）
+    // 回写落盘：记录的 subtitle 字段不再带表情
     final raw = readTrashRaw().first as Map<String, dynamic>;
     expect(raw['subtitle'], '2026.11.10');
+    // data 里残留的 mood / weather 被原样保留但不参与任何展示，读取无异常
+    final data = raw['data'] as Map<String, dynamic>;
+    expect(data['mood'], '😄');
+    expect(data['weather'], '☀️');
   });
 
   testWidgets('还原：顶栏按钮 → 选择模式 → 多选确认 → 回到日记列表', (tester) async {

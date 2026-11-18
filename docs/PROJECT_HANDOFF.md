@@ -255,7 +255,8 @@ lib/
 | B 组笔误 | ✅ v4.9.32 已清 | 5 处 `;;` 双分号 |
 | **C 组冗余参数** | ⬜ 未动 | `UserProfile.validityLabel` 的 `owned`（注释自认兼容参数，函数体未用，改签名需连带改 10+ 调用/测试）；`_DashedRRectPainter` 的 dashWidth/dashGap/strokeWidth（全用默认值） |
 | **E 组 lint** | ⬜ 未动 | 约 117 条 info：`prefer_const_constructors`、未用 import、`use_build_context_synchronously` 等，仅整洁度 |
-| **兼容逻辑** | ⛔ 勿删 | `diary_entry.mood`、`countdown_event.loop`、`app_settings` 旧开关/主题缺字段回落、`asset_storage` 理财→基金迁移、`trash_storage` 旧档兜底、`todo_text` 旧 `[ ]/[x]` 格式 —— 老用户数据升级路径 |
+| 兼容逻辑 | ✅ v4.9.33 精简 | `diary_entry` 的 mood / weather 已彻底删除；旧备份含这两个字段时 `fromJson` 不再读取，自动无视、不报错、不回写 |
+| 兼容逻辑 | ⛔ 勿删 | `countdown_event.loop`、`app_settings` 旧开关/主题缺字段回落、`asset_storage` 理财→基金迁移、`trash_storage` 旧档兜底、`todo_text` 旧 `[ ]/[x]` 格式 —— 老用户数据升级路径 |
 
 ### 产品待优化（灵感池，未立项）
 
