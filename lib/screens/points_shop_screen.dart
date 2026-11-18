@@ -63,7 +63,7 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
       return;
     }
     if (profile.points < item.price) {
-      _toast('积分不足，还差 ${item.price - profile.points} 积分');
+      _toast('积分不足');
       return;
     }
 
