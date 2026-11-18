@@ -26,7 +26,6 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
   late final TextEditingController _amountCtrl;
   late final TextEditingController _iconCtrl;
   late String _type;
-  bool _saving = false;
 
   final GlobalKey<SaveDoneButtonState> _doneKey =
       GlobalKey<SaveDoneButtonState>();
@@ -129,7 +128,6 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
 
   Future<void> _save() async {
     final amount = double.tryParse(_amountCtrl.text.trim()) ?? 0;
-    setState(() => _saving = true);
     Haptics.light();
     final a = widget.asset ??
         Asset(id: DateTime.now().microsecondsSinceEpoch.toString());

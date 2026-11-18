@@ -155,15 +155,6 @@ class HighlightEditingController extends TextEditingController {
     );
   }
 
-  TextDecoration? _decoration(TextFormat f) {
-    final list = <TextDecoration>[];
-    if (f.underline == true) list.add(TextDecoration.underline);
-    if (f.strike == true) list.add(TextDecoration.lineThrough);
-    if (list.isEmpty) return null;
-    if (list.length == 1) return list.first;
-    return TextDecoration.combine(list);
-  }
-
   static Color _parseColor(String hex) {
     var h = hex.replaceAll('#', '');
     if (h.length == 6) h = 'FF$h';

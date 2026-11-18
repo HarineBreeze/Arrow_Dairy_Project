@@ -741,7 +741,7 @@ class _ItemCardState extends State<_ItemCard> {
           ),
         ),
       )
-    );;
+    );
   }
 
   // ---------- 愿望单卡片 ----------

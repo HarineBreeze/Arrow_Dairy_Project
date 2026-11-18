@@ -53,7 +53,6 @@ class FormatToolbarState extends State<FormatToolbar> {
     '#FFC7DA',
     '#E2D1FF',
   ];
-  static const List<String> _hlNames = ['黄', '绿', '蓝', '粉', '紫'];
   static const List<double> _sizes = [14, 16, 19, 23, 28];
   static const List<String> _sizeLabels = ['小', '常', '中', '大', '特大'];
 
@@ -111,10 +110,6 @@ class FormatToolbarState extends State<FormatToolbar> {
     _lockStart = null;
     _lockEnd = null;
   }
-
-  /// 当前生效区间所在的列表标记（不是列表行则为 null）。
-  ListMark? get _currentMark =>
-      ListText.markAt(widget.controller.text, _range[0]);
 
   bool _isOn(String key, dynamic value) {
     final rg = _range;

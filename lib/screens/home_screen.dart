@@ -596,10 +596,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
   }
 
-  void _openSearch() {
-    setState(() => _searching = true);
-  }
-
   void _closeSearch() {
     setState(() {
       _searching = false;
@@ -1945,7 +1941,7 @@ class _PinnedMiniCard extends StatelessWidget {
           ),
         ),
       )
-    );;
+    );
   }
 }
 
@@ -2316,7 +2312,7 @@ class _DiaryCard extends StatelessWidget {
             ),
           ),
         )
-      );;
+      );
     }
     // 非置顶：封条带在上（🔒已加密 / 发布日期，斜纹底），白色主体在下
     //（副标题 + 记录时间），整卡无描边 —— 与封条档案袋观感一致。
@@ -2388,7 +2384,7 @@ class _DiaryCard extends StatelessWidget {
           ),
         ),
       )
-    );;
+    );
   }
 
   /// 置顶加密卡底纹：与封条卡同款 45° 斜纹，叠一层极淡的置顶粉
@@ -2509,37 +2505,6 @@ class _DashedRRectPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => false;
-}
-
-/// 斜纹保密封带：浅灰底 + 45° 斜线纹理
-class _StripeBandPainter extends CustomPainter {
-  _StripeBandPainter() : dark = AppPalette.dark;
-
-  /// 构建时的主题快照：切换主题后 RenderCustomPaint 会因实例
-  /// 不同而询问 shouldRepaint，据此精确重绘，避免斜纹/底色
-  /// 残留上一个主题的颜色（const painter 会被 RenderObject 跳过）。
-  final bool dark;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    // 同 _SealStripePainter：裁掉 4px 线宽向带子边界外的溢出
-    canvas.clipRect(Offset.zero & size);
-    canvas.drawRect(
-        Offset.zero & size, Paint()..color = AppPalette.c(0xFFEEF4F0));
-    final paint = Paint()
-      ..color = AppPalette.c(0xFFE4EDE8)
-      ..strokeWidth = 4
-      ..style = PaintingStyle.stroke;
-    // 以 16px 为周期画 45° 斜线，覆盖整个矩形
-    for (double x = -size.height; x < size.width + size.height; x += 16) {
-      canvas.drawLine(
-          Offset(x, size.height), Offset(x + size.height, 0), paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _StripeBandPainter oldDelegate) =>
-      dark != oldDelegate.dark;
 }
 
 class _EmptyState extends StatelessWidget {

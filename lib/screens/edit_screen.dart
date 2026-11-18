@@ -448,21 +448,6 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     }
   }
 
-  void _closeToolbar() {
-    setState(() {
-      _showToolbar = false;
-      _selecting = false;
-    });
-    _hadSelection = false;
-    // 清除选区变回光标，下次点正文才弹键盘
-    final pos = _contentCtrl.selection.isValid
-        ? _contentCtrl.selection.end
-        : _contentCtrl.text.length;
-    _contentCtrl.selection = TextSelection.collapsed(offset: pos);
-    _contentFocus.unfocus();
-    SystemChannels.textInput.invokeMethod('TextInput.hide');
-  }
-
   /// 点击 # / @：在框选文字前插入符号，使其成为话题或物品引用。
   /// - # 任意文字都可成为话题
   /// - @ 仅当框选文字在物资清单中存在时才插入，否则提示

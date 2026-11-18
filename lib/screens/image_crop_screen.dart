@@ -140,13 +140,6 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
     }
   }
 
-  /// 图片以 contain 方式放进可用区域后的显示尺寸
-  Size _fitSize(Size constraint, int imgW, int imgH) {
-    final double scale =
-        math.min(constraint.width / imgW, constraint.height / imgH);
-    return Size(imgW * scale, imgH * scale);
-  }
-
   void _initRect(Size disp) {
     _rect = initialCropRect(disp);
   }

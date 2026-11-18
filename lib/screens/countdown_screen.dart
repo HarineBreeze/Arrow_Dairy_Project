@@ -336,13 +336,6 @@ class CountdownScreenState extends State<CountdownScreen> {
     );
   }
 
-  void _openSearch() {
-    setState(() {
-      _searching = true;
-      _calendarExpanded = false;
-    });
-  }
-
   void _closeSearch() {
     setState(() {
       _searching = false;
@@ -608,7 +601,7 @@ class CountdownScreenState extends State<CountdownScreen> {
           ),
         ),
       )
-    );;
+    );
   }
 
   // ---------- 顶栏 ----------
