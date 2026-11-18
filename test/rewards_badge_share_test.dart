@@ -15,7 +15,7 @@ import 'package:ayodiray/services/reward_service.dart';
 import 'package:ayodiray/services/user_storage.dart';
 import 'package:ayodiray/widgets/identity_badge.dart';
 
-/// 积分 / 身份铭牌 / 兑换码 / 卡片分享的回归测试。
+/// 灵感 / 身份铭牌 / 兑换码 / 卡片分享的回归测试。
 class _FakePathProvider extends PathProviderPlatform {
   final String path;
   _FakePathProvider(this.path);
@@ -60,7 +60,7 @@ void main() {
   }
 
   group('档案模型', () {
-    test('积分 / 铭牌 / 兑换记录可往返序列化', () {
+    test('灵感 / 铭牌 / 兑换记录可往返序列化', () {
       final p = UserProfile(
         nickname: '阿尤',
         points: 120,
@@ -75,7 +75,7 @@ void main() {
       expect(back.lastWriteReward, '2026-11-13');
     });
 
-    test('旧档案缺字段时回落为 0 积分 / 普通版身份牌', () {
+    test('旧档案缺字段时回落为 0 点 / 普通版身份', () {
       final back = UserProfile.fromJson({'nickname': '小明'});
       expect(back.points, 0);
       expect(back.badge, UserProfile.badgeNormal);
@@ -134,7 +134,7 @@ void main() {
       expect(again.points, 50);
     });
 
-    test('身份牌有效期文案：永久 / 剩余x天', () {
+    test('身份有效期文案：永久 / 剩余x天', () {
       final vip = UserProfile.badgeVip;
       // 永久拥有 → 永久
       expect(UserProfile.validityLabel(vip, owned: true, expiresAt: null),
@@ -168,7 +168,7 @@ void main() {
   });
 
   group('兑换码', () {
-    test('ayouriji：+100 积分，重复兑换被拒', () async {
+    test('ayouriji：+100 点，重复兑换被拒', () async {
       final first = await RewardService.redeem(' ayouriji ');
       expect(first.ok, isTrue);
       expect(first.message, contains('+100'));
@@ -180,7 +180,7 @@ void main() {
       expect((await UserStorage.load()).points, 100, reason: '不能重复加分');
     });
 
-    test('17381113325：每次 +1000 积分，不限次数', () async {
+    test('17381113325：每次 +1000 点，不限次数', () async {
       final first = await RewardService.redeem('17381113325');
       expect(first.ok, isTrue);
       expect(first.message, contains('+1000'));
@@ -194,7 +194,7 @@ void main() {
       expect(p.redeemedCodes, isEmpty, reason: '无限次码不写已使用记录');
     });
 
-    test('13031210237：每次 -1000 积分，不限次数，最低为 0 不为负', () async {
+    test('13031210237：每次 -1000 点，不限次数，最低为 0 不为负', () async {
       // 先用加分码攒到 2500
       await RewardService.redeem('17381113325');
       await RewardService.redeem('17381113325');
@@ -218,14 +218,14 @@ void main() {
       expect(third.ok, isTrue);
       expect(third.message, contains('-100'));
       p = await UserStorage.load();
-      expect(p.points, 0, reason: '积分最低为 0');
+      expect(p.points, 0, reason: '灵感最低为 0');
 
       // 已经是 0 再兑，仍为 0
       await RewardService.redeem('13031210237');
       expect((await UserStorage.load()).points, 0);
     });
 
-    test('neice：获得内测版身份牌', () async {
+    test('neice：获得内测版身份', () async {
       final r = await RewardService.redeem('neice');
       expect(r.ok, isTrue);
       expect(r.message, contains('内测版'));
@@ -235,7 +235,7 @@ void main() {
       expect(p.owns(UserProfile.badgeNormal), isTrue, reason: '普通版恒在');
     });
 
-    test('vip：获得 VIP 身份牌（覆盖已有佩戴）', () async {
+    test('vip：获得 VIP 身份（覆盖已有佩戴）', () async {
       await writeProfile(UserProfile(badge: UserProfile.badgeBeta));
       final r = await RewardService.redeem('vip');
       expect(r.ok, isTrue);
@@ -282,7 +282,7 @@ void main() {
     });
   });
 
-  group('身份牌组件', () {
+  group('身份组件', () {
     testWidgets('普通版：灰底白字', (tester) async {
       await tester.pumpWidget(const MaterialApp(
         home: Center(child: IdentityBadge(badge: UserProfile.badgeNormal)),
@@ -335,8 +335,8 @@ void main() {
     });
   });
 
-  group('个人信息页', () {
-    testWidgets('显示身份牌与积分', (tester) async {
+  group('档案页', () {
+    testWidgets('显示身份与灵感', (tester) async {
       await tester.binding.setSurfaceSize(const Size(600, 1200));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -347,14 +347,14 @@ void main() {
       ));
       await tester.pump();
 
-      expect(find.text('身份牌'), findsOneWidget);
+      expect(find.text('身份'), findsOneWidget);
       expect(find.text('VIP'), findsOneWidget);
-      expect(find.text('积分'), findsOneWidget);
+      expect(find.text('灵感'), findsOneWidget);
       expect(find.text('120'), findsOneWidget);
       expect(find.text('分'), findsOneWidget);
     });
 
-    testWidgets('默认佩戴普通版身份牌', (tester) async {
+    testWidgets('默认佩戴普通版身份', (tester) async {
       await tester.binding.setSurfaceSize(const Size(600, 1200));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -375,7 +375,7 @@ void main() {
         home: SettingsScreen(
           redeemOverride: (code) async {
             got = code;
-            return const RedeemOutcome(true, '兑换成功，+100 积分');
+            return const RedeemOutcome(true, '兑换成功，+100 点');
           },
         ),
       ));
@@ -391,7 +391,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(got, 'ayouriji');
-      expect(find.text('兑换成功，+100 积分'), findsOneWidget);
+      expect(find.text('兑换成功，+100 点'), findsOneWidget);
       // 排空提示自动收起定时器
       await tester.pump(const Duration(seconds: 2));
     });

@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../models/user_profile.dart';
 
-/// 身份牌：昵称旁的小胶囊。
+/// 身份：昵称旁的小胶囊。
 ///
-/// 视觉规范（与侧边栏、个人信息页、积分商城共用一份实现）：
+/// 视觉规范（与侧边栏、档案页、灵感杂货店共用一份实现）：
 /// - 普通版：灰底 `#8FA09A` + 白字（默认佩戴）
 /// - 内测版：橙底 `#F08C3A` + 白字
 /// - VIP / 终身VIP：红底 `#CB5C50` + 白字
@@ -15,7 +15,7 @@ import '../models/user_profile.dart';
 class IdentityBadge extends StatelessWidget {
   final String badge;
 
-  /// 放大倍数：积分商城的商品预览用它把牌放大到可看清的尺寸
+  /// 放大倍数：灵感杂货店的商品预览用它把牌放大到可看清的尺寸
   final double scale;
 
   const IdentityBadge({Key? key, required this.badge, this.scale = 1})
@@ -25,7 +25,7 @@ class IdentityBadge extends StatelessWidget {
   static bool isNormal(String badge) =>
       badge.isEmpty || badge == UserProfile.badgeNormal;
 
-  /// 身份牌文案（未知 id 返回 null）
+  /// 身份文案（未知 id 返回 null）
   static String? labelOf(String badge) {
     switch (badge) {
       case '':
@@ -44,7 +44,7 @@ class IdentityBadge extends StatelessWidget {
     }
   }
 
-  /// 身份牌底色
+  /// 身份底色
   static Color? colorOf(String badge) {
     switch (badge) {
       case '':

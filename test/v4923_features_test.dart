@@ -230,7 +230,7 @@ void main() {
         ),
       ));
       await tester.pump();
-      await tester.tap(find.text('身份牌'));
+      await tester.tap(find.text('身份'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
       await tester.pump(const Duration(milliseconds: 400));
@@ -239,7 +239,7 @@ void main() {
           .data;
     }
 
-    testWidgets('身份牌选择页：VIP 剩余天数随购买的实际天数增加', (tester) async {
+    testWidgets('身份选择页：VIP 剩余天数随购买的实际天数增加', (tester) async {
       await tester.binding.setSurfaceSize(const Size(600, 1200));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -262,7 +262,7 @@ void main() {
   });
 
   group('VIP周卡', () {
-    test('商品定义：1400 积分 / 限 6 次 / 每次 7 天', () {
+    test('商品定义：1400 点 / 限 6 次 / 每次 7 天', () {
       final item = RewardService.shopBadgeOf('vipWeekCard')!;
       expect(item.price, 1400);
       expect(item.limit, 6);
@@ -299,11 +299,11 @@ void main() {
       expect(p.vipCardCount, 1);
     });
 
-    test('周卡积分不足 / 达到 6 次上限：拒绝且不扣分', () async {
+    test('周卡灵感不足 / 达到 6 次上限：拒绝且不扣分', () async {
       writeProfile(UserProfile(points: 1399));
       var r = await RewardService.buyVipCard('vipWeekCard');
       expect(r.ok, isFalse);
-      expect(r.message, contains('积分不足'));
+      expect(r.message, contains('灵感不足'));
       expect((await UserStorage.load()).points, 1399);
 
       writeProfile(UserProfile(points: 99999, vipWeekCardCount: 6));
@@ -313,7 +313,7 @@ void main() {
       expect((await UserStorage.load()).points, 99999);
     });
 
-    testWidgets('商城展示 VIP周卡：1400 积分 / 0/6 / 7日权益', (tester) async {
+    testWidgets('杂货店展示 VIP周卡：1400 点 / 0/6 / 7日权益', (tester) async {
       await tester.binding.setSurfaceSize(const Size(600, 1600));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -326,7 +326,7 @@ void main() {
 
       expect(find.byKey(const ValueKey('shop-item-vipWeekCard')), findsOneWidget);
       expect(find.text('VIP周卡'), findsOneWidget);
-      expect(find.text('1400 积分'), findsOneWidget);
+      expect(find.text('1400 点'), findsOneWidget);
       expect(find.text('0/6'), findsOneWidget);
       expect(find.text('兑换后可获得VIP权益7日'), findsOneWidget);
       await tester.pump(const Duration(seconds: 2));
@@ -350,7 +350,7 @@ void main() {
 
       await tester.tap(find.byKey(const ValueKey('shop-item-vipWeekCard')));
       await tester.pump(const Duration(milliseconds: 300));
-      expect(find.textContaining('是否要花费 1400 积分兑换「VIP周卡」'),
+      expect(find.textContaining('是否要花费 1400 点兑换「VIP周卡」'),
           findsOneWidget);
       expect(find.textContaining('有效期7天'), findsOneWidget);
 
@@ -407,7 +407,7 @@ void main() {
       expect(text.style?.color, Colors.white);
     });
 
-    testWidgets('终身VIP 在身份牌选择页显示「永久」', (tester) async {
+    testWidgets('终身VIP 在身份选择页显示「永久」', (tester) async {
       await tester.binding.setSurfaceSize(const Size(600, 1200));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -422,7 +422,7 @@ void main() {
       ));
       await tester.pump();
 
-      await tester.tap(find.text('身份牌'));
+      await tester.tap(find.text('身份'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
       await tester.pump(const Duration(milliseconds: 400));

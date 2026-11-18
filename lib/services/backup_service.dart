@@ -185,7 +185,7 @@ class BackupService {
   /// - id 相同：日记有 updatedAt，取更新的一方；物品 / 资产 / 事件没有
   ///   时间戳，一律保留本地（本地才是用户正在维护的数据）；
   /// - id 不同：直接追加；
-  /// - 个人信息、字体设置：保留本地，合并不改变当前使用中的外观。
+  /// - 档案、字体设置：保留本地，合并不改变当前使用中的外观。
   ///
   /// 返回合并统计（各项合计的新增 / 更新条数）。
   static Future<MergeResult> mergeBackup(BackupData incoming) async {

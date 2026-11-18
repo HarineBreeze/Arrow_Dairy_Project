@@ -101,7 +101,7 @@ class SideMenu extends StatelessWidget {
                     color: AppPalette.c(0xFF24382F),
                   ),
                 ),
-                // 身份牌：普通版（灰）/ 内测版（橙）/ VIP（红）/ 诞生日（绿）
+                // 身份：普通版（灰）/ 内测版（橙）/ VIP（红）/ 诞生日（绿）
                 // v4.9.20 起普通版也常驻展示，佩戴什么就显示什么
                 const SizedBox(height: 5),
                 IdentityBadge(badge: profile.badge),

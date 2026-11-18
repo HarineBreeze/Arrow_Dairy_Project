@@ -105,8 +105,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         CurvedAnimation(parent: _menuController, curve: Curves.easeOutCubic);
     _expandedKeys.addAll(_defaultExpandedKeys());
     _listCtrl.addListener(_onListScroll);
-    // 积分 / 铭牌在设置页兑换、发布奖励后更新：档案一变就重新读取，
-    // 侧边栏的铭牌与个人信息页的积分始终保持最新。
+    // 灵感 / 铭牌在设置页兑换、发布奖励后更新：档案一变就重新读取，
+    // 侧边栏的铭牌与档案页的灵感始终保持最新。
     UserStorage.revision.addListener(_onProfileChanged);
     _load();
     _loadProfile();
@@ -307,11 +307,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
     if (result == true) {
       _load();
-      // 每日首次「发布笔记」奖励 20 积分（新建才算发布，编辑旧笔记不算）
+      // 每日首次「发布笔记」奖励 20 点（新建才算发布，编辑旧笔记不算）
       if (isNew) {
         final earned = await RewardService.awardDailyWrite();
         if (earned > 0 && mounted) {
-          AppToast.show(context, '今日首次发布，+$earned 积分');
+          AppToast.show(context, '今日首次发布，+$earned 点');
         }
       }
     }
@@ -1048,7 +1048,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         _openEditor();
                       }
                     },
-                    child: const AppIcon(AppIcons.plus),
+                    // v4.9.35：右下角主操作按钮由「加号」改为「斜笔」编辑图标
+                    child: const AppIcon(AppIcons.edit),
                   ),
           ),
         ),

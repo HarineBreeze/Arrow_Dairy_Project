@@ -9,15 +9,15 @@ import '../widgets/pressable.dart';
 
 import '../theme/app_palette.dart';
 import '../theme/app_theme_scope.dart';
-/// 积分商城：用积分兑换身份牌 / 限时 VIP 权益。
+/// 灵感杂货店：用灵感兑换身份 / 限时 VIP 权益。
 ///
 /// 版式沿用全 App 的「页面底色 + 白色圆角卡 + 灰色节标题」节奏：
-/// 顶部是积分余额卡，下面是「道具兑换」分组里的商品卡
+/// 顶部是剩余灵感卡，下面是「道具兑换」分组里的商品卡
 /// （名称 + 备注 + 价格 + 已兑/上限）。
 ///
 /// 商品卡本身就是按钮（带按压缩放回弹）：
-/// - 已拥有 / 积分不足 / 达到兑换上限：卡片置灰，点击给出对应提示；
-/// - 可兑换：点击弹确认框「是否要花费 x 积分兑换？」。
+/// - 已拥有 / 灵感不足 / 达到兑换上限：卡片置灰，点击给出对应提示；
+/// - 可兑换：点击弹确认框「是否要花费 x 点兑换？」。
 class PointsShopScreen extends StatefulWidget {
   /// 仅测试使用：替换档案读取（避免 widget 测试里走真实文件 IO）
   @visibleForTesting
@@ -63,12 +63,12 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
       return;
     }
     if (profile.points < item.price) {
-      _toast('积分不足');
+      _toast('灵感不足');
       return;
     }
 
     final isTimeCard = item.isVipTimeCard;
-    // 二次确认：积分是不可逆消耗，跟删除一样走两段式
+    // 二次确认：灵感是不可逆消耗，跟删除一样走两段式
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -76,9 +76,9 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: Text(
           isTimeCard
-              ? '是否要花费 ${item.price} 积分兑换「${item.name}」？\n'
+              ? '是否要花费 ${item.price} 点兑换「${item.name}」？\n'
                   '兑换后立即生效，${item.effectLabel}。'
-              : '是否要花费 ${item.price} 积分兑换「${item.name}」？',
+              : '是否要花费 ${item.price} 点兑换「${item.name}」？',
           style: const TextStyle(fontSize: 13, height: 1.7),
         ),
         actions: [
@@ -125,7 +125,7 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
     AppThemeScope.watch(context);
     final profile = _profile;
     return Scaffold(
-      appBar: AppBar(title: const Text('积分商城')),
+      appBar: AppBar(title: const Text('灵感杂货店')),
       body: profile == null
           ? const SizedBox.shrink()
           : ListView(
@@ -156,7 +156,7 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 4),
                   child: Text(
-                    '积分是兑换道具的货币，可通过参与活动的方式获得',
+                    '灵感是兑换道具的货币，可通过参与活动的方式获得',
                     style: TextStyle(
                       fontSize: 11,
                       height: 1.7,
@@ -169,7 +169,7 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
     );
   }
 
-  /// 积分余额卡：左侧「我的积分」、右侧大数字。
+  /// 剩余灵感卡：左侧「剩余灵感」、右侧大数字。
   /// 不加图标与底纹，文字与下方商品卡名称同一条左对齐线。
   Widget _buildBalanceCard(UserProfile profile) {
     return Container(
@@ -182,7 +182,7 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
         children: [
           Expanded(
             child: Text(
-              '我的积分',
+              '剩余灵感',
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
@@ -255,7 +255,7 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    '${item.price} 积分',
+                    '${item.price} 点',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,

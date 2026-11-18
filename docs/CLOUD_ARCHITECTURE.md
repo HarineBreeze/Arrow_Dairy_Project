@@ -24,7 +24,7 @@
 | 用户 ID | 本地自增，从 `10001` 起，固化在档案；序号单独存盘 | `user_profile.dart:23,58-60`、`user_storage.dart:17-22` |
 | 权益字段 |  nickname / gender / avatarPath / points / badge / ownedBadges / redeemedCodes / lastWriteReward / vipCardCount / vipWeekCardCount / vipCardExpireAt / userId / registeredAt | `user_profile.dart:29-63`、`toJson:168-182` |
 | 权益规则 | 每日首发 +20 分；VIP 日卡 24h（上限 30 次）、周卡 7 天（上限 6 次），累加到同一到期时间 | `reward_service.dart:61-70` |
-| 兑换码 | 积分码 / 身份牌码 / 无限次积分码 / 无限次扣分码，均记在 `redeemedCodes`（无限次码除外） | `reward_service.dart:72-93` |
+| 兑换码 | 灵感码 / 身份码 / 无限次灵感码 / 无限次扣分码，均记在 `redeemedCodes`（无限次码除外） | `reward_service.dart:72-93` |
 | 存储文件 | `user_profile.json`、`user_id_seq.json` 等，均在 `getApplicationDocumentsDirectory()` | `user_storage.dart:12-22` |
 | 测试 | 55 个测试文件、442 项测试全绿 | `test/` |
 
@@ -36,7 +36,7 @@
 
 本地可以保存和云端一模一样的副本，但**最终以谁为准**决定了谁能管理谁。
 
-- 若 VIP / 积分只存在本机：服务端无处可写；就算改了本地文件，下次同步本地旧值会反向覆盖云端——**管理权为零**。
+- 若 VIP / 灵感只存在本机：服务端无处可写；就算改了本地文件，下次同步本地旧值会反向覆盖云端——**管理权为零**。
 - 因此：想保留"远程给谁加 VIP、封谁、开哪个功能"的能力，这些状态就**必须有且只有服务端说了算**。这是定义，不是选择题。
 
 ---
@@ -52,7 +52,7 @@
 补充说明：
 
 - B 类不是"用户的数据"而是"你们之间契约的记录"。云端存"账号 VIP 到 2026-12-01"隐私顾虑极低，合规压力小；这与"不碰用户内容"的承诺不冲突。
-- `lastWriteReward`（每日首发奖励日期）虽然记在本地，但因为积分（`points`）已服务端权威，它最终也要以云端为准，否则用户改本地日期可无限刷分。
+- `lastWriteReward`（每日首发奖励日期）虽然记在本地，但因为灵感（`points`）已服务端权威，它最终也要以云端为准，否则用户改本地日期可无限刷分。
 - `nickname` / `gender` / `avatarPath` / `registeredAt` 归 A 类（本地权威），但云端可留只读副本用于展示。
 
 ---
@@ -65,9 +65,9 @@
 |---|---|---|
 | `userId` | string (PK) | 本地生成的顺序 ID，云端认它为主键 |
 | `vipExpireAt` | string (ISO8601) | VIP 到期时间；空 = 无生效中限时权益。对应本地 `vipCardExpireAt` |
-| `points` | int | 积分余额 |
-| `ownedBadges` | json array | 已拥有身份牌，`normal` 恒在首位 |
-| `badge` | string | 当前佩戴身份牌 |
+| `points` | int | 剩余灵感 |
+| `ownedBadges` | json array | 已拥有身份，`normal` 恒在首位 |
+| `badge` | string | 当前佩戴身份 |
 | `redeemedCodes` | json array | 已用兑换码（无限次码不入列） |
 | `vipCardCount` / `vipWeekCardCount` | int | 限次卡已兑次数，与本地规则一致（30 / 6 上限） |
 | `banned` | bool | 封禁标记（新增，本地目前无） |
@@ -138,7 +138,7 @@
 | 操作 | 涉及文件 | 说明 |
 |---|---|---|
 | 抽象权益数据源 | 新建 `services/entitlement_repository.dart` | 定义 `read(userId)` / `watch(userId)` 接口，本地实现读 `user_profile.json` |
-| 收敛权益写入口 | `reward_service.dart`、`user_storage.dart` | 所有 VIP/积分/badge 改动走统一入口，禁止散落直接改字段 |
+| 收敛权益写入口 | `reward_service.dart`、`user_storage.dart` | 所有 VIP/灵感/badge 改动走统一入口，禁止散落直接改字段 |
 | UI 改用数据源 | `profile_edit_screen.dart`、主页/侧边栏 | 从直接读 `UserProfile` 字段改为读 repository |
 
 验收：442 项测试全过，功能无变化。
@@ -187,7 +187,7 @@
 ### 12.1 核心定义
 
 - **账号是"钥匙"，不是"新身份"**：账号密码只是访问某个 uid 的凭证，**不新建云端 uid**。
-- **绑定而非注册新号**：用户在本机已有 uid（本地生成，`10001` 起），注册时把这个 uid 绑到账号上，历史数据 / 积分 / VIP 原地保留。
+- **绑定而非注册新号**：用户在本机已有 uid（本地生成，`10001` 起），注册时把这个 uid 绑到账号上，历史数据 / 灵感 / VIP 原地保留。
 - **换设备 = 凭账号找回同一个 uid**，权益跟着 uid 走，不跟设备走。
 
 ### 12.2 三条不可违背的约束

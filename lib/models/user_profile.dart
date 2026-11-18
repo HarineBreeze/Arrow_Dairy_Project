@@ -4,19 +4,19 @@ class UserProfile {
   /// 默认昵称：用户从未设置过昵称时展示这个名字。
   static const String defaultNickname = 'AyoDiray';
 
-  /// 身份牌 id：普通版（灰底白字）。默认佩戴、不可丢弃，始终在已拥有列表里。
+  /// 身份 id：普通版（灰底白字）。默认佩戴、不可丢弃，始终在已拥有列表里。
   static const String badgeNormal = 'normal';
 
-  /// 身份牌 id：内测版（橙底白字）
+  /// 身份 id：内测版（橙底白字）
   static const String badgeBeta = 'beta';
 
-  /// 身份牌 id：VIP（红底白字）
+  /// 身份 id：VIP（红底白字）
   static const String badgeVip = 'vip';
 
-  /// 身份牌 id：诞生日（绿底白字，积分商城兑换）
+  /// 身份 id：诞生日（绿底白字，灵感杂货店兑换）
   static const String badgeBirthday = 'birthday';
 
-  /// 身份牌 id：终身VIP（红底白字，兑换码 `zhongshenvip` 获得，永久有效）
+  /// 身份 id：终身VIP（红底白字，兑换码 `zhongshenvip` 获得，永久有效）
   static const String badgeVipForever = 'vip_forever';
 
   /// 顺序用户 ID 的起点：从 10001 起，每份新档案递增 1。
@@ -30,13 +30,17 @@ class UserProfile {
   String gender; // 'male' | 'female' | ''
   String avatarPath; // 空 = 默认头像
 
-  /// 积分余额（兑换码 / 每日首次发布 / 商城消费）
+  /// 生日（yyyy-MM-dd），空 = 未设置；在档案页用年月日滚轮选择。
+  /// 与注册日 registeredAt 相互独立：注册日是系统生成的不可改，生日是用户自填。
+  String birthday;
+
+  /// 剩余灵感（兑换码 / 每日首次发布 / 杂货店消费）
   int points;
 
-  /// 当前佩戴的身份牌，默认 [badgeNormal]
+  /// 当前佩戴的身份，默认 [badgeNormal]
   String badge;
 
-  /// 已拥有的身份牌（[badgeNormal] 恒在首位，其余由兑换码 / 积分商城获得）
+  /// 已拥有的身份（[badgeNormal] 恒在首位，其余由兑换码 / 灵感杂货店获得）
   List<String> ownedBadges;
 
   /// 已使用过的兑换码（同一用户 ID 下每码只能用一次）
@@ -56,7 +60,7 @@ class UserProfile {
   String vipCardExpireAt;
 
   /// 用户 ID：从 10001 起的顺序数，首次启动分配后固化到档案，
-  /// 可在个人信息页复制、侧边栏展示。
+  /// 可在档案页复制、侧边栏展示。
   String userId;
 
   /// 用户注册日（yyyy-MM-dd），即用户 ID 生成当天；「使用时间」由此计算。
@@ -66,6 +70,7 @@ class UserProfile {
     this.nickname = defaultNickname,
     this.gender = '',
     this.avatarPath = '',
+    this.birthday = '',
     this.points = 0,
     this.badge = badgeNormal,
     List<String>? ownedBadges,
@@ -129,7 +134,7 @@ class UserProfile {
     return days < 1 ? 1 : days;
   }
 
-  /// 身份牌在「选择身份牌」弹层里展示的有效期文案：
+  /// 身份在「选择身份」弹层里展示的有效期文案：
   /// VIP 行只要存在生效中的限时权益（日卡 / 周卡累计）就显示「剩余x天」，
   /// 天数随实际购买累加；其余牌以及没有限时权益的 VIP 显示「永久」。
   /// [owned] 保留为兼容参数（是否永久拥有），不再影响限时权益的展示。
@@ -152,7 +157,7 @@ class UserProfile {
     return list;
   }
 
-  /// 是否已拥有某个身份牌
+  /// 是否已拥有某个身份
   bool owns(String badgeId) => ownedBadges.contains(badgeId);
 
   /// VIP 权益到期时间（未设置返回 null）
@@ -169,6 +174,7 @@ class UserProfile {
         'nickname': nickname,
         'gender': gender,
         'avatarPath': avatarPath,
+        'birthday': birthday,
         'points': points,
         'badge': badge,
         'ownedBadges': ownedBadges,
@@ -214,6 +220,8 @@ class UserProfile {
           : json['nickname'] as String,
       gender: json['gender'] as String? ?? '',
       avatarPath: json['avatarPath'] as String? ?? '',
+      // 旧档案无 birthday 字段：回落空串（未设置），零迁移
+      birthday: json['birthday'] as String? ?? '',
       points: (json['points'] as num?)?.toInt() ?? 0,
       badge: current,
       ownedBadges: rawOwned,

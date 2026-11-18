@@ -123,8 +123,8 @@ void main() {
     expect(find.text('女'), findsNothing);
     expect(find.byKey(const ValueKey('profile-gender-row')), findsOneWidget);
 
-    // 昵称 / 性别 / ID / 注册日在同一张白色圆角卡内
-    for (final label in ['昵称', '性别', 'ID', '注册日']) {
+    // 昵称 / 性别 / 生日 / ID / 注册日在同一张白色圆角卡内
+    for (final label in ['昵称', '性别', '生日', 'ID', '注册日']) {
       final containers = tester
           .widgetList<Container>(
               find.ancestor(of: find.text(label), matching: find.byType(Container)))
@@ -228,5 +228,51 @@ void main() {
 
     final saved = await tester.runAsync(() => UserStorage.load());
     expect(saved?.gender, '');
+  });
+
+  test('生日字段：旧档案无字段回落空串，有则保留，toJson 写入', () {
+    // 旧档案无 birthday
+    expect(UserProfile.fromJson({}).birthday, '');
+    expect(UserProfile().birthday, '');
+    // 有 birthday 正常读取
+    final p = UserProfile.fromJson({'birthday': '2000-05-20'});
+    expect(p.birthday, '2000-05-20');
+    // toJson 含 birthday，便于备份/换机带走
+    expect(p.toJson()['birthday'], '2000-05-20');
+  });
+
+  testWidgets('生日行：在性别与 ID 之间，未设置显示「未设置」', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(600, 1200));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(MaterialApp(
+      home: ProfileEditScreen(profile: UserProfile()),
+    ));
+    await tester.pump();
+
+    expect(find.byKey(const ValueKey('profile-birthday-row')), findsOneWidget);
+    expect(find.text('生日'), findsOneWidget);
+    expect(find.text('未设置'), findsOneWidget);
+
+    // 顺序校验：性别行 < 生日行 < ID 行（按出现位置）
+    final genderTop = tester.getTopLeft(find.byKey(const ValueKey('profile-gender-row'))).dy;
+    final birthdayTop = tester.getTopLeft(find.byKey(const ValueKey('profile-birthday-row'))).dy;
+    final idTop = tester.getTopLeft(find.byKey(const ValueKey('profile-user-id-row'))).dy;
+    expect(genderTop, lessThan(birthdayTop));
+    expect(birthdayTop, lessThan(idTop));
+  });
+
+  testWidgets('生日行：已设置时显示「yyyy年M月d日」', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(600, 1200));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(MaterialApp(
+      home: ProfileEditScreen(
+          profile: UserProfile(birthday: '1998-03-07')),
+    ));
+    await tester.pump();
+
+    expect(find.text('1998年3月7日'), findsOneWidget);
+    expect(find.text('未设置'), findsNothing);
   });
 }

@@ -85,7 +85,7 @@ void main() {
 
     test('深色模式未登记的品牌/语义色保持原值', () {
       AppPalette.dark = true;
-      // 竹青主色、危险红、内测橙、身份牌红、渐变绿等都不该被主题改写
+      // 竹青主色、危险红、内测橙、身份红、渐变绿等都不该被主题改写
       for (final k in <int>[
         0xFF3E8E6D, 0xFFCB5C50, 0xFFF08C3A, 0xFF5CA985,
         0xFFFFD666, 0xFF9B6BE0, 0xFFE0576A,

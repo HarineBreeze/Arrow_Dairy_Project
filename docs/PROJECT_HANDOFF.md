@@ -15,7 +15,7 @@
 | 技术栈 | Flutter 3（Dart），无任何网络库；纯本地 JSON 存储 |
 | 核心依赖 | `path_provider`、`image_picker`、`file_picker`、`share_plus`、`path`、`cupertino_icons` |
 | 当前定位 | **离线单机版生活账本**：日记 + 物品 + 资产 + 倒计时四模块打通 |
-| 商业模式现状 | 全功能免费；积分/徽章/兑换码/VIP 为荣誉与留存体系，不锁功能 |
+| 商业模式现状 | 全功能免费；灵感/徽章/兑换码/VIP 为荣誉与留存体系，不锁功能 |
 
 ---
 
@@ -26,14 +26,14 @@ lib/
 ├─ main.dart                    入口：主题订阅、路由表
 ├─ models/                      diary_entry / item / asset / countdown_event / user_profile
 ├─ services/                    各 *_storage（本地 JSON 读写）、app_settings、backup_service、
-│                                reward_service（积分/兑换码/商城）、countdown_reminder
+│                                reward_service（灵感/兑换码/杂货店）、countdown_reminder
 ├─ screens/                     18 个页面（见下）
 ├─ widgets/                     通用组件（pressable / app_icons / save_bar / rich_note_text 等）
 ├─ theme/                       app_palette（语义色板）、app_theme_scope（明暗即时重建）
 └─ utils/                       app_motion / app_sheet / app_toast / haptics / app_version 等
 ```
 
-**18 个页面**：home（日记主页）、edit（笔记编辑）、note_view（笔记浏览）、item_list / item_edit（物品）、asset_screen / asset_edit（资产）、countdown_screen / countdown_edit（事件）、global_search、trash（回收站）、points_shop（积分商城）、profile_edit（个人信息）、settings、side_menu（侧边栏）、font_picker、image_crop、usable_days_settings_sheet。
+**18 个页面**：home（日记主页）、edit（笔记编辑）、note_view（笔记浏览）、item_list / item_edit（物品）、asset_screen / asset_edit（资产）、countdown_screen / countdown_edit（事件）、global_search、trash（回收站）、points_shop（灵感杂货店）、profile_edit（档案）、settings、side_menu（侧边栏）、font_picker、image_crop、usable_days_settings_sheet。
 
 **本地存储文件**（均在 `getApplicationDocumentsDirectory()` 下）：
 
@@ -41,7 +41,7 @@ lib/
 |---|---|
 | `diaries.json` / `items.json` / `assets.json` / `countdowns.json` | 四类主数据 |
 | `trash.json` | 回收站（保留 7 天） |
-| `user_profile.json` | 档案：昵称/性别/头像/积分/徽章/VIP 时效/userId/注册日 |
+| `user_profile.json` | 档案：昵称/性别/头像/灵感/徽章/VIP 时效/userId/注册日 |
 | `user_id_seq.json` | 用户 ID 顺序发号（与档案分离，删档不回退） |
 | `asset_pin.json` | 资产页密码 |
 | `app_settings.json` | 主题模式 / 字体 / 震动总开关 |
@@ -62,7 +62,7 @@ lib/
 - 半透明顶栏色块 `0xB3/0xCC/0xE6 3E8E6D`（70%/80%/90% 绿）在深色下统一映射为 `0xFF22342C`，避免"深色页顶亮绿块"。`0xB33E8E6D` 是各主页顶栏标准色。
 - `darkMap` **只登记中性色**（页面底/卡片底/文字/边框/顶栏色块）。品牌色与语义色一律不登记、跨主题保持原值：
   - 主色竹青 `0xFF3E8E6D`、警示红 `0xFFCB5C50`、橙 `0xFFF08C3A`
-  - 身份牌色、图表色、渐变、半透明黑白遮罩
+  - 身份色、图表色、渐变、半透明黑白遮罩
 - 主文字 `0xFF24382F`（深）→ `0xFFE9F2EB`（浅）；次要 `0xFF647A70` → `0xFFA8BCB0`；辅助 `0xFF8FA09A` → `0xFF90A69A`。
 - 顶栏/主色块上的前景文字与图标**始终 `Colors.white`**，不参与映射。
 - 主题模式三态 `AppThemeMode { system, light, dark }`，持久化到 `app_settings.json` 的 `themeMode` 字段。
@@ -160,7 +160,7 @@ lib/
 
 - 设置页分组：**外观**（深色模式 / 跟随系统 / 字体）、**反馈**（震动）、**数据**（导出/导入）、**活动**（兑换码）。
 - 字体：可切换，设置持久化，切换全站即时生效。
-- 每日首次发布笔记 +20 积分（`RewardService.dailyWritePoints`）。
+- 每日首次发布笔记 +20 点（`RewardService.dailyWritePoints`）。
 
 ---
 
@@ -196,12 +196,12 @@ lib/
 |---|---|
 | v4.9.15 | 笔记分享长图（底部信息条：Logo/应用名/日期时间地点） |
 | v4.9.16 | 分享图信息条上移内容区正下方、去多余白区 |
-| v4.9.17 | 兑换码体系 + 积分 + 每日发布 +20；长按菜单加分享 |
-| v4.9.18 | 身份牌体系（普通/内测/VIP/诞生日）、每 ID 每码限兑一次 |
-| v4.9.19 | 积分商城 VIP 日卡（200 积分 / 24h / 限 30） |
-| v4.9.20 | 待办回车续行；回收站选择模式；积分商城整卡兑换 |
-| v4.9.21 | 待办输入法回车修复；资产看板图标对齐；个人信息白卡化 |
-| v4.9.22 | 回收站抽屉改长按菜单；身份牌有效期显示；用户 ID/注册日/使用时间 |
+| v4.9.17 | 兑换码体系 + 灵感 + 每日发布 +20；长按菜单加分享 |
+| v4.9.18 | 身份体系（普通/内测/VIP/诞生日）、每 ID 每码限兑一次 |
+| v4.9.19 | 灵感杂货店 VIP 日卡（200 点 / 24h / 限 30） |
+| v4.9.20 | 待办回车续行；回收站选择模式；灵感杂货店整卡兑换 |
+| v4.9.21 | 待办输入法回车修复；资产看板图标对齐；档案白卡化 |
+| v4.9.22 | 回收站抽屉改长按菜单；身份有效期显示；用户 ID/注册日/使用时间 |
 | v4.9.23 | 用户 ID 改 10001 起顺序号；VIP 时效累加；VIP 周卡；终身 VIP 铭牌 |
 | v4.9.24 | **深色模式**：AppPalette 语义色板、双主题、84 处白卡映射、顶栏深墨绿 |
 | v4.9.25 | 修复深色切换需滑侧栏才全量刷新（AppThemeScope）；多处深色细节 |
@@ -220,8 +220,8 @@ lib/
 > 详细码表见 `docs/redeem_codes.md`。
 
 - **用户 ID**：10001 起纯数字顺序号，`user_id_seq.json` 独立发号；旧 `AYO-xxxx` 自动迁移。
-- **积分**：每日首发 +20；兑换码发放/扣减；商城消费。
-- **身份牌**：普通（灰）/ 内测版（橙）/ VIP（红）/ 终身 VIP / 诞生日（绿）；个人信息页可切换佩戴。
+- **灵感**：每日首发 +20；兑换码发放/扣减；杂货店消费。
+- **身份**：普通（灰）/ 内测版（橙）/ VIP（红）/ 终身 VIP / 诞生日（绿）；档案页可切换佩戴。
 - **VIP 时效道具**：日卡（+24h，限 30）/ 周卡（+7d，限 6），共用 `vipCardExpireAt`，**在原剩余时间上累加**；到期自动摘牌。限时 VIP 不进 `ownedBadges`。
 - **兑换码**：`ayouriji`/`neice`/`vip`/`zhongshenvip` 限 1 次；`17381113325`（+1000）、`13031210237`（-1000）无限次。
 - 核心实现：`lib/services/reward_service.dart`、`lib/models/user_profile.dart`、`lib/widgets/identity_badge.dart`。
@@ -234,9 +234,9 @@ lib/
 
 1. **目标模式**：联网化；**云服务 VIP 收费，其它用户仍存本地**。
 2. **数据主权铁律**：本地为根、云为可选镜像。免费=完整功能；付费=多设备同步便利；**欠费/断网绝不锁数据**，到期可一键导出全量回本地。
-3. **双轨合并 VIP**：现有积分兑换的限时 VIP（日卡/周卡）自动赋予等时长云同步体验，作为付费试用装；荣誉徽章独立存在，不绑架功能。
+3. **双轨合并 VIP**：现有灵感兑换的限时 VIP（日卡/周卡）自动赋予等时长云同步体验，作为付费试用装；荣誉徽章独立存在，不绑架功能。
 4. **差异化定位**：数据主权 + 四模块打通；主标语"记日记、管物品、理资产、数日子——数据默认只在手机里，想上云再付费"。
-5. **合规红线**：Google Play 数字商品必须走 Play Billing、iOS 必须 IAP（否则拒审）；日记属敏感个人信息，上云需隐私政策/用户协议/加密说明/备案。
+5. **合规红线**：Google Play 数字商品必须走 Play Billing、iOS 必须 IAP（否则拒审）；日记属敏感档案，上云需隐私政策/用户协议/加密说明/备案。
 6. **架构建议**：一期整包上传+时间戳仲裁（复用 `BackupService.mergeBackup` 按 id 合并逻辑），二期按 id 增量；老用户本地 uid 用绑定码认领到云端；WiFi+变更后 30s 合并上传。
 
 ### 7.2 差异化卖点（对外口径）

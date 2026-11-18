@@ -5,7 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import '../models/user_profile.dart';
 
 class UserStorage {
-  /// 档案变更通知：积分 / 铭牌在别处（设置页兑换、发布奖励）更新后，
+  /// 档案变更通知：灵感 / 铭牌在别处（设置页兑换、发布奖励）更新后，
   /// 主页与侧边栏据此重新读取，避免显示旧值。
   static final ValueNotifier<int> revision = ValueNotifier<int>(0);
 

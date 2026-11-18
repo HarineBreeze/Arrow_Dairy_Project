@@ -522,7 +522,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
   }
 
 
-  /// v4.9.26：个人信息页同款「标签 — 当前值 ›」行，点整行弹底部选择层。
+  /// v4.9.26：档案页同款「标签 — 当前值 ›」行，点整行弹底部选择层。
   Widget _selectRow({
     required String label,
     required String value,
@@ -569,7 +569,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
     );
   }
 
-  /// 通用底部选择层：标题 + 选项列表 + 当前项打勾（个人信息页性别弹层同款）。
+  /// 通用底部选择层：标题 + 选项列表 + 当前项打勾（档案页性别弹层同款）。
   Future<void> _pickOptionSheet({
     required String title,
     required List<String> options,

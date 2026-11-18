@@ -12,6 +12,7 @@ import '../services/reward_service.dart';
 import '../services/user_storage.dart';
 import '../widgets/avatar.dart';
 import '../widgets/identity_badge.dart';
+import '../widgets/wheel_picker.dart';
 import 'points_shop_screen.dart';
 import '../widgets/unsaved_guard.dart';
 import '../widgets/pressable.dart';
@@ -28,11 +29,11 @@ class ProfileEditScreen extends StatefulWidget {
   @visibleForTesting
   final Future<RedeemOutcome> Function(String badgeId)? wearOverride;
 
-  /// 仅测试使用：替换积分商城页面（默认打开真实的 [PointsShopScreen]）
+  /// 仅测试使用：替换灵感杂货店页面（默认打开真实的 [PointsShopScreen]）
   @visibleForTesting
   final Widget Function()? shopBuilder;
 
-  /// 仅测试使用：替换档案读取（商城返回后刷新积分用）
+  /// 仅测试使用：替换档案读取（杂货店返回后刷新灵感用）
   @visibleForTesting
   final Future<UserProfile> Function()? loadOverride;
 
@@ -57,9 +58,10 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   late final TextEditingController _nicknameCtrl;
   late String _gender;
   late String _avatarPath;
+  late DateTime? _birthday;
   bool _saving = false;
 
-  /// 身份牌 / 积分是本页的即时状态：切换身份牌、商城消费后立即刷新，
+  /// 身份 / 灵感是本页的即时状态：切换身份、杂货店消费后立即刷新，
   /// 与昵称性别的「编辑后保存」互不干扰。
   late String _badge;
   late int _points;
@@ -83,7 +85,15 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   String _initial = '';
 
   /// 当前编辑内容（用于 dirty 比较）
-  String _snapshot() => [_nicknameCtrl.text, _gender, _avatarPath].join('\u0001');
+  String _snapshot() =>
+      [_nicknameCtrl.text, _gender, _avatarPath, _birthdayKey()].join('\u0001');
+
+  /// 生日在快照/落盘里的键：yyyy-MM-dd，未设置为空串
+  String _birthdayKey() => _birthday == null
+      ? ''
+      : '${_birthday!.year.toString().padLeft(4, '0')}-'
+          '${_birthday!.month.toString().padLeft(2, '0')}-'
+          '${_birthday!.day.toString().padLeft(2, '0')}';
 
   bool get _dirty => _snapshot() != _initial;
 
@@ -96,6 +106,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     _nicknameCtrl = TextEditingController(text: widget.profile.nickname);
     _gender = widget.profile.gender;
     _avatarPath = widget.profile.avatarPath;
+    _birthday = DateTime.tryParse(widget.profile.birthday);
     _badge = widget.profile.badge;
     _points = widget.profile.points;
     _ownedBadges = List<String>.from(widget.profile.ownedBadges);
@@ -140,18 +151,19 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     setState(() => _saving = true);
     final name = _nicknameCtrl.text.trim();
     // 以磁盘上的最新档案为基底，只覆盖本页编辑的三个字段：
-    // 直接 new UserProfile 会把积分、身份牌、兑换记录一起清空。
+    // 直接 new UserProfile 会把灵感、身份、兑换记录一起清空。
     final profile = await UserStorage.load();
     profile.nickname = name.isEmpty ? UserProfile.defaultNickname : name;
     profile.gender = _gender;
     profile.avatarPath = _avatarPath;
+    profile.birthday = _birthdayKey();
     await UserStorage.save(profile);
     if (!mounted) return;
     // 落盘完成：续播对勾 + 粒子，播完由 onDone 返回
     _doneKey.currentState?.finish();
   }
 
-  /// 重读档案：商城消费后刷新本页展示
+  /// 重读档案：杂货店消费后刷新本页展示
   Future<void> _refresh() async {
     final p = await (widget.loadOverride ?? UserStorage.load)();
     if (!mounted) return;
@@ -165,7 +177,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     });
   }
 
-  /// 选择身份牌：底部选项卡，列出可佩戴的牌
+  /// 选择身份：底部选项卡，列出可佩戴的牌
   /// （已拥有的恒在；VIP日卡生效期间 VIP 也在列）
   Future<void> _pickBadge() async {
     final options = List<String>.from(_ownedBadges);
@@ -182,7 +194,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
             Padding(
               padding: EdgeInsets.fromLTRB(20, 18, 20, 6),
               child: Text(
-                '选择身份牌',
+                '选择身份',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -199,7 +211,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                   child: Row(
                     children: [
-                      // 只保留身份牌胶囊本身，旁边不再重复放一份名称文字
+                      // 只保留身份胶囊本身，旁边不再重复放一份名称文字
                       IdentityBadge(badge: id),
                       const Spacer(),
                       // 右侧显示有效期：永久拥有 →「永久」，限时牌 →「剩余x天」
@@ -244,7 +256,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     setState(() => _badge = picked);
   }
 
-  /// 进入积分商城
+  /// 进入灵感杂货店
   Future<void> _openShop() async {
     await Navigator.push(
       context,
@@ -263,7 +275,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       onWillPop: _handleLeave,
       child: Scaffold(
       appBar: AppBar(
-        title: const Text('个人信息'),
+        title: const Text('档案'),
         leading: IconButton(
           icon: const AppIcon(AppIcons.back),
           tooltip: '返回',
@@ -306,8 +318,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
             const SizedBox(height: 28),
             _buildIdentityCard(),
             const SizedBox(height: 16),
-            // 昵称 / 性别 / 用户ID / 使用时间合为一张白卡：
-            // 四行值统一从同一条竖线开始，性别选择、ID 复制都是行内点击
+            // 昵称 / 性别 / 生日 / 用户ID / 使用时间合为一张白卡：
+            // 五行值统一从同一条竖线开始，性别/生日选择、ID 复制都是行内点击
             _buildFieldCard(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -316,6 +328,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                   _buildNicknameField(),
                   Divider(height: 1, color: AppPalette.c(0xFFEEF4F0)),
                   _buildGenderRow(),
+                  Divider(height: 1, color: AppPalette.c(0xFFEEF4F0)),
+                  _buildBirthdayRow(),
                   Divider(height: 1, color: AppPalette.c(0xFFEEF4F0)),
                   _buildUserIdRow(),
                   Divider(height: 1, color: AppPalette.c(0xFFEEF4F0)),
@@ -353,8 +367,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   }
 
 
-  /// 身份牌与积分：数据来自 user_profile.json（兑换码 / 发布奖励 / 商城消费）。
-  /// 两行都可点：身份牌行切佩戴、积分行进商城。
+  /// 身份与灵感：数据来自 user_profile.json（兑换码 / 发布奖励 / 杂货店消费）。
+  /// 两行都可点：身份行切佩戴、灵感行进杂货店。
   Widget _buildIdentityCard() {
     return Container(
       decoration: BoxDecoration(
@@ -365,13 +379,13 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       child: Column(
         children: [
           _buildIdentityRow(
-            label: '身份牌',
+            label: '身份',
             onTap: _pickBadge,
             trailing: IdentityBadge(badge: _badge),
           ),
           Divider(height: 1, color: AppPalette.c(0xFFEEF4F0)),
           _buildIdentityRow(
-            label: '积分',
+            label: '灵感',
             onTap: _openShop,
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
@@ -423,7 +437,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     );
   }
 
-  /// 白底圆角信息卡：昵称 / 性别沿用身份牌卡片的视觉（白底 16 圆角）
+  /// 白底圆角信息卡：昵称 / 性别沿用身份卡片的视觉（白底 16 圆角）
   Widget _buildFieldCard({required Widget child}) {
     return Container(
       width: double.infinity,
@@ -515,7 +529,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     }
   }
 
-  /// 性别选择弹层（与身份牌选择同款：标题 + 选项 + 当前项打勾）
+  /// 性别选择弹层（与身份选择同款：标题 + 选项 + 当前项打勾）
   Future<void> _pickGender() async {
     const options = <String, String>{
       '男': 'male',
@@ -568,6 +582,51 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     );
     if (picked == null || !mounted) return;
     setState(() => _gender = picked);
+  }
+
+  /// 生日行：点击弹出「年 / 月 / 日」滚轮，选完回填（未设置时显示「未设置」）。
+  Widget _buildBirthdayRow() {
+    return SizedBox(
+      height: 48,
+      child: InkWell(
+        key: const ValueKey('profile-birthday-row'),
+        onTap: _pickBirthday,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            _buildFieldLabel('生日'),
+            Expanded(
+              child: Text(
+                _birthday == null ? '未设置' : _formatBirthday(_birthday!),
+                style: TextStyle(
+                  fontSize: 15,
+                  color: _birthday == null
+                      ? AppPalette.c(0xFF8FA09A)
+                      : AppPalette.c(0xFF24382F),
+                ),
+              ),
+            ),
+            AppIcon(AppIcons.chevR, size: 16, color: AppPalette.c(0xFFC6D6CD)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 生日展示文案：yyyy年M月d日（滚轮选择后回填）
+  String _formatBirthday(DateTime d) => '${d.year}年${d.month}月${d.day}日';
+
+  Future<void> _pickBirthday() async {
+    final now = DateTime.now();
+    final picked = await showWheelDatePicker(
+      context,
+      initial: _birthday ?? DateTime(2000, 1, 1),
+      minimum: DateTime(1900, 1, 1),
+      maximum: DateTime(now.year, now.month, now.day),
+      title: '选择生日',
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _birthday = picked);
   }
 
   /// 用户 ID：淡灰只读文字，点击整行复制到剪贴板。

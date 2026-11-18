@@ -14,7 +14,7 @@ import 'package:ayodiray/services/reward_service.dart';
 import 'package:ayodiray/services/user_storage.dart';
 import 'package:ayodiray/widgets/identity_badge.dart';
 
-/// 身份牌切换 / 积分商城 / 活动分组文案的回归测试。
+/// 身份切换 / 灵感杂货店 / 活动分组文案的回归测试。
 class _FakePathProvider extends PathProviderPlatform {
   final String path;
   _FakePathProvider(this.path);
@@ -58,8 +58,8 @@ void main() {
         .writeAsStringSync(jsonEncode(p.toJson()));
   }
 
-  group('积分商城兑换', () {
-    test('积分充足：扣 50 分 → 加入已拥有 → 立即佩戴', () async {
+  group('灵感杂货店兑换', () {
+    test('灵感充足：扣 50 分 → 加入已拥有 → 立即佩戴', () async {
       writeProfile(UserProfile(points: 120));
       final r = await RewardService.buyBadge(UserProfile.badgeBirthday);
       expect(r.ok, isTrue);
@@ -71,11 +71,11 @@ void main() {
       expect(p.owns(UserProfile.badgeBirthday), isTrue);
     });
 
-    test('积分不足：不扣分、不发放', () async {
+    test('灵感不足：不扣分、不发放', () async {
       writeProfile(UserProfile(points: 30));
       final r = await RewardService.buyBadge(UserProfile.badgeBirthday);
       expect(r.ok, isFalse);
-      expect(r.message, contains('积分不足'));
+      expect(r.message, contains('灵感不足'));
 
       final p = await UserStorage.load();
       expect(p.points, 30);
@@ -90,7 +90,7 @@ void main() {
       ));
       final r = await RewardService.buyBadge(UserProfile.badgeBirthday);
       expect(r.ok, isFalse);
-      expect(r.message, '已拥有该身份牌');
+      expect(r.message, '已拥有该身份');
       expect((await UserStorage.load()).points, 100);
     });
 
@@ -101,7 +101,7 @@ void main() {
     });
   });
 
-  group('身份牌切换', () {
+  group('身份切换', () {
     test('已拥有：可来回切换（诞生日 → 普通版）', () async {
       writeProfile(UserProfile(
         points: 70,
@@ -122,14 +122,14 @@ void main() {
       writeProfile(UserProfile());
       final r = await RewardService.wearBadge(UserProfile.badgeVip);
       expect(r.ok, isFalse);
-      expect(r.message, '尚未拥有该身份牌');
+      expect(r.message, '尚未拥有该身份');
     });
 
     test('已是当前牌：提示无需切换', () async {
       writeProfile(UserProfile(badge: UserProfile.badgeNormal));
       final r = await RewardService.wearBadge(UserProfile.badgeNormal);
       expect(r.ok, isFalse);
-      expect(r.message, '已是当前身份牌');
+      expect(r.message, '已是当前身份');
     });
   });
 
@@ -142,13 +142,13 @@ void main() {
       await tester.pump();
 
       expect(find.text('活动'), findsOneWidget);
-      expect(find.text('兑换与积分'), findsNothing);
+      expect(find.text('兑换与灵感'), findsNothing);
       expect(find.text('参与活动获得兑换码'), findsOneWidget);
       expect(find.text('兑换码'), findsOneWidget);
     });
   });
 
-  group('积分商城页面', () {
+  group('灵感杂货店页面', () {
     testWidgets('商品卡：名称 + 备注 + 价格 + 兑换次数，没有按钮', (tester) async {
       await tester.binding.setSurfaceSize(const Size(600, 1200));
       addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -160,31 +160,31 @@ void main() {
       ));
       await tester.pump();
 
-      expect(find.text('积分商城'), findsOneWidget);
-      expect(find.text('我的积分'), findsOneWidget);
+      expect(find.text('灵感杂货店'), findsOneWidget);
+      expect(find.text('剩余灵感'), findsOneWidget);
       expect(find.text('120'), findsOneWidget);
 
       // 分组标题与提示语
       expect(find.text('道具兑换'), findsOneWidget);
-      expect(find.text('积分是兑换道具的货币，可通过参与活动的方式获得'),
+      expect(find.text('灵感是兑换道具的货币，可通过参与活动的方式获得'),
           findsOneWidget);
 
-      // 诞生日（商品名带「-身份牌」后缀）
-      expect(find.text('诞生日-身份牌'), findsOneWidget);
+      // 诞生日（商品名带「-身份」后缀）
+      expect(find.text('诞生日-身份'), findsOneWidget);
       expect(find.text('纪念APP正式上线，1年后下架'), findsOneWidget);
-      expect(find.text('50 积分'), findsOneWidget);
+      expect(find.text('50 点'), findsOneWidget);
       expect(find.text('0/1'), findsOneWidget, reason: '次数改为「已兑/上限」');
 
       // VIP日卡
       expect(find.text('VIP日卡'), findsOneWidget);
       expect(find.text('兑换后可获得VIP权益1日'), findsOneWidget);
-      expect(find.text('200 积分'), findsOneWidget);
+      expect(find.text('200 点'), findsOneWidget);
       expect(find.text('0/30'), findsOneWidget, reason: '次数改为「已兑/上限」');
 
-      // 卡片不再有独立按钮文案，也不再展示身份牌胶囊
+      // 卡片不再有独立按钮文案，也不再展示身份胶囊
       expect(find.text('兑换'), findsNothing);
       expect(find.text('已拥有'), findsNothing);
-      expect(find.text('积分不足'), findsNothing);
+      expect(find.text('灵感不足'), findsNothing);
       expect(find.byType(IdentityBadge), findsNothing);
 
       // 兑换次数：无底纹（外层不该有带圆角色块的 Container 包着数字），
@@ -206,7 +206,7 @@ void main() {
       expect(decorated, findsNothing, reason: '兑换次数不应再有独立底纹胶囊');
     });
 
-    testWidgets('提示语与分组标题：积分是兑换道具的货币 / 道具兑换', (tester) async {
+    testWidgets('提示语与分组标题：灵感是兑换道具的货币 / 道具兑换', (tester) async {
       await tester.binding.setSurfaceSize(const Size(600, 1200));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -217,17 +217,17 @@ void main() {
       ));
       await tester.pump();
 
-      expect(find.text('积分是兑换道具的货币，可通过参与活动的方式获得'),
+      expect(find.text('灵感是兑换道具的货币，可通过参与活动的方式获得'),
           findsOneWidget);
       expect(find.text('道具兑换'), findsOneWidget);
-      expect(find.text('积分可通过参与活动的方式获得'), findsNothing);
-      expect(find.text('身份牌'), findsNothing);
+      expect(find.text('灵感可通过参与活动的方式获得'), findsNothing);
+      expect(find.text('身份'), findsNothing);
       expect(find.text('佩戴后显示在昵称旁'), findsNothing);
       expect(find.textContaining('兑换后会立即佩戴'), findsNothing);
       expect(find.textContaining('每日首次发布笔记'), findsNothing);
     });
 
-    testWidgets('积分不足：点击卡片提示差额，不弹确认框、不扣分', (tester) async {
+    testWidgets('灵感不足：点击卡片提示差额，不弹确认框、不扣分', (tester) async {
       await tester.binding.setSurfaceSize(const Size(600, 1200));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -245,7 +245,7 @@ void main() {
 
       await tester.tap(find.byKey(const ValueKey('shop-item-birthday')));
       await tester.pump(const Duration(milliseconds: 300));
-      expect(find.textContaining('积分不足'), findsOneWidget);
+      expect(find.textContaining('灵感不足'), findsOneWidget);
       expect(find.textContaining('是否要花费'), findsNothing);
       expect(bought, 0);
       await tester.pump(const Duration(seconds: 2)); // 排空 toast 定时器
@@ -277,11 +277,11 @@ void main() {
 
       await tester.tap(find.byKey(const ValueKey('shop-item-birthday')));
       await tester.pump(const Duration(milliseconds: 300));
-      expect(find.textContaining('已拥有「诞生日-身份牌」'), findsOneWidget);
+      expect(find.textContaining('已拥有「诞生日-身份」'), findsOneWidget);
       await tester.pump(const Duration(seconds: 2));
     });
 
-    testWidgets('可兑换：点卡片弹「是否要花费x积分兑换」→ 确认后扣分刷新', (tester) async {
+    testWidgets('可兑换：点卡片弹「是否要花费x灵感兑换」→ 确认后扣分刷新', (tester) async {
       await tester.binding.setSurfaceSize(const Size(600, 1200));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -295,7 +295,7 @@ void main() {
               badge: id,
               ownedBadges: [id],
             );
-            return const RedeemOutcome(true, '兑换成功，已佩戴「诞生日」身份牌');
+            return const RedeemOutcome(true, '兑换成功，已佩戴「诞生日」身份');
           },
         ),
       ));
@@ -303,10 +303,10 @@ void main() {
 
       await tester.tap(find.byKey(const ValueKey('shop-item-birthday')));
       await tester.pump(const Duration(milliseconds: 300));
-      expect(find.textContaining('是否要花费 50 积分兑换「诞生日-身份牌」'),
+      expect(find.textContaining('是否要花费 50 点兑换「诞生日-身份」'),
           findsOneWidget);
       expect(find.textContaining('兑换后剩余'), findsNothing,
-          reason: '确认框不再提示兑换后剩余积分');
+          reason: '确认框不再提示兑换后剩余灵感');
 
       await tester.tap(find.text('确认'));
       await _settle(tester);
@@ -335,11 +335,11 @@ void main() {
       expect(left.inMinutes, inInclusiveRange(23 * 60, 24 * 60));
     });
 
-    test('积分不足：不扣分、不计次', () async {
+    test('灵感不足：不扣分、不计次', () async {
       writeProfile(UserProfile(points: 199));
       final r = await RewardService.buyVipCard(UserProfile.badgeVip);
       expect(r.ok, isFalse);
-      expect(r.message, contains('积分不足'));
+      expect(r.message, contains('灵感不足'));
 
       final p = await UserStorage.load();
       expect(p.points, 199);
@@ -419,7 +419,7 @@ void main() {
       expect(back.owns(UserProfile.badgeVip), isTrue);
     });
 
-    testWidgets('商城展示 VIP日卡：备注、价格与已兑次数', (tester) async {
+    testWidgets('杂货店展示 VIP日卡：备注、价格与已兑次数', (tester) async {
       await tester.binding.setSurfaceSize(const Size(600, 1600));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -435,7 +435,7 @@ void main() {
 
       expect(find.text('兑换后可获得VIP权益1日'), findsOneWidget);
       expect(find.text('2/30'), findsOneWidget);
-      expect(find.text('200 积分'), findsOneWidget);
+      expect(find.text('200 点'), findsOneWidget);
       await tester.pump(const Duration(seconds: 2));
     });
 
@@ -449,7 +449,7 @@ void main() {
           loadOverride: () async => UserProfile(points: 300),
           buyOverride: (id) async {
             boughtIds.add(id);
-            return const RedeemOutcome(true, '兑换成功，VIP身份牌生效1天');
+            return const RedeemOutcome(true, '兑换成功，VIP身份生效1天');
           },
         ),
       ));
@@ -457,7 +457,7 @@ void main() {
 
       await tester.tap(find.byKey(const ValueKey('shop-item-vip')));
       await tester.pump(const Duration(milliseconds: 300));
-      expect(find.textContaining('是否要花费 200 积分兑换「VIP日卡」'), findsOneWidget);
+      expect(find.textContaining('是否要花费 200 点兑换「VIP日卡」'), findsOneWidget);
       expect(find.textContaining('有效期1天'), findsOneWidget);
       expect(find.textContaining('兑换后剩余'), findsNothing);
 
@@ -496,8 +496,8 @@ void main() {
     });
   });
 
-  group('个人信息页身份牌', () {
-    testWidgets('点「身份牌」弹出选项，可在普通版与已有牌之间切换', (tester) async {
+  group('档案页身份', () {
+    testWidgets('点「身份」弹出选项，可在普通版与已有牌之间切换', (tester) async {
       tester.binding.window.physicalSizeTestValue = const Size(600, 1200);
       tester.binding.window.devicePixelRatioTestValue = 1.0;
       addTearDown(tester.binding.window.clearPhysicalSizeTestValue);
@@ -520,11 +520,11 @@ void main() {
       expect(find.text('VIP'), findsOneWidget);
       expect(find.text('普通版'), findsNothing, reason: '当前佩戴 VIP，页面只显示 VIP');
 
-      await tester.tap(find.text('身份牌'));
+      await tester.tap(find.text('身份'));
       await tester.pump(); // route 入栈
       await tester.pump(const Duration(milliseconds: 400)); // 弹层滑入
       await tester.pump(const Duration(milliseconds: 400));
-      expect(find.text('选择身份牌'), findsOneWidget);
+      expect(find.text('选择身份'), findsOneWidget);
       // 选项：普通版恒在 + 已拥有的 VIP
       expect(find.byKey(const ValueKey('badge_option_normal')), findsOneWidget);
       expect(find.byKey(const ValueKey('badge_option_vip')), findsOneWidget);
@@ -535,12 +535,12 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
 
       expect(worn, UserProfile.badgeNormal);
-      expect(find.text('选择身份牌'), findsNothing, reason: '选完应关闭选项');
+      expect(find.text('选择身份'), findsNothing, reason: '选完应关闭选项');
       expect(find.text('普通版'), findsOneWidget, reason: '页面应显示已切换的普通版');
       await tester.pump(const Duration(seconds: 2)); // 排空 toast 定时器
     });
 
-    testWidgets('身份牌选择页：移除名称文字，右侧显示有效期（永久/剩余x天）',
+    testWidgets('身份选择页：移除名称文字，右侧显示有效期（永久/剩余x天）',
         (tester) async {
       tester.binding.window.physicalSizeTestValue = const Size(600, 1200);
       tester.binding.window.devicePixelRatioTestValue = 1.0;
@@ -562,7 +562,7 @@ void main() {
       ));
       await tester.pump();
 
-      await tester.tap(find.text('身份牌'));
+      await tester.tap(find.text('身份'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
       await tester.pump(const Duration(milliseconds: 400));
@@ -584,7 +584,7 @@ void main() {
       await tester.pump(const Duration(seconds: 2));
     });
 
-    testWidgets('点「积分」进入积分商城', (tester) async {
+    testWidgets('点「灵感」进入灵感杂货店', (tester) async {
       await tester.binding.setSurfaceSize(const Size(600, 1200));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -593,18 +593,18 @@ void main() {
           profile: UserProfile(points: 60),
           loadOverride: () async => UserProfile(points: 60),
           shopBuilder: () => const Scaffold(
-            body: Center(child: Text('积分商城页')),
+            body: Center(child: Text('灵感杂货店页')),
           ),
         ),
       ));
       await tester.pump();
 
-      await tester.tap(find.text('积分'));
+      await tester.tap(find.text('灵感'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
       await tester.pump(const Duration(milliseconds: 400));
 
-      expect(find.text('积分商城页'), findsOneWidget);
+      expect(find.text('灵感杂货店页'), findsOneWidget);
     });
   });
 }

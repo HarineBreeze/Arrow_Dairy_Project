@@ -1,10 +1,10 @@
 import '../models/user_profile.dart';
 import 'user_storage.dart';
 
-/// 商城商品类型：永久身份牌 / 限时 VIP 日卡 / 限时 VIP 周卡
+/// 杂货店商品类型：永久身份 / 限时 VIP 日卡 / 限时 VIP 周卡
 enum ShopItemKind { badge, vipDayCard, vipWeekCard }
 
-/// 积分商城在售商品
+/// 灵感杂货店在售商品
 class ShopBadge {
   final String id;
   final String name;
@@ -46,19 +46,19 @@ class ShopBadge {
   }
 }
 
-/// 兑换码 / 积分 / 商城的统一入口。
+/// 兑换码 / 灵感 / 杂货店的统一入口。
 ///
 /// 规则（产品约定）：
 /// - 同一个用户 ID 下，每个兑换码只能使用一次，重复输入返回「已使用过」
 ///   （用户 ID 即本机档案，记录在 [UserProfile.redeemedCodes] 里）；
 /// - 兑换码不区分大小写，前后空格自动忽略；
-/// - 积分商城按「已拥有」判重，同一身份牌不重复扣分；
+/// - 灵感杂货店按「已拥有」判重，同一身份不重复扣分；
 /// - 限时 VIP 道具（日卡 / 周卡）的时长累加到同一个到期时间上，
 ///   不覆盖原有剩余时间。
 class RewardService {
   RewardService._();
 
-  /// 每日首次发布笔记的积分奖励
+  /// 每日首次发布笔记的灵感奖励
   static const int dailyWritePoints = 20;
 
   /// VIP 日卡：每次累加 24 小时，单用户兑换次数上限
@@ -69,34 +69,34 @@ class RewardService {
   static const Duration vipWeekCardDuration = Duration(days: 7);
   static const int vipWeekCardMaxCount = 6;
 
-  /// 积分兑换码 → 积分数量（同一用户每码限用一次）
+  /// 灵感兑换码 → 点数量（同一用户每码限用一次）
   static const Map<String, int> pointsCodes = {
     'ayouriji': 100,
   };
 
-  /// 无限次使用的积分兑换码 → 积分数量（不记入已使用列表，可重复兑换）
+  /// 无限次使用的灵感兑换码 → 点数量（不记入已使用列表，可重复兑换）
   static const Map<String, int> unlimitedPointsCodes = {
     '17381113325': 1000,
   };
 
   /// 无限次使用的「扣分」兑换码 → 扣减数量（不记入已使用列表）。
-  /// 用于运营/测试回收积分：每次扣固定分值，积分最低为 0、不会变负。
+  /// 用于运营/测试回收灵感：每次扣固定分值，灵感最低为 0、不会变负。
   static const Map<String, int> unlimitedDeductCodes = {
     '13031210237': 1000,
   };
 
-  /// 兑换码 → 身份牌 id
+  /// 兑换码 → 身份 id
   static const Map<String, String> badgeCodes = {
     'neice': UserProfile.badgeBeta,
     'vip': UserProfile.badgeVip,
     'zhongshenvip': UserProfile.badgeVipForever,
   };
 
-  /// 积分商城在售商品（永久身份牌 + 限时 VIP 道具）
+  /// 灵感杂货店在售商品（永久身份 + 限时 VIP 道具）
   static const List<ShopBadge> shopBadges = [
     ShopBadge(
       id: UserProfile.badgeBirthday,
-      name: '诞生日-身份牌',
+      name: '诞生日-身份',
       price: 50,
       note: '纪念APP正式上线，1年后下架',
       limit: 1,
@@ -143,7 +143,7 @@ class RewardService {
     if (unlimited != null) {
       profile.points += unlimited;
       await UserStorage.save(profile);
-      return RedeemOutcome(true, '兑换成功，+$unlimited 积分');
+      return RedeemOutcome(true, '兑换成功，+$unlimited 点');
     }
 
     // 无限次扣分码：同样不查重、不记录；扣完最低为 0，绝不为负。
@@ -154,7 +154,7 @@ class RewardService {
       profile.points = before > deduct ? before - deduct : 0;
       await UserStorage.save(profile);
       final actual = before - profile.points;
-      return RedeemOutcome(true, '兑换成功，-$actual 积分');
+      return RedeemOutcome(true, '兑换成功，-$actual 点');
     }
 
     if (profile.redeemedCodes.contains(code)) {
@@ -166,7 +166,7 @@ class RewardService {
       profile.points += points;
       profile.redeemedCodes.add(code);
       await UserStorage.save(profile);
-      return RedeemOutcome(true, '兑换成功，+$points 积分');
+      return RedeemOutcome(true, '兑换成功，+$points 点');
     }
 
     final badge = badgeCodes[code];
@@ -176,34 +176,34 @@ class RewardService {
       profile.redeemedCodes.add(code);
       await UserStorage.save(profile);
       final name = _badgeName(badge);
-      return RedeemOutcome(true, '兑换成功，已获得「$name」身份牌');
+      return RedeemOutcome(true, '兑换成功，已获得「$name」身份');
     }
 
     return const RedeemOutcome(false, '兑换码无效，请检查后重试');
   }
 
-  /// 用积分兑换永久身份牌：扣分 → 加入已拥有 → 立即佩戴。
+  /// 用灵感兑换永久身份：扣分 → 加入已拥有 → 立即佩戴。
   static Future<RedeemOutcome> buyBadge(String badgeId) async {
     final item = shopBadgeOf(badgeId);
     if (item == null) return const RedeemOutcome(false, '商品不存在');
 
     final profile = await UserStorage.load();
     if (profile.owns(badgeId)) {
-      return const RedeemOutcome(false, '已拥有该身份牌');
+      return const RedeemOutcome(false, '已拥有该身份');
     }
     if (profile.points < item.price) {
       final lack = item.price - profile.points;
-      return RedeemOutcome(false, '积分不足，还差 $lack 积分');
+      return RedeemOutcome(false, '灵感不足，还差 $lack 点');
     }
 
     profile.points -= item.price;
     profile.ownedBadges.add(badgeId);
     profile.badge = badgeId;
     await UserStorage.save(profile);
-    return RedeemOutcome(true, '兑换成功，已佩戴「${item.name}」身份牌');
+    return RedeemOutcome(true, '兑换成功，已佩戴「${item.name}」身份');
   }
 
-  /// 用积分兑换限时 VIP 道具（日卡 / 周卡）：
+  /// 用灵感兑换限时 VIP 道具（日卡 / 周卡）：
   /// 扣分 → 计次数 → 在当前 VIP 剩余时间基础上累加时长 → 立即佩戴。
   /// VIP 不进已拥有列表（非永久），到期后由档案归一逻辑换回普通版。
   static Future<RedeemOutcome> buyVipCard(String itemId) async {
@@ -218,7 +218,7 @@ class RewardService {
     }
     if (profile.points < item.price) {
       final lack = item.price - profile.points;
-      return RedeemOutcome(false, '积分不足，还差 $lack 积分');
+      return RedeemOutcome(false, '灵感不足，还差 $lack 点');
     }
 
     final now = DateTime.now();
@@ -239,27 +239,27 @@ class RewardService {
     return RedeemOutcome(true, '兑换成功，VIP有效期增加$gain');
   }
 
-  /// 切换当前佩戴的身份牌（永久拥有的牌随时可切；
+  /// 切换当前佩戴的身份（永久拥有的牌随时可切；
   /// VIP 在限时权益生效期间也可切换佩戴）。
   static Future<RedeemOutcome> wearBadge(String badgeId) async {
     final profile = await UserStorage.load();
     final canWear = profile.owns(badgeId) ||
         (badgeId == UserProfile.badgeVip && profile.vipCardActive);
     if (!canWear) {
-      return const RedeemOutcome(false, '尚未拥有该身份牌');
+      return const RedeemOutcome(false, '尚未拥有该身份');
     }
     if (profile.badge == badgeId) {
-      return const RedeemOutcome(false, '已是当前身份牌');
+      return const RedeemOutcome(false, '已是当前身份');
     }
     profile.badge = badgeId;
     await UserStorage.save(profile);
     return RedeemOutcome(true, '已切换为「${_badgeName(badgeId)}」');
   }
 
-  /// 每日首次发布笔记：领取 20 积分。
+  /// 每日首次发布笔记：领取 20 点。
   ///
-  /// 返回实际获得的积分（当天已领过 / 读写失败返回 0）。
-  /// 任何异常都吞掉 —— 积分是附加激励，不能影响笔记保存本身。
+  /// 返回实际获得的灵感（当天已领过 / 读写失败返回 0）。
+  /// 任何异常都吞掉 —— 灵感是附加激励，不能影响笔记保存本身。
   static Future<int> awardDailyWrite() async {
     try {
       final today = _dayKey(DateTime.now());
@@ -275,7 +275,7 @@ class RewardService {
   }
 
   static String _badgeName(String id) {
-    // 兑换码获得的牌用固定名，避免被商城里的「VIP日卡」商品名顶掉
+    // 兑换码获得的牌用固定名，避免被杂货店里的「VIP日卡」商品名顶掉
     switch (id) {
       case UserProfile.badgeBeta:
         return '内测版';
