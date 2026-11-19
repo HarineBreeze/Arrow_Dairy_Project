@@ -186,6 +186,34 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       _loading = false;
     });
     _precacheCovers(list);
+    if (_pendingScrollId != null) _scrollToPendingEntry();
+  }
+
+  /// v4.9.39：新建/编辑保存返回后滚到该笔记。
+  /// 先按有序列表里的位置估算 jump 让它进入懒加载构建范围，
+  /// 再在下一帧用卡片 GlobalKey 做 ensureVisible 精确对齐。
+  void _scrollToPendingEntry() {
+    final id = _pendingScrollId;
+    if (id == null) return;
+    _pendingScrollId = null;
+    final idx = _entries.indexWhere((e) => e.id == id);
+    if (idx < 0) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      // 估算行高 ~112px，先滚到目标附近（留 1 行余量），触发懒加载构建
+      final estimate = (idx > 1 ? idx - 1 : 0) * 112.0;
+      _listCtrl.jumpTo(estimate.clamp(0.0, _listCtrl.position.maxScrollExtent));
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final ctx = _cardKeys[id]?.currentContext;
+        if (ctx != null) {
+          Scrollable.ensureVisible(ctx,
+              alignment: 0.25,
+              duration: const Duration(milliseconds: 320),
+              curve: Curves.easeOutCubic);
+        }
+      });
+    });
   }
 
   /// 首屏封面图预解码：放到下一帧之后做，不占用首帧时间。
@@ -217,6 +245,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Offset? _pressPos;
   double _pressMoved = 0;
   DiaryEntry? _pressEntry;
+
+  /// v4.9.39：保存后滚动定位。卡片 GlobalKey + 待定位 id。
+  final Map<String, GlobalKey> _cardKeys = {};
+  String? _pendingScrollId;
 
   /// 手指按下后 1 秒内屏幕保持不移动，即弹出操作菜单（置顶/编辑/删除）；
   /// 期间移动或抬起则取消，避免上下滑动屏幕时误触。
@@ -300,16 +332,22 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     if (action == 'pin') {
       final list = await DiaryStorage.load();
       final idx = list.indexWhere((e) => e.id == entry.id);
-      if (idx >= 0) {
-        list[idx].pinned = !list[idx].pinned;
-        await DiaryStorage.save(list);
+      if (idx < 0) return;
+      final willPin = !list[idx].pinned;
+      if (willPin) {
+        // 取消置顶始终允许；新增置顶受免费数量上限约束（VIP 不限）
+        final profile = await UserStorage.load();
+        final pinnedCount = list.where((e) => e.pinned).length;
+        if (RewardService.pinLimitReached(pinnedCount, profile)) {
+          if (!mounted) return;
+          AppToast.show(context, RewardService.pinLimitMessage('篇笔记'));
+          return;
+        }
       }
+      list[idx].pinned = willPin;
+      await DiaryStorage.save(list);
       if (!mounted) return;
-      AppToast.show(
-          context,
-          list.firstWhere((e) => e.id == entry.id).pinned
-              ? '已置顶该笔记'
-              : '已取消置顶');
+      AppToast.show(context, willPin ? '已置顶该笔记' : '已取消置顶');
       _load();
     } else if (action == 'edit') {
       _openEditor(entry);
@@ -344,6 +382,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       _slideRoute(EditScreen(entry: entry, defaultDate: _selectedDate)),
     );
     if (result == true) {
+      // v4.9.39：保存后定位到该笔记（新建或编辑）
+      _pendingScrollId = EditScreen.lastSavedId;
       _load();
       // 每日首次「发布笔记」奖励 20 点（新建才算发布，编辑旧笔记不算）
       if (isNew) {
@@ -1251,6 +1291,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   /// 外层 RepaintBoundary：滚动时卡片内容不参与主列表重绘。
   Widget _cardRow(DiaryEntry e) {
     return RepaintBoundary(
+      key: _cardKeys.putIfAbsent(e.id, () => GlobalKey()),
       child: Padding(
         padding: const EdgeInsets.only(top: 8),
         child: Listener(

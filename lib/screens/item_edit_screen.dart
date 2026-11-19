@@ -905,7 +905,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
                   decimal: true, signed: true),
               style: const TextStyle(fontSize: 15),
               decoration: const InputDecoration(
-                hintText: '选填，可为负数',
+                hintText: '可为负数（选填）',
                 prefixText: '¥ ',
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.symmetric(vertical: 14),

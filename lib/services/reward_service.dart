@@ -344,6 +344,22 @@ class RewardService {
         vipBadges.contains(p.badge);
   }
 
+  /// 免费用户最多可置顶的数量（笔记 / 事件分别计数）。
+  static const int freePinLimit = 3;
+
+  /// 新增置顶是否被数量上限拦截。
+  /// [currentPinned] 为当前该类别已置顶的数量（尚未包含本次要置顶的条目）。
+  /// 权益身份（内测版 / VIP / 终身VIP）不限；非权益用户已达 3 条即拦截。
+  /// VIP 期间置顶、过期后仍置顶的条目不自动撤销，仅阻止再新增。
+  static bool pinLimitReached(int currentPinned, UserProfile profile) {
+    if (hasVipPrivilege(profile)) return false;
+    return currentPinned >= freePinLimit;
+  }
+
+  /// 置顶超限提示语。[kind] 传 '笔记' 或 '事'。
+  static String pinLimitMessage(String kind) =>
+      '非VIP用户最多置顶$freePinLimit$kind哦～';
+
   static String _badgeName(String id) {
     // 兑换码获得的牌用固定名，避免被杂货店里的「VIP日卡」商品名顶掉
     switch (id) {

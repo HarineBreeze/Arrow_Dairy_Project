@@ -16,8 +16,8 @@ import '../utils/app_sheet.dart';
 /// 保存用户删除的笔记 / 物品 / 事件 / 资产，最长 7 天。
 ///
 /// 还原与删除都不再挂在每张卡片上：
-/// - 顶栏「还原」弹出菜单：选择性还原（选择模式，单选 / 多选）/ 全部还原；
-/// - 顶栏「删除」弹出菜单：选择性删除（选择模式）/ 清空回收站。
+/// - 顶栏「还原」弹出菜单：选择还原（选择模式，单选 / 多选）/ 全部还原；
+/// - 顶栏「删除」弹出菜单：选择删除（选择模式）/ 清空回收站。
 class TrashScreen extends StatefulWidget {
   final VoidCallback onOpenMenu;
 
@@ -386,7 +386,7 @@ class TrashScreenState extends State<TrashScreen> {
     _toast('已清空');
   }
 
-  /// 还原按钮的二级菜单：选择性还原 / 全部还原
+  /// 还原按钮的二级菜单：选择还原 / 全部还原
   Future<void> _showRestoreMenu() async {
     Haptics.light();
     final action = await AppSheet.show<String>(
@@ -399,7 +399,7 @@ class TrashScreenState extends State<TrashScreen> {
             _menuRow(
               key: const ValueKey('trash-menu-restore-selective'),
               icon: AppIcons.check,
-              label: '选择性还原',
+              label: '选择还原',
               hint: '勾选要还原的内容',
               color: AppPalette.c(0xFF24382F),
               onTap: () => Navigator.pop(ctx, 'selective'),
@@ -468,7 +468,7 @@ class TrashScreenState extends State<TrashScreen> {
     _toast('已还原 $n 项');
   }
 
-  /// 删除按钮的二级菜单：选择性删除 / 清空回收站
+  /// 删除按钮的二级菜单：选择删除 / 清空回收站
   Future<void> _showDeleteMenu() async {
     Haptics.light();
     final action = await AppSheet.show<String>(
@@ -481,7 +481,7 @@ class TrashScreenState extends State<TrashScreen> {
             _menuRow(
               key: const ValueKey('trash-menu-selective'),
               icon: AppIcons.check,
-              label: '选择性删除',
+              label: '选择删除',
               hint: '勾选要彻底删除的内容',
               color: AppPalette.c(0xFF24382F),
               onTap: () => Navigator.pop(ctx, 'selective'),

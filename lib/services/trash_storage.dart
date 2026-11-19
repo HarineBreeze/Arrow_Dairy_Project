@@ -7,10 +7,13 @@ import '../models/asset.dart';
 import '../models/countdown_event.dart';
 import '../models/diary_entry.dart';
 import '../models/item.dart';
+import '../models/user_profile.dart';
 import 'asset_storage.dart';
 import 'countdown_storage.dart';
 import 'diary_storage.dart';
 import 'item_storage.dart';
+import 'reward_service.dart';
+import 'user_storage.dart';
 
 /// 回收站条目类型
 enum TrashKind { diary, item, event, asset }
@@ -64,6 +67,8 @@ class TrashEntry {
   final DateTime deletedAt; // 删除时间
   final String title; // 列表展示标题（加密笔记只显示副标题）
   final String subtitle; // 列表展示副标题
+  /// 保留天数：删除时是权益身份则 30 天，否则 7 天。旧记录缺省 7。
+  final int keepDays;
 
   TrashEntry({
     required this.id,
@@ -72,17 +77,18 @@ class TrashEntry {
     required this.deletedAt,
     required this.title,
     required this.subtitle,
+    this.keepDays = 7,
   });
 
-  /// 剩余保存天数（7 天倒计时），已过期返回 0
+  /// 剩余保存天数（按本条目的保留期倒计时），已过期返回 0
   int get daysLeft {
-    final expire = deletedAt.add(TrashStorage.keepDuration);
+    final expire = deletedAt.add(Duration(days: keepDays));
     final left = expire.difference(DateTime.now()).inSeconds;
     if (left <= 0) return 0;
     return (left / 86400).ceil();
   }
 
-  DateTime get expireAt => deletedAt.add(TrashStorage.keepDuration);
+  DateTime get expireAt => deletedAt.add(Duration(days: keepDays));
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -91,6 +97,7 @@ class TrashEntry {
         'deletedAt': deletedAt.toIso8601String(),
         'title': title,
         'subtitle': subtitle,
+        'keepDays': keepDays,
       };
 
   factory TrashEntry.fromJson(Map<String, dynamic> j) => TrashEntry(
@@ -101,6 +108,7 @@ class TrashEntry {
             DateTime.now(),
         title: (j['title'] as String?) ?? '',
         subtitle: (j['subtitle'] as String?) ?? '',
+        keepDays: (j['keepDays'] as int?) ?? 7,
       );
 }
 
@@ -145,6 +153,7 @@ class TrashStorage {
             deletedAt: entries[i].deletedAt,
             title: entries[i].title,
             subtitle: fixed,
+            keepDays: entries[i].keepDays,
           );
           changed = true;
         }
@@ -187,10 +196,13 @@ class TrashStorage {
       TrashKind.diary,
       e.id,
       e.toJson(),
-      // 加密笔记在回收站里只显示副标题，避免泄露正文标题
-      title: e.encrypted
-          ? (e.subtitle.isNotEmpty ? e.subtitle : '加密笔记')
-          : (e.title.isNotEmpty ? e.title : '（无标题）'),
+      // 加密笔记在回收站里只显示副标题，避免泄露正文标题；
+      // 未来信件同理——未到查看时间前不能暴露真实标题，统一显示「未来信件」
+      title: e.isFutureLetter
+          ? '未来信件'
+          : (e.encrypted
+              ? (e.subtitle.isNotEmpty ? e.subtitle : '加密笔记')
+              : (e.title.isNotEmpty ? e.title : '（无标题）')),
       // 只显示日期：mood / weather 表情早已下线，旧笔记里残留的 emoji
       // 不应再出现在回收站副标题里
       subtitle: _dateLabel(e.publishDate) + (e.encrypted ? ' · 已加密' : ''),
@@ -241,6 +253,13 @@ class TrashStorage {
     required String subtitle,
   }) async {
     final list = await load();
+    // 权益身份（内测版/VIP/终身VIP）在权益生效期间删除 → 保留 30 天；
+    // 否则 7 天。该保留期固化在条目上，日后过期也不变。
+    int keepDays = 7;
+    try {
+      final profile = await UserStorage.load();
+      if (RewardService.hasVipPrivilege(profile)) keepDays = 30;
+    } catch (_) {}
     // 同一对象重复删除：先移除旧记录，保证只有一条
     list.removeWhere((t) =>
         t.kind == kind && (t.data['id'] as String?) == bizId);
@@ -253,6 +272,7 @@ class TrashStorage {
         deletedAt: DateTime.now(),
         title: title,
         subtitle: subtitle,
+        keepDays: keepDays,
       ),
     );
     await _write(list);

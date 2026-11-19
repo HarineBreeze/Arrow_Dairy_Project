@@ -309,10 +309,11 @@ class ItemListScreenState extends State<ItemListScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 14, vertical: 8),
-                            // v4.9.29：选项去掉描边，仅以底色区分选中态
+                            // v4.9.39：未选选项加浅绿底纹，与事件页筛选抽屉同款
                             decoration: BoxDecoration(
-                              color:
-                                  sel ? const Color(0xFF3E8E6D) : AppPalette.c(0xFFFFFFFF),
+                              color: sel
+                                  ? const Color(0xFF3E8E6D)
+                                  : AppPalette.c(0xFFF5FAF7),
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Text(

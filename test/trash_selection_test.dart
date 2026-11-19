@@ -12,8 +12,8 @@ import 'package:ayodiray/widgets/app_icons.dart';
 
 /// v4.9.21 回收站交互回归：
 /// 1. 卡片上不再有还原 / 彻底删除按钮，操作移到顶栏；
-/// 2. 顶栏「还原」弹出菜单：选择性还原（选择模式）/ 全部还原；
-/// 3. 顶栏「删除」弹出菜单：选择性删除（含全选）/ 清空回收站；
+/// 2. 顶栏「还原」弹出菜单：选择还原（选择模式）/ 全部还原；
+/// 3. 顶栏「删除」弹出菜单：选择删除（含全选）/ 清空回收站；
 /// 4. 选择模式无提示语、勾选圆圈里的对勾居中；
 /// 5. 旧版本拼进副标题的 mood emoji 在读档时被清理，残留的废弃字段被无视。
 class _FakePathProvider extends PathProviderPlatform {
@@ -174,7 +174,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('trash-restore')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    expect(find.text('选择性还原'), findsOneWidget);
+    expect(find.text('选择还原'), findsOneWidget);
     expect(find.text('全部还原'), findsOneWidget);
 
     await tester.tap(
@@ -193,7 +193,7 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('trash-confirm')));
     await tester.pump();
-    // v4.9.27：选择性还原新增二次确认弹窗
+    // v4.9.27：选择还原新增二次确认弹窗
     expect(find.text('确认要还原吗?'), findsOneWidget);
     await tester.tap(find.widgetWithText(TextButton, '还原'));
     await _settle(tester);
@@ -212,7 +212,7 @@ void main() {
     await tester.pump(const Duration(seconds: 2)); // 排空 toast 定时器
   });
 
-  testWidgets('选择性删除：菜单进入 → 全选 → 确认弹窗 → 彻底删除', (tester) async {
+  testWidgets('选择删除：菜单进入 → 全选 → 确认弹窗 → 彻底删除', (tester) async {
     await tester.binding.setSurfaceSize(const Size(400, 1100));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -227,7 +227,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('trash-delete')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    expect(find.text('选择性删除'), findsOneWidget);
+    expect(find.text('选择删除'), findsOneWidget);
     expect(find.text('清空回收站'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('trash-menu-selective')));
@@ -326,7 +326,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('trash-restore')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    expect(find.text('选择性还原'), findsOneWidget);
+    expect(find.text('选择还原'), findsOneWidget);
     expect(find.text('取消'), findsNothing, reason: '还原抽屉移除取消按钮');
     // 点遮罩关闭抽屉
     await tester.tapAt(const Offset(200, 100));
@@ -336,7 +336,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('trash-delete')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    expect(find.text('选择性删除'), findsOneWidget);
+    expect(find.text('选择删除'), findsOneWidget);
     expect(find.text('取消'), findsNothing, reason: '删除抽屉移除取消按钮');
     await tester.pump(const Duration(seconds: 2));
   });

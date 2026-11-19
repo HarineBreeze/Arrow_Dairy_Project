@@ -104,7 +104,8 @@ void main() {
   });
 
   group('浏览页搜索高亮与逐条定位', () {
-    testWidgets('带 searchQuery 时顶栏显示 N 处匹配并可上/下切换', (tester) async {
+    testWidgets('带 searchQuery 时顶栏不再显示 N 处匹配（v4.9.38 移除）',
+        (tester) async {
       await tester.binding.setSurfaceSize(const Size(500, 1200));
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(MaterialApp(
@@ -115,14 +116,10 @@ void main() {
       ));
       await _settle(tester);
 
-      expect(find.textContaining('处匹配'), findsOneWidget);
-      expect(find.text('1/3 处匹配'), findsOneWidget);
-      await tester.tap(find.byKey(const ValueKey('match_next')));
-      await tester.pump(const Duration(milliseconds: 350));
-      expect(find.text('2/3 处匹配'), findsOneWidget);
-      await tester.tap(find.byKey(const ValueKey('match_prev')));
-      await tester.pump(const Duration(milliseconds: 350));
-      expect(find.text('1/3 处匹配'), findsOneWidget);
+      // 顶栏匹配条与上/下切换均已移除
+      expect(find.textContaining('处匹配'), findsNothing);
+      expect(find.byKey(const ValueKey('match_next')), findsNothing);
+      expect(find.byKey(const ValueKey('match_prev')), findsNothing);
     });
 
     testWidgets('无 searchQuery 时顶栏不显示匹配条', (tester) async {

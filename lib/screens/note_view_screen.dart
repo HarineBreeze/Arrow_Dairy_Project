@@ -272,35 +272,6 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
     return '${d.year}/${d.month}/${d.day} $h:$m';
   }
 
-  /// 顶栏命中条：「N 处匹配」+ 上/下一条，数字跟随当前命中。
-  Widget _buildMatchBar() {
-    final n = _hitCount;
-    if (n <= 0) {
-      return const Text('无匹配',
-          style: TextStyle(fontSize: 15, color: Colors.white));
-    }
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text('${_hitIndex + 1}/$n 处匹配',
-            style: const TextStyle(fontSize: 14, color: Colors.white)),
-        const SizedBox(width: 2),
-        IconButton(
-          key: const ValueKey('match_prev'),
-          tooltip: '上一个匹配',
-          icon: const Icon(Icons.keyboard_arrow_up, size: 22, color: Colors.white),
-          onPressed: () => _gotoHit(-1),
-        ),
-        IconButton(
-          key: const ValueKey('match_next'),
-          tooltip: '下一个匹配',
-          icon: const Icon(Icons.keyboard_arrow_down, size: 22, color: Colors.white),
-          onPressed: () => _gotoHit(1),
-        ),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
@@ -314,10 +285,9 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
         backgroundColor: AppPalette.c(0xB33E8E6D), // v4.9.31：与笔记主页顶栏同色
         foregroundColor: Colors.white,
         elevation: 0,
-        // v4.9.27：搜索进入时顶栏显示「N 处匹配」+ 上/下一条定位
-        title: widget.searchQuery.trim().isEmpty
-            ? null
-            : _buildMatchBar(),
+        // v4.9.38：从搜索页进入时也移除顶栏「N 处匹配 / 上一条下一条」，
+        // 仅保留正文高亮；顶栏标题留空。
+        title: null,
         actions: [
           // v4.9.27：编辑/删除/分享收进「更多」，点击从按钮处弹下拉选框
           // v4.9.28：竖三点改为横三点；热区与左侧返回箭头一致（48×48）

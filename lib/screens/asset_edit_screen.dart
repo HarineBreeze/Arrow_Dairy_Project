@@ -7,6 +7,7 @@ import '../widgets/unsaved_guard.dart';
 import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
 import '../widgets/save_done_button.dart';
+import '../widgets/save_bar.dart';
 import '../widgets/entry_icon.dart';
 
 import '../theme/app_palette.dart';
@@ -328,7 +329,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                       style: const TextStyle(
                           fontSize: 17, fontWeight: FontWeight.w600),
                       decoration: InputDecoration(
-                        hintText: _isLiability ? '输入欠款金额' : '输入资产金额',
+                        hintText: _isLiability ? '输入欠款金额' : '输入数额',
                         hintStyle: TextStyle(
                             fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
                         border: InputBorder.none,
@@ -341,21 +342,31 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
               ),
             ),
             const SizedBox(height: 28),
-
-            // 保存：点击后收缩成圆形 + 打勾 + 粒子，播完再返回
-            SaveDoneButton(
-              key: _doneKey,
-              color: const Color(0xFF3E8E6D),
-              validate: _validate,
-              onTap: _save,
-              onDone: () {
-                if (mounted) Navigator.pop(context, _pending);
-              },
-            ),
           ],
         ),
       ),
+      // v4.9.39：保存栏改「取消 + 完成」吸底双按钮，与事件/物品页一致
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+          child: _buildSaveBar(),
+        ),
+      ),
     ),
+    );
+  }
+
+  /// 保存栏：点完成后取消淡出、完成收缩打勾 + 粒子，播完再保存返回。
+  Widget _buildSaveBar() {
+    return SaveBar(
+      saveKey: _doneKey,
+      color: const Color(0xFF3E8E6D),
+      onCancel: () => Navigator.pop(context),
+      validate: _validate,
+      onSave: _save,
+      onDone: () {
+        if (mounted) Navigator.pop(context, _pending);
+      },
     );
   }
 

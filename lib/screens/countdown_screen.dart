@@ -7,6 +7,7 @@ import '../models/countdown_event.dart';
 import '../services/countdown_storage.dart';
 import '../services/countdown_reminder.dart';
 import '../services/reward_service.dart';
+import '../services/user_storage.dart';
 import '../services/trash_storage.dart';
 import '../utils/app_toast.dart';
 import '../widgets/empty_state.dart';
@@ -207,7 +208,17 @@ class CountdownScreenState extends State<CountdownScreen> {
               title: Text(e.pinned ? '取消置顶' : '置顶'),
               onTap: () async {
                 Navigator.pop(ctx);
-                e.pinned = !e.pinned;
+                final willPin = !e.pinned;
+                if (willPin) {
+                  final profile = await UserStorage.load();
+                  final pinnedCount = _events.where((x) => x.pinned).length;
+                  if (RewardService.pinLimitReached(pinnedCount, profile)) {
+                    if (!mounted) return;
+                    AppToast.show(context, RewardService.pinLimitMessage('件事'));
+                    return;
+                  }
+                }
+                e.pinned = willPin;
                 await CountdownStorage.save(_events);
                 if (mounted) setState(() {});
               },

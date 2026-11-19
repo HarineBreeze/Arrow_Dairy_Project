@@ -38,6 +38,11 @@ enum _ImageAction { gallery, camera, crop }
 class EditScreen extends StatefulWidget {
   final DiaryEntry? entry;
   final DateTime? defaultDate;
+
+  /// v4.9.39：最近一次保存的笔记 id，供主页保存返回后滚动定位。
+  /// 用静态字段而非改 Navigator 返回值，避免影响依赖 bool 返回的调用方与测试。
+  static String? lastSavedId;
+
   const EditScreen({Key? key, this.entry, this.defaultDate}) : super(key: key);
 
   @override
@@ -573,10 +578,12 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     final content = _vContent;
     final subtitle = _vSubtitle;
     final list = await DiaryStorage.load();
+    final String savedId;
     if (_isNew) {
       final now = DateTime.now();
+      savedId = now.microsecondsSinceEpoch.toString();
       list.add(DiaryEntry(
-        id: now.microsecondsSinceEpoch.toString(),
+        id: savedId,
         title: title,
         subtitle: subtitle,
         content: content,
@@ -594,6 +601,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
         publishDate: _publishDate,
       ));
     } else {
+      savedId = widget.entry!.id;
       final idx = list.indexWhere((e) => e.id == widget.entry!.id);
       if (idx >= 0) {
         list[idx].title = title;
@@ -614,6 +622,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
       }
     }
     await DiaryStorage.save(list);
+    EditScreen.lastSavedId = savedId;
 
     if (!mounted) return;
     // 落盘完成：续播对勾 + 粒子，播完由 onDone 返回
