@@ -36,6 +36,9 @@ import '../services/countdown_storage.dart';
 import '../services/countdown_reminder.dart';
 import '../services/countdown_banner_log.dart';
 import '../widgets/countdown_banner.dart';
+import '../widgets/future_letter_banner.dart';
+import '../services/future_letter_reminder.dart';
+import '../services/future_letter_notice_log.dart';
 import '../widgets/loading_skeleton.dart';
 import '../widgets/empty_state.dart';
 import '../utils/menu_gesture_gate.dart';
@@ -93,6 +96,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   final GlobalKey<TrashScreenState> _trashKey = GlobalKey<TrashScreenState>();
   final GlobalKey<CountdownBannerHostState> _bannerKey =
       GlobalKey<CountdownBannerHostState>();
+  final GlobalKey<FutureLetterBannerHostState> _futureBannerKey =
+      GlobalKey<FutureLetterBannerHostState>();
 
   @override
   void initState() {
@@ -111,6 +116,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _load();
     _loadProfile();
     _initCountdown();
+    _initFutureLetters();
   }
 
   void _onProfileChanged() {
@@ -139,6 +145,35 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     // 等首帧布局完成、页面动画稳定后再滑出横幅（避免被首屏渲染盖住）
     Future.delayed(const Duration(milliseconds: 700), () {
       if (mounted) _bannerKey.currentState?.showFor(target);
+    });
+  }
+
+  /// 未来信件：同步系统通知 + 到期开封时弹一次 App 内横幅。
+  /// 开封横幅按笔记 id 去重（FutureLetterNoticeLog），重复打开 App 不重复弹。
+  Future<void> _initFutureLetters() async {
+    final list = await DiaryStorage.load();
+    if (!mounted) return;
+    final now = DateTime.now();
+    await FutureLetterReminder.syncAll(list, now: now);
+    if (!mounted) return;
+    final due = list
+        .where((e) => e.isFutureLetter && e.isRevealedAt(now))
+        .toList();
+    if (due.isEmpty) return;
+    final shown = await FutureLetterNoticeLog.shown();
+    if (!mounted) return;
+    final fresh = due.where((e) => !shown.contains(e.id)).toList();
+    if (fresh.isEmpty) return;
+    final target = fresh.first;
+    // 先落记录再弹，避免期间反复唤醒导致重复弹出
+    await FutureLetterNoticeLog.markShown(target.id);
+    // 兜底：若到期当天 9 点闹钟已错过，补发一条通知栏消息
+    if (target.revealAt != null) {
+      await FutureLetterReminder.notifyNow(target.revealAt!);
+    }
+    if (!mounted) return;
+    Future.delayed(const Duration(milliseconds: 900), () {
+      if (mounted) _futureBannerKey.currentState?.showFor(target);
     });
   }
 
@@ -233,20 +268,23 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               onTap: () => Navigator.pop(ctx, 'pin'),
             ),
             // 加密笔记出于安全考虑，长按菜单仅支持置顶
+            // v4.9.37：封存中的未来信件只给「置顶 + 删除」，不给编辑/分享
             if (!entry.encrypted) ...[
-              ListTile(
-                leading:
-                    const AppIcon(AppIcons.edit, color: Color(0xFF3E8E6D)),
-                title: const Text('编辑', style: TextStyle(fontSize: 15)),
-                onTap: () => Navigator.pop(ctx, 'edit'),
-              ),
-              ListTile(
-                key: const ValueKey('card_action_share'),
-                leading:
-                    const AppIcon(AppIcons.share, color: Color(0xFF3E8E6D)),
-                title: const Text('分享', style: TextStyle(fontSize: 15)),
-                onTap: () => Navigator.pop(ctx, 'share'),
-              ),
+              if (!entry.isSealed) ...[
+                ListTile(
+                  leading:
+                      const AppIcon(AppIcons.edit, color: Color(0xFF3E8E6D)),
+                  title: const Text('编辑', style: TextStyle(fontSize: 15)),
+                  onTap: () => Navigator.pop(ctx, 'edit'),
+                ),
+                ListTile(
+                  key: const ValueKey('card_action_share'),
+                  leading:
+                      const AppIcon(AppIcons.share, color: Color(0xFF3E8E6D)),
+                  title: const Text('分享', style: TextStyle(fontSize: 15)),
+                  onTap: () => Navigator.pop(ctx, 'share'),
+                ),
+              ],
               ListTile(
                 leading: const AppIcon(AppIcons.delete, color: Color(0xFFCB5C50)),
                 title: const Text('删除',
@@ -318,6 +356,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Future<void> _openNote(DiaryEntry entry) async {
+    // v4.9.37 未来信件：封存期内不可打开/编辑，仅提示等待到期
+    if (entry.isSealed) {
+      AppToast.show(context, '还没到查看时间，到期阿尤会提醒你哦～');
+      return;
+    }
     if (entry.encrypted) {
       final ok = await _verifyPassword(entry);
       if (!ok) return;
@@ -845,10 +888,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         ),
         child: child!,
       ),
-      child: CountdownBannerHost(
-        key: _bannerKey,
-        onOpenEvent: _openCountdownById,
-        child: WillPopScope(
+      child: FutureLetterBannerHost(
+        key: _futureBannerKey,
+        onOpenLetter: _openNote,
+        child: CountdownBannerHost(
+          key: _bannerKey,
+          onOpenEvent: _openCountdownById,
+          child: WillPopScope(
           onWillPop: _handleBack,
           child: Scaffold(
             backgroundColor: AppPalette.c(0xFFF5FAF7),
@@ -1053,6 +1099,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   ),
           ),
         ),
+      ),
       ),
     );
   }
@@ -1874,7 +1921,8 @@ class _PinnedMiniCard extends StatelessWidget {
     final t = entry.createdAt;
     final hh = t.hour.toString().padLeft(2, '0');
     final mm = t.minute.toString().padLeft(2, '0');
-    final encrypted = entry.encrypted;
+    // v4.9.37：封存中的未来信件与真加密笔记同款「封条」外观
+    final encrypted = entry.isSealed || entry.encrypted;
     // 置顶卡两种形态，均为两行：
     // ① 加密笔记：第 1 行副标题，第 2 行「完整日期时间 + 锁」
     // ② 公开笔记：第 1 行标题，   第 2 行「完整日期时间」
@@ -2066,7 +2114,8 @@ class _DiaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
     AppThemeScope.watch(context);
-    final isEncrypted = entry.encrypted;
+    // v4.9.37：封存中的未来信件与真加密笔记同款「封条」外观
+    final isEncrypted = entry.isSealed || entry.encrypted;
     // 加密笔记：封条风卡片（斜纹密封带 + 虚线边框），只外显副标题与日期时间
     if (isEncrypted) return _buildEncryptedCard();
     // 有图走「左图右文」（图片 4:3）；无图沿用原撕页日历排版。

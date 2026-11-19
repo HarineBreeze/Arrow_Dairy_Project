@@ -25,6 +25,7 @@ import io.flutter.plugin.common.MethodChannel
 class MainActivity : FlutterActivity() {
     private val channelName = "vector_diary/countdown"
     private val hapticChannelName = "vector_diary/haptic"
+    private val futureLetterChannelName = "vector_diary/future_letter"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -78,6 +79,34 @@ class MainActivity : FlutterActivity() {
                     // 「为什么这里不震」——省电模式会禁用所有振动、部分
                     // 平板 / 模拟器根本没有振动马达，代码对此无能为力。
                     "diagnose" -> result.success(Haptics.diagnose(context))
+                    else -> result.notImplemented()
+                }
+            }
+
+        // v4.9.37「未来信件」通知通道：独立 id 段，避免与倒数日互相 cancel
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, futureLetterChannelName)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "schedule" -> {
+                        val id = call.argument<Int>("id") ?: 0
+                        val body = call.argument<String>("body") ?: ""
+                        val at = call.argument<Long>("at") ?: 0L
+                        try {
+                            FutureLetterAlarm.schedule(context, id, body, at)
+                            result.success(true)
+                        } catch (e: Exception) {
+                            result.success(false)
+                        }
+                    }
+                    "cancelAll" -> {
+                        FutureLetterAlarm.cancelAll(context)
+                        result.success(true)
+                    }
+                    "show" -> {
+                        val body = call.argument<String>("body") ?: ""
+                        FutureLetterAlarm.showNow(context, body)
+                        result.success(true)
+                    }
                     else -> result.notImplemented()
                 }
             }
@@ -272,5 +301,106 @@ class CountdownReceiver : BroadcastReceiver() {
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE)
             as NotificationManager
         nm.notify(9100 + id, builder.build())
+    }
+}
+
+/**
+ * v4.9.37「未来信件」到期通知：精确闹钟 + 通知栏。
+ * 与倒数日完全独立的 channel / id 段 / receiver，互不 cancel。
+ * 通知标题固定，正文为 Dart 侧传入的「x年x月x日，你给未来写的信请查收～」。
+ */
+object FutureLetterAlarm {
+    const val CHANNEL_ID = "future_letter_reminders"
+    private const val REQ_BASE = 61000
+    private const val NOTIFY_BASE = 20000
+    private const val TITLE = "你有一封来自未来的信"
+
+    private fun flags(): Int =
+        if (Build.VERSION.SDK_INT >= 23)
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        else PendingIntent.FLAG_UPDATE_CURRENT
+
+    fun notifyId(id: Int) = NOTIFY_BASE + id
+
+    fun schedule(context: Context, id: Int, body: String, at: Long) {
+        val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(context, FutureLetterReceiver::class.java).apply {
+            putExtra("body", body)
+            putExtra("id", id)
+            data = android.net.Uri.parse("futureletter://note/$id")
+        }
+        val pi = PendingIntent.getBroadcast(context, REQ_BASE + id, intent, flags())
+        if (Build.VERSION.SDK_INT >= 31 && !am.canScheduleExactAlarms()) {
+            am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pi)
+        } else if (Build.VERSION.SDK_INT >= 23) {
+            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pi)
+        } else {
+            am.setExact(AlarmManager.RTC_WAKEUP, at, pi)
+        }
+    }
+
+    /** 立即发一条通知（App 内检测到到期但未预约闹钟时的兜底）。 */
+    fun showNow(context: Context, body: String) {
+        ensureChannel(context)
+        val nm = context.getSystemService(Context.NOTIFICATION_SERVICE)
+            as NotificationManager
+        nm.notify(NOTIFY_BASE + 1999, buildNotification(context, body, 1999))
+    }
+
+    fun cancelAll(context: Context) {
+        val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(context, FutureLetterReceiver::class.java)
+        for (id in 0..2000) {
+            am.cancel(PendingIntent.getBroadcast(context, REQ_BASE + id, intent, flags()))
+        }
+    }
+
+    fun buildNotification(context: Context, body: String, id: Int): android.app.Notification {
+        val launch = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("future_letter", "1")
+        }
+        val contentPi = PendingIntent.getActivity(
+            context, REQ_BASE + id, launch, flags()
+        )
+        val smallIcon = context.applicationInfo.icon
+        return NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(if (smallIcon != 0) smallIcon else android.R.drawable.ic_dialog_info)
+            .setContentTitle(TITLE)
+            .setContentText(body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .setContentIntent(contentPi)
+            .build()
+    }
+
+    fun ensureChannel(context: Context) {
+        if (Build.VERSION.SDK_INT >= 26) {
+            val nm = context.getSystemService(Context.NOTIFICATION_SERVICE)
+                as NotificationManager
+            if (nm.getNotificationChannel(CHANNEL_ID) == null) {
+                val ch = NotificationChannel(
+                    CHANNEL_ID,
+                    "未来信件提醒",
+                    NotificationManager.IMPORTANCE_HIGH
+                ).apply {
+                    description = "写给未来的信到期时提醒查看"
+                    enableVibration(true)
+                }
+                nm.createNotificationChannel(ch)
+            }
+        }
+    }
+}
+
+class FutureLetterReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        val body = intent.getStringExtra("body") ?: ""
+        val id = intent.getIntExtra("id", 0)
+        FutureLetterAlarm.ensureChannel(context)
+        val nm = context.getSystemService(Context.NOTIFICATION_SERVICE)
+            as NotificationManager
+        nm.notify(FutureLetterAlarm.notifyId(id), FutureLetterAlarm.buildNotification(context, body, id))
     }
 }

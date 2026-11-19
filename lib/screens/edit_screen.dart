@@ -28,6 +28,10 @@ import 'image_crop_screen.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_theme_scope.dart';
 import '../utils/app_sheet.dart';
+import '../models/user_profile.dart';
+import '../services/user_storage.dart';
+import '../services/reward_service.dart';
+import '../widgets/identity_badge.dart';
 /// 封面图抽屉动作
 enum _ImageAction { gallery, camera, crop }
 
@@ -79,15 +83,17 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
 
   bool get _isNew => widget.entry == null;
 
-  /// 标题为空时展示的随机话题（内置 50 条）。仅新建笔记抽取，
-  /// 编辑已有笔记若标题为空同样给一个，避免空白。
-  late String _prompt = WritingPrompts.random();
+  /// v4.9.37：「今日一句」——按自然日固定的写作话题（100 条）。
+  /// 同一天始终同一条，页面不提供「换一个」入口（不可手动刷新）。
+  late String _prompt = WritingPrompts.ofDay();
 
-  /// 换一个话题（点提示语右侧的小图标）。
-  void _shufflePrompt() {
-    setState(() => _prompt = WritingPrompts.random(exclude: _prompt));
-    Haptics.light();
-  }
+  /// v4.9.37「未来信件」：可见日期（null = 普通笔记），VIP 专属入口设置。
+  DateTime? _revealAt;
+  bool _hasFutureVip = false;
+  String? _ownedFutureVipBadge;
+
+  /// 可操作：有 VIP 权益，或此前已设置过（允许改期/取消）。
+  bool get _futureLetterEnabled => _hasFutureVip || _revealAt != null;
 
   // ---------- 撤销 / 重做 ----------
   // 栈中保存的是「某个历史状态」：文本 + 格式。
@@ -177,7 +183,9 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     _password = widget.entry?.password ?? '';
     _passwordHint = widget.entry?.passwordHint ?? '';
     _passwordAnswer = widget.entry?.passwordAnswer ?? '';
+    _revealAt = widget.entry?.revealAt;
     _initial = _snapshot();
+    _loadFutureVip();
     _loadItems();
   }
 
@@ -198,6 +206,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
         _password,
         _passwordHint,
         _passwordAnswer,
+        _revealAt?.toIso8601String() ?? '',
       ].join('\u0001');
 
   bool get _dirty => _snapshot() != _initial;
@@ -579,6 +588,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
         passwordHint: _passwordHint,
         passwordAnswer: _passwordAnswer,
         pinned: _pinned,
+        revealAt: _revealAt,
         createdAt: now,
         updatedAt: now,
         publishDate: _publishDate,
@@ -599,6 +609,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
         list[idx].passwordAnswer = _passwordAnswer;
         list[idx].pinned = _pinned;
         list[idx].publishDate = _publishDate;
+        list[idx].revealAt = _revealAt;
         list[idx].updatedAt = DateTime.now();
       }
     }
@@ -914,6 +925,61 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                   _pickVisibility();
                 },
               ),
+              ListTile(
+                contentPadding: const EdgeInsets.only(left: 24, right: 16),
+                title: Row(
+                  children: [
+                    Text('未来信件',
+                        style: TextStyle(
+                            fontSize: 13,
+                            color: _futureLetterEnabled
+                                ? AppPalette.c(0xFF24382F)
+                                : AppPalette.c(0xFF8FA09A))),
+                    const SizedBox(width: 6),
+                    Transform.scale(
+                      scale: 0.85,
+                      child: IdentityBadge(
+                          badge: _hasFutureVip
+                              ? (_ownedFutureVipBadge ?? UserProfile.badgeVip)
+                              : UserProfile.badgeVip),
+                    ),
+                  ],
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      !_futureLetterEnabled
+                          ? 'VIP专属·未解锁'
+                          : (_revealAt == null
+                              ? '未设置'
+                              : '${_revealAt!.year}年${_revealAt!.month}月${_revealAt!.day}日'),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: _futureLetterEnabled
+                            ? const Color(0xFF3E8E6D)
+                            : AppPalette.c(0xFF8FA09A),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    AppIcon(AppIcons.chevR,
+                        size: 18,
+                        color: _futureLetterEnabled
+                            ? AppPalette.c(0xFF8FA09A)
+                            : AppPalette.c(0xFFC6D6CD)),
+                  ],
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  if (_futureLetterEnabled) {
+                    _pickFutureLetter();
+                  } else {
+                    AppToast.show(
+                        context, '未来信件是VIP专属权益，请充值后再尝试～');
+                  }
+                },
+              ),
               SwitchListTile(
                 contentPadding: const EdgeInsets.only(left: 24, right: 16),
                 title: Text('置顶',
@@ -932,6 +998,88 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
         );
       },
     );
+  }
+
+  /// 读取档案，判断未来信件的 VIP 门槛与角标身份。
+  Future<void> _loadFutureVip() async {
+    try {
+      final p = await UserStorage.load();
+      if (!mounted) return;
+      setState(() {
+        _hasFutureVip = RewardService.hasVipPrivilege(p);
+        _ownedFutureVipBadge = _pickVipBadge(p);
+      });
+    } catch (_) {}
+  }
+
+  static String? _pickVipBadge(UserProfile p) {
+    if (p.ownedBadges.contains(UserProfile.badgeVipForever) ||
+        p.badge == UserProfile.badgeVipForever) {
+      return UserProfile.badgeVipForever;
+    }
+    if (p.ownedBadges.contains(UserProfile.badgeVip) ||
+        p.badge == UserProfile.badgeVip ||
+        p.vipCardActive) {
+      return UserProfile.badgeVip;
+    }
+    if (p.ownedBadges.contains(UserProfile.badgeBeta) ||
+        p.badge == UserProfile.badgeBeta) {
+      return UserProfile.badgeBeta;
+    }
+    return null;
+  }
+
+  /// 未来信件：设置可见日期 / 取消。仅可选系统时间之后的未来时间。
+  Future<void> _pickFutureLetter() async {
+    final now = DateTime.now();
+    final tomorrow = DateTime(now.year, now.month, now.day + 1);
+    final picked = await AppSheet.show<String>(
+      context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading:
+                  const AppIcon(AppIcons.clock, color: Color(0xFF3E8E6D)),
+              title: const Text('设置可见日期', style: TextStyle(fontSize: 15)),
+              trailing: const AppIcon(AppIcons.chevR,
+                  size: 18, color: Color(0xFF8FA09A)),
+              onTap: () => Navigator.pop(ctx, 'pick'),
+            ),
+            if (_revealAt != null)
+              ListTile(
+                leading:
+                    const AppIcon(AppIcons.delete, color: Color(0xFFCB5C50)),
+                title: const Text('取消未来信件',
+                    style: TextStyle(fontSize: 15, color: Color(0xFFCB5C50))),
+                onTap: () => Navigator.pop(ctx, 'clear'),
+              ),
+            const SizedBox(height: 6),
+          ],
+        ),
+      ),
+    );
+    if (picked == 'clear') {
+      Haptics.light();
+      setState(() => _revealAt = null);
+      return;
+    }
+    if (picked != 'pick') return;
+    final initial = _revealAt != null && _revealAt!.isAfter(now)
+        ? _revealAt!
+        : tomorrow;
+    final date = await showWheelDatePicker(
+      context,
+      initial: initial,
+      minimum: tomorrow,
+      maximum: DateTime(2100, 12, 31),
+      title: '选择可见日期',
+    );
+    if (date != null) {
+      Haptics.light();
+      setState(() => _revealAt = DateTime(date.year, date.month, date.day));
+    }
   }
 
   Future<void> _pickDate() async {
@@ -1069,18 +1217,6 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                         onChanged: (_) => setState(() {}),
                       ),
                     ),
-                    // 标题为空时提供「换一个」入口
-                    if (_titleCtrl.text.isEmpty)
-                      InkWell(
-                        onTap: _shufflePrompt,
-                        borderRadius: BorderRadius.circular(16),
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 4),
-                          child: AppIcon(AppIcons.restore,
-                              size: 18, color: AppPalette.c(0xFF8FA09A)),
-                        ),
-                      ),
                     Text(
                       '${_titleCtrl.text.length}/15',
                       style: TextStyle(

@@ -43,6 +43,11 @@
             android:name=".CountdownReceiver"
             android:exported="false" />
 
+        <!-- v4.9.37 未来信件到期提醒广播接收器 -->
+        <receiver
+            android:name=".FutureLetterReceiver"
+            android:exported="false" />
+
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
