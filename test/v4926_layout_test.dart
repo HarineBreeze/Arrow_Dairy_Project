@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,6 +7,7 @@ import 'package:path_provider_platform_interface/path_provider_platform_interfac
 import 'package:path_provider_platform_interface/src/method_channel_path_provider.dart';
 
 import 'package:ayodiray/models/countdown_event.dart';
+import 'package:ayodiray/models/user_profile.dart';
 import 'package:ayodiray/screens/countdown_edit_screen.dart';
 import 'package:ayodiray/screens/item_edit_screen.dart';
 import 'package:ayodiray/screens/settings_screen.dart';
@@ -84,8 +86,17 @@ void main() {
         (tester) async {
       await tall(tester);
       addTearDown(() => tester.binding.setSurfaceSize(null));
+      // 提醒时间为 VIP 专属：先授予 VIP 身份再进入
+      final vipProfile = UserProfile(
+          ownedBadges: [UserProfile.badgeNormal, UserProfile.badgeVip]);
+      File('${dir.path}/user_profile.json')
+          .writeAsStringSync(jsonEncode(vipProfile.toJson()));
       await tester.pumpWidget(const MaterialApp(home: CountdownEditScreen()));
       await _settle(tester);
+      // 等待编辑页异步读取档案判断 VIP 权限
+      await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 100)));
+      await tester.pumpAndSettle();
 
       expect(find.text('提醒时间'), findsOneWidget);
       expect(find.text('当天'), findsOneWidget, reason: '默认当天，作为行内当前值');

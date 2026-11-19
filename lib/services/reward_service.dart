@@ -4,6 +4,9 @@ import 'user_storage.dart';
 /// 杂货店商品类型：永久身份 / 限时 VIP 日卡 / 限时 VIP 周卡
 enum ShopItemKind { badge, vipDayCard, vipWeekCard }
 
+/// 首次新增奖励的类别（事件 / 物品 / 资产，各仅 1 次）
+enum FirstAddKind { event, item, asset }
+
 /// 灵感杂货店在售商品
 class ShopBadge {
   final String id;
@@ -61,6 +64,9 @@ class RewardService {
   /// 每日首次发布笔记的灵感奖励
   static const int dailyWritePoints = 20;
 
+  /// 首次新增事件 / 物品 / 资产的灵感奖励（每类仅 1 次）
+  static const int firstAddPoints = 20;
+
   /// VIP 日卡：每次累加 24 小时，单用户兑换次数上限
   static const Duration vipCardDuration = Duration(hours: 24);
   static const int vipCardMaxCount = 30;
@@ -84,6 +90,10 @@ class RewardService {
   static const Map<String, int> unlimitedDeductCodes = {
     '13031210237': 1000,
   };
+
+  /// 无限次使用的「清除会员身份」兑换码。
+  /// 使用后移除非普通版身份牌与 VIP 权益，并返还杂货店里非 VIP 身份牌的兑换次数。
+  static const String noVipCode = 'novip';
 
   /// 兑换码 → 身份 id
   static const Map<String, String> badgeCodes = {
@@ -155,6 +165,26 @@ class RewardService {
       await UserStorage.save(profile);
       final actual = before - profile.points;
       return RedeemOutcome(true, '兑换成功，-$actual 点');
+    }
+
+    // 无限次「清除会员身份」码：不查重、不记录，每次都能用。
+    // 移除非普通版身份牌 + VIP 权益；杂货店里的次数随计数清零自然返还。
+    if (code == noVipCode) {
+      final removed = profile.ownedBadges
+          .where((b) => b != UserProfile.badgeNormal)
+          .toList();
+      profile.ownedBadges = [UserProfile.badgeNormal];
+      if (profile.badge != UserProfile.badgeNormal) {
+        profile.badge = UserProfile.badgeNormal;
+      }
+      profile.vipCardExpireAt = '';
+      profile.vipCardCount = 0;
+      profile.vipWeekCardCount = 0;
+      await UserStorage.save(profile);
+      final msg = removed.isEmpty
+          ? '已是普通版，无需清除'
+          : '已清除身份与会员权益：${removed.map(_badgeName).join('、')}';
+      return RedeemOutcome(true, msg);
     }
 
     if (profile.redeemedCodes.contains(code)) {
@@ -272,6 +302,46 @@ class RewardService {
     } catch (_) {
       return 0;
     }
+  }
+
+  /// 首次新增事件 / 物品 / 资产的灵感奖励（每类仅 1 次，非每日）。
+  /// 返回实际获得的灵感（该类别已领过 / 读写失败返回 0）。
+  /// 与每日发布奖励相同：异常吞掉，不影响新增本身。
+  static Future<int> awardFirstAdd(FirstAddKind kind) async {
+    try {
+      final profile = await UserStorage.load();
+      final claimed = kind == FirstAddKind.event
+          ? profile.firstEventReward
+          : kind == FirstAddKind.item
+              ? profile.firstItemReward
+              : profile.firstAssetReward;
+      if (claimed) return 0;
+      if (kind == FirstAddKind.event) {
+        profile.firstEventReward = true;
+      } else if (kind == FirstAddKind.item) {
+        profile.firstItemReward = true;
+      } else {
+        profile.firstAssetReward = true;
+      }
+      profile.points += firstAddPoints;
+      await UserStorage.save(profile);
+      return firstAddPoints;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  /// 是否拥有可解锁「提醒时间」的 VIP 类身份：
+  /// 内测版 / VIP / 终身VIP 其一（拥有即可，无需佩戴；限时 VIP 生效中亦可）。
+  static bool hasVipPrivilege(UserProfile p) {
+    if (p.vipCardActive) return true;
+    const vipBadges = {
+      UserProfile.badgeBeta,
+      UserProfile.badgeVip,
+      UserProfile.badgeVipForever,
+    };
+    return p.ownedBadges.any(vipBadges.contains) ||
+        vipBadges.contains(p.badge);
   }
 
   static String _badgeName(String id) {

@@ -350,7 +350,7 @@ void main() {
 
       await tester.tap(find.byKey(const ValueKey('shop-item-vipWeekCard')));
       await tester.pump(const Duration(milliseconds: 300));
-      expect(find.textContaining('是否要花费 1400 点兑换「VIP周卡」'),
+      expect(find.textContaining('是否要花费 1400 点灵感兑换「VIP周卡」'),
           findsOneWidget);
       expect(find.textContaining('有效期7天'), findsOneWidget);
 

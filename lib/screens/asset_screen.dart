@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../utils/app_motion.dart';
 import '../utils/app_toast.dart';
+import '../services/reward_service.dart';
 import '../models/asset.dart';
 import '../services/app_settings.dart';
 import '../services/asset_storage.dart';
@@ -88,6 +89,12 @@ class AssetScreenState extends State<AssetScreen> {
       _assets.add(r);
       await AssetStorage.save(_assets);
       if (mounted) setState(() {});
+      // 首次新增资产奖励灵感
+      RewardService.awardFirstAdd(FirstAddKind.asset).then((n) {
+        if (n > 0 && mounted) {
+          AppToast.show(context, '首次新增资产，+$n 点灵感');
+        }
+      });
     }
   }
 
@@ -425,6 +432,14 @@ class AssetScreenState extends State<AssetScreen> {
       // 编辑/新增保存
       await AssetStorage.save(_assets);
       if (mounted) setState(() {});
+      // 仅新增（非编辑）发首次奖励
+      if (asset == null) {
+        RewardService.awardFirstAdd(FirstAddKind.asset).then((n) {
+          if (n > 0 && mounted) {
+            AppToast.show(context, '首次新增资产，+$n 点灵感');
+          }
+        });
+      }
     }
   }
 

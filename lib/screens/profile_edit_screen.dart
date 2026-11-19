@@ -400,7 +400,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                 ),
                 const SizedBox(width: 3),
                 Text(
-                  '分',
+                  '点',
                   style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
                 ),
               ],

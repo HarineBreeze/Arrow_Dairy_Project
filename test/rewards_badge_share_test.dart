@@ -351,7 +351,7 @@ void main() {
       expect(find.text('VIP'), findsOneWidget);
       expect(find.text('灵感'), findsOneWidget);
       expect(find.text('120'), findsOneWidget);
-      expect(find.text('分'), findsOneWidget);
+      expect(find.text('点'), findsOneWidget);
     });
 
     testWidgets('默认佩戴普通版身份', (tester) async {

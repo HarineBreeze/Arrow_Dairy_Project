@@ -311,7 +311,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       if (isNew) {
         final earned = await RewardService.awardDailyWrite();
         if (earned > 0 && mounted) {
-          AppToast.show(context, '今日首次发布，+$earned 点');
+          AppToast.show(context, '今日首次发布，+$earned 点灵感');
         }
       }
     }

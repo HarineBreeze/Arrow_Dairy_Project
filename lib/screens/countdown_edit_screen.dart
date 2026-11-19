@@ -1,7 +1,12 @@
 import '../widgets/app_icons.dart';
 import 'package:flutter/material.dart';
 import '../models/countdown_event.dart';
+import '../models/user_profile.dart';
+import '../services/user_storage.dart';
+import '../services/reward_service.dart';
 import '../services/trash_storage.dart';
+import '../utils/app_toast.dart';
+import '../widgets/identity_badge.dart';
 import '../widgets/unsaved_guard.dart';
 import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
@@ -35,6 +40,12 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
   late RepeatRule _repeat;
   late int _remindBeforeDays;
   bool _saving = false;
+
+  /// 「提醒时间」VIP 门槛：是否有内测版/VIP/终身VIP 身份。
+  /// null = 尚未从磁盘读出（先按无权限渲染，读出后再刷新）。
+  bool? _hasVip;
+  /// 本次进入时已有的提醒值（>0 表示曾设置过；VIP 失去后用于区分「不提示」）
+  late int _initialRemindDays;
 
 
   final GlobalKey<SaveDoneButtonState> _doneKey =
@@ -120,6 +131,17 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
     _type = e?.type ?? '纪念日';
     _repeat = e?.repeat ?? RepeatRule.none;
     _remindBeforeDays = e?.remindBeforeDays ?? 0;
+    _initialRemindDays = _remindBeforeDays;
+    // 异步读取档案判断提醒时间的 VIP 权限
+    UserStorage.load().then((p) {
+      if (!mounted) return;
+      setState(() {
+        _hasVip = RewardService.hasVipPrivilege(p);
+        _ownedVipBadge = _pickVipBadge(p);
+      });
+    }).catchError((_) {
+      if (mounted) setState(() => _hasVip = false);
+    });
     // 记住进入时的图标（可能为空），用于判断用户是否手动改过图标
     _initIcon = (e?.icon ?? '').trim();
     _iconCtrl = TextEditingController(
@@ -468,26 +490,8 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
             ),
             const SizedBox(height: 16),
 
-            // 提醒时间（0 = 当天）
-            _selectRow(
-              label: '提醒时间',
-              value: _remindBeforeDays == 0
-                  ? '当天'
-                  : '提前 $_remindBeforeDays 天',
-              onTap: () => _pickOptionSheet(
-                title: '提醒时间',
-                options: const [0, 1, 3, 7]
-                    .map((d) => d == 0 ? '当天' : '提前 $d 天')
-                    .toList(),
-                current: _remindBeforeDays == 0
-                    ? '当天'
-                    : '提前 $_remindBeforeDays 天',
-                onSelected: (label) => setState(() => _remindBeforeDays =
-                    label == '当天'
-                        ? 0
-                        : int.parse(label.replaceAll(RegExp(r'[^0-9]'), ''))),
-              ),
-            ),
+            // 提醒时间（0 = 当天）：VIP 专属，右上角身份牌角标
+            _buildRemindRow(),
           ],
         ),
       ),
@@ -527,7 +531,14 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
     required String label,
     required String value,
     required VoidCallback onTap,
+    bool dimmed = false,
   }) {
+    final labelColor = dimmed
+        ? AppPalette.c(0xFFB2C2BA)
+        : AppPalette.c(0xFF24382F);
+    final valueColor = dimmed
+        ? AppPalette.c(0xFFB2C2BA)
+        : AppPalette.c(0xFF647A70);
     return Container(
       decoration: _box(),
       child: InkWell(
@@ -545,8 +556,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                 SizedBox(
                   width: 76,
                   child: Text(label,
-                      style: TextStyle(
-                          fontSize: 15, color: AppPalette.c(0xFF24382F))),
+                      style: TextStyle(fontSize: 15, color: labelColor)),
                 ),
                 Expanded(
                   child: Text(
@@ -554,8 +564,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                     textAlign: TextAlign.right,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                        fontSize: 14, color: AppPalette.c(0xFF647A70)),
+                    style: TextStyle(fontSize: 14, color: valueColor),
                   ),
                 ),
                 const SizedBox(width: 6),
@@ -567,6 +576,92 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
         ),
       ),
     );
+  }
+
+  /// 提醒时间行：VIP 身份门槛 + 右上角身份牌角标（略微溢出边框）。
+  Widget _buildRemindRow() {
+    final canEdit = _hasVip == true;
+    final wasSet = _initialRemindDays > 0; // VIP 失去前已设过提醒
+    final value = _remindBeforeDays == 0
+        ? '当天'
+        : '提前 $_remindBeforeDays 天';
+
+    // 角标：有权限显示用户自己的 VIP 类牌，无权限显示 VIP 牌作「专属」提示
+    final badgeId = canEdit ? _vipBadgeId : UserProfile.badgeVip;
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        _selectRow(
+          label: '提醒时间',
+          value: canEdit
+              ? value
+              : (wasSet ? value : 'VIP专属·未解锁'),
+          dimmed: !canEdit,
+          onTap: () {
+            if (canEdit) {
+              _pickOptionSheet(
+                title: '提醒时间',
+                options: const [0, 1, 3, 7]
+                    .map((d) => d == 0 ? '当天' : '提前 $d 天')
+                    .toList(),
+                current: _remindBeforeDays == 0
+                    ? '当天'
+                    : '提前 $_remindBeforeDays 天',
+                onSelected: (label) => setState(() => _remindBeforeDays =
+                    label == '当天'
+                        ? 0
+                        : int.parse(label.replaceAll(RegExp(r'[^0-9]'), ''))),
+              );
+            } else if (wasSet) {
+              // VIP 过期/失去：已设提醒时间保持不变，禁用修改且不弹提示
+              return;
+            } else {
+              // 从未拥有：提示需 VIP
+              AppToast.show(
+                  context, '提醒时间是VIP专属权益，请充值后再尝试～');
+            }
+          },
+        ),
+        // 右上角身份牌，略微溢出边框
+        Positioned(
+          right: -4,
+          top: -6,
+          child: IgnorePointer(
+            child: Transform.scale(
+              scale: 0.85,
+              child: IdentityBadge(badge: badgeId),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 当前拥有的 VIP 类身份牌 id（用于角标展示）
+  String get _vipBadgeId {
+    // 依次取终身VIP > VIP > 内测版，与权益强度一致
+    return _ownedVipBadge ?? UserProfile.badgeVip;
+  }
+
+  String? _ownedVipBadge;
+
+  /// 取用户拥有的 VIP 类身份牌 id（终身VIP > VIP > 内测版），用于角标展示
+  static String? _pickVipBadge(UserProfile p) {
+    if (p.ownedBadges.contains(UserProfile.badgeVipForever) ||
+        p.badge == UserProfile.badgeVipForever) {
+      return UserProfile.badgeVipForever;
+    }
+    if (p.ownedBadges.contains(UserProfile.badgeVip) ||
+        p.badge == UserProfile.badgeVip ||
+        p.vipCardActive) {
+      return UserProfile.badgeVip;
+    }
+    if (p.ownedBadges.contains(UserProfile.badgeBeta) ||
+        p.badge == UserProfile.badgeBeta) {
+      return UserProfile.badgeBeta;
+    }
+    return null;
   }
 
   /// 通用底部选择层：标题 + 选项列表 + 当前项打勾（档案页性别弹层同款）。

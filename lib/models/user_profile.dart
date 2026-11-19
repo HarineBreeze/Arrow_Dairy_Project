@@ -49,6 +49,12 @@ class UserProfile {
   /// 最近一次「每日首次发布」奖励的日期（yyyy-MM-dd），空 = 从未领取
   String lastWriteReward;
 
+  /// 首次新增奖励是否已领取（每类仅 1 次，非每日）：
+  /// 事件 / 物品 / 资产各自第一次新增成功时 +20 灵感，之后不再发。
+  bool firstEventReward;
+  bool firstItemReward;
+  bool firstAssetReward;
+
   /// 已兑换「VIP日卡」的次数（单用户上限见 RewardService.vipCardMaxCount）
   int vipCardCount;
 
@@ -76,6 +82,9 @@ class UserProfile {
     List<String>? ownedBadges,
     List<String>? redeemedCodes,
     this.lastWriteReward = '',
+    this.firstEventReward = false,
+    this.firstItemReward = false,
+    this.firstAssetReward = false,
     this.vipCardCount = 0,
     this.vipWeekCardCount = 0,
     this.vipCardExpireAt = '',
@@ -180,6 +189,9 @@ class UserProfile {
         'ownedBadges': ownedBadges,
         'redeemedCodes': redeemedCodes,
         'lastWriteReward': lastWriteReward,
+        'firstEventReward': firstEventReward,
+        'firstItemReward': firstItemReward,
+        'firstAssetReward': firstAssetReward,
         'vipCardCount': vipCardCount,
         'vipWeekCardCount': vipWeekCardCount,
         'vipCardExpireAt': vipCardExpireAt,
@@ -229,6 +241,10 @@ class UserProfile {
           (json['redeemedCodes'] as List?)?.map((e) => e.toString()).toList() ??
               <String>[],
       lastWriteReward: json['lastWriteReward'] as String? ?? '',
+      // 旧档案无首次新增奖励字段：回落 false（未领取），零迁移
+      firstEventReward: json['firstEventReward'] as bool? ?? false,
+      firstItemReward: json['firstItemReward'] as bool? ?? false,
+      firstAssetReward: json['firstAssetReward'] as bool? ?? false,
       vipCardCount: (json['vipCardCount'] as num?)?.toInt() ?? 0,
       vipWeekCardCount: (json['vipWeekCardCount'] as num?)?.toInt() ?? 0,
       vipCardExpireAt: json['vipCardExpireAt'] as String? ?? '',

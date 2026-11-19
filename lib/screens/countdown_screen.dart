@@ -6,7 +6,9 @@ import 'package:flutter/services.dart';
 import '../models/countdown_event.dart';
 import '../services/countdown_storage.dart';
 import '../services/countdown_reminder.dart';
+import '../services/reward_service.dart';
 import '../services/trash_storage.dart';
+import '../utils/app_toast.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/loading_skeleton.dart';
 import '../utils/menu_gesture_gate.dart';
@@ -91,6 +93,12 @@ class CountdownScreenState extends State<CountdownScreen> {
       setState(() => _events.add(r));
       CountdownStorage.save(_events);
       CountdownReminder.syncAll(_events);
+      // 首次新增事件奖励灵感（每类仅 1 次，异步不阻塞）
+      RewardService.awardFirstAdd(FirstAddKind.event).then((n) {
+        if (n > 0 && mounted) {
+          AppToast.show(context, '首次新增事件，+$n 点灵感');
+        }
+      });
     }
   }
 
@@ -169,6 +177,14 @@ class CountdownScreenState extends State<CountdownScreen> {
       });
       CountdownStorage.save(_events);
       CountdownReminder.syncAll(_events);
+      // 新增（非编辑）时发首次奖励
+      if (i < 0) {
+        RewardService.awardFirstAdd(FirstAddKind.event).then((n) {
+          if (n > 0 && mounted) {
+            AppToast.show(context, '首次新增事件，+$n 点灵感');
+          }
+        });
+      }
     }
   }
 

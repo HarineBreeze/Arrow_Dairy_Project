@@ -76,9 +76,9 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: Text(
           isTimeCard
-              ? '是否要花费 ${item.price} 点兑换「${item.name}」？\n'
+              ? '是否要花费 ${item.price} 点灵感兑换「${item.name}」？\n'
                   '兑换后立即生效，${item.effectLabel}。'
-              : '是否要花费 ${item.price} 点兑换「${item.name}」？',
+              : '是否要花费 ${item.price} 点灵感兑换「${item.name}」？',
           style: const TextStyle(fontSize: 13, height: 1.7),
         ),
         actions: [
@@ -200,7 +200,7 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
           ),
           const SizedBox(width: 3),
           Text(
-            '分',
+            '点',
             style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
           ),
         ],

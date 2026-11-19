@@ -303,7 +303,7 @@ void main() {
 
       await tester.tap(find.byKey(const ValueKey('shop-item-birthday')));
       await tester.pump(const Duration(milliseconds: 300));
-      expect(find.textContaining('是否要花费 50 点兑换「诞生日-身份」'),
+      expect(find.textContaining('是否要花费 50 点灵感兑换「诞生日-身份」'),
           findsOneWidget);
       expect(find.textContaining('兑换后剩余'), findsNothing,
           reason: '确认框不再提示兑换后剩余灵感');
@@ -457,7 +457,7 @@ void main() {
 
       await tester.tap(find.byKey(const ValueKey('shop-item-vip')));
       await tester.pump(const Duration(milliseconds: 300));
-      expect(find.textContaining('是否要花费 200 点兑换「VIP日卡」'), findsOneWidget);
+      expect(find.textContaining('是否要花费 200 点灵感兑换「VIP日卡」'), findsOneWidget);
       expect(find.textContaining('有效期1天'), findsOneWidget);
       expect(find.textContaining('兑换后剩余'), findsNothing);
 

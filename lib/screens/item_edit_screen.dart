@@ -2,7 +2,9 @@ import '../widgets/app_icons.dart';
 import 'package:flutter/material.dart';
 import '../models/item.dart';
 import '../services/item_storage.dart';
+import '../services/reward_service.dart';
 import '../services/trash_storage.dart';
+import '../utils/app_toast.dart';
 import '../widgets/unsaved_guard.dart';
 import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
@@ -199,6 +201,15 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
       }
     }
     await ItemStorage.save(list);
+
+    // 首次新增物品奖励灵感（仅新增、每类 1 次，异步不阻塞动画）
+    if (_isNew) {
+      RewardService.awardFirstAdd(FirstAddKind.item).then((n) {
+        if (n > 0 && mounted) {
+          AppToast.show(context, '首次新增物品，+$n 点灵感');
+        }
+      });
+    }
 
     if (!mounted) return;
     // 落盘完成：续播对勾 + 粒子，播完由 onDone 返回
