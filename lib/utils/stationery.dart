@@ -7,9 +7,8 @@ import 'package:flutter/material.dart';
 /// - [id] 稳定字符串，落进 DiaryEntry.stationery 做持久化；
 ///   空串表示经典（无信纸底纹）。
 /// - [vip] 是否 VIP 专属：仅经典款（无信纸）免费，其余全部 VIP。
-/// - v4.9.41：移除「和风信笺」「花间私语」两款；旧数据里的这两个 id
-///   会被 DiaryEntry.fromJson 视为未知样式回退为经典。
-/// - 「抹茶格纹」更名「抹茶横纹」（id 保持 'lined' 不变，老数据无缝）。
+/// - 已下架样式：「和风信笺」「花间私语」「抹茶横纹」。旧数据里的
+///   这些 id 会被 DiaryEntry.fromJson 视为未知样式回退为经典。
 const String stationeryNone = ''; // 经典：无信纸底纹
 
 const List<StationeryStyle> stationeryStyles = [
@@ -17,12 +16,6 @@ const List<StationeryStyle> stationeryStyles = [
     id: 'grid',
     name: '手账方格',
     en: 'GRID NOTE',
-    vip: true,
-  ),
-  StationeryStyle(
-    id: 'lined',
-    name: '抹茶横纹',
-    en: 'CLASSIC LINED',
     vip: true,
   ),
   StationeryStyle(

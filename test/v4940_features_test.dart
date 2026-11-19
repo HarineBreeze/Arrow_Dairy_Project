@@ -82,21 +82,22 @@ void main() {
 
   // ---------- 1. 信纸常量 ----------
   group('信纸样式常量', () {
-    test('共 4 款，全部 VIP；仅经典（无信纸）免费', () {
-      expect(stationeryStyles.length, 4);
+    test('共 3 款，全部 VIP；仅经典（无信纸）免费', () {
+      expect(stationeryStyles.length, 3);
       final free = stationeryStyles.where((s) => !s.vip).map((s) => s.id).toSet();
       final vip = stationeryStyles.where((s) => s.vip).map((s) => s.id).toSet();
       expect(free, isEmpty);
-      expect(vip, {'grid', 'lined', 'night', 'kraft'});
+      expect(vip, {'grid', 'night', 'kraft'});
       for (final s in stationeryStyles) {
         expect(isVipStationery(s.id), isTrue);
       }
     });
 
-    test('「抹茶格纹」更名「抹茶横纹」，已下架样式查询为空', () {
-      expect(stationeryById('lined')?.name, '抹茶横纹');
+    test('已下架样式查询为空（含抹茶横纹）', () {
+      expect(stationeryById('lined'), isNull);
       expect(stationeryById('washi'), isNull);
       expect(stationeryById('botanical'), isNull);
+      expect(isValidStationery('lined'), isFalse);
       expect(isValidStationery('washi'), isFalse);
       expect(isValidStationery('botanical'), isFalse);
     });
@@ -129,8 +130,8 @@ void main() {
       expect(DiaryEntry.fromJson(map).stationery, '');
     });
 
-    test('已下架样式（和风信笺/花间私语）读回 → 回退经典', () {
-      for (final legacy in ['washi', 'botanical', 'nope']) {
+    test('已下架样式（抹茶横纹/和风信笺/花间私语）读回 → 回退经典', () {
+      for (final legacy in ['lined', 'washi', 'botanical', 'nope']) {
         final e = entryWith(stationery: legacy);
         final back = DiaryEntry.fromJson(e.toJson());
         expect(back.stationery, '', reason: '$legacy 应回退经典');
@@ -158,6 +159,30 @@ void main() {
       ));
       await _settle(tester);
       expect(find.text('一封日记'), findsOneWidget);
+      await tester.binding.setSurfaceSize(null);
+    });
+
+    testWidgets('星夜来信：浏览页背景压暗（与信纸不割裂）', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(500, 1200));
+      await tester.pumpWidget(MaterialApp(
+        home: NoteViewScreen(entry: entryWith(stationery: 'night')),
+      ));
+      await _settle(tester);
+      final scaffold =
+          tester.widget<Scaffold>(find.byType(Scaffold).first);
+      expect(scaffold.backgroundColor, const Color(0xFF1A201C));
+      await tester.binding.setSurfaceSize(null);
+    });
+
+    testWidgets('经典：浏览页背景保持默认', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(500, 1200));
+      await tester.pumpWidget(MaterialApp(
+        home: NoteViewScreen(entry: entryWith(stationery: 'grid')),
+      ));
+      await _settle(tester);
+      final scaffold =
+          tester.widget<Scaffold>(find.byType(Scaffold).first);
+      expect(scaffold.backgroundColor, isNull);
       await tester.binding.setSurfaceSize(null);
     });
   });
@@ -193,12 +218,12 @@ void main() {
       tile.onTap!();
       await tester.pump(const Duration(milliseconds: 350));
 
-      // 抽屉：经典 + 4 款信纸（均 VIP）
+      // 抽屉：经典 + 3 款信纸（均 VIP）
       expect(find.text('经典'), findsOneWidget);
       expect(find.text('手账方格'), findsOneWidget);
-      expect(find.text('抹茶横纹'), findsOneWidget);
       expect(find.text('星夜来信'), findsOneWidget);
       expect(find.text('牛皮旧信'), findsOneWidget);
+      expect(find.text('抹茶横纹'), findsNothing);
       expect(find.text('和风信笺'), findsNothing);
       expect(find.text('花间私语'), findsNothing);
       // 副标题与图标已移除，仅保留标题
@@ -231,12 +256,46 @@ void main() {
       await tester.pump(const Duration(milliseconds: 350));
       // 选中一款信纸
       final vipTile = tester.widget<ListTile>(find
-          .ancestor(of: find.text('抹茶横纹'), matching: find.byType(ListTile)));
+          .ancestor(of: find.text('牛皮旧信'), matching: find.byType(ListTile)));
       vipTile.onTap!();
       await tester.pump(const Duration(milliseconds: 350));
       // 抽屉关闭后，更多面板里信纸项显示新名字（重开更多）
       await openMore(tester);
-      expect(find.text('抹茶横纹'), findsOneWidget);
+      expect(find.text('牛皮旧信'), findsOneWidget);
+      // 编辑页正文落在信纸上（所见即所得）
+      expect(find.byType(StationeryPaper), findsWidgets);
+      await tester.binding.setSurfaceSize(null);
+    });
+
+    testWidgets('星夜来信：编辑页背景与文字同步压暗/提亮', (tester) async {
+      // 已设置 night 的笔记，用 VIP 身份打开编辑
+      final now = DateTime(2026, 11, 19, 10);
+      File('${dir.path}/diaries.json').writeAsStringSync(jsonEncode([
+        DiaryEntry(
+          id: 'old2',
+          title: '夜信',
+          content: '夜色',
+          stationery: 'night',
+          createdAt: now,
+          updatedAt: now,
+          publishDate: now,
+        ).toJson()
+      ]));
+      final vip = UserProfile(
+          badge: UserProfile.badgeVip,
+          ownedBadges: [UserProfile.badgeNormal, UserProfile.badgeVip]);
+      writeProfile(vip);
+      await tester.binding.setSurfaceSize(const Size(420, 1400));
+      await tester.pumpWidget(MaterialApp(home: EditScreen(
+        entry: DiaryEntry.fromJson(
+            jsonDecode(File('${dir.path}/diaries.json').readAsStringSync())[0]),
+      )));
+      await _settle(tester);
+      final scaffold =
+          tester.widget<Scaffold>(find.byType(Scaffold).first);
+      expect(scaffold.backgroundColor, const Color(0xFF1A201C));
+      // 正文落在信纸上
+      expect(find.byType(StationeryPaper), findsWidgets);
       await tester.binding.setSurfaceSize(null);
     });
 

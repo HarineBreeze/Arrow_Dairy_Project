@@ -11,19 +11,11 @@ class StationeryPaper extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
 
-  /// 是否绘制横纹。抹茶横纹的横线需要与正文文字行对齐，因此整页大
-  /// 底纹应传 false（只画底色），由包住正文文字的内层信纸负责画线。
-  final bool showRuling;
-
-  /// 抹茶横纹的横线间距 = 正文行高（15 * 1.8）。
-  static const double ruledLineSpacing = 27;
-
   const StationeryPaper({
     Key? key,
     required this.styleId,
     required this.child,
     this.padding = const EdgeInsets.all(16),
-    this.showRuling = true,
   }) : super(key: key);
 
   /// 正文文字颜色：星夜来信为浅色，其余为深绿。
@@ -67,16 +59,7 @@ class StationeryPaper extends StatelessWidget {
           Positioned.fill(
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              // 横线起点 = 内边距顶部（正文首行行框的上缘），
-              // 间距 = 正文行高，保证每行文字都落在两条横线之间
-              child: CustomPaint(
-                painter: _StationeryPainter(
-                  styleId,
-                  lineTop: showRuling
-                      ? padding.resolve(TextDirection.ltr).top
-                      : -1,
-                ),
-              ),
+              child: CustomPaint(painter: _StationeryPainter(styleId)),
             ),
           ),
           Padding(padding: padding, child: child),
@@ -98,11 +81,6 @@ class StationeryPaper extends StatelessWidget {
 
   LinearGradient? _gradient(String id) {
     switch (id) {
-      case 'lined':
-        return const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFFFBFDFB), Color(0xFFEFF7F1)]);
       case 'night':
         return const LinearGradient(
             begin: Alignment.topLeft,
@@ -128,17 +106,11 @@ class StationeryPaper extends StatelessWidget {
 
 class _StationeryPainter extends CustomPainter {
   final String id;
-
-  /// 抹茶横纹的首条横线 y 坐标（= 正文首行行框上缘）；< 0 表示不画线。
-  final double lineTop;
-  _StationeryPainter(this.id, {this.lineTop = -1});
+  _StationeryPainter(this.id);
 
   @override
   void paint(Canvas canvas, Size size) {
     switch (id) {
-      case 'lined':
-        _paintLined(canvas, size);
-        break;
       case 'grid':
         _paintGrid(canvas, size);
         break;
@@ -148,19 +120,6 @@ class _StationeryPainter extends CustomPainter {
       case 'kraft':
         _paintKraft(canvas, size);
         break;
-    }
-  }
-
-  /// 抹茶横纹：只有抹茶绿横线（取消红色装订线），横线从正文首行
-  /// 上缘起、按正文行高（27px）分布，文字恰好落在两条横线之间。
-  void _paintLined(Canvas canvas, Size size) {
-    if (lineTop < 0) return; // 外层大底纹不画线，由内层正文信纸负责
-    final p = Paint()
-      ..color = const Color(0x333E8E6D)
-      ..strokeWidth = 1;
-    final spacing = StationeryPaper.ruledLineSpacing;
-    for (double y = lineTop; y < size.height; y += spacing) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), p);
     }
   }
 

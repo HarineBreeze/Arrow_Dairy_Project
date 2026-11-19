@@ -271,10 +271,14 @@ void main() {
       expect(find.textContaining('今天去了海边'), findsOneWidget);
     });
 
-    testWidgets('抹茶横纹：正文落在内层信纸上（横线与文字行对齐）', (tester) async {
-      await pumpShare(tester, _entryWith('lined'));
-      // 外层整页底纹 + 内层正文信纸
-      expect(find.byType(StationeryPaper), findsNWidgets(2));
+    testWidgets('星夜来信：信纸之外的区域同步压暗', (tester) async {
+      await pumpShare(tester, _entryWith('night'));
+      // 信纸渲染层存在，且内容区背景为压暗的深色
+      expect(find.byType(StationeryPaper), findsWidgets);
+      final darkBg = find.byWidgetPredicate((w) =>
+          w is Container &&
+          w.color == const Color(0xFF1A201C));
+      expect(darkBg, findsOneWidget);
     });
 
     testWidgets('已下架样式读回回退经典，分享不报错', (tester) async {

@@ -115,6 +115,17 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
   /// （VIP 过期后保留当前信纸、可切回经典，但不可再换其它 VIP 款）。
   bool _canPickVipPaper(String id) => _hasPaperVip || id == _stationery;
 
+  /// 星夜来信：编辑页背景与文字同步压暗/提亮（与浏览页一致）。
+  bool get _isNightPaper => _stationery == 'night';
+
+  /// 编辑页正文主文字色：星夜用浅色，其余深绿。
+  Color get _editTextColor =>
+      _isNightPaper ? const Color(0xFFE8F3EC) : AppPalette.c(0xFF24382F);
+
+  /// 编辑页次要文字色（字数计数、分隔线等）：星夜提亮。
+  Color get _editSubColor =>
+      _isNightPaper ? const Color(0xFFB9CCC1) : AppPalette.c(0xFF8FA09A);
+
   // ---------- 撤销 / 重做 ----------
   // 栈中保存的是「某个历史状态」：文本 + 格式。
   // _lastContent / _formats 始终代表当前状态。
@@ -1293,6 +1304,9 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     return WillPopScope(
       onWillPop: _handleLeave,
       child: Scaffold(
+      // 星夜来信：笔记与图片之外的区域同步压暗（与浏览页一致）
+      backgroundColor:
+          _isNightPaper ? const Color(0xFF1A201C) : null,
       appBar: AppBar(
         toolbarHeight: 48, // v4.9.31：与笔记主页顶栏同高
         backgroundColor: AppPalette.c(0xB33E8E6D), // v4.9.31：与笔记主页顶栏同色
@@ -1359,8 +1373,10 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                         maxLength: 15,
                         // 键盘弹出时标题不被输入法贴边遮挡
                         scrollPadding: const EdgeInsets.only(bottom: 120),
-                        style: const TextStyle(
-                            fontSize: 22, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w600,
+                            color: _editTextColor),
                         decoration: InputDecoration(
                           // 标题为空时随机展示一条写作话题作为引导
                           hintText: _titleCtrl.text.isEmpty ? _prompt : '标题',
@@ -1378,11 +1394,15 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                     Text(
                       '${_titleCtrl.text.length}/15',
                       style: TextStyle(
-                          fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
+                          fontSize: 13, color: _editSubColor),
                     ),
                   ],
                 ),
-                const Divider(height: 1),
+                Divider(
+                    height: 1,
+                    color: _isNightPaper
+                        ? Colors.white.withOpacity(0.14)
+                        : null),
                 if (_encrypted) ...[
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -1392,7 +1412,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                           controller: _subtitleCtrl,
                           maxLength: 15,
                           style: TextStyle(
-                              fontSize: 15, color: AppPalette.c(0xFF24382F)),
+                              fontSize: 15, color: _editTextColor),
                           decoration: InputDecoration(
                             hintText: '此处标题会公开显示哦～',
                             hintStyle: TextStyle(
@@ -1406,11 +1426,15 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                       Text(
                         '${_subtitleCtrl.text.length}/15',
                         style: TextStyle(
-                            fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
+                            fontSize: 13, color: _editSubColor),
                       ),
                     ],
                   ),
-                  const Divider(height: 1),
+                  Divider(
+                      height: 1,
+                      color: _isNightPaper
+                          ? Colors.white.withOpacity(0.14)
+                          : null),
                 ],
               ],
             ),
@@ -1424,9 +1448,16 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-              child: Container(
+              // 设置了信纸：正文卡直接落在信纸底纹上（编辑时所见即所得）；
+              // 经典（无信纸）保持原白色卡片，StationeryPaper('') 为透明包裹层
+              child: StationeryPaper(
+                styleId: _stationery,
+                padding: EdgeInsets.zero,
+                child: Container(
                 decoration: BoxDecoration(
-                  color: AppPalette.c(0xFFFFFFFF),
+                  color: _stationery.isEmpty
+                      ? AppPalette.c(0xFFFFFFFF)
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Stack(
@@ -1448,9 +1479,17 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                         textAlignVertical: TextAlignVertical.top,
                         // 光标在正文底部时，确保它滚到排版栏与字数计数器上方
                         scrollPadding: const EdgeInsets.only(bottom: 132),
-                        style: const TextStyle(fontSize: 15, height: 1.7),
-                        decoration: const InputDecoration(
+                        style: TextStyle(
+                          fontSize: 15,
+                          height: 1.7,
+                          color: _stationery.isEmpty ? null : _editTextColor,
+                        ),
+                        decoration: InputDecoration(
                           hintText: '今天发生了什么…',
+                          hintStyle: TextStyle(
+                              color: _isNightPaper
+                                  ? const Color(0xFF7E948A)
+                                  : null),
                           border: InputBorder.none,
                           counterText: '',
                         ),
@@ -1492,14 +1531,15 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                       child: Text(
                         '${_contentCtrl.text.length}/2000',
                         style: TextStyle(
-                            fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
+                            fontSize: 13, color: _editSubColor),
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-          ),
+              ),
+            ),
                 // 排版栏占正文区的一块（不是浮层）：键盘顶起页面时它自然
                 // 停在键盘上方；不弹键盘时则贴在保存栏上方，不会盖住内容。
                 _buildInlineToolbar(),

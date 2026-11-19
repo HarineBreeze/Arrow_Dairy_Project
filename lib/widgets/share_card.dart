@@ -63,7 +63,10 @@ class ShareCard extends StatelessWidget {
 
     final content = Container(
       width: 375,
-      color: const Color(0xFFF5FAF7),
+      // 星夜来信：信纸之外的区域同步压暗（与浏览页一致），其余浅绿底
+      color: paperId == 'night'
+          ? const Color(0xFF1A201C)
+          : const Color(0xFFF5FAF7),
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -86,8 +89,6 @@ class ShareCard extends StatelessWidget {
           ],
           StationeryPaper(
             styleId: paperId,
-            // 抹茶横纹的横线由内层正文信纸对准文字行绘制
-            showRuling: paperId != 'lined',
             padding:
                 hasPaper ? const EdgeInsets.all(16) : EdgeInsets.zero,
             child: Column(
@@ -116,49 +117,28 @@ class ShareCard extends StatelessWidget {
                 ],
                 if (entry.content.isNotEmpty) ...[
                   const SizedBox(height: 16),
-                  if (paperId == 'lined')
-                    // 抹茶横纹：正文落在内层信纸上，横线对准文字行
-                    StationeryPaper(
-                      styleId: paperId,
-                      padding: const EdgeInsets.all(16),
-                      child: RichNoteText(
-                        text: entry.content,
-                        formats: FormatStore.decode(entry.formats),
-                        itemNames: items
-                            .map((e) => e.name)
-                            .where((n) => n.isNotEmpty)
-                            .toSet(),
-                        style: TextStyle(
-                          fontSize: 15,
-                          height: 1.8,
-                          color: textColor,
-                          fontFamily: fontFamily,
-                        ),
-                      ),
-                    )
-                  else
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: cardColor,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: RichNoteText(
-                        text: entry.content,
-                        formats: FormatStore.decode(entry.formats),
-                        itemNames: items
-                            .map((e) => e.name)
-                            .where((n) => n.isNotEmpty)
-                            .toSet(),
-                        style: TextStyle(
-                          fontSize: 15,
-                          height: 1.8,
-                          color: textColor,
-                          fontFamily: fontFamily,
-                        ),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: cardColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: RichNoteText(
+                      text: entry.content,
+                      formats: FormatStore.decode(entry.formats),
+                      itemNames: items
+                          .map((e) => e.name)
+                          .where((n) => n.isNotEmpty)
+                          .toSet(),
+                      style: TextStyle(
+                        fontSize: 15,
+                        height: 1.8,
+                        color: textColor,
+                        fontFamily: fontFamily,
                       ),
                     ),
+                  ),
                 ],
                 if (hasTodos) ...[
                   const SizedBox(height: 12),

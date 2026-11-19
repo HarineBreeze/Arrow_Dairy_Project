@@ -36,6 +36,17 @@ Future<File?> captureShareCard(
     }
   }
 
+  // 品牌 Logo 预解码：Image.asset 异步解码，若不等待，截图瞬间
+  // 信息条里的 Logo 还没画出来，长图上会缺失（白块/空位）
+  try {
+    await precacheImage(
+      const AssetImage('assets/images/app_logo.png'),
+      context,
+    );
+  } catch (_) {
+    // 预解码失败不阻断分享流程，Logo 位随宿主帧重试
+  }
+
   final boundaryKey = GlobalKey();
 
   late final OverlayEntry host;

@@ -290,7 +290,10 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
     final Color metaColor = hasPaper && paperId == 'night'
         ? const Color(0xFFB9CCC1)
         : AppPalette.c(0xFF8FA09A);
+    // 星夜来信：笔记与图片之外的区域同步压暗，避免白底与深色信纸割裂
+    final Color? pageBg = paperId == 'night' ? const Color(0xFF1A201C) : null;
     return Scaffold(
+      backgroundColor: pageBg,
       appBar: AppBar(
         toolbarHeight: 48, // v4.9.31：与笔记主页顶栏同高
         leadingWidth: 48, // v4.9.31：返回键与右侧图标同为 48×48 热区
@@ -356,9 +359,6 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                 ],
                 StationeryPaper(
                   styleId: paperId,
-                  // 抹茶横纹的横线必须对准正文文字行，由内层正文信纸
-                  // 负责绘制；外层整页底纹只画底色
-                  showRuling: paperId != 'lined',
                   padding: hasPaper
                       ? const EdgeInsets.fromLTRB(16, 22, 16, 22)
                       : EdgeInsets.zero,
@@ -388,60 +388,33 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                   ],
                   if (_entry.content.isNotEmpty) ...[
                     const SizedBox(height: 16),
-                    if (paperId == 'lined')
-                      // 抹茶横纹：正文单独落在内层信纸上，
-                      // 横线与文字行（15 × 1.8 = 27px）一一对齐
-                      StationeryPaper(
-                        styleId: paperId,
-                        padding: const EdgeInsets.all(16),
-                        child: RichNoteText(
-                          text: _entry.content,
-                          formats: FormatStore.decode(_entry.formats),
-                          itemNames: _items
-                              .map((e) => e.name)
-                              .where((n) => n.isNotEmpty)
-                              .toSet(),
-                          onTapMention: _openItem,
-                          searchQuery: widget.searchQuery,
-                          currentHit: widget.searchQuery.trim().isEmpty
-                              ? -1
-                              : _hitIndex,
-                          style: TextStyle(
-                            fontSize: 15,
-                            height: 1.8,
-                            color: paperTextColor,
-                            fontFamily: fontFamily,
-                          ),
-                        ),
-                      )
-                    else
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: cardColor,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: RichNoteText(
-                          text: _entry.content,
-                          formats: FormatStore.decode(_entry.formats),
-                          itemNames: _items
-                              .map((e) => e.name)
-                              .where((n) => n.isNotEmpty)
-                              .toSet(),
-                          onTapMention: _openItem,
-                          searchQuery: widget.searchQuery,
-                          currentHit: widget.searchQuery.trim().isEmpty
-                              ? -1
-                              : _hitIndex,
-                          style: TextStyle(
-                            fontSize: 15,
-                            height: 1.8,
-                            color: paperTextColor,
-                            fontFamily: fontFamily,
-                          ),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: cardColor,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: RichNoteText(
+                        text: _entry.content,
+                        formats: FormatStore.decode(_entry.formats),
+                        itemNames: _items
+                            .map((e) => e.name)
+                            .where((n) => n.isNotEmpty)
+                            .toSet(),
+                        onTapMention: _openItem,
+                        searchQuery: widget.searchQuery,
+                        currentHit: widget.searchQuery.trim().isEmpty
+                            ? -1
+                            : _hitIndex,
+                        style: TextStyle(
+                          fontSize: 15,
+                          height: 1.8,
+                          color: paperTextColor,
+                          fontFamily: fontFamily,
                         ),
                       ),
+                    ),
                   ],
                   // 正文里的 [ ] / [x] 行 → 可勾选的待办清单
                   if (_hasTodos) ...[
