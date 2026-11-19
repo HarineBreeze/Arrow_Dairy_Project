@@ -171,7 +171,7 @@ void main() {
       await pumpEditor(tester, UserProfile());
       await openMore(tester);
       expect(find.text('未来信件'), findsOneWidget);
-      expect(find.text('VIP专属·未解锁'), findsOneWidget);
+      expect(find.text('未解锁'), findsOneWidget);
       await tapFutureTile(tester);
       expect(find.text('未来信件是VIP专属权益，请充值后再尝试～'), findsOneWidget);
       // 清理 AppToast 的 1.6s 定时器
@@ -245,6 +245,36 @@ void main() {
     testWidgets('封存未来信件按加密封条样式显示', (tester) async {
       await pumpHomeWithSealed(tester, sealed: true, subtitle: '给三年后的自己');
       expect(find.text('已加密'), findsOneWidget);
+    });
+
+    testWidgets('空副标题的封存未来信件：预览卡标题显示「未来信件」', (tester) async {
+      await pumpHomeWithSealed(tester, sealed: true, subtitle: '');
+      expect(find.text('未来信件'), findsWidgets);
+      expect(find.text('加密笔记'), findsNothing);
+    });
+
+    testWidgets('真加密笔记空副标题：仍显示「加密笔记」', (tester) async {
+      tester.binding.window.physicalSizeTestValue = const Size(400, 900);
+      tester.binding.window.devicePixelRatioTestValue = 1.0;
+      addTearDown(tester.binding.window.clearPhysicalSizeTestValue);
+      addTearDown(tester.binding.window.clearDevicePixelRatioTestValue);
+      final now = DateTime.now();
+      writeEntries([
+        DiaryEntry(
+          id: 'enc1',
+          encrypted: true,
+          password: '1234',
+          subtitle: '',
+          content: 'x',
+          createdAt: now,
+          updatedAt: now,
+          publishDate: DateTime(now.year, now.month, now.day),
+        ),
+      ]);
+      await tester.pumpWidget(const MaterialApp(home: HomeScreen()));
+      await _settle(tester);
+      expect(find.text('加密笔记'), findsWidgets);
+      expect(find.text('未来信件'), findsNothing);
     });
   });
 }

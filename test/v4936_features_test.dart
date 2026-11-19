@@ -201,7 +201,7 @@ void main() {
       writeProfile(UserProfile(points: 0)); // 普通版
       await tester.pumpWidget(const MaterialApp(home: CountdownEditScreen()));
       await _settle(tester);
-      expect(find.text('VIP专属·未解锁'), findsOneWidget);
+      expect(find.text('未解锁'), findsOneWidget);
       await tester.tap(find.text('提醒时间'));
       await tester.pumpAndSettle();
       expect(find.textContaining('VIP专属权益，请充值后再尝试'), findsOneWidget);
@@ -226,7 +226,7 @@ void main() {
       await _settle(tester);
       // 保留原提醒值，不显示「未解锁」
       expect(find.text('提前 3 天'), findsOneWidget);
-      expect(find.text('VIP专属·未解锁'), findsNothing);
+      expect(find.text('未解锁'), findsNothing);
       await tester.tap(find.text('提醒时间'));
       await tester.pumpAndSettle();
       // 不弹充值提示，也不弹选择层

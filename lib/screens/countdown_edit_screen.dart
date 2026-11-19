@@ -596,7 +596,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
           label: '提醒时间',
           value: canEdit
               ? value
-              : (wasSet ? value : 'VIP专属·未解锁'),
+              : (wasSet ? value : '未解锁'),
           dimmed: !canEdit,
           onTap: () {
             if (canEdit) {

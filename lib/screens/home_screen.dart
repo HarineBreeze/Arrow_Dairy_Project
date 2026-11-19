@@ -1927,7 +1927,9 @@ class _PinnedMiniCard extends StatelessWidget {
     // ① 加密笔记：第 1 行副标题，第 2 行「完整日期时间 + 锁」
     // ② 公开笔记：第 1 行标题，   第 2 行「完整日期时间」
     final title = encrypted
-        ? (entry.subtitle.isNotEmpty ? entry.subtitle : '加密笔记')
+        ? (entry.subtitle.isNotEmpty
+            ? entry.subtitle
+            : (entry.isSealed ? '未来信件' : '加密笔记'))
         : (entry.title.isNotEmpty ? entry.title : '（无标题）');
     return Pressable(
       child:   Material(
@@ -2333,7 +2335,7 @@ class _DiaryCard extends StatelessWidget {
                               child: Text(
                                 entry.subtitle.isNotEmpty
                                     ? entry.subtitle
-                                    : '加密笔记',
+                                    : (entry.isSealed ? '未来信件' : '加密笔记'),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
@@ -2409,7 +2411,7 @@ class _DiaryCard extends StatelessWidget {
                           child: Text(
                             entry.subtitle.isNotEmpty
                                 ? entry.subtitle
-                                : '加密笔记',
+                                : (entry.isSealed ? '未来信件' : '加密笔记'),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(

@@ -160,8 +160,11 @@ void main() {
       final more = find.byKey(const ValueKey('note_action_more'));
       expect(more, findsOneWidget);
       final btn = tester.widget<IconButton>(more);
-      final icon = btn.icon as AppIcon;
+      // v4.9.38：图标放大到 28 并小幅左移，外层包 Transform.translate
+      final translate = btn.icon as Transform;
+      final icon = translate.child as AppIcon;
       expect(icon.path, AppIcons.moreH, reason: '竖三点改横三点');
+      expect(icon.size, 28, reason: '横三点放大到 28');
       expect(
           btn.constraints,
           const BoxConstraints.tightFor(width: 48, height: 48));

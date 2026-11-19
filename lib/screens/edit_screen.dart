@@ -950,7 +950,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                   children: [
                     Text(
                       !_futureLetterEnabled
-                          ? 'VIP专属·未解锁'
+                          ? '未解锁'
                           : (_revealAt == null
                               ? '未设置'
                               : '${_revealAt!.year}年${_revealAt!.month}月${_revealAt!.day}日'),

@@ -330,8 +330,12 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
               // 图标热区同步为 48×48，与返回键一致
               constraints:
                   const BoxConstraints.tightFor(width: 48, height: 48),
-              iconSize: 24,
-              icon: const AppIcon(AppIcons.moreH),
+              // v4.9.38：横三点偏右且偏小——放大到 28 并小幅左移 3px
+              iconSize: 28,
+              icon: Transform.translate(
+                offset: const Offset(-3, 0),
+                child: const AppIcon(AppIcons.moreH, size: 28),
+              ),
               onPressed: () => _showMoreMenu(btnCtx),
             ),
           ),
