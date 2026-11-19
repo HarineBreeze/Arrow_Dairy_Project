@@ -12,6 +12,7 @@ import 'package:ayodiray/models/diary_entry.dart';
 import 'package:ayodiray/models/item.dart';
 import 'package:ayodiray/screens/note_view_screen.dart';
 import 'package:ayodiray/widgets/share_card.dart';
+import 'package:ayodiray/widgets/stationery_paper.dart';
 
 /// 把文档/临时目录指到临时目录
 class _FakePaths extends PathProviderPlatform {
@@ -238,6 +239,47 @@ void main() {
       expect(find.text('分享图生成失败，请重试'), findsOneWidget);
       // 排空提示的自动收起定时器
       await tester.pump(const Duration(seconds: 2));
+    });
+  });
+
+  group('分享卡保留信纸样式', () {
+    Future<void> pumpShare(WidgetTester tester, DiaryEntry entry) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ListView(
+              children: [
+                ShareCard(entry: entry, items: const <Item>[]),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    DiaryEntry _entryWith(String stationery) {
+      final e = _entry(location: '');
+      e.stationery = stationery;
+      return e;
+    }
+
+    testWidgets('设置信纸的笔记分享时保留信纸渲染层', (tester) async {
+      await pumpShare(tester, _entryWith('night'));
+      expect(find.byType(StationeryPaper), findsWidgets);
+      expect(find.text('海边的一天'), findsOneWidget);
+      expect(find.textContaining('今天去了海边'), findsOneWidget);
+    });
+
+    testWidgets('抹茶横纹：正文落在内层信纸上（横线与文字行对齐）', (tester) async {
+      await pumpShare(tester, _entryWith('lined'));
+      // 外层整页底纹 + 内层正文信纸
+      expect(find.byType(StationeryPaper), findsNWidgets(2));
+    });
+
+    testWidgets('已下架样式读回回退经典，分享不报错', (tester) async {
+      await pumpShare(tester, _entryWith('washi'));
+      expect(find.text('海边的一天'), findsOneWidget);
     });
   });
 }

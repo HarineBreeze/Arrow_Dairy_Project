@@ -10,7 +10,10 @@ import '../utils/todo_text.dart';
 import 'app_icons.dart';
 import 'entry_image.dart';
 import 'rich_note_text.dart';
+import 'stationery_paper.dart';
 import 'todo_card.dart';
+
+import '../utils/stationery.dart';
 
 /// 分享卡片：把当前笔记渲染成一张可分享的长图。
 ///
@@ -48,6 +51,15 @@ class ShareCard extends StatelessWidget {
     final bool hasImage =
         entry.imagePath.isNotEmpty && File(entry.imagePath).existsSync();
     final bool hasTodos = TodoText.parseAll(entry.content).isNotEmpty;
+    // 与浏览页一致：信纸样式笔记分享时保留信纸；
+    // 已下架/未知样式 id 回退经典（无信纸）
+    final String paperId =
+        isValidStationery(entry.stationery) ? entry.stationery : '';
+    final bool hasPaper = paperId.isNotEmpty;
+    final Color textColor = hasPaper
+        ? StationeryPaper.textColor(paperId)
+        : const Color(0xFF24382F);
+    final Color cardColor = hasPaper ? Colors.transparent : Colors.white;
 
     final content = Container(
       width: 375,
@@ -57,6 +69,7 @@ class ShareCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
+          // 封面图独立板块：与正文信纸分区（与浏览页一致）
           if (hasImage) ...[
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
@@ -69,65 +82,103 @@ class ShareCard extends StatelessWidget {
                 ),
               ),
             ),
-          ],
-          if (entry.title.isNotEmpty) ...[
-            if (hasImage) const SizedBox(height: 16),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                entry.title,
-                style: TextStyle(
-                  fontSize: 20,
-                  height: 1.35,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF24382F),
-                  fontFamily: fontFamily,
-                ),
-              ),
-            ),
-          ],
-          if (entry.content.isNotEmpty) ...[
             const SizedBox(height: 16),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: RichNoteText(
-                text: entry.content,
-                formats: FormatStore.decode(entry.formats),
-                itemNames:
-                    items.map((e) => e.name).where((n) => n.isNotEmpty).toSet(),
-                style: TextStyle(
-                  fontSize: 15,
-                  height: 1.8,
-                  color: const Color(0xFF24382F),
-                  fontFamily: fontFamily,
-                ),
-              ),
-            ),
           ],
-          if (hasTodos) ...[
-            const SizedBox(height: 12),
-            TodoCard(
-              content: entry.content,
-              itemNames:
-                  items.map((e) => e.name).where((n) => n.isNotEmpty).toSet(),
-              style: TextStyle(
-                fontSize: 15,
-                height: 1.5,
-                color: const Color(0xFF24382F),
-                fontFamily: fontFamily,
-              ),
+          StationeryPaper(
+            styleId: paperId,
+            // 抹茶横纹的横线由内层正文信纸对准文字行绘制
+            showRuling: paperId != 'lined',
+            padding:
+                hasPaper ? const EdgeInsets.all(16) : EdgeInsets.zero,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (entry.title.isNotEmpty) ...[
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: cardColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      entry.title,
+                      style: TextStyle(
+                        fontSize: 20,
+                        height: 1.35,
+                        fontWeight: FontWeight.w700,
+                        color: textColor,
+                        fontFamily: fontFamily,
+                      ),
+                    ),
+                  ),
+                ],
+                if (entry.content.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  if (paperId == 'lined')
+                    // 抹茶横纹：正文落在内层信纸上，横线对准文字行
+                    StationeryPaper(
+                      styleId: paperId,
+                      padding: const EdgeInsets.all(16),
+                      child: RichNoteText(
+                        text: entry.content,
+                        formats: FormatStore.decode(entry.formats),
+                        itemNames: items
+                            .map((e) => e.name)
+                            .where((n) => n.isNotEmpty)
+                            .toSet(),
+                        style: TextStyle(
+                          fontSize: 15,
+                          height: 1.8,
+                          color: textColor,
+                          fontFamily: fontFamily,
+                        ),
+                      ),
+                    )
+                  else
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: cardColor,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: RichNoteText(
+                        text: entry.content,
+                        formats: FormatStore.decode(entry.formats),
+                        itemNames: items
+                            .map((e) => e.name)
+                            .where((n) => n.isNotEmpty)
+                            .toSet(),
+                        style: TextStyle(
+                          fontSize: 15,
+                          height: 1.8,
+                          color: textColor,
+                          fontFamily: fontFamily,
+                        ),
+                      ),
+                    ),
+                ],
+                if (hasTodos) ...[
+                  const SizedBox(height: 12),
+                  TodoCard(
+                    content: entry.content,
+                    itemNames: items
+                        .map((e) => e.name)
+                        .where((n) => n.isNotEmpty)
+                        .toSet(),
+                    style: TextStyle(
+                      fontSize: 15,
+                      height: 1.5,
+                      color: textColor,
+                      fontFamily: fontFamily,
+                    ),
+                  ),
+                ],
+              ],
             ),
-          ],
+          ),
         ],
       ),
     );

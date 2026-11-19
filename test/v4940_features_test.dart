@@ -18,11 +18,11 @@ import 'package:ayodiray/services/user_storage.dart';
 import 'package:ayodiray/utils/stationery.dart';
 import 'package:ayodiray/widgets/stationery_paper.dart';
 
-/// v4.9.40 回归：
-/// 1. 信纸样式常量（方格/牛皮免费，其余4款VIP）与按 id 查询；
-/// 2. DiaryEntry.stationery 落盘/读回，旧数据零迁移；
-/// 3. 浏览页按信纸渲染，普通信纸保持原白卡；
-/// 4. 编辑页「更多」的信纸入口 + 抽屉：免费置顶、VIP灰化提示、过期保留；
+/// 信纸与资产排序回归：
+/// 1. 信纸样式常量（4 款全 VIP，仅经典免费）与按 id 查询；
+/// 2. DiaryEntry.stationery 落盘/读回，旧数据零迁移，下架样式回退经典；
+/// 3. 浏览页按信纸渲染，经典保持原背景；
+/// 4. 编辑页「更多」的信纸入口 + 抽屉：VIP灰化提示、过期保留、仅标题；
 /// 5. 资产拖拽排序：把卡片拖到最顶层（newIndex==1）不再被误杀。
 class _FakePathProvider extends PathProviderPlatform {
   final String path;
@@ -82,46 +82,59 @@ void main() {
 
   // ---------- 1. 信纸常量 ----------
   group('信纸样式常量', () {
-    test('共 6 款，方格与牛皮免费，其余 4 款 VIP', () {
-      expect(stationeryStyles.length, 6);
+    test('共 4 款，全部 VIP；仅经典（无信纸）免费', () {
+      expect(stationeryStyles.length, 4);
       final free = stationeryStyles.where((s) => !s.vip).map((s) => s.id).toSet();
       final vip = stationeryStyles.where((s) => s.vip).map((s) => s.id).toSet();
-      expect(free, {'grid', 'kraft'});
-      expect(vip, {'lined', 'washi', 'botanical', 'night'});
+      expect(free, isEmpty);
+      expect(vip, {'grid', 'lined', 'night', 'kraft'});
+      for (final s in stationeryStyles) {
+        expect(isVipStationery(s.id), isTrue);
+      }
     });
 
-    test('免费两款排在抽屉最上方', () {
-      expect(stationeryStyles[0].id, 'grid');
-      expect(stationeryStyles[1].id, 'kraft');
-      expect(stationeryStyles[0].vip, isFalse);
-      expect(stationeryStyles[1].vip, isFalse);
+    test('「抹茶格纹」更名「抹茶横纹」，已下架样式查询为空', () {
+      expect(stationeryById('lined')?.name, '抹茶横纹');
+      expect(stationeryById('washi'), isNull);
+      expect(stationeryById('botanical'), isNull);
+      expect(isValidStationery('washi'), isFalse);
+      expect(isValidStationery('botanical'), isFalse);
     });
 
-    test('按 id 查询与 VIP 判定', () {
+    test('按 id 查询与 VIP 判定；经典命名', () {
       expect(stationeryById('grid')?.name, '手账方格');
       expect(stationeryById('kraft')?.name, '牛皮旧信');
+      expect(stationeryById('night')?.name, '星夜来信');
       expect(isVipStationery('night'), isTrue);
-      expect(isVipStationery('grid'), isFalse);
+      expect(isVipStationery('grid'), isTrue);
       expect(stationeryById('nope'), isNull);
-      expect(isValidStationery(''), isFalse); // 空 = 普通
-      expect(stationeryName(''), '普通');
+      expect(isValidStationery(''), isFalse); // 空 = 经典
+      expect(stationeryName(''), '经典');
     });
   });
 
   // ---------- 2. 数据模型 ----------
   group('DiaryEntry.stationery', () {
     test('落盘与读回保留信纸 id', () {
-      final e = entryWith(stationery: 'washi');
+      final e = entryWith(stationery: 'night');
       final map = e.toJson();
-      expect(map['stationery'], 'washi');
+      expect(map['stationery'], 'night');
       final back = DiaryEntry.fromJson(map);
-      expect(back.stationery, 'washi');
+      expect(back.stationery, 'night');
     });
 
-    test('旧数据无 stationery 字段 → 普通（空串）', () {
+    test('旧数据无 stationery 字段 → 经典（空串）', () {
       final e = entryWith();
       final map = e.toJson()..remove('stationery');
       expect(DiaryEntry.fromJson(map).stationery, '');
+    });
+
+    test('已下架样式（和风信笺/花间私语）读回 → 回退经典', () {
+      for (final legacy in ['washi', 'botanical', 'nope']) {
+        final e = entryWith(stationery: legacy);
+        final back = DiaryEntry.fromJson(e.toJson());
+        expect(back.stationery, '', reason: '$legacy 应回退经典');
+      }
     });
   });
 
@@ -163,15 +176,15 @@ void main() {
       await _settle(tester);
     }
 
-    testWidgets('更多面板含「信纸」项，默认显示普通', (tester) async {
+    testWidgets('更多面板含「信纸」项，默认显示经典', (tester) async {
       await pumpEditor(tester, UserProfile());
       await openMore(tester);
       expect(find.text('信纸'), findsOneWidget);
-      expect(find.text('普通'), findsOneWidget);
+      expect(find.text('经典'), findsOneWidget);
       await tester.binding.setSurfaceSize(null);
     });
 
-    testWidgets('普通身份：VIP 信纸灰化 + 未解锁，点击提示充值', (tester) async {
+    testWidgets('经典身份：全部信纸款均 VIP 灰化，点击提示充值', (tester) async {
       await pumpEditor(tester, UserProfile());
       await openMore(tester);
       // 直接触发「信纸」ListTile 的 onTap（面板行可能被挤出屏幕外）
@@ -180,14 +193,22 @@ void main() {
       tile.onTap!();
       await tester.pump(const Duration(milliseconds: 350));
 
-      // 抽屉：免费两款 + VIP 四款 + 普通
+      // 抽屉：经典 + 4 款信纸（均 VIP）
+      expect(find.text('经典'), findsOneWidget);
       expect(find.text('手账方格'), findsOneWidget);
-      expect(find.text('牛皮旧信'), findsOneWidget);
-      expect(find.text('抹茶格纹'), findsOneWidget);
+      expect(find.text('抹茶横纹'), findsOneWidget);
       expect(find.text('星夜来信'), findsOneWidget);
-      expect(find.text('未解锁'), findsNWidgets(4));
+      expect(find.text('牛皮旧信'), findsOneWidget);
+      expect(find.text('和风信笺'), findsNothing);
+      expect(find.text('花间私语'), findsNothing);
+      // 副标题与图标已移除，仅保留标题
+      expect(find.text('不加信纸'), findsNothing);
+      expect(find.text('未解锁'), findsNothing);
+      expect(find.text('使用中'), findsNothing);
+      expect(find.byIcon(Icons.lock), findsNothing);
+      expect(find.byIcon(Icons.check), findsNothing);
 
-      // 点击 VIP 行触发提示（找到含「星夜来信」的 ListTile）
+      // 点击信纸款触发提示（找到含「星夜来信」的 ListTile）
       final vipTile = tester.widget<ListTile>(find
           .ancestor(of: find.text('星夜来信'), matching: find.byType(ListTile)));
       vipTile.onTap!();
@@ -198,7 +219,7 @@ void main() {
       await tester.binding.setSurfaceSize(null);
     });
 
-    testWidgets('VIP 身份：VIP 信纸可选、无灰化', (tester) async {
+    testWidgets('VIP 身份：信纸可选', (tester) async {
       final vip = UserProfile(
           badge: UserProfile.badgeVip,
           ownedBadges: [UserProfile.badgeNormal, UserProfile.badgeVip]);
@@ -208,19 +229,18 @@ void main() {
           find.ancestor(of: find.text('信纸'), matching: find.byType(ListTile)));
       tile.onTap!();
       await tester.pump(const Duration(milliseconds: 350));
-      expect(find.text('未解锁'), findsNothing);
-      // 选中一款 VIP 信纸
+      // 选中一款信纸
       final vipTile = tester.widget<ListTile>(find
-          .ancestor(of: find.text('抹茶格纹'), matching: find.byType(ListTile)));
+          .ancestor(of: find.text('抹茶横纹'), matching: find.byType(ListTile)));
       vipTile.onTap!();
       await tester.pump(const Duration(milliseconds: 350));
       // 抽屉关闭后，更多面板里信纸项显示新名字（重开更多）
       await openMore(tester);
-      expect(find.text('抹茶格纹'), findsOneWidget);
+      expect(find.text('抹茶横纹'), findsOneWidget);
       await tester.binding.setSurfaceSize(null);
     });
 
-    testWidgets('VIP 过期（当前已设 VIP 信纸）：保留当前、可切普通、不可换其它 VIP',
+    testWidgets('VIP 过期（当前已设信纸）：保留当前、可切经典、不可换其它款',
         (tester) async {
       // 已设置 'night' 的旧笔记；当前档案为普通身份（已过期）
       final now = DateTime(2026, 11, 19, 10);
@@ -250,16 +270,14 @@ void main() {
       tile.onTap!();
       await tester.pump(const Duration(milliseconds: 350));
 
-      // 当前已设的 night 可用（显示使用中），其它 3 款 VIP 灰化
+      // 当前已设的 night 保留（抽屉可见），经典可点（切回经典）
       expect(find.text('星夜来信'), findsOneWidget);
-      expect(find.text('未解锁'), findsNWidgets(3));
-      // 普通可点（切回普通）
       final normalTile = tester.widget<ListTile>(find
-          .ancestor(of: find.text('普通'), matching: find.byType(ListTile)));
+          .ancestor(of: find.text('经典'), matching: find.byType(ListTile)));
       normalTile.onTap!();
       await tester.pump(const Duration(milliseconds: 350));
       await openMore(tester);
-      expect(find.text('普通'), findsOneWidget);
+      expect(find.text('经典'), findsOneWidget);
       await tester.binding.setSurfaceSize(null);
     });
   });

@@ -102,7 +102,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
   /// 可操作：有 VIP 权益，或此前已设置过（允许改期/取消）。
   bool get _futureLetterEnabled => _hasFutureVip || _revealAt != null;
 
-  /// v4.9.40「VIP 信纸」：正文信纸样式 id（'' = 普通）。
+  /// 「VIP 信纸」：正文信纸样式 id（'' = 经典）。
   String _stationery = '';
   bool _hasPaperVip = false;
   String? _ownedPaperVipBadge;
@@ -112,7 +112,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
 
   /// 信纸抽屉里某 VIP 款是否可选：
   /// 有权益 → 全部可选；无权益 → 仅「当前已设置的那一款」与免费款可选
-  /// （VIP 过期后保留当前信纸、可切回普通，但不可再换其它 VIP 款）。
+  /// （VIP 过期后保留当前信纸、可切回经典，但不可再换其它 VIP 款）。
   bool _canPickVipPaper(String id) => _hasPaperVip || id == _stationery;
 
   // ---------- 撤销 / 重做 ----------
@@ -1097,10 +1097,10 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     } catch (_) {}
   }
 
-  /// v4.9.40：信纸样式选择抽屉。
-  /// 免费两款在最上，VIP 四款在下（VIP 角标）；无权益身份的 VIP 款显示
-  /// 灰色 + 「未解锁」，点击提示充值。已设置的 VIP 信纸在过期后仍保留，
-  /// 可切回「普通」，但不可再切换其它 VIP 款。
+  /// 信纸样式选择抽屉。
+  /// 经典（无信纸）置顶且免费，其余样式均为 VIP 专属（VIP 角标）；
+  /// 无权益身份的 VIP 款显示灰色，点击提示充值。已设置的 VIP 信纸在
+  /// 过期后仍保留，可切回经典，但不可再切换其它 VIP 款。
   Future<void> _pickStationery() async {
     final chosen = await AppSheet.show<String>(
       context,
@@ -1108,7 +1108,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 普通（无信纸）——始终可选，也是 VIP 过期后的回退项
+            // 经典（无信纸底纹）——免费，也是 VIP 过期后的回退项
             ListTile(
               leading: Container(
                 width: 52,
@@ -1129,12 +1129,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                           fontSize: 13, color: AppPalette.c(0xFF9AABA2))),
                 ),
               ),
-              title: const Text('普通', style: TextStyle(fontSize: 15)),
-              subtitle: const Text('不加信纸',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF9AABA2))),
-              trailing: _stationery.isEmpty
-                  ? const Icon(Icons.check, color: Color(0xFF3E8E6D))
-                  : null,
+              title: const Text('经典', style: TextStyle(fontSize: 15)),
               onTap: () {
                 Haptics.light();
                 Navigator.pop(ctx, '');
@@ -1144,7 +1139,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Divider(height: 1, color: AppPalette.c(0xFFEDF2EF)),
             ),
-            // 免费两款 + VIP 四款
+            // VIP 信纸四款
             ...stationeryStyles.map((s) {
               final canPick = !s.vip || _canPickVipPaper(s.id);
               final isCurrent = _stationery == s.id;
@@ -1162,30 +1157,15 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                   children: [
                     Text(s.name, style: TextStyle(fontSize: 15, color: labelColor)),
                     const SizedBox(width: 6),
-                    if (s.vip)
-                      Transform.scale(
-                        scale: 0.8,
-                        child: IdentityBadge(
-                            badge: _hasPaperVip
-                                ? (_ownedPaperVipBadge ?? UserProfile.badgeVip)
-                                : UserProfile.badgeVip),
-                      ),
+                    Transform.scale(
+                      scale: 0.8,
+                      child: IdentityBadge(
+                          badge: _hasPaperVip
+                              ? (_ownedPaperVipBadge ?? UserProfile.badgeVip)
+                              : UserProfile.badgeVip),
+                    ),
                   ],
                 ),
-                subtitle: Text(
-                  !canPick ? '未解锁' : (isCurrent ? '使用中' : s.en),
-                  style: TextStyle(
-                      fontSize: 12,
-                      color: !canPick
-                          ? const Color(0xFFC0CCC5)
-                          : const Color(0xFF9AABA2)),
-                ),
-                trailing: isCurrent
-                    ? const Icon(Icons.check, color: Color(0xFF3E8E6D))
-                    : (!canPick
-                        ? AppIcon(AppIcons.lock,
-                            size: 18, color: AppPalette.c(0xFFC6D6CD))
-                        : null),
                 onTap: () {
                   if (canPick) {
                     Haptics.light();

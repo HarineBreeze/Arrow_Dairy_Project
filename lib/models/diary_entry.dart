@@ -1,3 +1,5 @@
+import '../utils/stationery.dart';
+
 class DiaryEntry {
   final String id;
   String title;
@@ -21,7 +23,7 @@ class DiaryEntry {
   DateTime? revealAt;
 
   /// v4.9.40「VIP 信纸」：正文页信纸样式 id（'' / 'normal' = 普通无信纸）。
-  /// 取值见 utils/stationery.dart。旧数据缺字段 → 空串（普通），零迁移。
+  /// 取值见 utils/stationery.dart。旧数据缺字段 → 空串（经典），零迁移。
   String stationery;
 
   DiaryEntry({
@@ -104,8 +106,9 @@ class DiaryEntry {
       revealAt: json['revealAt'] != null
           ? DateTime.tryParse(json['revealAt'] as String)
           : null,
-      // v4.9.40：旧数据无 stationery → ''（普通），零迁移
-      stationery: json['stationery'] as String? ?? '',
+      // 旧数据无 stationery → ''（经典）；已下架的样式 id（和风信笺/
+      // 花间私语）视为未知样式，自动回退经典，零迁移
+      stationery: stationeryById(json['stationery'] as String? ?? '')?.id ?? '',
       createdAt: createdAt,
       updatedAt: DateTime.parse(json['updatedAt'] as String),
       publishDate: json['publishDate'] != null

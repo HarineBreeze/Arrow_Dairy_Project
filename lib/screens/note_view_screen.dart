@@ -332,34 +332,40 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
               padding: hasPaper
                   ? const EdgeInsets.all(14)
                   : const EdgeInsets.fromLTRB(16, 16, 16, 16),
-              child: StationeryPaper(
-                styleId: paperId,
-                padding: hasPaper
-                    ? const EdgeInsets.fromLTRB(16, 22, 16, 22)
-                    : EdgeInsets.zero,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                  // 排版顺序：封面图 → 标题 → 正文；无图时标题直接从顶部开始
-                  if (_hasImage) ...[
-                    // v4.9.30：移除点击封面进入全屏预览的入口，
-                    // 封面图仅作展示，不响应点击
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: AspectRatio(
-                        aspectRatio: 4 / 3,
-                        // 页宽 - 左右各 16 边距；降采样解码后滚动更顺
-                        child: EntryImage(
-                          path: _entry.imagePath,
-                          displayWidth:
-                              MediaQuery.of(context).size.width - 32,
-                          iconSize: 24,
-                        ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                // 封面图独立板块：在信纸之外，与正文信纸分成两块
+                if (_hasImage) ...[
+                  // v4.9.30：移除点击封面进入全屏预览的入口，
+                  // 封面图仅作展示，不响应点击
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: AspectRatio(
+                      aspectRatio: 4 / 3,
+                      // 页宽 - 左右各 16 边距；降采样解码后滚动更顺
+                      child: EntryImage(
+                        path: _entry.imagePath,
+                        displayWidth:
+                            MediaQuery.of(context).size.width - 32,
+                        iconSize: 24,
                       ),
                     ),
-                  ],
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                StationeryPaper(
+                  styleId: paperId,
+                  // 抹茶横纹的横线必须对准正文文字行，由内层正文信纸
+                  // 负责绘制；外层整页底纹只画底色
+                  showRuling: paperId != 'lined',
+                  padding: hasPaper
+                      ? const EdgeInsets.fromLTRB(16, 22, 16, 22)
+                      : EdgeInsets.zero,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                   if (_entry.title.isNotEmpty) ...[
-                    if (_hasImage) const SizedBox(height: 16),
                     // 标题回到白色卡片底纹上：与下方正文卡片同一视觉层级
                     Container(
                       width: double.infinity,
@@ -382,33 +388,60 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                   ],
                   if (_entry.content.isNotEmpty) ...[
                     const SizedBox(height: 16),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: cardColor,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: RichNoteText(
-                        text: _entry.content,
-                        formats: FormatStore.decode(_entry.formats),
-                        itemNames: _items
-                            .map((e) => e.name)
-                            .where((n) => n.isNotEmpty)
-                            .toSet(),
-                        onTapMention: _openItem,
-                        searchQuery: widget.searchQuery,
-                        currentHit: widget.searchQuery.trim().isEmpty
-                            ? -1
-                            : _hitIndex,
-                        style: TextStyle(
-                          fontSize: 15,
-                          height: 1.8,
-                          color: paperTextColor,
-                          fontFamily: fontFamily,
+                    if (paperId == 'lined')
+                      // 抹茶横纹：正文单独落在内层信纸上，
+                      // 横线与文字行（15 × 1.8 = 27px）一一对齐
+                      StationeryPaper(
+                        styleId: paperId,
+                        padding: const EdgeInsets.all(16),
+                        child: RichNoteText(
+                          text: _entry.content,
+                          formats: FormatStore.decode(_entry.formats),
+                          itemNames: _items
+                              .map((e) => e.name)
+                              .where((n) => n.isNotEmpty)
+                              .toSet(),
+                          onTapMention: _openItem,
+                          searchQuery: widget.searchQuery,
+                          currentHit: widget.searchQuery.trim().isEmpty
+                              ? -1
+                              : _hitIndex,
+                          style: TextStyle(
+                            fontSize: 15,
+                            height: 1.8,
+                            color: paperTextColor,
+                            fontFamily: fontFamily,
+                          ),
+                        ),
+                      )
+                    else
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: cardColor,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: RichNoteText(
+                          text: _entry.content,
+                          formats: FormatStore.decode(_entry.formats),
+                          itemNames: _items
+                              .map((e) => e.name)
+                              .where((n) => n.isNotEmpty)
+                              .toSet(),
+                          onTapMention: _openItem,
+                          searchQuery: widget.searchQuery,
+                          currentHit: widget.searchQuery.trim().isEmpty
+                              ? -1
+                              : _hitIndex,
+                          style: TextStyle(
+                            fontSize: 15,
+                            height: 1.8,
+                            color: paperTextColor,
+                            fontFamily: fontFamily,
+                          ),
                         ),
                       ),
-                    ),
                   ],
                   // 正文里的 [ ] / [x] 行 → 可勾选的待办清单
                   if (_hasTodos) ...[
@@ -431,8 +464,10 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                 ],
               ),
             ),
+                ],
+              ),
+            ),
           ),
-        ),
         // 底部信息行：时间在最左，与正文文字左缘对齐
         // （正文卡片有 16px 内边距，页面 padding 16，合计 32px）
           Padding(
