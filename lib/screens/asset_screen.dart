@@ -533,9 +533,10 @@ class AssetScreenState extends State<AssetScreen> {
   /// 这里把列表下标换算成业务列表下标，再落到 _assets 的真实位置，
   /// 因此即使正处于筛选状态，拖拽也只会在可见卡片所在的真实位置之间移动。
   void _onReorder(int oldIndex, int newIndex) {
-    // 看板（第 0 项）不参与排序
-    if (oldIndex == 0) return;
-    if (newIndex <= 1) return; // 不允许把卡片拖到看板之前
+    if (oldIndex == 0) return; // 看板本身不参与排序
+    // 看板固定在第 0 项，不能把卡片拖到看板之前（newIndex==0）。
+    // newIndex==1 表示「放到第一张卡片的位置」，是合法的置顶操作，必须放行。
+    if (newIndex < 1) return; // 只拦截拖到看板之前；<=1 会误杀置顶，已修复
 
     final list = _filtered;
     final from = oldIndex - 1;

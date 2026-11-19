@@ -20,6 +20,10 @@ class DiaryEntry {
   /// 到期后自动还原为普通笔记，不改动本字段（保留设置痕迹）。
   DateTime? revealAt;
 
+  /// v4.9.40「VIP 信纸」：正文页信纸样式 id（'' / 'normal' = 普通无信纸）。
+  /// 取值见 utils/stationery.dart。旧数据缺字段 → 空串（普通），零迁移。
+  String stationery;
+
   DiaryEntry({
     required this.id,
     this.title = '',
@@ -34,6 +38,7 @@ class DiaryEntry {
     this.passwordAnswer = '',
     this.pinned = false,
     this.revealAt,
+    this.stationery = '',
     required this.createdAt,
     required this.updatedAt,
     required this.publishDate,
@@ -71,6 +76,7 @@ class DiaryEntry {
       'passwordAnswer': passwordAnswer,
       'pinned': pinned,
       'revealAt': revealAt?.toIso8601String(),
+      'stationery': stationery,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
       'publishDate': publishDate.toIso8601String(),
@@ -98,6 +104,8 @@ class DiaryEntry {
       revealAt: json['revealAt'] != null
           ? DateTime.tryParse(json['revealAt'] as String)
           : null,
+      // v4.9.40：旧数据无 stationery → ''（普通），零迁移
+      stationery: json['stationery'] as String? ?? '',
       createdAt: createdAt,
       updatedAt: DateTime.parse(json['updatedAt'] as String),
       publishDate: json['publishDate'] != null

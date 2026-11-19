@@ -21,6 +21,8 @@ import 'item_edit_screen.dart';
 import '../utils/haptics.dart';
 import '../utils/todo_text.dart';
 import '../widgets/pressable.dart';
+import '../utils/stationery.dart';
+import '../widgets/stationery_paper.dart';
 
 import '../theme/app_palette.dart';
 import '../theme/app_theme_scope.dart';
@@ -278,6 +280,16 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
     AppThemeScope.watch(context);
     // 字体选择（设置页切换后返回本页即生效）
     final String? fontFamily = AppSettings.fontFamily;
+    // v4.9.40：信纸样式——空 id = 普通（保持原白卡），非空则正文落在信纸上
+    final String paperId = _entry.stationery;
+    final bool hasPaper = paperId.isNotEmpty;
+    final Color paperTextColor =
+        hasPaper ? StationeryPaper.textColor(paperId) : AppPalette.c(0xFF24382F);
+    final Color cardColor =
+        hasPaper ? const Color(0x00000000) : AppPalette.c(0xFFFFFFFF);
+    final Color metaColor = hasPaper && paperId == 'night'
+        ? const Color(0xFFB9CCC1)
+        : AppPalette.c(0xFF8FA09A);
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 48, // v4.9.31：与笔记主页顶栏同高
@@ -317,10 +329,17 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
             child: SingleChildScrollView(
               key: _bodyKey,
               controller: _bodyCtrl,
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+              padding: hasPaper
+                  ? const EdgeInsets.all(14)
+                  : const EdgeInsets.fromLTRB(16, 16, 16, 16),
+              child: StationeryPaper(
+                styleId: paperId,
+                padding: hasPaper
+                    ? const EdgeInsets.fromLTRB(16, 22, 16, 22)
+                    : EdgeInsets.zero,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                   // 排版顺序：封面图 → 标题 → 正文；无图时标题直接从顶部开始
                   if (_hasImage) ...[
                     // v4.9.30：移除点击封面进入全屏预览的入口，
@@ -346,7 +365,7 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppPalette.c(0xFFFFFFFF),
+                        color: cardColor,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -355,7 +374,7 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                           fontSize: 22,
                           height: 1.35,
                           fontWeight: FontWeight.w700,
-                          color: AppPalette.c(0xFF24382F),
+                          color: paperTextColor,
                           fontFamily: fontFamily,
                         ),
                       ),
@@ -367,7 +386,7 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppPalette.c(0xFFFFFFFF),
+                        color: cardColor,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: RichNoteText(
@@ -385,7 +404,7 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                         style: TextStyle(
                           fontSize: 15,
                           height: 1.8,
-                          color: AppPalette.c(0xFF24382F),
+                          color: paperTextColor,
                           fontFamily: fontFamily,
                         ),
                       ),
@@ -401,7 +420,7 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                       style: TextStyle(
                         fontSize: 15,
                         height: 1.5,
-                        color: AppPalette.c(0xFF24382F),
+                        color: paperTextColor,
                         fontFamily: fontFamily,
                       ),
                       // 传回的是切换后的整篇正文，行号在卡片内部已算好，
@@ -413,8 +432,9 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
               ),
             ),
           ),
-          // 底部信息行：时间在最左，与正文文字左缘对齐
-          // （正文卡片有 16px 内边距，页面 padding 16，合计 32px）
+        ),
+        // 底部信息行：时间在最左，与正文文字左缘对齐
+        // （正文卡片有 16px 内边距，页面 padding 16，合计 32px）
           Padding(
             padding: const EdgeInsets.fromLTRB(32, 8, 16, 16),
             child: Row(
@@ -422,7 +442,7 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                 Text(
                   _timeLabel(),
                   style: TextStyle(
-                      fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
+                      fontSize: 13, color: metaColor),
                 ),
                 if (_entry.location.isNotEmpty) ...[
                   const SizedBox(width: 10),
@@ -435,7 +455,7 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                          fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
+                          fontSize: 13, color: metaColor),
                     ),
                   ),
                 ],

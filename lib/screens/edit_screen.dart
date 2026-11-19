@@ -32,6 +32,8 @@ import '../models/user_profile.dart';
 import '../services/user_storage.dart';
 import '../services/reward_service.dart';
 import '../widgets/identity_badge.dart';
+import '../utils/stationery.dart';
+import '../widgets/stationery_paper.dart';
 /// 封面图抽屉动作
 enum _ImageAction { gallery, camera, crop }
 
@@ -99,6 +101,19 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
 
   /// 可操作：有 VIP 权益，或此前已设置过（允许改期/取消）。
   bool get _futureLetterEnabled => _hasFutureVip || _revealAt != null;
+
+  /// v4.9.40「VIP 信纸」：正文信纸样式 id（'' = 普通）。
+  String _stationery = '';
+  bool _hasPaperVip = false;
+  String? _ownedPaperVipBadge;
+
+  /// 当前信纸是否 VIP 款。
+  bool get _currentIsVipPaper => isVipStationery(_stationery);
+
+  /// 信纸抽屉里某 VIP 款是否可选：
+  /// 有权益 → 全部可选；无权益 → 仅「当前已设置的那一款」与免费款可选
+  /// （VIP 过期后保留当前信纸、可切回普通，但不可再换其它 VIP 款）。
+  bool _canPickVipPaper(String id) => _hasPaperVip || id == _stationery;
 
   // ---------- 撤销 / 重做 ----------
   // 栈中保存的是「某个历史状态」：文本 + 格式。
@@ -189,8 +204,10 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     _passwordHint = widget.entry?.passwordHint ?? '';
     _passwordAnswer = widget.entry?.passwordAnswer ?? '';
     _revealAt = widget.entry?.revealAt;
+    _stationery = widget.entry?.stationery ?? '';
     _initial = _snapshot();
     _loadFutureVip();
+    _loadPaperVip();
     _loadItems();
   }
 
@@ -212,6 +229,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
         _passwordHint,
         _passwordAnswer,
         _revealAt?.toIso8601String() ?? '',
+        _stationery,
       ].join('\u0001');
 
   bool get _dirty => _snapshot() != _initial;
@@ -596,6 +614,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
         passwordAnswer: _passwordAnswer,
         pinned: _pinned,
         revealAt: _revealAt,
+        stationery: _stationery,
         createdAt: now,
         updatedAt: now,
         publishDate: _publishDate,
@@ -618,6 +637,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
         list[idx].pinned = _pinned;
         list[idx].publishDate = _publishDate;
         list[idx].revealAt = _revealAt;
+        list[idx].stationery = _stationery;
         list[idx].updatedAt = DateTime.now();
       }
     }
@@ -989,6 +1009,33 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                   }
                 },
               ),
+              // v4.9.40：信纸入口——与可见度同款右箭头
+              ListTile(
+                contentPadding: const EdgeInsets.only(left: 24, right: 16),
+                title: Text('信纸',
+                    style: TextStyle(
+                        fontSize: 13, color: AppPalette.c(0xFF24382F))),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      stationeryName(_stationery),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF3E8E6D),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    AppIcon(AppIcons.chevR,
+                        size: 18, color: AppPalette.c(0xFF8FA09A)),
+                  ],
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickStationery();
+                },
+              ),
               SwitchListTile(
                 contentPadding: const EdgeInsets.only(left: 24, right: 16),
                 title: Text('置顶',
@@ -1036,6 +1083,128 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
       return UserProfile.badgeBeta;
     }
     return null;
+  }
+
+  /// v4.9.40：读取档案判断信纸 VIP 门槛与角标身份。
+  Future<void> _loadPaperVip() async {
+    try {
+      final p = await UserStorage.load();
+      if (!mounted) return;
+      setState(() {
+        _hasPaperVip = RewardService.hasVipPrivilege(p);
+        _ownedPaperVipBadge = _pickVipBadge(p);
+      });
+    } catch (_) {}
+  }
+
+  /// v4.9.40：信纸样式选择抽屉。
+  /// 免费两款在最上，VIP 四款在下（VIP 角标）；无权益身份的 VIP 款显示
+  /// 灰色 + 「未解锁」，点击提示充值。已设置的 VIP 信纸在过期后仍保留，
+  /// 可切回「普通」，但不可再切换其它 VIP 款。
+  Future<void> _pickStationery() async {
+    final chosen = await AppSheet.show<String>(
+      context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 普通（无信纸）——始终可选，也是 VIP 过期后的回退项
+            ListTile(
+              leading: Container(
+                width: 52,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: AppPalette.c(0xFFF6F8F7),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: _stationery.isEmpty
+                        ? const Color(0xFF3E8E6D)
+                        : const Color(0xFFE2EBE5),
+                    width: _stationery.isEmpty ? 2 : 1,
+                  ),
+                ),
+                child: Center(
+                  child: Text('无',
+                      style: TextStyle(
+                          fontSize: 13, color: AppPalette.c(0xFF9AABA2))),
+                ),
+              ),
+              title: const Text('普通', style: TextStyle(fontSize: 15)),
+              subtitle: const Text('不加信纸',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF9AABA2))),
+              trailing: _stationery.isEmpty
+                  ? const Icon(Icons.check, color: Color(0xFF3E8E6D))
+                  : null,
+              onTap: () {
+                Haptics.light();
+                Navigator.pop(ctx, '');
+              },
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Divider(height: 1, color: AppPalette.c(0xFFEDF2EF)),
+            ),
+            // 免费两款 + VIP 四款
+            ...stationeryStyles.map((s) {
+              final canPick = !s.vip || _canPickVipPaper(s.id);
+              final isCurrent = _stationery == s.id;
+              final labelColor = canPick
+                  ? AppPalette.c(0xFF24382F)
+                  : AppPalette.c(0xFFB7C4BD);
+              return ListTile(
+                leading: AbsorbPointer(
+                  child: Opacity(
+                    opacity: canPick ? 1.0 : 0.45,
+                    child: StationeryPaper.swatch(s.id, selected: isCurrent),
+                  ),
+                ),
+                title: Row(
+                  children: [
+                    Text(s.name, style: TextStyle(fontSize: 15, color: labelColor)),
+                    const SizedBox(width: 6),
+                    if (s.vip)
+                      Transform.scale(
+                        scale: 0.8,
+                        child: IdentityBadge(
+                            badge: _hasPaperVip
+                                ? (_ownedPaperVipBadge ?? UserProfile.badgeVip)
+                                : UserProfile.badgeVip),
+                      ),
+                  ],
+                ),
+                subtitle: Text(
+                  !canPick ? '未解锁' : (isCurrent ? '使用中' : s.en),
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: !canPick
+                          ? const Color(0xFFC0CCC5)
+                          : const Color(0xFF9AABA2)),
+                ),
+                trailing: isCurrent
+                    ? const Icon(Icons.check, color: Color(0xFF3E8E6D))
+                    : (!canPick
+                        ? AppIcon(AppIcons.lock,
+                            size: 18, color: AppPalette.c(0xFFC6D6CD))
+                        : null),
+                onTap: () {
+                  if (canPick) {
+                    Haptics.light();
+                    Navigator.pop(ctx, s.id);
+                  } else {
+                    AppToast.show(context,
+                        '${s.name}是VIP专属信纸，请充值后再尝试～');
+                  }
+                },
+              );
+            }),
+            const SizedBox(height: 6),
+          ],
+        ),
+      ),
+    );
+    if (chosen != null && chosen != _stationery) {
+      setState(() => _stationery = chosen);
+    }
   }
 
   /// 未来信件：设置可见日期 / 取消。仅可选系统时间之后的未来时间。
