@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_palette.dart';
 
 import '../models/user_profile.dart';
 
@@ -56,7 +57,7 @@ class IdentityBadge extends StatelessWidget {
       case UserProfile.badgeVipForever:
         return const Color(0xFFCB5C50);
       case UserProfile.badgeBirthday:
-        return const Color(0xFF3E8E6D);
+        return AppPalette.c(0xFF3E8E6D);
       default:
         return null;
     }

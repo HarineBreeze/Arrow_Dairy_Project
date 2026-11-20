@@ -251,7 +251,7 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
                     child: ElevatedButton(
                       onPressed: _save,
                       style: ElevatedButton.styleFrom(
-                        primary: const Color(0xFF3E8E6D),
+                        primary: AppPalette.c(0xFF3E8E6D),
                         onPrimary: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
@@ -301,7 +301,7 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
       color = const Color(0xFFCB5C50);
     } else {
       body = '';
-      color = const Color(0xFF3E8E6D);
+      color = AppPalette.c(0xFF3E8E6D);
     }
     // 到这里 d 一定非空（前面 d == null 已单独分支），用局部变量固化提升
     final double dd = d ?? 0;

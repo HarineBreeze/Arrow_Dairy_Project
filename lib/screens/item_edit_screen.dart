@@ -64,7 +64,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
 
   /// 主题强调色：愿望单=粉色，已拥有=蓝色
   Color get _accent =>
-      _wishlist ? const Color(0xFFE58BA0) : const Color(0xFF3E8E6D);
+      _wishlist ? const Color(0xFFE58BA0) : AppPalette.c(0xFF3E8E6D);
 
   @override
   void initState() {
@@ -531,7 +531,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
                 color: _savePerTime > 0
-                    ? const Color(0xFF3E8E6D)
+                    ? AppPalette.c(0xFF3E8E6D)
                     : AppPalette.c(0xFF8FA09A),
               ),
             ),
@@ -574,10 +574,10 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
             behavior: HitTestBehavior.opaque,
             child: Text(
               '¥${_fmtAmount(_savedAmount)}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF3E8E6D),
+                color: AppPalette.c(0xFF3E8E6D),
               ),
             ),
           ),
@@ -609,7 +609,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
                   Container(color: AppPalette.c(0xFFDFEAE5)),
                   FractionallySizedBox(
                     widthFactor: ratio,
-                    child: Container(color: const Color(0xFF3E8E6D)),
+                    child: Container(color: AppPalette.c(0xFF3E8E6D)),
                   ),
                   Center(
                     child: Text(
@@ -722,8 +722,8 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
                               fontSize: 14, color: AppPalette.c(0xFF647A70))),
                       const Spacer(),
                       if (opt == current)
-                        const AppIcon(AppIcons.check,
-                            size: 20, color: Color(0xFF3E8E6D)),
+                        AppIcon(AppIcons.check,
+                            size: 20, color: AppPalette.c(0xFF3E8E6D)),
                     ],
                   ),
                 ),
@@ -770,8 +770,8 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
                               fontSize: 14, color: AppPalette.c(0xFF647A70))),
                       const Spacer(),
                       if (opt != custom && opt == _category)
-                        const AppIcon(AppIcons.check,
-                            size: 20, color: Color(0xFF3E8E6D)),
+                        AppIcon(AppIcons.check,
+                            size: 20, color: AppPalette.c(0xFF3E8E6D)),
                     ],
                   ),
                 ),
@@ -923,10 +923,10 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
           if (extra != 0 || price > 0)
             Text(
               '实际 ¥${_fmtAmount(price + extra)}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF3E8E6D),
+                color: AppPalette.c(0xFF3E8E6D),
               ),
             ),
         ],
@@ -976,7 +976,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         ),
         child: Row(
           children: [
-            const AppIcon(AppIcons.event, size: 16, color: Color(0xFF3E8E6D)),
+            AppIcon(AppIcons.event, size: 16, color: AppPalette.c(0xFF3E8E6D)),
             const SizedBox(width: 8),
             Expanded(
               child: Text(

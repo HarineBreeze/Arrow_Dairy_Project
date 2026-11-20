@@ -192,7 +192,7 @@ class SideMenu extends StatelessWidget {
       duration: const Duration(milliseconds: 280),
       curve: Curves.easeOutCubic,
       builder: (context, t, child) {
-        final iconColor = Color.lerp(const Color(0xFF3E8E6D), Colors.white, t)!;
+        final iconColor = Color.lerp(AppPalette.c(0xFF3E8E6D), Colors.white, t)!;
         final textColor = Color.lerp(AppPalette.c(0xFF24382F), Colors.white, t)!;
         return SizedBox(
           height: height,

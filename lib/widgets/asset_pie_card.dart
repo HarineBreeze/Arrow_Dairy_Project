@@ -431,8 +431,8 @@ class OverviewStackState extends State<OverviewStack>
               child: Container(
                 width: dot,
                 height: dot,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF3E8E6D),
+                decoration: BoxDecoration(
+                  color: AppPalette.c(0xFF3E8E6D),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -629,8 +629,8 @@ const Map<String, Color> kInvestSliceColors = {
 };
 
 /// 非理财类（储蓄/货币基金等）按出现顺序循环取色。
-const List<Color> kSlicePalette = [
-  Color(0xFF3E8E6D),
+List<Color> kSlicePalette = [
+  AppPalette.c(0xFF3E8E6D),
   Color(0xFF5CA985),
   Color(0xFFF0A020),
   Color(0xFF20B2C4),
@@ -842,10 +842,10 @@ class _AssetPieCardState extends State<AssetPieCard>
               ),
               Text(
                 '${(s.ratio * 100).toStringAsFixed(s.ratio >= 0.1 ? 0 : 1)}%',
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF3E8E6D)),
+                    color: AppPalette.c(0xFF3E8E6D)),
               ),
               const SizedBox(width: 6),
               SizedBox(

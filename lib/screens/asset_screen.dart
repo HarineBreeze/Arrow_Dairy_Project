@@ -139,7 +139,7 @@ class AssetScreenState extends State<AssetScreen> {
             ListTile(
               leading: AppIcon(
                   _hasPin ? AppIcons.lock : AppIcons.unlock,
-                  color: const Color(0xFF3E8E6D)),
+                  color: AppPalette.c(0xFF3E8E6D)),
               title: const Text('设置加密访问'),
               subtitle: Text(
                   _hasPin
@@ -149,7 +149,7 @@ class AssetScreenState extends State<AssetScreen> {
                       fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
               trailing: Switch(
                 value: _hasPin,
-                activeColor: const Color(0xFF3E8E6D),
+                activeColor: AppPalette.c(0xFF3E8E6D),
                 onChanged: (v) {
                   Navigator.pop(ctx);
                   if (v) {
@@ -172,7 +172,7 @@ class AssetScreenState extends State<AssetScreen> {
             ListTile(
               leading: AppIcon(AppIcons.lock,
                   color: _hasPin
-                      ? const Color(0xFF3E8E6D)
+                      ? AppPalette.c(0xFF3E8E6D)
                       : AppPalette.c(0xFFC2D4C9)),
               enabled: _hasPin,
               title: Text('修改资产密码',
@@ -294,7 +294,7 @@ class AssetScreenState extends State<AssetScreen> {
                               horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
                             color: sel
-                                ? const Color(0xFF3E8E6D)
+                                ? AppPalette.c(0xFF3E8E6D)
                                 : AppPalette.c(0xFFF5FAF7),
                             borderRadius: BorderRadius.circular(16),
                           ),
@@ -355,9 +355,9 @@ class AssetScreenState extends State<AssetScreen> {
                               Navigator.pop(ctx);
                               setState(() {});
                             },
-                            child: const Text('确定',
+                            child: Text('确定',
                                 style: TextStyle(
-                                    color: Color(0xFF3E8E6D),
+                                    color: AppPalette.c(0xFF3E8E6D),
                                     fontWeight: FontWeight.w600)),
                           ),
                         ),
@@ -577,7 +577,7 @@ class AssetScreenState extends State<AssetScreen> {
           children: [
             const SizedBox(height: 10),
             ListTile(
-              leading: const AppIcon(AppIcons.edit, color: Color(0xFF3E8E6D)),
+              leading: AppIcon(AppIcons.edit, color: AppPalette.c(0xFF3E8E6D)),
               title: const Text('编辑'),
               onTap: () {
                 Navigator.pop(ctx);
@@ -674,7 +674,7 @@ class AssetScreenState extends State<AssetScreen> {
               : _loading
                   ? const ListSkeleton()
                   : RefreshIndicator(
-                      color: const Color(0xFF3E8E6D),
+                      color: AppPalette.c(0xFF3E8E6D),
                       onRefresh: _load,
                       child: _filtered.isEmpty
                           ? ListView(
@@ -1113,7 +1113,7 @@ class AssetScreenState extends State<AssetScreen> {
                   if (pos > 0)
                     Expanded(
                       flex: (pos / total * 1000).round().clamp(1, 999),
-                      child: const ColoredBox(color: Color(0xFF3E8E6D)),
+                      child: ColoredBox(color: AppPalette.c(0xFF3E8E6D)),
                     ),
                   if (neg > 0)
                     Expanded(
@@ -1171,7 +1171,7 @@ class AssetScreenState extends State<AssetScreen> {
     // 左侧色条代表资产性质：负资产红 / 理财蓝 / 其它绿
     final barColor = negative
         ? const Color(0xFFCB5C50)
-        : (invest ? const Color(0xFF3E7BD6) : const Color(0xFF3E8E6D));
+        : (invest ? const Color(0xFF3E7BD6) : AppPalette.c(0xFF3E8E6D));
     return GestureDetector(
       onTap: () => _openEditor(a),
       child: Pressable(
@@ -1619,7 +1619,7 @@ class _PinSetupDialogState extends State<_PinSetupDialog> {
               child: Text('确认',
                   style: TextStyle(
                       color: _valid
-                          ? const Color(0xFF3E8E6D)
+                          ? AppPalette.c(0xFF3E8E6D)
                           : AppPalette.c(0xFF8FA09A))),
             ),
           ),
@@ -1868,7 +1868,7 @@ class _PinUnlockDialogState extends State<_PinUnlockDialog> {
             child: TextButton(
               onPressed: _forgot ? _resetByAnswer : _submit,
               child: Text('确认',
-                  style: const TextStyle(color: Color(0xFF3E8E6D))),
+                  style: TextStyle(color: AppPalette.c(0xFF3E8E6D))),
             ),
           ),
         ],
@@ -1938,7 +1938,7 @@ class _DisablePinDialogState extends State<_DisablePinDialog> {
           height: 34,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: sel ? const Color(0xFF3E8E6D) : AppPalette.c(0xFFF5FAF7),
+            color: sel ? AppPalette.c(0xFF3E8E6D) : AppPalette.c(0xFFF5FAF7),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Text(label,
@@ -2169,7 +2169,7 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
           height: 34,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: sel ? const Color(0xFF3E8E6D) : AppPalette.c(0xFFF5FAF7),
+            color: sel ? AppPalette.c(0xFF3E8E6D) : AppPalette.c(0xFFF5FAF7),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Text(label,
@@ -2313,7 +2313,7 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
             child: TextButton(
               onPressed: _saving ? null : (_verified ? _save : _verify),
               child: Text(_verified ? '保存' : '下一步',
-                  style: const TextStyle(color: Color(0xFF3E8E6D))),
+                  style: TextStyle(color: AppPalette.c(0xFF3E8E6D))),
             ),
           ),
         ],

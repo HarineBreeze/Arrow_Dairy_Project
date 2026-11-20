@@ -93,10 +93,10 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
             enabled: true,
             child: TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text(
+              child: Text(
                 '确认',
                 style: TextStyle(
-                  color: Color(0xFF3E8E6D),
+                  color: AppPalette.c(0xFF3E8E6D),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -192,10 +192,10 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
           ),
           Text(
             '${profile.points}',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF3E8E6D),
+              color: AppPalette.c(0xFF3E8E6D),
             ),
           ),
           const SizedBox(width: 3),
@@ -218,7 +218,7 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
     final titleColor =
         enabled ? AppPalette.c(0xFF24382F) : AppPalette.c(0xFF8FA09A);
     final priceColor =
-        enabled ? const Color(0xFF3E8E6D) : AppPalette.c(0xFFB2C2BA);
+        enabled ? AppPalette.c(0xFF3E8E6D) : AppPalette.c(0xFFB2C2BA);
 
     // 兑换次数用「已兑/上限」的紧凑数字（如 0/6、2/30）。
     // 永久牌只有一次，拥有即记 1；限时卡按各自累计次数计。

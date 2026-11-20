@@ -7,14 +7,19 @@ enum AppThemeMode { system, light, dark }
 
 /// 一套主题色（v4.9.43）。
 ///
-/// 默认「竹青」的 [rgb] / [darkTop] / [darkTint] 与原写死值逐字节一致——
-/// 这样既有 widget 测试的精确颜色断言全部不受影响；选中其它主题色时，
-/// [AppPalette.c] 会把整个主色家族重映射到这套值，做到一处切换、全局换色。
+/// 默认「竹青」的 [rgb] / [tintRgb] / [pageRgb] / [darkTop] / [darkTint]
+/// 与原写死值逐字节一致——这样既有 widget 测试的精确颜色断言全部不受影响；
+/// 选中其它主题色时，[AppPalette.c] 会把整个「绿色家族」重映射到这套值，
+/// 做到一处切换、按钮/标签/置顶边框/页面底/高亮字/图标底纹一起换色。
 class AccentStyle {
   final String id;
   final String name;
-  /// 浅色主色（0xRRGGBB，不含 alpha）
+  /// 浅色主色（0xRRGGBB，不含 alpha）：按钮、高亮字、置顶边框、图标色
   final int rgb;
+  /// 浅底纹（对应原 0xFFE4F2EB）：图标底纹、标签底、选中态底
+  final int tintRgb;
+  /// 页面底（对应原 0xFFF5FAF7）：带极淡主题色调的页面背景
+  final int pageRgb;
   /// 深色顶栏色
   final int darkTop;
   /// 深色极淡底纹色
@@ -26,6 +31,8 @@ class AccentStyle {
     required this.id,
     required this.name,
     required this.rgb,
+    required this.tintRgb,
+    required this.pageRgb,
     required this.darkTop,
     required this.darkTint,
     required this.vip,
@@ -43,6 +50,8 @@ class AccentCatalog {
         id: 'bamboo',
         name: '竹青',
         rgb: 0x3E8E6D,
+        tintRgb: 0xE4F2EB, // 原浅绿底纹，逐字节不变
+        pageRgb: 0xF5FAF7, // 原页面底，逐字节不变
         darkTop: 0x22342C,
         darkTint: 0x59B189,
         vip: false),
@@ -50,6 +59,8 @@ class AccentCatalog {
         id: 'lotus',
         name: '藕粉',
         rgb: 0xD9788C,
+        tintRgb: 0xFBE8ED,
+        pageRgb: 0xFDF4F6,
         darkTop: 0x3A2228,
         darkTint: 0xD992A3,
         vip: true),
@@ -57,6 +68,8 @@ class AccentCatalog {
         id: 'ocean',
         name: '雾蓝',
         rgb: 0x4A7FB5,
+        tintRgb: 0xE4EDF7,
+        pageRgb: 0xF4F8FC,
         darkTop: 0x1E2C3A,
         darkTint: 0x7BA7D2,
         vip: true),
@@ -64,6 +77,8 @@ class AccentCatalog {
         id: 'amber',
         name: '暖棕',
         rgb: 0xB07D4F,
+        tintRgb: 0xF4EADA,
+        pageRgb: 0xFBF6F0,
         darkTop: 0x33261C,
         darkTint: 0xC9A47A,
         vip: true),
@@ -71,6 +86,8 @@ class AccentCatalog {
         id: 'ink',
         name: '墨灰',
         rgb: 0x5B6B66,
+        tintRgb: 0xE7ECEA,
+        pageRgb: 0xF5F7F6,
         darkTop: 0x222A27,
         darkTint: 0x8A9C95,
         vip: true),
@@ -117,25 +134,44 @@ class AppPalette {
     0x593E8E6D, 0x1A3E8E6D,
   };
 
+  /// 浅底纹族：图标底纹、标签底、选中态底（原浅绿 E4F2EB 一系）。
+  /// v4.9.44：随主题色换成对应的淡色 [AccentStyle.tintRgb]。
+  static const Set<int> _tintArgs = <int>{
+    0xFFE4F2EB, 0xFFE4EDE8, 0xFFE1ECE6, 0xFFDFEAE5,
+  };
+
+  /// 页面底族：页面主背景、卡片底（原浅灰绿 F5FAF7 一系）。
+  /// v4.9.44：随主题色换成对应的极淡色 [AccentStyle.pageRgb]。
+  static const Set<int> _pageArgs = <int>{
+    0xFFF5FAF7, 0xFFF2F6F4,
+  };
+
   /// 语义取色：浅色原样返回，深色查表转换，未登记保持原值。
   ///
   /// v4.9.43：若当前主题色非竹青，主色家族会被换成对应色（保留 alpha），
   /// 让顶栏、底纹、描边等随主题色一起变；默认竹青时原样返回，零行为变化。
+  /// v4.9.44：浅底纹族 / 页面底族也纳入重映射，做到「按钮、标签、置顶边框、
+  /// 页面底、高亮字、图标底纹」一整套一起换色。
   static Color c(int argb) {
+    final themed = accent.id != AccentCatalog.bamboo;
     if (!dark) {
-      if (accent.id != AccentCatalog.bamboo && _accentRgbArgs.contains(argb)) {
+      if (themed) {
         final alpha = argb >> 24;
-        return Color((alpha << 24) | accent.rgb);
+        if (_accentRgbArgs.contains(argb)) return Color((alpha << 24) | accent.rgb);
+        if (_tintArgs.contains(argb)) return Color((alpha << 24) | accent.tintRgb);
+        if (_pageArgs.contains(argb)) return Color((alpha << 24) | accent.pageRgb);
       }
       return Color(argb);
     }
     final mapped = darkMap[argb] ?? argb;
-    if (accent.id != AccentCatalog.bamboo) {
+    if (themed) {
       // 深色主色：顶栏不透明墨绿 / 极淡底纹半透明，按当前主题色替换
       if (mapped == 0xFF22342C) return Color(0xFF000000 | accent.darkTop);
       if (mapped == 0x1F59B189 || mapped == 0x1A59B189) {
         return Color((argb & 0xFF000000) | accent.darkTint);
       }
+      // 不透明主色本身（按钮/高亮字/置顶边框/图标色）深色下也跟随主题色
+      if (argb == 0xFF3E8E6D) return Color(0xFF000000 | accent.rgb);
     }
     return Color(mapped);
   }

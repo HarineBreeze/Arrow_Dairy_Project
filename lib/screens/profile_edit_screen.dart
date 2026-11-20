@@ -230,8 +230,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                       ),
                       const SizedBox(width: 10),
                       if (id == _badge)
-                        const AppIcon(AppIcons.check,
-                            size: 20, color: Color(0xFF3E8E6D))
+                        AppIcon(AppIcons.check,
+                            size: 20, color: AppPalette.c(0xFF3E8E6D))
                       else
                         const SizedBox(width: 20),
                     ],
@@ -299,8 +299,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                     bottom: 0,
                     child: Container(
                       padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF3E8E6D),
+                      decoration: BoxDecoration(
+                        color: AppPalette.c(0xFF3E8E6D),
                         shape: BoxShape.circle,
                       ),
                       child: const AppIcon(AppIcons.camera,
@@ -392,10 +392,10 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
               children: [
                 Text(
                   '$_points',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF3E8E6D),
+                    color: AppPalette.c(0xFF3E8E6D),
                   ),
                 ),
                 const SizedBox(width: 3),
@@ -569,8 +569,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                               fontSize: 14, color: AppPalette.c(0xFF647A70))),
                       const Spacer(),
                       if (_gender == entry.value)
-                        const AppIcon(AppIcons.check,
-                            size: 20, color: Color(0xFF3E8E6D)),
+                        AppIcon(AppIcons.check,
+                            size: 20, color: AppPalette.c(0xFF3E8E6D)),
                     ],
                   ),
                 ),

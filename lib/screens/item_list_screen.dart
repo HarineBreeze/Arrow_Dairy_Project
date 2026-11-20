@@ -89,7 +89,7 @@ class ItemListScreenState extends State<ItemListScreen> {
             const SizedBox(height: 10),
             ListTile(
               leading:
-                  const AppIcon(AppIcons.edit, color: Color(0xFF3E8E6D)),
+                  AppIcon(AppIcons.edit, color: AppPalette.c(0xFF3E8E6D)),
               title: const Text('编辑'),
               onTap: () => Navigator.pop(ctx, 'edit'),
             ),
@@ -312,7 +312,7 @@ class ItemListScreenState extends State<ItemListScreen> {
                             // v4.9.39：未选选项加浅绿底纹，与事件页筛选抽屉同款
                             decoration: BoxDecoration(
                               color: sel
-                                  ? const Color(0xFF3E8E6D)
+                                  ? AppPalette.c(0xFF3E8E6D)
                                   : AppPalette.c(0xFFF5FAF7),
                               borderRadius: BorderRadius.circular(16),
                             ),
@@ -340,10 +340,10 @@ class ItemListScreenState extends State<ItemListScreen> {
                             Navigator.pop(ctx);
                             setState(() {});
                           },
-                          child: const Text('完成',
+                          child: Text('完成',
                               style: TextStyle(
                                   fontSize: 15,
-                                  color: Color(0xFF3E8E6D),
+                                  color: AppPalette.c(0xFF3E8E6D),
                                   fontWeight: FontWeight.w600)),
                         ),
                       ),
@@ -380,7 +380,7 @@ class ItemListScreenState extends State<ItemListScreen> {
           Divider(height: 1, color: AppPalette.c(0xFFE8EDF5)),
           Expanded(
             child: RefreshIndicator(
-              color: const Color(0xFF3E8E6D),
+              color: AppPalette.c(0xFF3E8E6D),
               onRefresh: _load,
               child: _filtered.isEmpty
                   ? ListView(
@@ -525,10 +525,10 @@ class ItemListScreenState extends State<ItemListScreen> {
           children: [
             Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF3E8E6D),
+                color: AppPalette.c(0xFF3E8E6D),
               ),
             ),
             const SizedBox(height: 4),
@@ -556,10 +556,10 @@ class ItemListScreenState extends State<ItemListScreen> {
         children: [
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF3E8E6D),
+              color: AppPalette.c(0xFF3E8E6D),
             ),
           ),
           const SizedBox(height: 4),
@@ -611,7 +611,7 @@ class ItemListScreenState extends State<ItemListScreen> {
                                 ? FontWeight.w600
                                 : FontWeight.w400,
                             color: selected
-                                ? const Color(0xFF3E8E6D)
+                                ? AppPalette.c(0xFF3E8E6D)
                                 : AppPalette.c(0xFF647A70),
                           ),
                         ),
@@ -629,7 +629,7 @@ class ItemListScreenState extends State<ItemListScreen> {
                   width: 40,
                   height: 3,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF3E8E6D),
+                    color: AppPalette.c(0xFF3E8E6D),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -771,7 +771,7 @@ class _ItemCardState extends State<_ItemCard> {
               const SizedBox(height: 4),
               Text(
                 '已攒 ¥${_fmt(item.savedAmount)}',
-                style: const TextStyle(fontSize: 13, color: Color(0xFF3E8E6D)),
+                style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF3E8E6D)),
               ),
               const SizedBox(height: 8),
               Padding(
@@ -814,7 +814,7 @@ class _ItemCardState extends State<_ItemCard> {
             FractionallySizedBox(
               alignment: Alignment.centerLeft,
               widthFactor: item.progress,
-              child: Container(color: const Color(0xFF3E8E6D)),
+              child: Container(color: AppPalette.c(0xFF3E8E6D)),
             ),
             Center(
               child: Text(
@@ -879,7 +879,7 @@ class _ItemCardState extends State<_ItemCard> {
                 style: TextStyle(
                   fontSize: 13,
                   color:
-                      lost ? AppPalette.c(0xFFAFBFB8) : const Color(0xFF3E8E6D),
+                      lost ? AppPalette.c(0xFFAFBFB8) : AppPalette.c(0xFF3E8E6D),
                 ),
               ),
               const SizedBox(height: 2),

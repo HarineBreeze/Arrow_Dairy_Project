@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_palette.dart';
 
 import '../utils/stationery.dart';
 
@@ -31,7 +32,7 @@ class StationeryPaper extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: selected ? const Color(0xFF3E8E6D) : const Color(0xFFE2EBE5),
+          color: selected ? AppPalette.c(0xFF3E8E6D) : const Color(0xFFE2EBE5),
           width: selected ? 2 : 1,
         ),
       ),

@@ -768,7 +768,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                 groupValue: choice,
                 dense: true,
                 visualDensity: VisualDensity.compact,
-                activeColor: const Color(0xFF3E8E6D),
+                activeColor: AppPalette.c(0xFF3E8E6D),
                 onChanged: (v) => setState(() => choice = v!),
               ),
               RadioListTile<String>(
@@ -779,7 +779,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                 groupValue: choice,
                 dense: true,
                 visualDensity: VisualDensity.compact,
-                activeColor: const Color(0xFF3E8E6D),
+                activeColor: AppPalette.c(0xFF3E8E6D),
                 onChanged: (v) => setState(() => choice = v!),
               ),
             ],
@@ -798,11 +798,11 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
               enabled: true,
               child: TextButton(
                 onPressed: () => Navigator.pop(ctx, choice),
-                child: const Text('确定',
+                child: Text('确定',
                     style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF3E8E6D))),
+                        color: AppPalette.c(0xFF3E8E6D))),
               ),
             ),
           ],
@@ -949,9 +949,9 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                   children: [
                     Text(
                       _encrypted ? '加密' : '公开',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
-                        color: Color(0xFF3E8E6D),
+                        color: AppPalette.c(0xFF3E8E6D),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -997,7 +997,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                       style: TextStyle(
                         fontSize: 13,
                         color: _futureLetterEnabled
-                            ? const Color(0xFF3E8E6D)
+                            ? AppPalette.c(0xFF3E8E6D)
                             : AppPalette.c(0xFF8FA09A),
                         fontWeight: FontWeight.w600,
                       ),
@@ -1031,9 +1031,9 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                   children: [
                     Text(
                       stationeryName(_stationery),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
-                        color: Color(0xFF3E8E6D),
+                        color: AppPalette.c(0xFF3E8E6D),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -1053,7 +1053,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                     style:
                         TextStyle(fontSize: 13, color: AppPalette.c(0xFF24382F))),
                 value: _pinned,
-                activeColor: const Color(0xFF3E8E6D),
+                activeColor: AppPalette.c(0xFF3E8E6D),
                 onChanged: (v) {
                   setState(() => _pinned = v);
                   Navigator.pop(ctx);
@@ -1129,7 +1129,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: _stationery.isEmpty
-                        ? const Color(0xFF3E8E6D)
+                        ? AppPalette.c(0xFF3E8E6D)
                         : const Color(0xFFE2EBE5),
                     width: _stationery.isEmpty ? 2 : 1,
                   ),
@@ -1210,7 +1210,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
           children: [
             ListTile(
               leading:
-                  const AppIcon(AppIcons.clock, color: Color(0xFF3E8E6D)),
+                  AppIcon(AppIcons.clock, color: AppPalette.c(0xFF3E8E6D)),
               title: const Text('设置可见日期', style: TextStyle(fontSize: 15)),
               trailing: const AppIcon(AppIcons.chevR,
                   size: 18, color: Color(0xFF8FA09A)),
@@ -1897,7 +1897,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
   Widget _buildSaveBar() {
     return SaveBar(
       saveKey: _doneKey,
-      color: const Color(0xFF3E8E6D),
+      color: AppPalette.c(0xFF3E8E6D),
       onCancel: _saving ? null : _cancel,
       validate: _validate,
       onSave: _save,
@@ -1925,7 +1925,7 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
         ),
         child: Row(
           children: [
-            AppIcon(icon, size: 16, color: const Color(0xFF3E8E6D)),
+            AppIcon(icon, size: 16, color: AppPalette.c(0xFF3E8E6D)),
             const SizedBox(width: 6),
             Expanded(
               // 超宽时整体缩小适配（如「2026年12月31日」落在窄列）
@@ -2013,14 +2013,14 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
+                            children: [
                               AppIcon(AppIcons.image,
-                                  size: 18, color: Color(0xFF3E8E6D)),
+                                  size: 18, color: AppPalette.c(0xFF3E8E6D)),
                               SizedBox(width: 6),
                               Text('添加封面图',
                                   style: TextStyle(
                                       fontSize: 13,
-                                      color: Color(0xFF3E8E6D))),
+                                      color: AppPalette.c(0xFF3E8E6D))),
                             ],
                           ),
                         ),
@@ -2070,15 +2070,15 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const AppIcon(AppIcons.image,
-                  size: 20, color: Color(0xFF3E8E6D)),
+              leading: AppIcon(AppIcons.image,
+                  size: 20, color: AppPalette.c(0xFF3E8E6D)),
               title: Text('从相册选择',
                   style: TextStyle(fontSize: 15, color: AppPalette.c(0xFF24382F))),
               onTap: () => Navigator.pop(ctx, _ImageAction.gallery),
             ),
             ListTile(
-              leading: const AppIcon(AppIcons.camera,
-                  size: 20, color: Color(0xFF3E8E6D)),
+              leading: AppIcon(AppIcons.camera,
+                  size: 20, color: AppPalette.c(0xFF3E8E6D)),
               title: Text('拍照',
                   style: TextStyle(fontSize: 15, color: AppPalette.c(0xFF24382F))),
               onTap: () => Navigator.pop(ctx, _ImageAction.camera),
@@ -2086,8 +2086,8 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
             // 自由裁剪：仅已选封面图时可用，对当前图固定 4:3 裁剪
             if (hasImage)
               ListTile(
-                leading: const AppIcon(AppIcons.crop,
-                    size: 20, color: Color(0xFF3E8E6D)),
+                leading: AppIcon(AppIcons.crop,
+                    size: 20, color: AppPalette.c(0xFF3E8E6D)),
                 title: Text('自由裁剪（4:3）',
                     style: TextStyle(fontSize: 15, color: AppPalette.c(0xFF24382F))),
                 onTap: () => Navigator.pop(ctx, _ImageAction.crop),

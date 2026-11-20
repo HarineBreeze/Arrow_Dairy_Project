@@ -193,9 +193,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               enabled: true,
               child: TextButton(
                 onPressed: () => Navigator.pop(ctx, selected),
-                child: const Text('确定',
+                child: Text('确定',
                     style: TextStyle(
-                        color: Color(0xFF3E8E6D), fontWeight: FontWeight.w600)),
+                        color: AppPalette.c(0xFF3E8E6D), fontWeight: FontWeight.w600)),
               ),
             ),
           ],
@@ -228,7 +228,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             AppIcon(
               sel ? AppIcons.radioOn : AppIcons.radioOff,
               size: 18,
-              color: sel ? const Color(0xFF3E8E6D) : AppPalette.c(0xFFC6D6CD),
+              color: sel ? AppPalette.c(0xFF3E8E6D) : AppPalette.c(0xFFC6D6CD),
             ),
             const SizedBox(width: 8),
             Expanded(
@@ -240,7 +240,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: sel
-                              ? const Color(0xFF3E8E6D)
+                              ? AppPalette.c(0xFF3E8E6D)
                               : AppPalette.c(0xFF24382F))),
                   const SizedBox(height: 2),
                   Text(desc,
@@ -294,7 +294,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     children: [
                       _buildItem(
                         icon: AppIcons.share,
-                        iconColor: const Color(0xFF3E8E6D),
+                        iconColor: AppPalette.c(0xFF3E8E6D),
                         title: '导出数据',
                         subtitle: '以 JSON 格式保存数据到本地',
                         busy: _exporting,
@@ -303,7 +303,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const Divider(height: 1, indent: 52),
                       _buildItem(
                         icon: AppIcons.download,
-                        iconColor: const Color(0xFF3E8E6D),
+                        iconColor: AppPalette.c(0xFF3E8E6D),
                         title: '导入数据',
                         subtitle: '支持增添合并或完全覆盖两种导入方式',
                         busy: _importing,
@@ -331,7 +331,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   child: _buildItem(
                     icon: AppIcons.gift,
-                    iconColor: const Color(0xFF3E8E6D),
+                    iconColor: AppPalette.c(0xFF3E8E6D),
                     title: '兑换码',
                     subtitle: '参与活动获得兑换码',
                     busy: false,
@@ -432,10 +432,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             enabled: true,
             child: TextButton(
               onPressed: () => Navigator.pop(ctx, ctrl.text),
-              child: const Text(
+              child: Text(
                 '兑换',
                 style: TextStyle(
-                  color: Color(0xFF3E8E6D),
+                  color: AppPalette.c(0xFF3E8E6D),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -471,7 +471,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: DecoratedBox(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFF3E8E6D), width: 1),
+                border: Border.all(color: AppPalette.c(0xFF3E8E6D), width: 1),
               ),
               child: Center(
                 child: Text(
@@ -480,7 +480,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     fontSize: 9,
                     height: 1,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF3E8E6D),
+                    color: AppPalette.c(0xFF3E8E6D),
                   ),
                 ),
               ),
@@ -590,7 +590,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   // v4.9.26：字体并入「外观」分组，作为本卡第三行
                   _buildItem(
                     icon: AppIcons.fontType,
-                    iconColor: const Color(0xFF3E8E6D),
+                    iconColor: AppPalette.c(0xFF3E8E6D),
                     title: '字体',
                     subtitle:
                         '当前：${FontCatalog.nameOf(AppSettings.fontFamilyId.isEmpty ? null : AppSettings.fontFamilyId) ?? '默认字体'}',
@@ -647,7 +647,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: AppIcon(icon,
                   size: 22,
                   color: enabled
-                      ? const Color(0xFF3E8E6D)
+                      ? AppPalette.c(0xFF3E8E6D)
                       : AppPalette.c(0xFFC6D6CD)),
             ),
           ),
@@ -673,7 +673,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Switch(
             value: value,
             onChanged: enabled ? onChanged : null,
-            activeColor: const Color(0xFF3E8E6D),
+            activeColor: AppPalette.c(0xFF3E8E6D),
           ),
         ],
       ),
@@ -772,18 +772,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Expanded(
               child: Opacity(
                 opacity: canPick ? 1.0 : 0.45,
-                child: Text(s.name,
-                    style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
-                        color: AppPalette.c(0xFF24382F))),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(s.name,
+                          style: TextStyle(
+                              fontSize: 15,
+                              fontWeight:
+                                  selected ? FontWeight.w600 : FontWeight.normal,
+                              color: AppPalette.c(0xFF24382F))),
+                    ),
+                    if (s.vip) ...[
+                      const SizedBox(width: 6),
+                      Transform.scale(
+                        scale: 0.8,
+                        child: IdentityBadge(badge: UserProfile.badgeVip),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
-            if (s.vip)
-              Transform.scale(
-                scale: 0.8,
-                child: IdentityBadge(badge: UserProfile.badgeVip),
-              ),
             if (selected)
               Padding(
                 padding: const EdgeInsets.only(left: 8),

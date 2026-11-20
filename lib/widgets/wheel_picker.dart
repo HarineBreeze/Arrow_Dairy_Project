@@ -13,7 +13,7 @@ import '../utils/app_sheet.dart';
 /// flutter_localizations，直接用它会出现「英文月名 + 日/月/年 顺序」。
 /// 这里改为自绘三列（年 / 月 / 日），中文单位直接写在数字后面，
 /// 顺序固定为 年 → 月 → 日。
-const Color _kBlue = Color(0xFF3E8E6D);
+Color _kBlue = AppPalette.c(0xFF3E8E6D);
 
 /// 项高：每格滚轮高度。
 const double kWheelItemExtent = 36;
@@ -424,7 +424,7 @@ class _SheetHeader extends StatelessWidget {
           ),
           TextButton(
             onPressed: onConfirm,
-            child: const Text('确定',
+            child: Text('确定',
                 style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,

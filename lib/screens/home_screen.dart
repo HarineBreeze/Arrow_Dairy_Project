@@ -46,7 +46,7 @@ import '../utils/menu_gesture_gate.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_theme_scope.dart';
 import '../utils/app_sheet.dart';
-const Color kPrimaryBlue = Color(0xFF3E8E6D);
+Color get kPrimaryBlue => AppPalette.c(0xFF3E8E6D);
 Color get kLightBlue => AppPalette.c(0xFFE4F2EB);
 Color get kTextDark => AppPalette.c(0xFF24382F);
 Color get kTextMid => AppPalette.c(0xFF647A70);
@@ -293,7 +293,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               leading: AppIcon(
                 entry.pinned ? AppIcons.pin : AppIcons.pinOn,
                 // 与下方「编辑」按钮同款绿色，不再用红色
-                color: const Color(0xFF3E8E6D),
+                color: AppPalette.c(0xFF3E8E6D),
               ),
               title: Text(entry.pinned ? '取消置顶' : '置顶',
                   style: const TextStyle(fontSize: 15)),
@@ -305,14 +305,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               if (!entry.isSealed) ...[
                 ListTile(
                   leading:
-                      const AppIcon(AppIcons.edit, color: Color(0xFF3E8E6D)),
+                      AppIcon(AppIcons.edit, color: AppPalette.c(0xFF3E8E6D)),
                   title: const Text('编辑', style: TextStyle(fontSize: 15)),
                   onTap: () => Navigator.pop(ctx, 'edit'),
                 ),
                 ListTile(
                   key: const ValueKey('card_action_share'),
                   leading:
-                      const AppIcon(AppIcons.share, color: Color(0xFF3E8E6D)),
+                      AppIcon(AppIcons.share, color: AppPalette.c(0xFF3E8E6D)),
                   title: const Text('分享', style: TextStyle(fontSize: 15)),
                   onTap: () => Navigator.pop(ctx, 'share'),
                 ),
@@ -532,10 +532,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       ),
                       child: Text(
                         '密码：$revealedPwd',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF3E8E6D),
+                          color: AppPalette.c(0xFF3E8E6D),
                         ),
                       ),
                     ),
@@ -1191,7 +1191,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       )
                     : RefreshIndicator(
                         onRefresh: _load,
-                        color: const Color(0xFF3E8E6D),
+                        color: AppPalette.c(0xFF3E8E6D),
                         child: isFlat
                             ? _buildFlatList(pinned, flatList)
                             : _buildGroupedList(pinned, groups),
@@ -1222,8 +1222,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           ),
                         ],
                       ),
-                      child: const AppIcon(AppIcons.arrowUp,
-                          size: 18, color: Color(0xFF3E8E6D)),
+                      child: AppIcon(AppIcons.arrowUp,
+                          size: 18, color: AppPalette.c(0xFF3E8E6D)),
                     ),
                   ),
                 ),
@@ -1359,7 +1359,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             fontWeight:
                                 selected ? FontWeight.w600 : FontWeight.w400,
                             color: selected
-                                ? const Color(0xFF3E8E6D)
+                                ? AppPalette.c(0xFF3E8E6D)
                                 : AppPalette.c(0xFF647A70),
                           ),
                         ),
@@ -1377,7 +1377,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   width: 40,
                   height: 3,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF3E8E6D),
+                    color: AppPalette.c(0xFF3E8E6D),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -1412,12 +1412,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const AppIcon(AppIcons.pinOn, size: 12, color: Color(0xFF3E8E6D)),
+              AppIcon(AppIcons.pinOn, size: 12, color: AppPalette.c(0xFF3E8E6D)),
               const SizedBox(width: 3),
               Text(
                 '置顶 ${pinned.length} 篇',
-                style: const TextStyle(
-                    fontSize: 11, color: Color(0xFF3E8E6D)),
+                style: TextStyle(
+                    fontSize: 11, color: AppPalette.c(0xFF3E8E6D)),
               ),
             ],
           ),
@@ -1722,11 +1722,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
                             color:
-                                active ? const Color(0xFF3E8E6D) : AppPalette.c(0xFFFFFFFF),
+                                active ? AppPalette.c(0xFF3E8E6D) : AppPalette.c(0xFFFFFFFF),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
                               color: active
-                                  ? const Color(0xFF3E8E6D)
+                                  ? AppPalette.c(0xFF3E8E6D)
                                   : AppPalette.c(0xFFE4F2EB),
                             ),
                           ),
@@ -1758,17 +1758,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          const AppIcon(AppIcons.tag, size: 14, color: Color(0xFF3E8E6D)),
+          AppIcon(AppIcons.tag, size: 14, color: AppPalette.c(0xFF3E8E6D)),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
               '正在筛选话题：#${_activeTopic}',
-              style: const TextStyle(fontSize: 13, color: Color(0xFF3E8E6D)),
+              style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF3E8E6D)),
             ),
           ),
           GestureDetector(
             onTap: () => setState(() => _activeTopic = null),
-            child: const AppIcon(AppIcons.close, size: 16, color: Color(0xFF3E8E6D)),
+            child: AppIcon(AppIcons.close, size: 16, color: AppPalette.c(0xFF3E8E6D)),
           ),
         ],
       ),
@@ -1836,7 +1836,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           enabled: true,
           child: TextButton(
             onPressed: _showAll,
-            child: const Text(
+            child: Text(
               '全部',
               style: TextStyle(
                 color: kPrimaryBlue,
@@ -1983,7 +1983,7 @@ class _PinnedMiniCard extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               // 卡带里的卡本身就是置顶的，统一用主色描边
-              border: Border.all(color: const Color(0xFF3E8E6D), width: 1.3),
+              border: Border.all(color: AppPalette.c(0xFF3E8E6D), width: 1.3),
             ),
             // 加密笔记：卡面铺斜纹纹理（与未置顶封条卡同一语言）
             // 注意：底色必须透明，否则会盖住下面的 painter
@@ -2173,7 +2173,7 @@ class _DiaryCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           // 置顶笔记：主色描边（不再用红色，避免和「涨/警示红」混淆）
           side: isPinned
-              ? const BorderSide(color: Color(0xFF3E8E6D), width: 1.5)
+              ? BorderSide(color: AppPalette.c(0xFF3E8E6D), width: 1.5)
               : BorderSide.none,
         ),
         color: AppPalette.c(0xFFFFFFFF),
@@ -2262,10 +2262,10 @@ class _DiaryCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text('${entry.publishDate.day}',
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF3E8E6D),
+                        color: AppPalette.c(0xFF3E8E6D),
                         height: 1.1)),
                 const SizedBox(height: 2),
                 // 年月：不换行，超宽时整体缩小适配两位月份

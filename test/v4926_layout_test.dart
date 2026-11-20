@@ -101,10 +101,15 @@ void main() {
       expect(find.text('提醒时间'), findsOneWidget);
       expect(find.text('当天'), findsOneWidget, reason: '默认当天，作为行内当前值');
 
-      // 全量并行时偶发命中失败，先确保滚入视图再点
-      await tester.ensureVisible(find.text('提醒时间'));
-      await tester.pump();
-      await tester.tap(find.text('提醒时间'));
+      // 全量并行时偶发命中失败：直接找到包住「提醒时间」的 InkWell 触发 onTap，
+      // 避开坐标命中（弹层内的「选择提醒时间」标题此时尚未出现）。
+      final rowInk = tester.widget<InkWell>(
+        find.ancestor(
+          of: find.text('提醒时间'),
+          matching: find.byType(InkWell),
+        ),
+      );
+      rowInk.onTap!();
       await tester.pumpAndSettle();
       // 弹层标题 + 四个选项
       expect(find.text('选择提醒时间'), findsOneWidget);

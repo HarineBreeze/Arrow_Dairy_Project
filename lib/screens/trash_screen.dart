@@ -187,8 +187,8 @@ class TrashScreenState extends State<TrashScreen> {
               enabled: true,
               child: TextButton(
                   onPressed: () => Navigator.pop(ctx, true),
-                  child: const Text('还原',
-                      style: TextStyle(color: Color(0xFF3E8E6D)))),
+                  child: Text('还原',
+                      style: TextStyle(color: AppPalette.c(0xFF3E8E6D)))),
             ),
           ],
         ),
@@ -258,7 +258,7 @@ class TrashScreenState extends State<TrashScreen> {
             ListTile(
               key: const ValueKey('trash_card_action_restore'),
               leading:
-                  const AppIcon(AppIcons.restore, color: Color(0xFF3E8E6D)),
+                  AppIcon(AppIcons.restore, color: AppPalette.c(0xFF3E8E6D)),
               title: const Text('还原', style: TextStyle(fontSize: 15)),
               onTap: () => Navigator.pop(ctx, 'restore'),
             ),
@@ -296,8 +296,8 @@ class TrashScreenState extends State<TrashScreen> {
               enabled: true,
               child: TextButton(
                   onPressed: () => Navigator.pop(ctx, true),
-                  child: const Text('还原',
-                      style: TextStyle(color: Color(0xFF3E8E6D)))),
+                  child: Text('还原',
+                      style: TextStyle(color: AppPalette.c(0xFF3E8E6D)))),
             ),
           ],
         ),
@@ -454,8 +454,8 @@ class TrashScreenState extends State<TrashScreen> {
             enabled: true,
             child: TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('还原',
-                    style: TextStyle(color: Color(0xFF3E8E6D)))),
+                child: Text('还原',
+                    style: TextStyle(color: AppPalette.c(0xFF3E8E6D)))),
           ),
         ],
       ),
@@ -783,7 +783,7 @@ class TrashScreenState extends State<TrashScreen> {
         color: AppPalette.c(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: picked ? const Color(0xFF3E8E6D) : Colors.transparent,
+          color: picked ? AppPalette.c(0xFF3E8E6D) : Colors.transparent,
           width: 1.4,
         ),
       ),
@@ -801,11 +801,11 @@ class TrashScreenState extends State<TrashScreen> {
                 // 13px 的对勾被拉到左上角而不是落在圆圈中心。
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: picked ? const Color(0xFF3E8E6D) : AppPalette.c(0xFFFFFFFF),
+                  color: picked ? AppPalette.c(0xFF3E8E6D) : AppPalette.c(0xFFFFFFFF),
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: picked
-                        ? const Color(0xFF3E8E6D)
+                        ? AppPalette.c(0xFF3E8E6D)
                         : AppPalette.c(0xFFC6D6CD),
                   ),
                 ),

@@ -18,7 +18,7 @@ void main() async {
 }
 
 /// 竹青主题色 #3E8E6D。
-const Color kPrimaryGreen = Color(0xFF3E8E6D);
+Color get kPrimaryGreen => AppPalette.c(0xFF3E8E6D);
 
 /// 由主题色生成 Material 色阶 swatch。
 ///

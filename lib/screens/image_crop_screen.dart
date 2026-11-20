@@ -1,4 +1,5 @@
 import 'dart:io';
+import '../theme/app_palette.dart';
 import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -319,7 +320,7 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(7),
-              border: Border.all(color: const Color(0xFF3E8E6D), width: 2),
+              border: Border.all(color: AppPalette.c(0xFF3E8E6D), width: 2),
             ),
           ),
         ),

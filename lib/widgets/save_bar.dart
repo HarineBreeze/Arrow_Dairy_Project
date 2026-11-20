@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_palette.dart';
 
 import 'pressable.dart';
 import 'save_done_button.dart';
@@ -97,7 +98,7 @@ class _SaveBarState extends State<SaveBar> {
                         style: OutlinedButton.styleFrom(
                           minimumSize: const Size.fromHeight(48),
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          side: const BorderSide(color: Color(0xFF3E8E6D)),
+                          side: BorderSide(color: AppPalette.c(0xFF3E8E6D)),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),

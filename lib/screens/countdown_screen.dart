@@ -203,7 +203,7 @@ class CountdownScreenState extends State<CountdownScreen> {
             ListTile(
               leading: AppIcon(
                 e.pinned ? AppIcons.pinOn : AppIcons.pin,
-                color: const Color(0xFF3E8E6D),
+                color: AppPalette.c(0xFF3E8E6D),
               ),
               title: Text(e.pinned ? '取消置顶' : '置顶'),
               onTap: () async {
@@ -225,7 +225,7 @@ class CountdownScreenState extends State<CountdownScreen> {
             ),
             ListTile(
               leading:
-                  const AppIcon(AppIcons.edit, color: Color(0xFF3E8E6D)),
+                  AppIcon(AppIcons.edit, color: AppPalette.c(0xFF3E8E6D)),
               title: const Text('编辑'),
               onTap: () {
                 Navigator.pop(ctx);
@@ -305,7 +305,7 @@ class CountdownScreenState extends State<CountdownScreen> {
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
                     color:
-                        on ? const Color(0xFF3E8E6D) : AppPalette.c(0xFFF5FAF7),
+                        on ? AppPalette.c(0xFF3E8E6D) : AppPalette.c(0xFFF5FAF7),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(label,
@@ -347,9 +347,9 @@ class CountdownScreenState extends State<CountdownScreen> {
                           Navigator.pop(ctx);
                           setState(() {});
                         },
-                        child: const Text('确定',
+                        child: Text('确定',
                             style: TextStyle(
-                                color: Color(0xFF3E8E6D),
+                                color: AppPalette.c(0xFF3E8E6D),
                                 fontWeight: FontWeight.w600)),
                       ),
                     ),
@@ -418,7 +418,7 @@ class CountdownScreenState extends State<CountdownScreen> {
           child: _loading
               ? const ListSkeleton()
               : RefreshIndicator(
-                  color: const Color(0xFF3E8E6D),
+                  color: AppPalette.c(0xFF3E8E6D),
                   onRefresh: _refresh,
                   child: _filtered.isEmpty
                       ? ListView(
@@ -532,7 +532,7 @@ class CountdownScreenState extends State<CountdownScreen> {
             borderRadius: BorderRadius.circular(16),
             // 置顶：主色描边；到期循环：保留红色警示。两者并存时以置顶为准
             border: e.pinned
-                ? Border.all(color: const Color(0xFF3E8E6D), width: 1.5)
+                ? Border.all(color: AppPalette.c(0xFF3E8E6D), width: 1.5)
                 : (loopRed
                     ? Border.all(color: const Color(0xFFCB5C50), width: 1.5)
                     : null),
@@ -600,7 +600,7 @@ class CountdownScreenState extends State<CountdownScreen> {
                             ? AppPalette.c(0xFFB2C2BA)
                             : (e.daysLeft == 0
                                 ? const Color(0xFFCB5C50)
-                                : const Color(0xFF3E8E6D)),
+                                : AppPalette.c(0xFF3E8E6D)),
                       ),
                     ),
                   // 副标题：资产日「已拥有 x 天」/ 纪念日「已过去 x 天」
@@ -620,7 +620,7 @@ class CountdownScreenState extends State<CountdownScreen> {
                           fontWeight: FontWeight.w700,
                           color: grey
                               ? AppPalette.c(0xFFB2C2BA)
-                              : const Color(0xFF3E8E6D),
+                              : AppPalette.c(0xFF3E8E6D),
                         )),
                 ],
               ),
@@ -830,10 +830,10 @@ class CountdownScreenState extends State<CountdownScreen> {
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
-                  child: const Text('今天',
+                  child: Text('今天',
                       style: TextStyle(
                           fontSize: 13,
-                          color: Color(0xFF3E8E6D),
+                          color: AppPalette.c(0xFF3E8E6D),
                           fontWeight: FontWeight.w600)),
                 ),
               ),
@@ -913,7 +913,7 @@ class CountdownScreenState extends State<CountdownScreen> {
                             ? FontWeight.w700
                             : FontWeight.normal,
                         color: isToday
-                            ? const Color(0xFF3E8E6D)
+                            ? AppPalette.c(0xFF3E8E6D)
                             : AppPalette.c(0xFF24382F))),
                 const SizedBox(height: 1),
                 EntryIcon(hasEvent ? icon : '', size: 10),

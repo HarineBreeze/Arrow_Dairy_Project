@@ -76,7 +76,7 @@ class EmptyState extends StatelessWidget {
             child: TextButton(
               onPressed: onAction,
               style: TextButton.styleFrom(
-                primary: const Color(0xFF3E8E6D),
+                primary: AppPalette.c(0xFF3E8E6D),
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               ),
               child: Text(actionLabel!,

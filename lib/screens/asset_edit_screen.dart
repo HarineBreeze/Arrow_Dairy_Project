@@ -289,7 +289,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
   Widget _buildSaveBar() {
     return SaveBar(
       saveKey: _doneKey,
-      color: const Color(0xFF3E8E6D),
+      color: AppPalette.c(0xFF3E8E6D),
       onCancel: () => Navigator.pop(context),
       validate: _validate,
       onSave: _save,
@@ -422,12 +422,12 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                                             ? FontWeight.w600
                                             : FontWeight.normal,
                                         color: t == _type
-                                            ? const Color(0xFF3E8E6D)
+                                            ? AppPalette.c(0xFF3E8E6D)
                                             : AppPalette.c(0xFF24382F))),
                               ),
                               if (t == _type)
-                                const AppIcon(AppIcons.check,
-                                    size: 16, color: Color(0xFF3E8E6D)),
+                                AppIcon(AppIcons.check,
+                                    size: 16, color: AppPalette.c(0xFF3E8E6D)),
                             ],
                           ),
                         ),
@@ -516,7 +516,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                         enabled: true,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            primary: const Color(0xFF3E8E6D),
+                            primary: AppPalette.c(0xFF3E8E6D),
                             onPrimary: Colors.white,
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12)),

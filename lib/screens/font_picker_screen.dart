@@ -56,7 +56,7 @@ class _FontPickerScreenState extends State<FontPickerScreen> {
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: selected
-                          ? const Color(0xFF3E8E6D)
+                          ? AppPalette.c(0xFF3E8E6D)
                           : AppPalette.c(0xFFE8EDF5),
                       width: selected ? 1.5 : 1,
                     ),
@@ -92,8 +92,8 @@ class _FontPickerScreenState extends State<FontPickerScreen> {
                       ),
                       const SizedBox(width: 8),
                       if (selected)
-                        const AppIcon(AppIcons.success,
-                            color: Color(0xFF3E8E6D), size: 22)
+                        AppIcon(AppIcons.success,
+                            color: AppPalette.c(0xFF3E8E6D), size: 22)
                       else
                         AppIcon(AppIcons.radioOff,
                             color: AppPalette.c(0xFFC6D6CD), size: 22),

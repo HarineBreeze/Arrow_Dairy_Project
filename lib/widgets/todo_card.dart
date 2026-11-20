@@ -60,8 +60,8 @@ class TodoCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const AppIcon(AppIcons.todo,
-                  size: 16, color: Color(0xFF3E8E6D)),
+              AppIcon(AppIcons.todo,
+                  size: 16, color: AppPalette.c(0xFF3E8E6D)),
               const SizedBox(width: 6),
               Text('待办清单',
                   style: TextStyle(
@@ -70,10 +70,10 @@ class TodoCard extends StatelessWidget {
                       color: AppPalette.c(0xFF24382F))),
               const Spacer(),
               Text('$done / $total',
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF3E8E6D))),
+                      color: AppPalette.c(0xFF3E8E6D))),
             ],
           ),
           const SizedBox(height: 8),
@@ -84,7 +84,7 @@ class TodoCard extends StatelessWidget {
               minHeight: 3,
               backgroundColor: AppPalette.c(0xFFECF2EE),
               valueColor:
-                  const AlwaysStoppedAnimation(Color(0xFF3E8E6D)),
+                  AlwaysStoppedAnimation(AppPalette.c(0xFF3E8E6D)),
             ),
           ),
           const SizedBox(height: 6),
@@ -142,12 +142,12 @@ class _TodoRow extends StatelessWidget {
                   height: 19,
                   decoration: BoxDecoration(
                     color: todo.done
-                        ? const Color(0xFF3E8E6D)
+                        ? AppPalette.c(0xFF3E8E6D)
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
                       color: todo.done
-                          ? const Color(0xFF3E8E6D)
+                          ? AppPalette.c(0xFF3E8E6D)
                           : AppPalette.c(0xFFC2D4C9),
                       width: 1.6,
                     ),
@@ -185,7 +185,7 @@ class _TodoRow extends StatelessWidget {
         text: s.text,
         style: isLink
             ? base.copyWith(
-                color: const Color(0xFF3E8E6D),
+                color: AppPalette.c(0xFF3E8E6D),
                 decoration:
                     todo.done ? TextDecoration.lineThrough : null,
               )

@@ -47,9 +47,9 @@ Future<bool> confirmLeaveIfDirty(
           enabled: true,
           child: TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('确定',
+            child: Text('确定',
                 style: TextStyle(
-                    color: Color(0xFF3E8E6D),
+                    color: AppPalette.c(0xFF3E8E6D),
                     fontSize: 13,
                     fontWeight: FontWeight.w600)),
           ),

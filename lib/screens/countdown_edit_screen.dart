@@ -357,7 +357,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                               size: 17,
                               color: _target == null
                                   ? AppPalette.c(0xFF8FA09A)
-                                  : const Color(0xFF3E8E6D)),
+                                  : AppPalette.c(0xFF3E8E6D)),
                           const SizedBox(width: 6),
                           Expanded(
                             // 列宽只有五分之二，日期文字必须压缩显示，
@@ -400,7 +400,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                               size: 17,
                               color: _target == null
                                   ? AppPalette.c(0xFF8FA09A)
-                                  : const Color(0xFF3E8E6D)),
+                                  : AppPalette.c(0xFF3E8E6D)),
                           const SizedBox(width: 6),
                           Expanded(
                             child: FittedBox(
@@ -698,8 +698,8 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                               fontSize: 14, color: AppPalette.c(0xFF647A70))),
                       const Spacer(),
                       if (opt == current)
-                        const AppIcon(AppIcons.check,
-                            size: 20, color: Color(0xFF3E8E6D)),
+                        AppIcon(AppIcons.check,
+                            size: 20, color: AppPalette.c(0xFF3E8E6D)),
                     ],
                   ),
                 ),
@@ -770,7 +770,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
             color: sel ? AppPalette.c(0xFFE4F2EB) : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: sel ? const Color(0xFF3E8E6D) : Colors.transparent,
+              color: sel ? AppPalette.c(0xFF3E8E6D) : Colors.transparent,
               width: 1.5,
             ),
           ),
@@ -821,7 +821,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: sel
-                                ? const Color(0xFF3E8E6D)
+                                ? AppPalette.c(0xFF3E8E6D)
                                 : Colors.transparent,
                             width: 1.5,
                           ),

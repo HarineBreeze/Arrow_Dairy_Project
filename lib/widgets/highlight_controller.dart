@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_palette.dart';
 import '../utils/list_text.dart';
 import '../utils/rich_text.dart';
 import '../utils/todo_text.dart';
@@ -70,7 +71,7 @@ class HighlightEditingController extends TextEditingController {
         final base = _styleAt(segStart) ?? const TextStyle();
         children.add(TextSpan(
           text: s.text,
-          style: base.copyWith(color: const Color(0xFF3E8E6D)),
+          style: base.copyWith(color: AppPalette.c(0xFF3E8E6D)),
         ));
       } else {
         children.add(buildPlain(s.text, segStart));
@@ -112,8 +113,8 @@ class HighlightEditingController extends TextEditingController {
     if (pos < text.length &&
         (text[pos] == TodoText.uncheckedSymbol ||
             text[pos] == TodoText.checkedSymbol)) {
-      return const TextStyle(
-          color: Color(0xFF3E8E6D), fontWeight: FontWeight.w700);
+      return TextStyle(
+          color: AppPalette.c(0xFF3E8E6D), fontWeight: FontWeight.w700);
     }
     // 列表标记（1. / · / 　a.）：主色 + 半粗，让「标题感」立起来，
     // 正文本身不受影响，用户自己的 B/S 样式仍叠加在上面
@@ -151,7 +152,7 @@ class HighlightEditingController extends TextEditingController {
       // 才清晰）；无高亮时列表标记仍用主色，其余继承父级主题色。
       color: highlight != null
           ? const Color(0xFF24382F)
-          : (isMark ? const Color(0xFF3E8E6D) : null),
+          : (isMark ? AppPalette.c(0xFF3E8E6D) : null),
     );
   }
 

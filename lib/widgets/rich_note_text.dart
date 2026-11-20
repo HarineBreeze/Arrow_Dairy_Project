@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_palette.dart';
 import '../utils/rich_text.dart';
 import '../utils/text_format.dart';
 import '../utils/todo_text.dart';
@@ -201,7 +202,7 @@ class _RichNoteTextState extends State<RichNoteText> {
       final end = offset + s.text.length;
       if (pos >= offset && pos < end) {
         if (s.type == 'mention' || s.type == 'topic') {
-          return const Color(0xFF3E8E6D);
+          return AppPalette.c(0xFF3E8E6D);
         }
         return null;
       }

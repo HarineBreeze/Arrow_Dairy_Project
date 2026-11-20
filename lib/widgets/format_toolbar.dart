@@ -211,7 +211,7 @@ class FormatToolbarState extends State<FormatToolbar> {
         margin: const EdgeInsets.symmetric(horizontal: 1),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: active ? const Color(0xFF3E8E6D) : Colors.transparent,
+          color: active ? AppPalette.c(0xFF3E8E6D) : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
@@ -519,7 +519,7 @@ class FormatToolbarState extends State<FormatToolbar> {
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
                       color: active
-                          ? const Color(0xFF3E8E6D)
+                          ? AppPalette.c(0xFF3E8E6D)
                           : AppPalette.c(0xFFDFEAE5),
                       width: active ? 2 : 1,
                     ),
@@ -579,7 +579,7 @@ class FormatToolbarState extends State<FormatToolbar> {
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                   decoration: BoxDecoration(
                     color: active
-                        ? const Color(0xFF3E8E6D)
+                        ? AppPalette.c(0xFF3E8E6D)
                         : AppPalette.c(0xFFF5FAF7),
                     borderRadius: BorderRadius.circular(8),
                   ),
