@@ -175,19 +175,11 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
+              // v4.9.48：「可使用天数 参数」标题移除，仅保留右上角关闭按钮
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 8, 12, 4),
                 child: Row(
                   children: [
-                    Text('可使用天数',
-                        style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w700,
-                            color: AppPalette.c(0xFF24382F))),
-                    const SizedBox(width: 6),
-                    Text('参数',
-                        style: TextStyle(
-                            fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
                     const Spacer(),
                     IconButton(
                       onPressed: () => Navigator.pop(context, false),

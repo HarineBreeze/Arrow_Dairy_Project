@@ -433,41 +433,39 @@ class _NoteViewScreenState extends State<NoteViewScreen> {
                       // 这里用「新旧文本对齐」反推是哪一行被切换
                       onToggle: _applyToggledContent,
                     ),
+                    ],
                   ],
-                ],
-              ),
-            ),
-                ],
-              ),
-            ),
-          ),
-        // 底部信息行：时间在最左，与正文文字左缘对齐
-        // （正文卡片有 16px 内边距，页面 padding 16，合计 32px）
-          Padding(
-            padding: const EdgeInsets.fromLTRB(32, 8, 16, 16),
-            child: Row(
-              children: [
-                Text(
-                  _timeLabel(),
-                  style: TextStyle(
-                      fontSize: 13, color: metaColor),
                 ),
-                if (_entry.location.isNotEmpty) ...[
-                  const SizedBox(width: 10),
-                  AppIcon(AppIcons.mapPin,
-                      size: 14, color: AppPalette.c(0xFF8FA09A)),
-                  const SizedBox(width: 4),
-                  Flexible(
-                    child: Text(
-                      _entry.location,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                          fontSize: 13, color: metaColor),
+              ),
+              // v4.9.48：时间/地点信息行取消吸底，随正文滚动、置于内容最底部
+              // （需滑到最底部才可见），与回收站底部提示语同一处理。
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 0, 4),
+                child: Row(
+                  children: [
+                    Text(
+                      _timeLabel(),
+                      style: TextStyle(fontSize: 13, color: metaColor),
                     ),
-                  ),
+                    if (_entry.location.isNotEmpty) ...[
+                      const SizedBox(width: 10),
+                      AppIcon(AppIcons.mapPin,
+                          size: 14, color: AppPalette.c(0xFF8FA09A)),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          _entry.location,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 13, color: metaColor),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
                 ],
-              ],
+              ),
             ),
           ),
         ],

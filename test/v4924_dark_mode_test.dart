@@ -233,36 +233,42 @@ void main() {
       expect(find.byType(Switch), findsOneWidget);
     });
 
-    testWidgets('点「深色模式」开抽屉，可手动选已开启/已关闭/跟随系统',
+    testWidgets('点「深色模式」开抽屉，双开关：跟随系统 + 深色模式（震动同款）',
         (tester) async {
       await pumpSettings(tester);
       // 打开抽屉
       await tester.tap(find.text('深色模式'));
       await tester.pumpAndSettle();
       expect(find.text('跟随系统'), findsOneWidget);
-      expect(find.text('已开启'), findsOneWidget);
-      expect(find.text('已关闭'), findsOneWidget);
+      // v4.9.48：「已开启/已关闭」两行合并为一个「深色模式」开关
+      expect(find.text('已开启'), findsNothing);
+      expect(find.text('已关闭'), findsNothing);
+      expect(find.byKey(const ValueKey('theme-follow-system')), findsOneWidget);
+      expect(find.byKey(const ValueKey('theme-dark-mode')), findsOneWidget);
 
-      // 选「已开启」→ 手动深色，副标题变「已开启」
-      await tester.tap(find.text('已开启'));
-      await tester.pumpAndSettle();
-      expect(AppSettings.themeMode, AppThemeMode.dark);
-      expect(find.text('已开启'), findsOneWidget);
+      // 默认跟随系统开启 → 深色模式开关置灰禁用
+      Switch darkSwitch() => tester.widget<Switch>(
+          find.byKey(const ValueKey('theme-dark-mode')));
+      expect(darkSwitch().onChanged, isNull,
+          reason: '跟随系统开启时深色模式开关不可选');
 
-      // 再开抽屉选「已关闭」→ 手动浅色
-      await tester.tap(find.text('深色模式'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('已关闭').last);
+      // 关闭「跟随系统」→ 切到手动浅色，深色模式开关恢复可用
+      await tester.tap(find.byKey(const ValueKey('theme-follow-system')));
       await tester.pumpAndSettle();
       expect(AppSettings.themeMode, AppThemeMode.light);
-      expect(find.text('已关闭'), findsOneWidget);
+      expect(darkSwitch().onChanged, isNotNull,
+          reason: '关闭跟随系统后深色模式开关恢复可选');
 
-      // 再开抽屉选「跟随系统」→ system
-      await tester.tap(find.text('深色模式'));
+      // 打开「深色模式」开关 → 手动深色
+      await tester.tap(find.byKey(const ValueKey('theme-dark-mode')));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('跟随系统').last);
+      expect(AppSettings.themeMode, AppThemeMode.dark);
+
+      // 再开「跟随系统」→ system，深色开关再次置灰
+      await tester.tap(find.byKey(const ValueKey('theme-follow-system')));
       await tester.pumpAndSettle();
       expect(AppSettings.themeMode, AppThemeMode.system);
+      expect(darkSwitch().onChanged, isNull);
     });
   });
 

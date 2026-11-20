@@ -522,9 +522,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   /// 「外观」分组：深色模式 / 字体 / 主题色。
   ///
-  /// v4.9.47：「深色模式」由开关改为右箭头，副标题仍反映「已开启 / 已关闭」
-  /// （跟随系统时追加「（跟随系统）」）；点击打开抽屉，内含「跟随系统 /
-  /// 已开启 / 已关闭」三项可手动选择，原独立的「跟随系统」开关行移入抽屉。
+  /// v4.9.48：「深色模式」行点击打开抽屉，内含「跟随系统 / 深色模式」两个
+  /// 震动同款开关（跟随系统开启时深色开关置灰禁用）；本行副标题仍反映
+  /// 当前深浅状态（跟随系统时追加「（跟随系统）」）。
   /// 用 ValueListenableBuilder 监听 themeModeNotifier，切换后立即刷新副标题。
   Widget _buildAppearanceSection(BuildContext context) {
     return ValueListenableBuilder<AppThemeMode>(
@@ -611,73 +611,86 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  /// v4.9.47：深色模式选择抽屉。三项「跟随系统 / 已开启 / 已关闭」单选，
-  /// 选中打勾；选中后写回 AppSettings 并立即应用。
+  /// v4.9.48：深色模式编辑抽屉改为「震动同款」双开关：
+  /// - 「跟随系统」开关：开 → AppThemeMode.system；关 → 按下方深色开关当前
+  ///   显示值回落到 dark / light（保持用户眼前看到的深浅，不跳变）。
+  /// - 「深色模式」开关：非跟随系统时可用，开 → dark，关 → light；
+  ///   跟随系统开启时置灰禁用，显示值仍跟随系统当前亮度（如实反映状态）。
+  /// 用 StatefulBuilder 让开关切换即时刷新抽屉内部；写回 AppSettings 后
+  /// themeModeNotifier 会同步刷新设置页副标题与全局主题。
   Future<void> _pickThemeMode() async {
-    final current = AppSettings.themeMode;
-    final chosen = await AppSheet.show<AppThemeMode>(
+    await AppSheet.show<void>(
       context,
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
+      builder: (ctx) => StatefulBuilder(
+        builder: (sheetCtx, setSheetState) {
+          final systemDark =
+              MediaQuery.platformBrightnessOf(sheetCtx) == Brightness.dark;
+          final mode = AppSettings.themeMode;
+          final followSystem = mode == AppThemeMode.system;
+          // 深色开关显示值：跟随系统时取系统亮度解析值，手动时取手动值
+          final darkSwitchOn =
+              followSystem ? systemDark : mode == AppThemeMode.dark;
+
+          void toggleFollow(bool v) {
+            Haptics.light();
+            AppSettings.setThemeMode(
+              v
+                  ? AppThemeMode.system
+                  : (darkSwitchOn ? AppThemeMode.dark : AppThemeMode.light),
+            );
+            setSheetState(() {});
+          }
+
+          void toggleDark(bool v) {
+            if (followSystem) return;
+            Haptics.light();
+            AppSettings.setThemeMode(v ? AppThemeMode.dark : AppThemeMode.light);
+            setSheetState(() {});
+          }
+
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+              child: Container(
                 decoration: BoxDecoration(
                   color: AppPalette.c(0xFFFFFFFF),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    for (final m in AppThemeMode.values)
-                      _themeModeRow(ctx, m, current),
+                    _buildSwitchItem(
+                      icon: AppIcons.sun,
+                      title: '跟随系统',
+                      subtitle: followSystem
+                          ? '已开启，深浅色随系统自动切换'
+                          : '已关闭，可手动设置下方开关',
+                      value: followSystem,
+                      enabled: true,
+                      onChanged: toggleFollow,
+                      switchKey: 'theme-follow-system',
+                    ),
+                    Divider(
+                        height: 1,
+                        indent: 52,
+                        color: AppPalette.c(0xFFE8EDF5)),
+                    _buildSwitchItem(
+                      icon: AppIcons.moon,
+                      title: '深色模式',
+                      subtitle: followSystem
+                          ? '跟随系统开启时不可手动设置'
+                          : (darkSwitchOn ? '已开启，使用深色外观' : '已关闭，使用浅色外观'),
+                      value: darkSwitchOn,
+                      enabled: !followSystem,
+                      onChanged: toggleDark,
+                      switchKey: 'theme-dark-mode',
+                    ),
                   ],
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-    if (chosen == null || !mounted) return;
-    if (chosen != current) {
-      await AppSettings.setThemeMode(chosen);
-      if (mounted) setState(() {});
-    }
-  }
-
-  Widget _themeModeRow(BuildContext ctx, AppThemeMode m, AppThemeMode current) {
-    final selected = m == current;
-    final label = m == AppThemeMode.system
-        ? '跟随系统'
-        : (m == AppThemeMode.dark ? '已开启' : '已关闭');
-    return InkWell(
-      onTap: () {
-        Haptics.light();
-        Navigator.pop(ctx, m);
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: selected ? AppPalette.c(0xFFE4F2EB) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(label,
-                  style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
-                      color: AppPalette.c(0xFF24382F))),
             ),
-            if (selected)
-              AppIcon(AppIcons.check,
-                  size: 16, color: AppPalette.accentColor),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -689,6 +702,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required bool value,
     required bool enabled,
     required ValueChanged<bool> onChanged,
+    String? switchKey,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -725,6 +739,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           Switch(
+            key: switchKey == null ? null : ValueKey(switchKey),
             value: value,
             onChanged: enabled ? onChanged : null,
             activeColor: AppPalette.c(0xFF3E8E6D),

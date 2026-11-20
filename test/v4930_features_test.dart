@@ -96,8 +96,9 @@ void main() {
     });
   });
 
-  group('回收站提示语吸附页面底部', () {
-    testWidgets('提示语固定在页面最底部，不随列表滚动', (tester) async {
+  group('回收站提示语置于内容最底部', () {
+    testWidgets('提示语置于内容最底部（空态常驻底部、有内容态随列表滚动到末尾）',
+        (tester) async {
       await tester.pumpWidget(MaterialApp(
         home: Scaffold(body: TrashScreen(onOpenMenu: () {})),
       ));
@@ -105,9 +106,10 @@ void main() {
 
       expect(find.text('超过7天的内容将彻底删除'), findsOneWidget);
       final rect = tester.getRect(find.text('超过7天的内容将彻底删除'));
-      // 视口高 600：提示语应贴近底部（底部留白 ~10）
+      // 视口高 600：v4.9.48 起提示语不再吸附视口，而是置于内容最底部；
+      // 空态无内容可滚，仍贴近底部（底部留白 ~10）。
       expect(rect.bottom, greaterThan(560),
-          reason: '提示语应吸附在页面最底部');
+          reason: '空态下提示语应位于页面最底部');
     });
   });
 }

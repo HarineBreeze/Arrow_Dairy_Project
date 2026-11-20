@@ -524,7 +524,8 @@ void main() {
       await tester.pump(); // route 入栈
       await tester.pump(const Duration(milliseconds: 400)); // 弹层滑入
       await tester.pump(const Duration(milliseconds: 400));
-      expect(find.text('选择身份'), findsOneWidget);
+      // v4.9.48：「选择身份」标题移除，弹层直接列选项
+      expect(find.text('选择身份'), findsNothing);
       // 选项：普通版恒在 + 已拥有的 VIP
       expect(find.byKey(const ValueKey('badge_option_normal')), findsOneWidget);
       expect(find.byKey(const ValueKey('badge_option_vip')), findsOneWidget);

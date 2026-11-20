@@ -569,16 +569,22 @@ class TrashScreenState extends State<TrashScreen> {
                   ? _buildEmpty()
                   : _buildBody(),
         ),
-        // v4.9.30：提示语固定吸附页面最底部，不随列表滚动；空态也常驻
-        Center(
-          child: Text(
-            '超过7天的内容将彻底删除',
-            style: TextStyle(
-                fontSize: 11, color: AppPalette.c(0xFF8FA09A).withOpacity(0.9)),
-          ),
-        ),
-        const SizedBox(height: 10),
       ],
+    );
+  }
+
+  /// v4.9.48：底部提示语取消吸附页面底部，改为随内容滚动、置于内容最底部
+  /// （与笔记浏览页时间/地点信息行同款处理，需滑到底才可见）。
+  Widget _buildTipText() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 10, bottom: 6),
+      child: Center(
+        child: Text(
+          '超过7天的内容将彻底删除',
+          style: TextStyle(
+              fontSize: 11, color: AppPalette.c(0xFF8FA09A).withOpacity(0.9)),
+        ),
+      ),
     );
   }
 
@@ -652,35 +658,43 @@ class TrashScreenState extends State<TrashScreen> {
   }
 
   Widget _buildEmpty() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppIcon(AppIcons.delete,
-                size: 54,
-                color: AppPalette.c(0xFF8FA09A).withOpacity(0.55)),
-            const SizedBox(height: 14),
-            Text(
-              '回收站是空的',
-              style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: AppPalette.c(0xFF647A70)),
+    return Column(
+      children: [
+        Expanded(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AppIcon(AppIcons.delete,
+                      size: 54,
+                      color: AppPalette.c(0xFF8FA09A).withOpacity(0.55)),
+                  const SizedBox(height: 14),
+                  Text(
+                    '回收站是空的',
+                    style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: AppPalette.c(0xFF647A70)),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '删除的内容支持7日内恢复哦～',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        fontSize: 13,
+                        height: 1.7,
+                        color: AppPalette.c(0xFF8FA09A).withOpacity(0.95)),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              '删除的内容支持7日内恢复哦～',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  fontSize: 13,
-                  height: 1.7,
-                  color: AppPalette.c(0xFF8FA09A).withOpacity(0.95)),
-            ),
-          ],
+          ),
         ),
-      ),
+        // v4.9.48：提示语置于空态最底部，与有内容态同款（页面最底部）
+        _buildTipText(),
+      ],
     );
   }
 
@@ -708,6 +722,8 @@ class TrashScreenState extends State<TrashScreen> {
                       _buildCard(e),
                       const SizedBox(height: 8),
                     ],
+                    // v4.9.48：提示语置于列表末尾，随内容滚动，滑到底才可见
+                    _buildTipText(),
                   ],
                 ),
         ),

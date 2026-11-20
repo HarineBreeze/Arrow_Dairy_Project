@@ -191,17 +191,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: EdgeInsets.fromLTRB(20, 18, 20, 6),
-              child: Text(
-                '选择身份',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: AppPalette.c(0xFF24382F),
-                ),
-              ),
-            ),
+            // v4.9.48：「选择身份」标题移除
             for (final id in options)
               InkWell(
                 key: ValueKey('badge_option_$id'),
@@ -539,17 +529,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: EdgeInsets.fromLTRB(20, 18, 20, 6),
-              child: Text(
-                '选择性别',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: AppPalette.c(0xFF24382F),
-                ),
-              ),
-            ),
+            // v4.9.48：「选择性别」标题移除
             for (final entry in options.entries)
               InkWell(
                 key: ValueKey(

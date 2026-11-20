@@ -143,7 +143,8 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pump(const Duration(milliseconds: 400));
-    expect(find.text('选择性别'), findsOneWidget);
+    // v4.9.48：「选择性别」标题移除，弹层直接列选项
+    expect(find.text('选择性别'), findsNothing);
     expect(find.byKey(const ValueKey('gender_option_male')), findsOneWidget);
     expect(find.byKey(const ValueKey('gender_option_female')), findsOneWidget);
     expect(find.byKey(const ValueKey('gender_option_none')), findsOneWidget);
