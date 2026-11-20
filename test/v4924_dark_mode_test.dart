@@ -213,7 +213,7 @@ void main() {
     });
   });
 
-  group('设置页深色模式开关', () {
+  group('设置页深色模式', () {
     Future<void> pumpSettings(WidgetTester tester) async {
       await tester.binding.setSurfaceSize(const Size(400, 1200));
       addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -221,39 +221,48 @@ void main() {
       await tester.pump();
     }
 
-    testWidgets('存在「外观」分组与「深色模式」「跟随系统」两个开关', (tester) async {
+    testWidgets('存在「外观」分组与「深色模式」右箭头项，无独立开关行', (tester) async {
       await pumpSettings(tester);
       expect(find.text('外观'), findsOneWidget);
       expect(find.text('深色模式'), findsOneWidget);
-      expect(find.text('跟随系统'), findsOneWidget,
-          reason: '「跟随系统」作为独立设置项标题');
-      expect(find.textContaining('跟随系统（当前'), findsOneWidget,
-          reason: '深色模式副标题展示当前系统亮度');
-      // 外观 2 个 + 反馈「震动」1 个
-      expect(find.byType(Switch), findsNWidgets(3));
+      // v4.9.47：跟随系统移入抽屉，不再作为独立设置项
+      expect(find.text('跟随系统'), findsNothing);
+      // 副标题反映当前状态（跟随系统 + 浅色 → 已关闭（跟随系统））
+      expect(find.text('已关闭（跟随系统）'), findsOneWidget);
+      // 外观分组已无 Switch，只剩反馈「震动」1 个
+      expect(find.byType(Switch), findsOneWidget);
     });
 
-    testWidgets('默认跟随系统：深色模式开关禁用，关闭跟随系统后可手动切换',
+    testWidgets('点「深色模式」开抽屉，可手动选已开启/已关闭/跟随系统',
         (tester) async {
       await pumpSettings(tester);
-      final switches = find.byType(Switch);
-      // 第 1 个 = 深色模式（跟随系统时禁用），第 2 个 = 跟随系统
-      expect(tester.widget<Switch>(switches.at(0)).onChanged, isNull,
-          reason: '跟随系统时深色模式开关应禁用');
-      expect(tester.widget<Switch>(switches.at(1)).value, isTrue);
-
-      // 关闭「跟随系统」-> 手动浅色
-      await tester.tap(switches.at(1));
+      // 打开抽屉
+      await tester.tap(find.text('深色模式'));
       await tester.pumpAndSettle();
-      expect(AppSettings.themeMode, AppThemeMode.light);
-      expect(tester.widget<Switch>(switches.at(0)).onChanged, isNotNull,
-          reason: '手动模式下深色开关应可操作');
+      expect(find.text('跟随系统'), findsOneWidget);
+      expect(find.text('已开启'), findsOneWidget);
+      expect(find.text('已关闭'), findsOneWidget);
 
-      // 打开「深色模式」-> 手动深色
-      await tester.tap(switches.at(0));
+      // 选「已开启」→ 手动深色，副标题变「已开启」
+      await tester.tap(find.text('已开启'));
       await tester.pumpAndSettle();
       expect(AppSettings.themeMode, AppThemeMode.dark);
       expect(find.text('已开启'), findsOneWidget);
+
+      // 再开抽屉选「已关闭」→ 手动浅色
+      await tester.tap(find.text('深色模式'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('已关闭').last);
+      await tester.pumpAndSettle();
+      expect(AppSettings.themeMode, AppThemeMode.light);
+      expect(find.text('已关闭'), findsOneWidget);
+
+      // 再开抽屉选「跟随系统」→ system
+      await tester.tap(find.text('深色模式'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('跟随系统').last);
+      await tester.pumpAndSettle();
+      expect(AppSettings.themeMode, AppThemeMode.system);
     });
   });
 

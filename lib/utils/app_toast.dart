@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../theme/app_palette.dart';
+
 /// 全局去重提示（Toast）。
 ///
 /// 问题背景：编辑页点「完成」时若校验不通过（如物品名称没填），
@@ -84,7 +86,7 @@ class AppToast {
           return Padding(
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
             child: Material(
-              color: const Color(0xFF24382F),
+              color: AppPalette.toastBg,
               borderRadius: BorderRadius.circular(16),
               child: InkWell(
                 borderRadius: BorderRadius.circular(16),

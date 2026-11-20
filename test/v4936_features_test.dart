@@ -195,21 +195,21 @@ void main() {
       expect(find.textContaining('点灵感兑换'), findsOneWidget);
     });
 
-    testWidgets('无 VIP 时提醒时间灰化，点击弹 VIP 专属提示', (tester) async {
+    testWidgets('无 VIP 时到期提醒灰化，点击弹 VIP 专属提示', (tester) async {
       await tester.binding.setSurfaceSize(const Size(600, 1200));
       addTearDown(() => tester.binding.setSurfaceSize(null));
       writeProfile(UserProfile(points: 0)); // 普通版
       await tester.pumpWidget(const MaterialApp(home: CountdownEditScreen()));
       await _settle(tester);
       expect(find.text('未解锁'), findsOneWidget);
-      await tester.tap(find.text('提醒时间'));
+      await tester.tap(find.text('到期提醒'));
       await tester.pumpAndSettle();
       expect(find.textContaining('VIP专属权益，请充值后再尝试'), findsOneWidget);
       // AppToast 内部有 1.6s 定时关闭，测试结束前 flush 掉避免 timer 残留
       await tester.pump(const Duration(seconds: 2));
     });
 
-    testWidgets('曾有提醒时间但 VIP 失去后：保持值、点击不弹提示', (tester) async {
+    testWidgets('曾有到期提醒但 VIP 失去后：保持值、点击不弹提示', (tester) async {
       await tester.binding.setSurfaceSize(const Size(600, 1200));
       addTearDown(() => tester.binding.setSurfaceSize(null));
       writeProfile(UserProfile(points: 0)); // 普通版，无 VIP
@@ -227,11 +227,11 @@ void main() {
       // 保留原提醒值，不显示「未解锁」
       expect(find.text('提前 3 天'), findsOneWidget);
       expect(find.text('未解锁'), findsNothing);
-      await tester.tap(find.text('提醒时间'));
+      await tester.tap(find.text('到期提醒'));
       await tester.pumpAndSettle();
       // 不弹充值提示，也不弹选择层
       expect(find.textContaining('VIP专属权益，请充值后再尝试'), findsNothing);
-      expect(find.text('选择提醒时间'), findsNothing);
+      expect(find.text('选择到期提醒'), findsNothing);
     });
   });
 }

@@ -520,24 +520,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  /// 「外观」分组：深色模式 / 跟随系统 / 字体。
+  /// 「外观」分组：深色模式 / 字体 / 主题色。
   ///
-  /// 前两行开关表达「手动 / 跟随系统」两种取向：
-  /// - 「跟随系统」开：主题由系统亮度决定，「深色模式」行置灰显示当前系统值；
-  /// - 「跟随系统」关：「深色模式」开关可手动控制浅/深。
-  /// 第三行「字体」点击进入字体选择页（v4.9.26 从独立分组并入本卡）。
-  /// 用 ValueListenableBuilder 监听 themeModeNotifier，切换后立即刷新开关状态。
+  /// v4.9.47：「深色模式」由开关改为右箭头，副标题仍反映「已开启 / 已关闭」
+  /// （跟随系统时追加「（跟随系统）」）；点击打开抽屉，内含「跟随系统 /
+  /// 已开启 / 已关闭」三项可手动选择，原独立的「跟随系统」开关行移入抽屉。
+  /// 用 ValueListenableBuilder 监听 themeModeNotifier，切换后立即刷新副标题。
   Widget _buildAppearanceSection(BuildContext context) {
     return ValueListenableBuilder<AppThemeMode>(
       valueListenable: AppSettings.themeModeNotifier,
       builder: (context, mode, _) {
         final followSystem = mode == AppThemeMode.system;
-        // 跟随系统时，深色开关显示系统当前亮度解析出的值，且不可操作
+        // 跟随系统时，副标题显示系统当前亮度解析出的值
         final systemDark = MediaQuery.platformBrightnessOf(context) ==
             Brightness.dark;
         final darkOn = followSystem
             ? systemDark
             : mode == AppThemeMode.dark;
+        final darkSubtitle =
+            '${darkOn ? '已开启' : '已关闭'}${followSystem ? '（跟随系统）' : ''}';
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -557,37 +558,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               child: Column(
                 children: [
-                  _buildSwitchItem(
+                  _buildItem(
                     icon: AppIcons.moon,
+                    iconColor: AppPalette.c(0xFF3E8E6D),
                     title: '深色模式',
-                    subtitle: followSystem
-                        ? '跟随系统（当前：${systemDark ? '深色' : '浅色'}）'
-                        : (darkOn ? '已开启' : '已关闭'),
-                    value: darkOn,
-                    enabled: !followSystem,
-                    onChanged: (v) => AppSettings.setThemeMode(
-                        v ? AppThemeMode.dark : AppThemeMode.light),
+                    subtitle: darkSubtitle,
+                    busy: false,
+                    onTap: _pickThemeMode,
                   ),
                   Divider(
                       height: 1,
                       indent: 52,
                       color: AppPalette.c(0xFFE8EDF5)),
-                  _buildSwitchItem(
-                    icon: AppIcons.sun,
-                    title: '跟随系统',
-                    subtitle: '开启后随系统深浅模式自动切换',
-                    value: followSystem,
-                    enabled: true,
-                    onChanged: (v) => AppSettings.setThemeMode(
-                        v ? AppThemeMode.system : (darkOn
-                            ? AppThemeMode.dark
-                            : AppThemeMode.light)),
-                  ),
-                  Divider(
-                      height: 1,
-                      indent: 52,
-                      color: AppPalette.c(0xFFE8EDF5)),
-                  // v4.9.26：字体并入「外观」分组，作为本卡第三行
+                  // v4.9.26：字体并入「外观」分组，作为本卡第二行
                   _buildItem(
                     icon: AppIcons.fontType,
                     iconColor: AppPalette.c(0xFF3E8E6D),
@@ -609,7 +592,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       height: 1,
                       indent: 52,
                       color: AppPalette.c(0xFFE8EDF5)),
-                  // v4.9.43：主题色并入「外观」分组，作为本卡第四行
+                  // v4.9.43：主题色并入「外观」分组，作为本卡第三行
                   _buildItem(
                     icon: AppIcons.sun,
                     iconColor: AppPalette.accentColor,
@@ -625,6 +608,77 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ],
         );
       },
+    );
+  }
+
+  /// v4.9.47：深色模式选择抽屉。三项「跟随系统 / 已开启 / 已关闭」单选，
+  /// 选中打勾；选中后写回 AppSettings 并立即应用。
+  Future<void> _pickThemeMode() async {
+    final current = AppSettings.themeMode;
+    final chosen = await AppSheet.show<AppThemeMode>(
+      context,
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: AppPalette.c(0xFFFFFFFF),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  children: [
+                    for (final m in AppThemeMode.values)
+                      _themeModeRow(ctx, m, current),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (chosen == null || !mounted) return;
+    if (chosen != current) {
+      await AppSettings.setThemeMode(chosen);
+      if (mounted) setState(() {});
+    }
+  }
+
+  Widget _themeModeRow(BuildContext ctx, AppThemeMode m, AppThemeMode current) {
+    final selected = m == current;
+    final label = m == AppThemeMode.system
+        ? '跟随系统'
+        : (m == AppThemeMode.dark ? '已开启' : '已关闭');
+    return InkWell(
+      onTap: () {
+        Haptics.light();
+        Navigator.pop(ctx, m);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: selected ? AppPalette.c(0xFFE4F2EB) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(label,
+                  style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+                      color: AppPalette.c(0xFF24382F))),
+            ),
+            if (selected)
+              AppIcon(AppIcons.check,
+                  size: 16, color: AppPalette.accentColor),
+          ],
+        ),
+      ),
     );
   }
 

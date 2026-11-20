@@ -17,7 +17,7 @@ import 'package:ayodiray/screens/settings_screen.dart';
 /// 2. 事件编辑页 事件类型 / 重复规则 / 提醒时间 改为「值 + 右箭头」行，
 ///    点整行弹底部选择层，选中项打勾并更新值；
 /// 3. 物品编辑页 物品状态 / 物品类型 / 计算方式 同样行式化；
-/// 4. 既有硬约束不破坏：外观两个 Switch、事件日期三块 2:2:1。
+/// 4. 既有硬约束不破坏：外观分组无开关（仅反馈震动1个）、事件日期三块 2:2:1。
 class _FakePathProvider extends PathProviderPlatform {
   final String path;
   _FakePathProvider(this.path);
@@ -65,8 +65,9 @@ void main() {
       expect(find.text('字体'), findsOneWidget,
           reason: '字体分组标题已并入外观，全页只剩功能项一处');
       expect(find.text('外观'), findsOneWidget);
-      // 外观 2 个（深色模式 / 跟随系统）+ 反馈 1 个（震动）
-      expect(find.byType(Switch), findsNWidgets(3));
+      // v4.9.47：深色模式/跟随系统改为右箭头+抽屉，外观分组已无开关，
+      // 只剩反馈「震动」1 个 Switch
+      expect(find.byType(Switch), findsOneWidget);
     });
 
     testWidgets('点字体行进入字体选择页', (tester) async {
@@ -82,11 +83,11 @@ void main() {
   });
 
   group('事件编辑页：选项行式弹层', () {
-    testWidgets('点「提醒时间」行弹底部选择层，选「提前 3 天」后值更新',
+    testWidgets('点「到期提醒」行弹底部选择层，选「提前 3 天」后值更新',
         (tester) async {
       await tall(tester);
       addTearDown(() => tester.binding.setSurfaceSize(null));
-      // 提醒时间为 VIP 专属：先授予 VIP 身份再进入
+      // 到期提醒为 VIP 专属：先授予 VIP 身份再进入
       final vipProfile = UserProfile(
           ownedBadges: [UserProfile.badgeNormal, UserProfile.badgeVip]);
       File('${dir.path}/user_profile.json')
@@ -98,21 +99,21 @@ void main() {
           () => Future<void>.delayed(const Duration(milliseconds: 100)));
       await tester.pumpAndSettle();
 
-      expect(find.text('提醒时间'), findsOneWidget);
+      expect(find.text('到期提醒'), findsOneWidget);
       expect(find.text('当天'), findsOneWidget, reason: '默认当天，作为行内当前值');
 
-      // 全量并行时偶发命中失败：直接找到包住「提醒时间」的 InkWell 触发 onTap，
+      // 全量并行时偶发命中失败：直接找到包住「到期提醒」的 InkWell 触发 onTap，
       // 避开坐标命中。
       final rowInk = tester.widget<InkWell>(
         find.ancestor(
-          of: find.text('提醒时间'),
+          of: find.text('到期提醒'),
           matching: find.byType(InkWell),
         ),
       );
       rowInk.onTap!();
       await tester.pumpAndSettle();
       // v4.9.46：弹层标题已移除，只保留四个选项
-      expect(find.text('选择提醒时间'), findsNothing);
+      expect(find.text('选择到期提醒'), findsNothing);
       expect(find.text('提前 3 天'), findsOneWidget);
 
       await tester.tap(find.text('提前 3 天').last);

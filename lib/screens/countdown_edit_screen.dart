@@ -524,11 +524,13 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
 
 
   /// v4.9.26：档案页同款「标签 — 当前值 ›」行，点整行弹底部选择层。
+  /// [labelTrailing] 可在标题文字后紧跟一个小部件（如 VIP 身份牌角标）。
   Widget _selectRow({
     required String label,
     required String value,
     required VoidCallback onTap,
     bool dimmed = false,
+    Widget? labelTrailing,
   }) {
     final labelColor = dimmed
         ? AppPalette.c(0xFFB2C2BA)
@@ -551,9 +553,17 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
             child: Row(
               children: [
                 SizedBox(
-                  width: 76,
-                  child: Text(label,
-                      style: TextStyle(fontSize: 15, color: labelColor)),
+                  width: labelTrailing != null ? 112 : 76,
+                  child: Row(
+                    children: [
+                      Text(label,
+                          style: TextStyle(fontSize: 15, color: labelColor)),
+                      if (labelTrailing != null) ...[
+                        const SizedBox(width: 4),
+                        Flexible(child: labelTrailing),
+                      ],
+                    ],
+                  ),
                 ),
                 Expanded(
                   child: Text(
@@ -575,7 +585,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
     );
   }
 
-  /// 提醒时间行：VIP 身份门槛 + 右上角身份牌角标（略微溢出边框）。
+  /// 到期提醒行：VIP 身份门槛 + 标题后紧跟身份牌角标。
   Widget _buildRemindRow() {
     final canEdit = _hasVip == true;
     final wasSet = _initialRemindDays > 0; // VIP 失去前已设过提醒
@@ -586,51 +596,39 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
     // 角标：有权限显示用户自己的 VIP 类牌，无权限显示 VIP 牌作「专属」提示
     final badgeId = canEdit ? _vipBadgeId : UserProfile.badgeVip;
 
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        _selectRow(
-          label: '提醒时间',
-          value: canEdit
-              ? value
-              : (wasSet ? value : '未解锁'),
-          dimmed: !canEdit,
-          onTap: () {
-            if (canEdit) {
-              _pickOptionSheet(
-                options: const [0, 1, 3, 7]
-                    .map((d) => d == 0 ? '当天' : '提前 $d 天')
-                    .toList(),
-                current: _remindBeforeDays == 0
-                    ? '当天'
-                    : '提前 $_remindBeforeDays 天',
-                onSelected: (label) => setState(() => _remindBeforeDays =
-                    label == '当天'
-                        ? 0
-                        : int.parse(label.replaceAll(RegExp(r'[^0-9]'), ''))),
-              );
-            } else if (wasSet) {
-              // VIP 过期/失去：已设提醒时间保持不变，禁用修改且不弹提示
-              return;
-            } else {
-              // 从未拥有：提示需 VIP
-              AppToast.show(
-                  context, '提醒时间是VIP专属权益，请充值后再尝试～');
-            }
-          },
-        ),
-        // 右上角身份牌，略微溢出边框
-        Positioned(
-          right: -4,
-          top: -6,
-          child: IgnorePointer(
-            child: Transform.scale(
-              scale: 0.85,
-              child: IdentityBadge(badge: badgeId),
-            ),
-          ),
-        ),
-      ],
+    return _selectRow(
+      label: '到期提醒',
+      labelTrailing: Transform.scale(
+        scale: 0.85,
+        child: IdentityBadge(badge: badgeId),
+      ),
+      value: canEdit
+          ? value
+          : (wasSet ? value : '未解锁'),
+      dimmed: !canEdit,
+      onTap: () {
+        if (canEdit) {
+          _pickOptionSheet(
+            options: const [0, 1, 3, 7]
+                .map((d) => d == 0 ? '当天' : '提前 $d 天')
+                .toList(),
+            current: _remindBeforeDays == 0
+                ? '当天'
+                : '提前 $_remindBeforeDays 天',
+            onSelected: (label) => setState(() => _remindBeforeDays =
+                label == '当天'
+                    ? 0
+                    : int.parse(label.replaceAll(RegExp(r'[^0-9]'), ''))),
+          );
+        } else if (wasSet) {
+          // VIP 过期/失去：已设提醒时间保持不变，禁用修改且不弹提示
+          return;
+        } else {
+          // 从未拥有：提示需 VIP
+          AppToast.show(
+              context, '到期提醒是VIP专属权益，请充值后再尝试～');
+        }
+      },
     );
   }
 

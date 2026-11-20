@@ -8,7 +8,7 @@ import 'package:path_provider_platform_interface/path_provider_platform_interfac
 import 'package:path_provider_platform_interface/src/method_channel_path_provider.dart';
 
 /// v4.9.12 回归：
-/// 1. 事件编辑页移除重复规则/提醒时间的说明提示语，「提前提醒」改名「提醒时间」；
+/// 1. 事件编辑页移除重复规则/提醒时间的说明提示语，「提前提醒」最终改名「到期提醒」（v4.9.47）；
 /// 2. 物品编辑页版式对齐事件编辑页：小节标题在上（物品类型/物品图标/日期/计算方式），
 ///    行内标签（物品名/物品价格等）改为节标题。
 class _FakePathProvider extends PathProviderPlatform {
@@ -55,12 +55,13 @@ void main() {
     addTearDown(tester.binding.window.clearDevicePixelRatioTestValue);
   }
 
-  testWidgets('事件编辑页：提示语移除，节名改为「提醒时间」', (tester) async {
+  testWidgets('事件编辑页：提示语移除，节名改为「到期提醒」', (tester) async {
     usePhone(tester);
     await tester.pumpWidget(const MaterialApp(home: CountdownEditScreen()));
     await _settle(tester);
 
-    expect(find.text('提醒时间'), findsOneWidget, reason: '提前提醒应改名提醒时间');
+    expect(find.text('到期提醒'), findsOneWidget, reason: '提前提醒应改名到期提醒');
+    expect(find.text('提醒时间'), findsNothing, reason: '旧名应移除');
     expect(find.text('提前提醒'), findsNothing);
     expect(find.textContaining('到期后自动进入'), findsNothing,
         reason: '重复规则的说明提示语应移除');

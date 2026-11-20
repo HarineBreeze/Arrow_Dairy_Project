@@ -310,12 +310,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              '点击更换头像',
-              style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
-            ),
-            const SizedBox(height: 28),
+            // v4.9.47：移除「点击更换头像」提示语，功能栏上移一行文字高度
+            const SizedBox(height: 36),
             _buildIdentityCard(),
             const SizedBox(height: 16),
             // 昵称 / 性别 / 生日 / 用户ID / 使用时间合为一张白卡：

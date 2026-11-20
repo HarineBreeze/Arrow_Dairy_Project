@@ -238,9 +238,13 @@ class SideMenu extends StatelessWidget {
             child: Row(
               children: [
                 SizedBox(width: 16),
-                AppIcon(AppIcons.settings, size: 22, color: AppPalette.c(0xFF647A70)),
+                // v4.9.47：设置图标改用主题主色，与上方导航项一致，
+                // 走 c() 映射后普通/深色模式都随主题色换色
+                AppIcon(AppIcons.settings,
+                    size: 22, color: AppPalette.c(0xFF3E8E6D)),
                 Spacer(),
-                AppIcon(AppIcons.chevR, size: 20, color: AppPalette.c(0xFFC6D6CD)),
+                AppIcon(AppIcons.chevR,
+                    size: 20, color: AppPalette.c(0xFFC6D6CD)),
                 SizedBox(width: 12),
               ],
             ),

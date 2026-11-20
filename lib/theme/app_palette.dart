@@ -237,6 +237,13 @@ class AppPalette {
   /// 当前主题色的实心 Color（供 Material swatch / 强调文字使用）。
   static Color get accentColor => Color(0xFF000000 | accent.rgb);
 
+  /// 底部滑入警示语（AppToast）的深色背景：深底白字。
+  /// 竹青沿用原值逐字节不变；其它主题色用各自的深色顶栏色，
+  /// 让常规模式与深色模式下警示语都随主题色换色。
+  static Color get toastBg => accent.id == AccentCatalog.bamboo
+      ? const Color(0xFF24382F)
+      : Color(0xFF000000 | accent.darkTop);
+
   /// 浅色字面量 → 深色字面量。只登记「中性 / 背景 / 文字 / 边框 / 顶栏色块」，
   /// 品牌色与语义色（绿 3E8E6D、红 CB5C50、橙 F08C3A、身份色、图表色、
   /// 渐变色、半透明黑/白遮罩）一律不登记，深色下保持原值。
