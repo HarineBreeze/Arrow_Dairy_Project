@@ -102,7 +102,7 @@ void main() {
       expect(find.text('当天'), findsOneWidget, reason: '默认当天，作为行内当前值');
 
       // 全量并行时偶发命中失败：直接找到包住「提醒时间」的 InkWell 触发 onTap，
-      // 避开坐标命中（弹层内的「选择提醒时间」标题此时尚未出现）。
+      // 避开坐标命中。
       final rowInk = tester.widget<InkWell>(
         find.ancestor(
           of: find.text('提醒时间'),
@@ -111,8 +111,8 @@ void main() {
       );
       rowInk.onTap!();
       await tester.pumpAndSettle();
-      // 弹层标题 + 四个选项
-      expect(find.text('选择提醒时间'), findsOneWidget);
+      // v4.9.46：弹层标题已移除，只保留四个选项
+      expect(find.text('选择提醒时间'), findsNothing);
       expect(find.text('提前 3 天'), findsOneWidget);
 
       await tester.tap(find.text('提前 3 天').last);
@@ -145,7 +145,8 @@ void main() {
 
       await tester.tap(find.text('重复规则'));
       await tester.pumpAndSettle();
-      expect(find.text('选择重复规则'), findsOneWidget);
+      expect(find.text('选择重复规则'), findsNothing,
+          reason: 'v4.9.46 抽屉标题已移除');
       await tester.tap(find.text('每月').last);
       await tester.pumpAndSettle();
       expect(find.text('每月'), findsOneWidget);
@@ -168,7 +169,8 @@ void main() {
       // 状态弹层：切到愿望单
       await tester.tap(find.text('物品状态'));
       await tester.pumpAndSettle();
-      expect(find.text('选择物品状态'), findsOneWidget);
+      expect(find.text('选择物品状态'), findsNothing,
+          reason: 'v4.9.46 抽屉标题已移除');
       await tester.tap(find.text('愿望单').last);
       await tester.pumpAndSettle();
       expect(find.text('愿望单'), findsOneWidget);
@@ -176,7 +178,8 @@ void main() {
       // 类型弹层：切到衣物
       await tester.tap(find.text('物品类型'));
       await tester.pumpAndSettle();
-      expect(find.text('选择物品类型'), findsOneWidget);
+      expect(find.text('选择物品类型'), findsNothing,
+          reason: 'v4.9.46 抽屉标题已移除');
       await tester.tap(find.text('衣物').last);
       await tester.pumpAndSettle();
       expect(find.text('衣物'), findsOneWidget);

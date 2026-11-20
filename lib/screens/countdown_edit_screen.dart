@@ -467,7 +467,6 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
               label: '事件类型',
               value: _type,
               onTap: () => _pickOptionSheet(
-                title: '事件类型',
                 options: CountdownEvent.types,
                 current: _type,
                 onSelected: _applyType,
@@ -480,7 +479,6 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
               label: '重复规则',
               value: _repeat.label,
               onTap: () => _pickOptionSheet(
-                title: '重复规则',
                 options: RepeatRule.values.map((r) => r.label).toList(),
                 current: _repeat.label,
                 onSelected: (label) => setState(() => _repeat = RepeatRule.values
@@ -600,7 +598,6 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
           onTap: () {
             if (canEdit) {
               _pickOptionSheet(
-                title: '提醒时间',
                 options: const [0, 1, 3, 7]
                     .map((d) => d == 0 ? '当天' : '提前 $d 天')
                     .toList(),
@@ -665,7 +662,6 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
 
   /// 通用底部选择层：标题 + 选项列表 + 当前项打勾（档案页性别弹层同款）。
   Future<void> _pickOptionSheet({
-    required String title,
     required List<String> options,
     required String current,
     required ValueChanged<String> onSelected,
@@ -677,14 +673,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 6),
-              child: Text('选择$title',
-                  style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: AppPalette.c(0xFF24382F))),
-            ),
+            // v4.9.46：移除抽屉标题「选择$title」，只保留选项列表
             for (final opt in options)
               InkWell(
                 onTap: () => Navigator.pop(ctx, opt),

@@ -370,14 +370,6 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: const EdgeInsets.only(left: 4, bottom: 8),
-                child: Text('资产类型',
-                    style: TextStyle(
-                        fontSize: 13,
-                        color: AppPalette.c(0xFF8FA09A),
-                        fontWeight: FontWeight.w600)),
-              ),
               Container(
                 decoration: BoxDecoration(
                   color: AppPalette.c(0xFFFFFFFF),

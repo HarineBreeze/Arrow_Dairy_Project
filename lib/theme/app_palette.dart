@@ -22,8 +22,14 @@ class AccentStyle {
   final int pageRgb;
   /// 深色顶栏色
   final int darkTop;
-  /// 深色极淡底纹色
+  /// 深色极淡底纹色（半透明主色块）
   final int darkTint;
+  /// 深色页面底（对应 darkMap 的 0xFF101613 一系）
+  final int darkPage;
+  /// 深色卡片/容器底（对应 0xFF18221E 一系）
+  final int darkSurface;
+  /// 深色选中/底色底纹（对应浅绿底纹 0xFF233A2F 一系）
+  final int darkTintBg;
   /// 是否 VIP 专属
   final bool vip;
 
@@ -35,6 +41,9 @@ class AccentStyle {
     required this.pageRgb,
     required this.darkTop,
     required this.darkTint,
+    required this.darkPage,
+    required this.darkSurface,
+    required this.darkTintBg,
     required this.vip,
   });
 }
@@ -54,6 +63,9 @@ class AccentCatalog {
         pageRgb: 0xF5FAF7, // 原页面底，逐字节不变
         darkTop: 0x22342C,
         darkTint: 0x59B189,
+        darkPage: 0x101613, // 原深色页面底，逐字节不变
+        darkSurface: 0x18221E, // 原深色卡片底
+        darkTintBg: 0x233A2F, // 原深色底纹
         vip: false),
     AccentStyle(
         id: 'lotus',
@@ -63,6 +75,9 @@ class AccentCatalog {
         pageRgb: 0xFDF4F6,
         darkTop: 0x3A2228,
         darkTint: 0xD992A3,
+        darkPage: 0x1C1216,
+        darkSurface: 0x271A20,
+        darkTintBg: 0x3A232C,
         vip: true),
     AccentStyle(
         id: 'ocean',
@@ -72,6 +87,9 @@ class AccentCatalog {
         pageRgb: 0xF4F8FC,
         darkTop: 0x1E2C3A,
         darkTint: 0x7BA7D2,
+        darkPage: 0x101720,
+        darkSurface: 0x18222E,
+        darkTintBg: 0x22303F,
         vip: true),
     AccentStyle(
         id: 'amber',
@@ -81,6 +99,9 @@ class AccentCatalog {
         pageRgb: 0xFBF6F0,
         darkTop: 0x33261C,
         darkTint: 0xC9A47A,
+        darkPage: 0x1A1510,
+        darkSurface: 0x261E16,
+        darkTintBg: 0x372A1D,
         vip: true),
     AccentStyle(
         id: 'ink',
@@ -90,6 +111,9 @@ class AccentCatalog {
         pageRgb: 0xF5F7F6,
         darkTop: 0x222A27,
         darkTint: 0x8A9C95,
+        darkPage: 0x141816,
+        darkSurface: 0x1E241F,
+        darkTintBg: 0x2B332E,
         vip: true),
   ];
 
@@ -146,6 +170,20 @@ class AppPalette {
     0xFFF5FAF7, 0xFFF2F6F4,
   };
 
+  /// v4.9.46：深色下 darkMap 映射出的「深墨绿」中性色，选非竹青主题时
+  /// 也要随主题色换成对应的深色配套，避免深色模式里顶栏换了色、
+  /// 页面底/卡片底/底纹却仍是竹青墨绿。按用途分三族。
+  static const Set<int> _darkPageMapped = <int>{
+    0xFF101613, // 页面主背景
+    0xFF18211D, 0xFF17201C, 0xFF19211E, // 斜纹卡/次级底
+  };
+  static const Set<int> _darkSurfaceMapped = <int>{
+    0xFF18221E, // 卡片/容器/白底
+  };
+  static const Set<int> _darkTintBgMapped = <int>{
+    0xFF233A2F, 0xFF22322A, 0xFF213029, 0xFF25352D, 0xFF26362F,
+  };
+
   /// 语义取色：浅色原样返回，深色查表转换，未登记保持原值。
   ///
   /// v4.9.43：若当前主题色非竹青，主色家族会被换成对应色（保留 alpha），
@@ -172,6 +210,16 @@ class AppPalette {
       }
       // 不透明主色本身（按钮/高亮字/置顶边框/图标色）深色下也跟随主题色
       if (argb == 0xFF3E8E6D) return Color(0xFF000000 | accent.rgb);
+      // v4.9.46：深色中性色（页面底/卡片底/底纹）随主题色换成对应深色
+      if (_darkTintBgMapped.contains(mapped)) {
+        return Color(0xFF000000 | accent.darkTintBg);
+      }
+      if (_darkSurfaceMapped.contains(mapped)) {
+        return Color(0xFF000000 | accent.darkSurface);
+      }
+      if (_darkPageMapped.contains(mapped)) {
+        return Color(0xFF000000 | accent.darkPage);
+      }
     }
     return Color(mapped);
   }

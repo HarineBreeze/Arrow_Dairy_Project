@@ -12,8 +12,8 @@ import 'package:path_provider_platform_interface/src/method_channel_path_provide
 /// 1. 全局 scaffoldBackgroundColor 随主题色页面底（pageRgb）换色——
 ///    物品编辑/笔记浏览/设置/字体/笔记编辑/档案/杂货店等走全局背景的页面
 ///    与资产/事件页取色方式统一；
-/// 2. 深色下页面底固定深灰绿，不随主题色变；
-/// 3. 竹青默认逐字节不变（保护既有精确颜色断言）。
+/// 2. 竹青默认逐字节不变（保护既有精确颜色断言）；
+/// 3. 深色下页面底 v4.9.46 起也随主题色换（竹青仍为原 0xFF101613）。
 class _FakePathProvider extends PathProviderPlatform {
   final String path;
   _FakePathProvider(this.path);
@@ -87,14 +87,15 @@ void main() {
           Color(0xFF000000 | ocean.pageRgb));
     });
 
-    testWidgets('深色下：页面底固定深灰绿，不随主题色变', (tester) async {
+    testWidgets('深色下：页面底也随主题色换（v4.9.46 起）', (tester) async {
       await AppSettings.setThemeMode(AppThemeMode.dark);
       await tester.pumpWidget(const DiaryApp());
       await tester.pump();
       await AppSettings.setAccentId('lotus');
       await tester.pump();
+      final lotus = AccentCatalog.byId('lotus');
       expect(_appOf(tester).darkTheme!.scaffoldBackgroundColor,
-          const Color(0xFF101613));
+          Color(0xFF000000 | lotus.darkPage));
     });
   });
 

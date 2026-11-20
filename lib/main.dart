@@ -132,6 +132,12 @@ class _DiaryAppState extends State<DiaryApp> with WidgetsBindingObserver {
     final green = AppPalette.accentColor;
     final swatch = createBambooSwatch(green);
     final dark = brightness == Brightness.dark;
+    // v4.9.46：深色下各中性底色也随主题色换（用参数 dark + accent 字段，
+    // 不依赖全局 AppPalette.dark——本函数会分别为 light/dark 各构建一次）。
+    final accent = AppPalette.accent;
+    final darkPage = Color(0xFF000000 | accent.darkPage);
+    final darkSurface = Color(0xFF000000 | accent.darkSurface);
+    final darkTop = Color(0xFF000000 | accent.darkTop);
 
     // 深色主题下：卡片/画布/弹窗走深灰绿，正文走浅色，分隔线走深灰，
     // 顶栏走深墨绿；主色、开关、选框、文本选区仍保持竹青，跨主题一致。
@@ -148,7 +154,7 @@ class _DiaryAppState extends State<DiaryApp> with WidgetsBindingObserver {
       // Scaffold 背景，这里按当前主题色 pageRgb 取色，与资产/事件页
       // 显式 AppPalette.c(0xFFF5FAF7) 的取色方式统一。
       scaffoldBackgroundColor: dark
-          ? const Color(0xFF101613)
+          ? darkPage
           : Color(0xFF000000 | AppPalette.accent.pageRgb),
       // AppIcon 默认跟随 IconTheme；浅色钉深墨色，深色改浅色，
       // AppBar.foregroundColor(白) 会在此基础上对顶栏图标覆写
@@ -158,7 +164,7 @@ class _DiaryAppState extends State<DiaryApp> with WidgetsBindingObserver {
           ? ColorScheme.dark(
               primary: green,
               secondary: Color(0xFF4B9C7D),
-              surface: Color(0xFF18221E),
+              surface: darkSurface,
             )
           : ColorScheme.light(
               primary: green,
@@ -166,7 +172,9 @@ class _DiaryAppState extends State<DiaryApp> with WidgetsBindingObserver {
               surface: Color(0xFFFFFFFF),
             ),
       appBarTheme: AppBarTheme(
-        backgroundColor: dark ? const Color(0xFF22342C) : green,
+        // v4.9.46：深色顶栏随主题色换（设置/档案/杂货店等走全局顶栏的页面
+        // 之前写死竹青墨绿，切主题色后不跟随）
+        backgroundColor: dark ? darkTop : green,
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
@@ -175,12 +183,12 @@ class _DiaryAppState extends State<DiaryApp> with WidgetsBindingObserver {
         backgroundColor: green,
         foregroundColor: Colors.white,
       ),
-      cardColor: dark ? const Color(0xFF18221E) : Colors.white,
-      canvasColor: dark ? const Color(0xFF18221E) : Colors.white,
-      dialogBackgroundColor: dark ? const Color(0xFF18221E) : Colors.white,
+      cardColor: dark ? darkSurface : Colors.white,
+      canvasColor: dark ? darkSurface : Colors.white,
+      dialogBackgroundColor: dark ? darkSurface : Colors.white,
       dividerColor: dark ? const Color(0xFF2A3830) : const Color(0xFFE8EDF5),
       bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: dark ? const Color(0xFF18221E) : Colors.white,
+        backgroundColor: dark ? darkSurface : Colors.white,
       ),
       // 选框类控件：激活态统一竹青，未选中态走各自默认
       checkboxTheme: CheckboxThemeData(

@@ -381,7 +381,6 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
               label: '物品状态',
               value: _wishlist ? '愿望单' : '已拥有',
               onTap: () => _pickOptionSheet(
-                title: '物品状态',
                 options: const ['已拥有', '愿望单'],
                 current: _wishlist ? '愿望单' : '已拥有',
                 onSelected: (v) => setState(() => _wishlist = v == '愿望单'),
@@ -417,7 +416,6 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
                 label: '计算方式',
                 value: _calcMethod == 0 ? '价格/天数' : '价格/使用次数',
                 onTap: () => _pickOptionSheet(
-                  title: '计算方式',
                   options: const ['价格/天数', '价格/使用次数'],
                   current: _calcMethod == 0 ? '价格/天数' : '价格/使用次数',
                   onSelected: (v) =>
@@ -689,7 +687,6 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
 
   /// 通用底部选择层：标题 + 选项列表 + 当前项打勾（档案页性别弹层同款）。
   Future<void> _pickOptionSheet({
-    required String title,
     required List<String> options,
     required String current,
     required ValueChanged<String> onSelected,
@@ -701,14 +698,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 6),
-              child: Text('选择$title',
-                  style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: AppPalette.c(0xFF24382F))),
-            ),
+            // v4.9.46：移除抽屉标题「选择$title」，只保留选项列表
             for (final opt in options)
               InkWell(
                 onTap: () => Navigator.pop(ctx, opt),
@@ -749,14 +739,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 6),
-              child: Text('选择物品类型',
-                  style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: AppPalette.c(0xFF24382F))),
-            ),
+            // v4.9.46：移除抽屉标题「选择物品类型」，只保留选项列表
             for (final opt in [...options, custom])
               InkWell(
                 onTap: () => Navigator.pop(ctx, opt),
