@@ -143,8 +143,13 @@ class _DiaryAppState extends State<DiaryApp> with WidgetsBindingObserver {
       fontFamily: fontFamily,
       primarySwatch: swatch,
       primaryColor: green,
-      scaffoldBackgroundColor:
-          dark ? const Color(0xFF101613) : const Color(0xFFF5FAF7),
+      // v4.9.45：页面底随主题色换色（竹青默认逐字节不变）。
+      // 物品编辑/笔记浏览/设置/字体/笔记编辑/档案/杂货店等页面走全局
+      // Scaffold 背景，这里按当前主题色 pageRgb 取色，与资产/事件页
+      // 显式 AppPalette.c(0xFFF5FAF7) 的取色方式统一。
+      scaffoldBackgroundColor: dark
+          ? const Color(0xFF101613)
+          : Color(0xFF000000 | AppPalette.accent.pageRgb),
       // AppIcon 默认跟随 IconTheme；浅色钉深墨色，深色改浅色，
       // AppBar.foregroundColor(白) 会在此基础上对顶栏图标覆写
       iconTheme: IconThemeData(

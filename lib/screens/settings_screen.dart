@@ -696,14 +696,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: const EdgeInsets.only(left: 4, bottom: 8),
-                child: Text('主题色',
-                    style: TextStyle(
-                        fontSize: 13,
-                        color: AppPalette.c(0xFF8FA09A),
-                        fontWeight: FontWeight.w600)),
-              ),
               Container(
                 decoration: BoxDecoration(
                   color: AppPalette.c(0xFFFFFFFF),
@@ -715,13 +707,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       _accentRow(ctx, s, current, vip),
                   ],
                 ),
-              ),
-              const SizedBox(height: 10),
-              Padding(
-                padding: const EdgeInsets.only(left: 4),
-                child: Text('竹青为默认主题色，其余为 VIP 专属权益',
-                    style: TextStyle(
-                        fontSize: 12, color: AppPalette.c(0xFF8FA09A))),
               ),
             ],
           ),
