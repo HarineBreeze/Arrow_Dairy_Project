@@ -5,6 +5,85 @@ import 'package:flutter/material.dart';
 /// 持久化到 app_settings.json 的 `themeMode` 字段（值为 name）。
 enum AppThemeMode { system, light, dark }
 
+/// 一套主题色（v4.9.43）。
+///
+/// 默认「竹青」的 [rgb] / [darkTop] / [darkTint] 与原写死值逐字节一致——
+/// 这样既有 widget 测试的精确颜色断言全部不受影响；选中其它主题色时，
+/// [AppPalette.c] 会把整个主色家族重映射到这套值，做到一处切换、全局换色。
+class AccentStyle {
+  final String id;
+  final String name;
+  /// 浅色主色（0xRRGGBB，不含 alpha）
+  final int rgb;
+  /// 深色顶栏色
+  final int darkTop;
+  /// 深色极淡底纹色
+  final int darkTint;
+  /// 是否 VIP 专属
+  final bool vip;
+
+  const AccentStyle({
+    required this.id,
+    required this.name,
+    required this.rgb,
+    required this.darkTop,
+    required this.darkTint,
+    required this.vip,
+  });
+}
+
+/// 主题色注册表。第一套免费，其余为 VIP 权益。
+class AccentCatalog {
+  AccentCatalog._();
+
+  static const String bamboo = 'bamboo';
+
+  static const List<AccentStyle> styles = <AccentStyle>[
+    AccentStyle(
+        id: 'bamboo',
+        name: '竹青',
+        rgb: 0x3E8E6D,
+        darkTop: 0x22342C,
+        darkTint: 0x59B189,
+        vip: false),
+    AccentStyle(
+        id: 'lotus',
+        name: '藕粉',
+        rgb: 0xD9788C,
+        darkTop: 0x3A2228,
+        darkTint: 0xD992A3,
+        vip: true),
+    AccentStyle(
+        id: 'ocean',
+        name: '雾蓝',
+        rgb: 0x4A7FB5,
+        darkTop: 0x1E2C3A,
+        darkTint: 0x7BA7D2,
+        vip: true),
+    AccentStyle(
+        id: 'amber',
+        name: '暖棕',
+        rgb: 0xB07D4F,
+        darkTop: 0x33261C,
+        darkTint: 0xC9A47A,
+        vip: true),
+    AccentStyle(
+        id: 'ink',
+        name: '墨灰',
+        rgb: 0x5B6B66,
+        darkTop: 0x222A27,
+        darkTint: 0x8A9C95,
+        vip: true),
+  ];
+
+  static AccentStyle byId(String? id) => styles.firstWhere(
+        (s) => s.id == id,
+        orElse: () => styles.first,
+      );
+
+  static bool isVip(String? id) => byId(id).vip;
+}
+
 /// 全局语义调色板。
 ///
 /// 设计要点（v4.9.24 深色模式）：
@@ -27,10 +106,38 @@ class AppPalette {
   /// 与 MaterialApp 的 theme/darkTheme 选择保持一致。
   static bool dark = false;
 
+  /// 当前主题色（v4.9.43）。默认竹青：与改造前的写死值逐字节一致。
+  /// 由 AppSettings 在 load / 切换时同步写入。
+  static AccentStyle accent = AccentCatalog.styles.first;
+
+  /// 主色族：c() 里这些「浅色字面量」在选中非默认主题色时需要重映射。
+  /// 只收主色家族（绿 3E8E6D 及其半透明变体），语义色（红/橙/身份色）不动。
+  static const Set<int> _accentRgbArgs = <int>{
+    0xFF3E8E6D, 0xB33E8E6D, 0xCC3E8E6D, 0xE63E8E6D,
+    0x593E8E6D, 0x1A3E8E6D,
+  };
+
   /// 语义取色：浅色原样返回，深色查表转换，未登记保持原值。
+  ///
+  /// v4.9.43：若当前主题色非竹青，主色家族会被换成对应色（保留 alpha），
+  /// 让顶栏、底纹、描边等随主题色一起变；默认竹青时原样返回，零行为变化。
   static Color c(int argb) {
-    if (!dark) return Color(argb);
-    return Color(darkMap[argb] ?? argb);
+    if (!dark) {
+      if (accent.id != AccentCatalog.bamboo && _accentRgbArgs.contains(argb)) {
+        final alpha = argb >> 24;
+        return Color((alpha << 24) | accent.rgb);
+      }
+      return Color(argb);
+    }
+    final mapped = darkMap[argb] ?? argb;
+    if (accent.id != AccentCatalog.bamboo) {
+      // 深色主色：顶栏不透明墨绿 / 极淡底纹半透明，按当前主题色替换
+      if (mapped == 0xFF22342C) return Color(0xFF000000 | accent.darkTop);
+      if (mapped == 0x1F59B189 || mapped == 0x1A59B189) {
+        return Color((argb & 0xFF000000) | accent.darkTint);
+      }
+    }
+    return Color(mapped);
   }
 
   /// 白色卡片 / 容器 / 弹窗背景。深色下为深灰绿卡片。
@@ -38,9 +145,13 @@ class AppPalette {
   /// `c(0xFFFFFFFF)`），否则深色模式只是把页面底变黑、卡片仍是刺眼白块。
   static Color get surface => c(0xFFFFFFFF);
 
-  /// 顶部导航栏实心主色背景（浅色为竹青，深色为深墨绿）。
-  static Color get topBar =>
-      dark ? const Color(0xFF22342C) : const Color(0xFF3E8E6D);
+  /// 顶部导航栏实心主色背景（浅色为当前主题色，深色为对应深墨绿）。
+  static Color get topBar => dark
+      ? Color(0xFF000000 | accent.darkTop)
+      : Color(0xFF000000 | accent.rgb);
+
+  /// 当前主题色的实心 Color（供 Material swatch / 强调文字使用）。
+  static Color get accentColor => Color(0xFF000000 | accent.rgb);
 
   /// 浅色字面量 → 深色字面量。只登记「中性 / 背景 / 文字 / 边框 / 顶栏色块」，
   /// 品牌色与语义色（绿 3E8E6D、红 CB5C50、橙 F08C3A、身份色、图表色、

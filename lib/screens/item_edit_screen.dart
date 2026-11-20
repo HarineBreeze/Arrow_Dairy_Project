@@ -388,6 +388,17 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
               ),
             ),
             const SizedBox(height: 16),
+            // v4.9.43：物品类型移到状态栏下方
+            _selectRow(
+              label: '物品类型',
+              value: _category,
+              onTap: () => _pickCategorySheet(),
+            ),
+            const SizedBox(height: 16),
+            // v4.9.43：移除「物品图标」标题，图标紧跟类型下方；
+            // 图标行改为与事件/资产同款的「一行白色底纹 + 选中高亮」
+            _buildIconRow(),
+            const SizedBox(height: 16),
             _sectionLabel('物品名称'),
             _buildNameField(),
             const SizedBox(height: 16),
@@ -397,25 +408,13 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
               const SizedBox(height: 16),
               _sectionLabel('附加价格'),
               _buildExtraPriceField(),
-            ],
-            const SizedBox(height: 16),
-            _selectRow(
-              label: '物品类型',
-              value: _category,
-              onTap: () => _pickCategorySheet(),
-            ),
-            const SizedBox(height: 16),
-            _sectionLabel('物品图标'),
-            _buildIconRow(),
-            if (!_wishlist) ...[
               const SizedBox(height: 16),
               _sectionLabel('日期'),
               _buildDateRow(),
               const SizedBox(height: 16),
-              _sectionLabel('计算方式'),
-              const SizedBox(height: 8),
+              // v4.9.43：移除「计算方式」标题，行内 label 改为「计算方式」
               _selectRow(
-                label: '方式',
+                label: '计算方式',
                 value: _calcMethod == 0 ? '价格/天数' : '价格/使用次数',
                 onTap: () => _pickOptionSheet(
                   title: '计算方式',
@@ -837,9 +836,14 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
       ...icons.map((ic) => _buildIconCell(ic)),
       _buildIconCell('…', isCustom: true),
     ];
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: cells,
+    // v4.9.43：与事件/资产同款——整行一个白色底纹，选中格高亮
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: _box(),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: cells,
+      ),
     );
   }
 
@@ -849,18 +853,21 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
       onTap: () =>
           isCustom ? _addCustomIcon() : setState(() => _icon = value),
       child: Container(
-        width: 32,
-        height: 32,
+        width: 36,
+        height: 40,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: sel ? _accent.withOpacity(0.15) : AppPalette.c(0xFFFFFFFF),
+          color: sel ? AppPalette.c(0xFFE4F2EB) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: sel ? _accent : Colors.transparent,
+            width: 1.5,
+          ),
         ),
         child: isCustom
-            // 自定义入口（…）保持灰色文本；预设值走 Lucide 细线图标
-            ? Text('…',
-                style: TextStyle(fontSize: 17, color: AppPalette.c(0xFF8FA09A)))
-            : EntryIcon(value, size: 18),
+            ? AppIcon(AppIcons.moreH,
+                size: 20, color: AppPalette.c(0xFF647A70))
+            : EntryIcon(value, size: 20),
       ),
     );
   }
@@ -876,9 +883,10 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         onSubmitted: (_) => _extraFocus.requestFocus(),
         keyboardType: TextInputType.number,
         style: const TextStyle(fontSize: 15),
+        // v4.9.43：去掉 prefixText（¥ 占宽会把 hint 右推），
+        // 改为并入 hintText，让提示文字与「物品名称」行左对齐
         decoration: const InputDecoration(
-          hintText: '0.00',
-          prefixText: '¥ ',
+          hintText: '¥ 0.00',
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(vertical: 14),
         ),
@@ -905,8 +913,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
                   decimal: true, signed: true),
               style: const TextStyle(fontSize: 15),
               decoration: const InputDecoration(
-                hintText: '可为负数（选填）',
-                prefixText: '¥ ',
+                hintText: '¥ 可为负数（选填）',
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.symmetric(vertical: 14),
               ),

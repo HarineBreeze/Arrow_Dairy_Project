@@ -67,6 +67,24 @@ class AppSettings {
     await _persist();
   }
 
+  // ---------------- 主题色（v4.9.43） ----------------
+
+  /// 当前主题色 id，默认竹青。持久化到 app_settings.json 的 accentId。
+  static String _accentId = 'bamboo';
+  static String get accentId => _accentId;
+
+  /// 主题色变更通知：MaterialApp 监听后重建主题与各页面。
+  static final ValueNotifier<String> accentNotifier =
+      ValueNotifier<String>('bamboo');
+
+  /// 切换主题色：同步全局色板 + 通知重建 + 落盘。
+  static Future<void> setAccentId(String id) async {
+    _accentId = AccentCatalog.byId(id).id;
+    AppPalette.accent = AccentCatalog.byId(_accentId);
+    accentNotifier.value = _accentId;
+    await _persist();
+  }
+
   // ---------------- 震动反馈 ----------------
 
   /// 全局震动开关，默认开启。持久化到 app_settings.json 的 hapticsEnabled。
@@ -154,6 +172,7 @@ class AppSettings {
         'annualRate': _annualRate,
         'inflationRate': _inflationRate,
         'themeMode': _themeMode.name,
+        'accentId': _accentId,
         'hapticsEnabled': _hapticsEnabled,
       };
 
@@ -194,6 +213,10 @@ class AppSettings {
         orElse: () => AppThemeMode.system,
       );
 
+      // 主题色：兼容旧档缺字段（默认竹青）；非法值回落竹青
+      final accent = map['accentId'];
+      _accentId = AccentCatalog.byId(accent is String ? accent : null).id;
+
       // 震动开关：旧档缺字段默认开启
       _hapticsEnabled = map['hapticsEnabled'] != false;
     } catch (_) {
@@ -202,6 +225,8 @@ class AppSettings {
     // 启动时也要同步一次，避免首帧与已存设置不一致
     fontNotifier.value = fontFamily;
     themeModeNotifier.value = _themeMode;
+    AppPalette.accent = AccentCatalog.byId(_accentId);
+    accentNotifier.value = _accentId;
     Haptics.enabled = _hapticsEnabled;
     hapticsNotifier.value = _hapticsEnabled;
   }

@@ -101,6 +101,9 @@ void main() {
       expect(find.text('提醒时间'), findsOneWidget);
       expect(find.text('当天'), findsOneWidget, reason: '默认当天，作为行内当前值');
 
+      // 全量并行时偶发命中失败，先确保滚入视图再点
+      await tester.ensureVisible(find.text('提醒时间'));
+      await tester.pump();
       await tester.tap(find.text('提醒时间'));
       await tester.pumpAndSettle();
       // 弹层标题 + 四个选项

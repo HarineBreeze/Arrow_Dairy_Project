@@ -175,6 +175,8 @@ class CountdownEvent {
     final now = today();
     if (t.isAfter(now)) return null;
     final diff = now.difference(t).inDays;
+    // v4.9.43：到期当天只显示主文案「就是今天」，不再叠一行「已过去 0 天」
+    if (diff == 0) return null;
     if (type == '资产日') return '已拥有 $diff 天';
     return '已过去 $diff 天';
   }

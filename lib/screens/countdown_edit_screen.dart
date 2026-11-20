@@ -275,8 +275,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 图标：一排 7 个 + 「...」
-            _sectionLabel('事件图标'),
+            // 图标：一排 7 个 + 「...」（v4.9.43：标题移除，图标直接置顶）
             Container(
               padding: const EdgeInsets.all(14),
               decoration: _box(),

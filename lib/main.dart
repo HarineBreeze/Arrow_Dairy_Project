@@ -78,7 +78,9 @@ class _DiaryAppState extends State<DiaryApp> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return ValueListenableBuilder<AppThemeMode>(
       valueListenable: AppSettings.themeModeNotifier,
-      builder: (context, mode, _) => ValueListenableBuilder<String?>(
+      builder: (context, mode, _) => ValueListenableBuilder<String>(
+        valueListenable: AppSettings.accentNotifier,
+        builder: (context, accentId, _) => ValueListenableBuilder<String?>(
         valueListenable: AppSettings.fontNotifier,
         builder: (context, fontFamily, _) {
           // 每次重建先算出实际亮度，写入全局色板；AppPalette.c 会在
@@ -87,6 +89,7 @@ class _DiaryAppState extends State<DiaryApp> with WidgetsBindingObserver {
               SchedulerBinding.instance.platformDispatcher.platformBrightness;
           final dark = AppSettings.resolveDark(mode, platformBrightness);
           AppPalette.dark = dark;
+          AppPalette.accent = AccentCatalog.byId(accentId);
 
           return MaterialApp(
             title: '阿尤日记',
@@ -102,11 +105,13 @@ class _DiaryAppState extends State<DiaryApp> with WidgetsBindingObserver {
             // 不必再滑一次侧边栏。State 原地保留，不丢导航栈与编辑内容。
             builder: (context, child) => AppThemeScope(
               dark: dark,
+              accentId: accentId,
               child: child ?? const SizedBox.shrink(),
             ),
             home: const HomeScreen(),
           );
         },
+        ),
       ),
     );
   }
@@ -123,7 +128,8 @@ class _DiaryAppState extends State<DiaryApp> with WidgetsBindingObserver {
   }
 
   ThemeData _buildTheme(String? fontFamily, Brightness brightness) {
-    const green = kPrimaryGreen;
+    // v4.9.43：主题色跟随用户选择（默认竹青，与 kPrimaryGreen 一致）
+    final green = AppPalette.accentColor;
     final swatch = createBambooSwatch(green);
     final dark = brightness == Brightness.dark;
 
@@ -144,12 +150,12 @@ class _DiaryAppState extends State<DiaryApp> with WidgetsBindingObserver {
       iconTheme: IconThemeData(
           color: dark ? const Color(0xFFDDE9E1) : const Color(0xFF273830)),
       colorScheme: dark
-          ? const ColorScheme.dark(
+          ? ColorScheme.dark(
               primary: green,
               secondary: Color(0xFF4B9C7D),
               surface: Color(0xFF18221E),
             )
-          : const ColorScheme.light(
+          : ColorScheme.light(
               primary: green,
               secondary: Color(0xFF4B9C7D),
               surface: Color(0xFFFFFFFF),
@@ -160,7 +166,7 @@ class _DiaryAppState extends State<DiaryApp> with WidgetsBindingObserver {
         elevation: 0,
         centerTitle: true,
       ),
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: green,
         foregroundColor: Colors.white,
       ),

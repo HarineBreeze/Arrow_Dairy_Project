@@ -170,7 +170,8 @@ void main() {
       await tester.pumpWidget(const MaterialApp(home: ItemEditScreen()));
       await _settle(tester);
       expect(find.text('计算方式'), findsOneWidget);
-      expect(find.text('方式'), findsOneWidget, reason: '行标签改名避免重复');
+      // v4.9.43：移除独立节标题，行标签直接叫「计算方式」，故仅一处
+      expect(find.text('方式'), findsNothing);
     });
 
     testWidgets('资产编辑页不再显示金额正数提示', (tester) async {

@@ -382,6 +382,13 @@ void main() {
       await tester.pump();
 
       expect(find.text('兑换码'), findsOneWidget);
+      // v4.9.43：外观栏新增「主题色」行后页面变长，先滚动到兑换码再点
+      await tester.scrollUntilVisible(
+        find.text('兑换码'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pump();
       await tester.tap(find.text('兑换码'));
       await tester.pump(const Duration(milliseconds: 300));
 

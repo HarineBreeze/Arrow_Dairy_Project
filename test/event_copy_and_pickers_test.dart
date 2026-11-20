@@ -63,7 +63,8 @@ void main() {
       expect(find.text('编辑倒数日'), findsNothing);
       // 图标分区也不该再写「倒数日」
       expect(find.text('倒数日图标'), findsNothing);
-      expect(find.text('事件图标'), findsOneWidget);
+      // v4.9.43：移除「事件图标」节标题
+      expect(find.text('事件图标'), findsNothing);
 
       final e = CountdownEvent(
         id: 'e1',

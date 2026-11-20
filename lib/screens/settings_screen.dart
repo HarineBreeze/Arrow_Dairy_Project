@@ -8,9 +8,13 @@ import '../utils/app_toast.dart';
 import '../services/app_settings.dart';
 import '../services/backup_service.dart';
 import '../services/reward_service.dart';
+import '../services/user_storage.dart';
+import '../models/user_profile.dart';
+import '../utils/app_sheet.dart';
 import '../utils/app_version.dart';
 import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
+import '../widgets/identity_badge.dart';
 import 'font_picker_screen.dart';
 
 import '../theme/app_palette.dart';
@@ -601,6 +605,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       if (mounted) setState(() {});
                     },
                   ),
+                  Divider(
+                      height: 1,
+                      indent: 52,
+                      color: AppPalette.c(0xFFE8EDF5)),
+                  // v4.9.43：主题色并入「外观」分组，作为本卡第四行
+                  _buildItem(
+                    icon: AppIcons.sun,
+                    iconColor: AppPalette.accentColor,
+                    title: '主题色',
+                    subtitle:
+                        '当前：${AccentCatalog.byId(AppSettings.accentId).name}',
+                    busy: false,
+                    onTap: _pickAccent,
+                  ),
                 ],
               ),
             ),
@@ -658,6 +676,122 @@ class _SettingsScreenState extends State<SettingsScreen> {
             activeColor: const Color(0xFF3E8E6D),
           ),
         ],
+      ),
+    );
+  }
+
+  /// v4.9.43：主题色抽屉。默认竹青免费，其余 4 套 VIP 专属。
+  /// VIP 过期后已设置的主题色保留、可切回竹青，但不可再选其它 VIP 色。
+  Future<void> _pickAccent() async {
+    final profile = await UserStorage.load();
+    if (!mounted) return;
+    final bool vip = RewardService.hasVipPrivilege(profile);
+    final current = AppSettings.accentId;
+    final chosen = await AppSheet.show<String>(
+      context,
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(left: 4, bottom: 8),
+                child: Text('主题色',
+                    style: TextStyle(
+                        fontSize: 13,
+                        color: AppPalette.c(0xFF8FA09A),
+                        fontWeight: FontWeight.w600)),
+              ),
+              Container(
+                decoration: BoxDecoration(
+                  color: AppPalette.c(0xFFFFFFFF),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  children: [
+                    for (final s in AccentCatalog.styles)
+                      _accentRow(ctx, s, current, vip),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Text('竹青为默认主题色，其余为 VIP 专属权益',
+                    style: TextStyle(
+                        fontSize: 12, color: AppPalette.c(0xFF8FA09A))),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (chosen == null || !mounted) return;
+    if (chosen != current) {
+      await AppSettings.setAccentId(chosen);
+      if (mounted) setState(() {});
+    }
+  }
+
+  Widget _accentRow(
+      BuildContext ctx, AccentStyle s, String current, bool vip) {
+    // 可选项：免费色、或当前正戴着且 VIP 已过期时仍可保留/切回
+    final canPick = !s.vip || vip || s.id == current;
+    final selected = s.id == current;
+    return InkWell(
+      onTap: () {
+        if (canPick) {
+          Haptics.light();
+          Navigator.pop(ctx, s.id);
+        } else {
+          AppToast.show(context, '${s.name}是VIP专属权益，请充值后再尝试～');
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: selected ? AppPalette.c(0xFFE4F2EB) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Opacity(
+              opacity: canPick ? 1.0 : 0.45,
+              child: Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: Color(0xFF000000 | s.rgb),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Opacity(
+                opacity: canPick ? 1.0 : 0.45,
+                child: Text(s.name,
+                    style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+                        color: AppPalette.c(0xFF24382F))),
+              ),
+            ),
+            if (s.vip)
+              Transform.scale(
+                scale: 0.8,
+                child: IdentityBadge(badge: UserProfile.badgeVip),
+              ),
+            if (selected)
+              Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: AppIcon(AppIcons.check,
+                    size: 16, color: AppPalette.accentColor),
+              ),
+          ],
+        ),
       ),
     );
   }

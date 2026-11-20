@@ -33,7 +33,6 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
 
   /// 保存后待返回的资产对象（动画播完才 pop）
   Asset? _pending;
-  bool _typeOpen = false; // 资产类型下拉是否展开
 
   /// 进入页面时的内容快照，用于判断是否有未保存的修改
   String _initial = '';
@@ -179,8 +178,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 资产图标：一排 7 个快捷图标 + 「...」更多
-            _sectionLabel('资产图标'),
+            // 资产图标：一排 7 个快捷图标 + 「...」更多（v4.9.43：标题移除）
             Container(
               padding: const EdgeInsets.all(14),
               decoration: _box(),
@@ -193,98 +191,29 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
             ),
             const SizedBox(height: 16),
 
-            // 资产类型：自定义下拉（固定从选框下方展开，选中项带底纹强调）
+            // 资产类型：右箭头打开抽屉，在抽屉内选择（v4.9.43）
             _sectionLabel('资产类型'),
-            GestureDetector(
-              onTap: () {
-                Haptics.light();
-                setState(() => _typeOpen = !_typeOpen);
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                decoration: _box(),
-                height: 48,
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(_type,
-                          style: TextStyle(
-                              fontSize: 15, color: AppPalette.c(0xFF24382F))),
-                    ),
-                    AnimatedRotation(
-                      turns: _typeOpen ? 0.5 : 0,
-                      duration: const Duration(milliseconds: 200),
-                      child: AppIcon(AppIcons.chevD,
-                          color: AppPalette.c(0xFF647A70)),
-                    ),
-                  ],
+            Pressable(
+              enabled: true,
+              child: GestureDetector(
+                onTap: _pickTypeSheet,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  decoration: _box(),
+                  height: 48,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(_type,
+                            style: TextStyle(
+                                fontSize: 15, color: AppPalette.c(0xFF24382F))),
+                      ),
+                      AppIcon(AppIcons.chevR,
+                          size: 18, color: AppPalette.c(0xFF647A70)),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            // 选项列表：始终固定在选框正下方展开，与选中项位置无关
-            AnimatedSize(
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeOutCubic,
-              alignment: Alignment.topCenter,
-              child: _typeOpen
-                  ? Container(
-                      margin: const EdgeInsets.only(top: 6),
-                      decoration: _box(),
-                      child: Column(
-                        children: [
-                          for (final t in Asset.types)
-                            InkWell(
-                              onTap: () {
-                                Haptics.light();
-                                setState(() {
-                                  _type = t;
-                                  _typeOpen = false;
-                                  // 未手动改过图标时跟随类型换默认图标
-                                  if (Asset.defaultIconFor(t) !=
-                                          _iconCtrl.text.trim() &&
-                                      Asset.types.any((x) =>
-                                          Asset.defaultIconFor(x) ==
-                                          _iconCtrl.text.trim())) {
-                                    _iconCtrl.text = Asset.defaultIconFor(t);
-                                  }
-                                });
-                              },
-                              child: Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 14, vertical: 13),
-                                decoration: BoxDecoration(
-                                  // 选中项底纹强调
-                                  color: t == _type
-                                      ? AppPalette.c(0xFFE4F2EB)
-                                      : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(t,
-                                          style: TextStyle(
-                                              fontSize: 15,
-                                              fontWeight: t == _type
-                                                  ? FontWeight.w600
-                                                  : FontWeight.normal,
-                                              color: t == _type
-                                                  ? const Color(0xFF3E8E6D)
-                                                  : AppPalette.c(0xFF24382F))),
-                                    ),
-                                    if (t == _type)
-                                      const AppIcon(AppIcons.check,
-                                          size: 16,
-                                          color: Color(0xFF3E8E6D)),
-                                  ],
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    )
-                  : const SizedBox(width: double.infinity),
             ),
             const SizedBox(height: 16),
 
@@ -424,6 +353,90 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
               ? AppIcon(AppIcons.moreH,
                   size: 22, color: AppPalette.c(0xFF647A70))
               : EntryIcon(icon!, size: 22),
+        ),
+      ),
+    );
+  }
+
+  /// v4.9.43：资产类型 → 右箭头打开的抽屉选择（沿用 _pickOptionSheet 同款样式）
+  Future<void> _pickTypeSheet() async {
+    Haptics.light();
+    await AppSheet.show(
+      context,
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(left: 4, bottom: 8),
+                child: Text('资产类型',
+                    style: TextStyle(
+                        fontSize: 13,
+                        color: AppPalette.c(0xFF8FA09A),
+                        fontWeight: FontWeight.w600)),
+              ),
+              Container(
+                decoration: BoxDecoration(
+                  color: AppPalette.c(0xFFFFFFFF),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  children: [
+                    for (final t in Asset.types)
+                      InkWell(
+                        onTap: () {
+                          Haptics.light();
+                          setState(() {
+                            _type = t;
+                            // 未手动改过图标时跟随类型换默认图标
+                            if (Asset.defaultIconFor(t) !=
+                                    _iconCtrl.text.trim() &&
+                                Asset.types.any((x) =>
+                                    Asset.defaultIconFor(x) ==
+                                    _iconCtrl.text.trim())) {
+                              _iconCtrl.text = Asset.defaultIconFor(t);
+                            }
+                          });
+                          Navigator.pop(ctx);
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 13),
+                          decoration: BoxDecoration(
+                            color: t == _type
+                                ? AppPalette.c(0xFFE4F2EB)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(t,
+                                    style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: t == _type
+                                            ? FontWeight.w600
+                                            : FontWeight.normal,
+                                        color: t == _type
+                                            ? const Color(0xFF3E8E6D)
+                                            : AppPalette.c(0xFF24382F))),
+                              ),
+                              if (t == _type)
+                                const AppIcon(AppIcons.check,
+                                    size: 16, color: Color(0xFF3E8E6D)),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

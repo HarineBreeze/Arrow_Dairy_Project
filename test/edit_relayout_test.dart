@@ -74,9 +74,11 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: ItemEditScreen()));
     await _settle(tester);
 
-    for (final label in ['物品类型', '物品图标', '日期', '计算方式']) {
-      expect(find.text(label), findsOneWidget, reason: '$label 节标题应存在');
+    for (final label in ['物品类型', '日期', '计算方式']) {
+      expect(find.text(label), findsOneWidget, reason: '$label 节标题/行标签应存在');
     }
+    // v4.9.43：移除「物品图标」节标题
+    expect(find.text('物品图标'), findsNothing);
     expect(find.text('均价计算方式'), findsNothing, reason: '旧节名应移除');
     expect(find.text('物品状态'), findsOneWidget);
     expect(find.text('物品名称'), findsOneWidget);

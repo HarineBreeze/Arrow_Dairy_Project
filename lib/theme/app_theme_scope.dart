@@ -22,10 +22,14 @@ import 'app_palette.dart';
 class AppThemeScope extends InheritedWidget {
   final bool dark;
 
+  /// 当前主题色 id（v4.9.43）：主题色切换时也触发全量重建
+  final String accentId;
+
   const AppThemeScope({
     Key? key,
     required this.dark,
     required Widget child,
+    this.accentId = 'bamboo',
   }) : super(key: key, child: child);
 
   /// 建立对主题明暗的重建依赖，返回当前是否深色。
@@ -45,5 +49,6 @@ class AppThemeScope extends InheritedWidget {
   }
 
   @override
-  bool updateShouldNotify(AppThemeScope oldWidget) => dark != oldWidget.dark;
+  bool updateShouldNotify(AppThemeScope oldWidget) =>
+      dark != oldWidget.dark || accentId != oldWidget.accentId;
 }

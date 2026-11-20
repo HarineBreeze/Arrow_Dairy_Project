@@ -175,7 +175,8 @@ void main() {
     testWidgets('物品编辑页：附加价格提示「可为负数（选填）」', (tester) async {
       await tester.pumpWidget(const MaterialApp(home: ItemEditScreen()));
       await _settle(tester);
-      expect(find.text('可为负数（选填）'), findsOneWidget);
+      // v4.9.43：¥ 并入 hintText 以与名称行左对齐
+      expect(find.text('¥ 可为负数（选填）'), findsOneWidget);
     });
 
     testWidgets('搜索进入浏览页：顶栏不再显示 N 处匹配', (tester) async {
