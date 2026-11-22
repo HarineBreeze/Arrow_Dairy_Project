@@ -67,6 +67,13 @@ class RewardService {
   /// 首次新增事件 / 物品 / 资产的灵感奖励（每类仅 1 次）
   static const int firstAddPoints = 20;
 
+  /// 写作里程碑：日记总数首次达到这些篇数时各奖励一次。
+  /// 顺序固定（供特效按篇数取文案），判重靠 [UserProfile.claimedWriteMilestones]。
+  static const List<int> writeMilestones = <int>[7, 30, 100, 200, 365, 500, 1000];
+
+  /// 每个写作里程碑达成时奖励的灵感
+  static const int milestonePoints = 20;
+
   /// VIP 日卡：每次累加 24 小时，单用户兑换次数上限
   static const Duration vipCardDuration = Duration(hours: 24);
   static const int vipCardMaxCount = 30;
@@ -328,6 +335,36 @@ class RewardService {
       return firstAddPoints;
     } catch (_) {
       return 0;
+    }
+  }
+
+  /// 写作里程碑奖励：日记总数 [diaryCount] 首次达到某节点时 +20 灵感。
+  ///
+  /// - 一次可能跨过多个节点（如老用户升级后第一次写，或数据恢复），
+  ///   按「已跨过且未领取」的节点全部补发，每个 +20；
+  /// - 判重记录在 [UserProfile.claimedWriteMilestones]，删除日记后篇数回落
+  ///   也不会重复发放；
+  /// - 返回本次实际达成的节点列表（升序），空列表表示无新里程碑；
+  /// - 与每日 / 首次奖励一致：异常吞掉，绝不影响笔记保存本身。
+  static Future<List<int>> awardWriteMilestone(int diaryCount) async {
+    try {
+      final reached = writeMilestones
+          .where((m) => diaryCount >= m)
+          .toList();
+      if (reached.isEmpty) return const <int>[];
+
+      final profile = await UserStorage.load();
+      final fresh = reached
+          .where((m) => !profile.claimedWriteMilestones.contains(m))
+          .toList();
+      if (fresh.isEmpty) return const <int>[];
+
+      profile.claimedWriteMilestones.addAll(fresh);
+      profile.points += milestonePoints * fresh.length;
+      await UserStorage.save(profile);
+      return fresh;
+    } catch (_) {
+      return const <int>[];
     }
   }
 

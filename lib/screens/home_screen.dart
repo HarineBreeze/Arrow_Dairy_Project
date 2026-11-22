@@ -46,6 +46,7 @@ import '../utils/menu_gesture_gate.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_theme_scope.dart';
 import '../utils/app_sheet.dart';
+import '../widgets/milestone_celebration.dart';
 Color get kPrimaryBlue => AppPalette.c(0xFF3E8E6D);
 Color get kLightBlue => AppPalette.c(0xFFE4F2EB);
 Color get kTextDark => AppPalette.c(0xFF24382F);
@@ -388,6 +389,20 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       // 每日首次「发布笔记」奖励 20 点（新建才算发布，编辑旧笔记不算）
       if (isNew) {
         final earned = await RewardService.awardDailyWrite();
+        // 写作里程碑：日记总数首次跨过节点时 +20 并弹庆祝特效。
+        // 与每日奖励同屏会叠两层，故先弹里程碑（await 关闭）再弹每日 Toast。
+        final count = (await DiaryStorage.load()).length;
+        final milestones = await RewardService.awardWriteMilestone(count);
+        if (!mounted) return;
+        if (milestones.isNotEmpty) {
+          final milestone = milestones.last; // 一次跨多节点时展示最高那档
+          final bonus = milestones.length * RewardService.milestonePoints;
+          await showMilestoneCelebration(
+            context,
+            milestone: milestone,
+            points: bonus,
+          );
+        }
         if (earned > 0 && mounted) {
           AppToast.show(context, '今日首次发布，+$earned 点灵感');
         }

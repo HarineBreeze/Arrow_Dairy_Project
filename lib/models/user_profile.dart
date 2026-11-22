@@ -55,6 +55,12 @@ class UserProfile {
   bool firstItemReward;
   bool firstAssetReward;
 
+  /// 已领取的「写作里程碑」篇数列表（每个节点仅 1 次，非每日）。
+  /// 当日记总数首次达到某个里程碑（7/30/100/…）时各 +20 灵感。
+  /// 用列表而非布尔，是为了支持多个节点各自独立判重；
+  /// 旧档案无此字段时回落空列表（零迁移）。
+  List<int> claimedWriteMilestones;
+
   /// 已兑换「VIP日卡」的次数（单用户上限见 RewardService.vipCardMaxCount）
   int vipCardCount;
 
@@ -85,6 +91,7 @@ class UserProfile {
     this.firstEventReward = false,
     this.firstItemReward = false,
     this.firstAssetReward = false,
+    List<int>? claimedWriteMilestones,
     this.vipCardCount = 0,
     this.vipWeekCardCount = 0,
     this.vipCardExpireAt = '',
@@ -92,6 +99,7 @@ class UserProfile {
     String? initialRegisteredAt,
   })  : ownedBadges = _normalizeOwned(ownedBadges, badge),
         redeemedCodes = redeemedCodes ?? <String>[],
+        claimedWriteMilestones = claimedWriteMilestones ?? <int>[],
         userId = (initialUserId == null || initialUserId.isEmpty)
             ? newUserId()
             : initialUserId,
@@ -192,6 +200,7 @@ class UserProfile {
         'firstEventReward': firstEventReward,
         'firstItemReward': firstItemReward,
         'firstAssetReward': firstAssetReward,
+        'claimedWriteMilestones': claimedWriteMilestones,
         'vipCardCount': vipCardCount,
         'vipWeekCardCount': vipWeekCardCount,
         'vipCardExpireAt': vipCardExpireAt,
@@ -245,6 +254,10 @@ class UserProfile {
       firstEventReward: json['firstEventReward'] as bool? ?? false,
       firstItemReward: json['firstItemReward'] as bool? ?? false,
       firstAssetReward: json['firstAssetReward'] as bool? ?? false,
+      // 旧档案无里程碑字段：回落空列表（零迁移）
+      claimedWriteMilestones: (json['claimedWriteMilestones'] as List?)
+          ?.map((e) => (e as num).toInt())
+          .toList(),
       vipCardCount: (json['vipCardCount'] as num?)?.toInt() ?? 0,
       vipWeekCardCount: (json['vipWeekCardCount'] as num?)?.toInt() ?? 0,
       vipCardExpireAt: json['vipCardExpireAt'] as String? ?? '',

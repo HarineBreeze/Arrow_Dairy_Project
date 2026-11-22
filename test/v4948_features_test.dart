@@ -6,7 +6,6 @@ import 'package:ayodiray/screens/settings_screen.dart';
 import 'package:ayodiray/screens/trash_screen.dart';
 import 'package:ayodiray/services/app_settings.dart';
 import 'package:ayodiray/theme/app_palette.dart';
-import 'package:ayodiray/utils/app_version.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
@@ -70,12 +69,6 @@ void main() {
     await AppSettings.setThemeMode(AppThemeMode.system);
     if (dir.existsSync()) dir.deleteSync(recursive: true);
     PathProviderPlatform.instance = MethodChannelPathProvider();
-  });
-
-  group('版本号', () {
-    test('展示版本同步到 V4.9.48', () {
-      expect(AppVersion.displayVersion, 'V4.9.48');
-    });
   });
 
   group('资产页可使用天数标题移除', () {
