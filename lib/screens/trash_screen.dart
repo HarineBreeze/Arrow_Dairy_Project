@@ -580,7 +580,7 @@ class TrashScreenState extends State<TrashScreen> {
       padding: const EdgeInsets.only(top: 10, bottom: 6),
       child: Center(
         child: Text(
-          '超过7天的内容将彻底删除',
+          '超过时间的内容将彻底删除',
           style: TextStyle(
               fontSize: 11, color: AppPalette.c(0xFF8FA09A).withOpacity(0.9)),
         ),

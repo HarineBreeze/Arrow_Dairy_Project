@@ -146,7 +146,7 @@ void main() {
     expect(rect.center.dy, lessThan(cardRect.top + 34),
         reason: '应在卡片顶部区域');
 
-    expect(find.text('超过7天的内容将彻底删除'), findsOneWidget);
+    expect(find.text('超过时间的内容将彻底删除'), findsOneWidget);
   });
 
   testWidgets('浏览页标题套白色圆角底纹', (tester) async {

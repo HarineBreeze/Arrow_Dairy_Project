@@ -17,7 +17,7 @@ void main() {
   });
 
   group('主题色配套色板', () {
-    test('共 5 套，每套都配齐 tintRgb/pageRgb/darkTop/darkTint', () {
+    test('共 6 套，每套都配齐 tintRgb/pageRgb/darkTop/darkTint', () {
       for (final s in AccentCatalog.styles) {
         expect(s.rgb & 0xFFFFFF != 0, true, reason: '${s.name} 主色非空');
         expect(s.tintRgb & 0xFFFFFF != 0, true, reason: '${s.name} 浅底纹非空');

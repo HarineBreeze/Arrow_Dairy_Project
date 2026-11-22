@@ -620,11 +620,10 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                     ? 0
                     : int.parse(label.replaceAll(RegExp(r'[^0-9]'), ''))),
           );
-        } else if (wasSet) {
-          // VIP 过期/失去：已设提醒时间保持不变，禁用修改且不弹提示
-          return;
         } else {
-          // 从未拥有：提示需 VIP
+          // v5.0.0：非 VIP 点击统一提示需 VIP，含「VIP 期间已设过提醒时间」
+          // 的情况——此前 wasSet 分支直接 return 导致提示语丢失。
+          // 已设的提醒时间仍保持不变、不可修改，仅补回提示。
           AppToast.show(
               context, '到期提醒是VIP专属权益，请充值后再尝试～');
         }

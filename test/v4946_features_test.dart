@@ -53,7 +53,7 @@ void main() {
   });
 
   group('深色配套色板', () {
-    test('5 套都配齐深色页面底/卡片底/底纹', () {
+    test('6 套都配齐深色页面底/卡片底/底纹', () {
       for (final s in AccentCatalog.styles) {
         expect(s.darkPage & 0xFFFFFF != 0, true, reason: '${s.name} 深色页面底非空');
         expect(s.darkSurface & 0xFFFFFF != 0, true, reason: '${s.name} 深色卡片底非空');

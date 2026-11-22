@@ -165,7 +165,7 @@ void main() {
         home: Scaffold(body: TrashScreen(onOpenMenu: () {})),
       ));
       await _settleWithIo(tester);
-      expect(find.text('超过7天的内容将彻底删除'), findsOneWidget);
+      expect(find.text('超过时间的内容将彻底删除'), findsOneWidget);
     });
   });
 }

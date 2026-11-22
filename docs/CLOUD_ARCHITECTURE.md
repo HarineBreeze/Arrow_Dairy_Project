@@ -2,7 +2,8 @@
 
 > 状态：**设计稿 / 施工图**，尚未实施。
 > 定位：本文是把「本地为根、云为可选增值层」战略落成可执行方案的**唯一依据**。
-> 基线：截至 v4.9.33，项目仍是 100% 本地单机、无任何网络依赖。文中所有现况描述均以源码为准并标注文件/符号。
+> 基线：截至 v4.9.48，项目仍是 100% 本地单机、无任何网络依赖。文中所有现况描述均以源码为准并标注文件/符号。
+> 最新项目状态与发版 SOP 以 `docs/PROJECT_HANDOFF.md` 为准。
 > 使用方式：每次准备接云前先读本文；任何字段权威归属的改动，必须先改本文再改代码。
 
 ---
@@ -26,7 +27,7 @@
 | 权益规则 | 每日首发 +20 分；VIP 日卡 24h（上限 30 次）、周卡 7 天（上限 6 次），累加到同一到期时间 | `reward_service.dart:61-70` |
 | 兑换码 | 灵感码 / 身份码 / 无限次灵感码 / 无限次扣分码，均记在 `redeemedCodes`（无限次码除外） | `reward_service.dart:72-93` |
 | 存储文件 | `user_profile.json`、`user_id_seq.json` 等，均在 `getApplicationDocumentsDirectory()` | `user_storage.dart:12-22` |
-| 测试 | 55 个测试文件、442 项测试全绿 | `test/` |
+| 测试 | 68 个测试文件、569 项测试全绿 | `test/` |
 
 **关键判断**：权益逻辑已经高度集中在 `user_profile.dart` + `reward_service.dart` + `user_storage.dart`，这是接云的最大有利条件——变化点少，改造面可控。
 
@@ -141,7 +142,7 @@
 | 收敛权益写入口 | `reward_service.dart`、`user_storage.dart` | 所有 VIP/灵感/badge 改动走统一入口，禁止散落直接改字段 |
 | UI 改用数据源 | `profile_edit_screen.dart`、主页/侧边栏 | 从直接读 `UserProfile` 字段改为读 repository |
 
-验收：442 项测试全过，功能无变化。
+验收：569 项测试全过，功能无变化。
 
 ### 阶段 2：云端权威层（多用户基础）
 

@@ -6,7 +6,7 @@ import 'package:ayodiray/theme/app_palette.dart';
 
 /// v4.9.43 行为回归：
 /// 1. 事件到期当天主文案「就是今天」、副标题不再叠「已过去/已拥有 0 天」；
-/// 2. 主题色注册表：默认竹青免费、其余 4 套 VIP、按 id 查询与非法回落；
+/// 2. 主题色注册表：默认竹青免费、其余 3 套 VIP（藕粉/雾蓝/霞紫）、按 id 查询与非法回落；
 /// 3. AppPalette 主色重映射：默认竹青逐字节不变，选中其它色时主色族随色改变，
 ///    语义色（红/橙）不受影响。
 void main() {
@@ -52,16 +52,16 @@ void main() {
   });
 
   group('主题色注册表', () {
-    test('共 5 套，竹青免费且为默认，v4.9.50 起 3 免费 2 VIP', () {
-      expect(AccentCatalog.styles.length, 5);
+    test('共 6 套，竹青免费且为默认，v5.0.0 起 3 免费 3 VIP', () {
+      expect(AccentCatalog.styles.length, 6);
       expect(AccentCatalog.styles.first.id, 'bamboo');
       expect(AccentCatalog.styles.first.vip, false);
       expect(AccentCatalog.styles.first.rgb, 0x3E8E6D);
-      // 暖棕 / 墨灰改为免费，仅藕粉 / 雾蓝为 VIP
-      expect(AccentCatalog.styles.where((s) => s.vip).length, 2);
+      // 暖棕 / 墨灰免费，藕粉 / 雾蓝 / 霞紫为 VIP
+      expect(AccentCatalog.styles.where((s) => s.vip).length, 3);
       expect(AccentCatalog.styles.where((s) => !s.vip).length, 3);
       expect(AccentCatalog.styles.map((s) => s.id).toList(),
-          ['bamboo', 'amber', 'ink', 'lotus', 'ocean']);
+          ['bamboo', 'amber', 'ink', 'lotus', 'ocean', 'violet']);
     });
 
     test('byId 非法值回落竹青', () {

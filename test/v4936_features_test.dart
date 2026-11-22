@@ -209,7 +209,7 @@ void main() {
       await tester.pump(const Duration(seconds: 2));
     });
 
-    testWidgets('曾有到期提醒但 VIP 失去后：保持值、点击不弹提示', (tester) async {
+    testWidgets('曾有到期提醒但 VIP 失去后：保持值、点击弹充值提示', (tester) async {
       await tester.binding.setSurfaceSize(const Size(600, 1200));
       addTearDown(() => tester.binding.setSurfaceSize(null));
       writeProfile(UserProfile(points: 0)); // 普通版，无 VIP
@@ -229,9 +229,10 @@ void main() {
       expect(find.text('未解锁'), findsNothing);
       await tester.tap(find.text('到期提醒'));
       await tester.pumpAndSettle();
-      // 不弹充值提示，也不弹选择层
-      expect(find.textContaining('VIP专属权益，请充值后再尝试'), findsNothing);
+      // v5.0.0：VIP 失去后点击也弹充值提示（不再静默 return），但仍保持原值、不弹选择层
+      expect(find.textContaining('VIP专属权益，请充值后再尝试'), findsOneWidget);
       expect(find.text('选择到期提醒'), findsNothing);
+      await tester.pump(const Duration(seconds: 2)); // flush AppToast timer
     });
   });
 }

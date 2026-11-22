@@ -48,7 +48,7 @@ class AccentStyle {
   });
 }
 
-/// 主题色注册表。竹青 / 暖棕 / 墨灰免费，藕粉 / 雾蓝为 VIP 权益。
+/// 主题色注册表。竹青 / 暖棕 / 墨灰免费，藕粉 / 雾蓝 / 霞紫为 VIP 权益。
 class AccentCatalog {
   AccentCatalog._();
 
@@ -115,6 +115,19 @@ class AccentCatalog {
         darkPage: 0x101720,
         darkSurface: 0x18222E,
         darkTintBg: 0x22303F,
+        vip: true),
+    // v5.0.0：新增紫色系「霞紫」，常规/深色全套配套，VIP 专属
+    AccentStyle(
+        id: 'violet',
+        name: '霞紫',
+        rgb: 0x9068B5,
+        tintRgb: 0xF1E9F8,
+        pageRgb: 0xFAF6FD,
+        darkTop: 0x2E2340,
+        darkTint: 0xAC8BCB,
+        darkPage: 0x161020,
+        darkSurface: 0x211930,
+        darkTintBg: 0x322645,
         vip: true),
   ];
 

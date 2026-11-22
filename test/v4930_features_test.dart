@@ -11,7 +11,7 @@ import 'package:path_provider_platform_interface/src/method_channel_path_provide
 
 /// v4.9.30 回归：
 /// 1. 弹层确认按钮（完成 / 确定）去掉绿色底纹色块，统一为主色文字按钮；
-/// 2. 回收站底部提示语「超过7天的内容将彻底删除」吸附页面最底部；
+/// 2. 回收站底部提示语「超过时间的内容将彻底删除」吸附页面最底部；
 /// 3. （封面预览入口移除已在 v4928 / v4929 测试中同步覆盖）
 class _FakePathProvider extends PathProviderPlatform {
   final String path;
@@ -104,8 +104,8 @@ void main() {
       ));
       await _settle(tester);
 
-      expect(find.text('超过7天的内容将彻底删除'), findsOneWidget);
-      final rect = tester.getRect(find.text('超过7天的内容将彻底删除'));
+      expect(find.text('超过时间的内容将彻底删除'), findsOneWidget);
+      final rect = tester.getRect(find.text('超过时间的内容将彻底删除'));
       // 视口高 600：v4.9.48 起提示语不再吸附视口，而是置于内容最底部；
       // 空态无内容可滚，仍贴近底部（底部留白 ~10）。
       expect(rect.bottom, greaterThan(560),

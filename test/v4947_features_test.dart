@@ -71,7 +71,7 @@ void main() {
     });
 
     test('其它主题 toastBg 换成各自深色顶栏色', () {
-      for (final id in ['lotus', 'ocean', 'amber', 'ink']) {
+      for (final id in ['lotus', 'ocean', 'amber', 'ink', 'violet']) {
         final a = AccentCatalog.byId(id);
         AppPalette.accent = a;
         expect(AppPalette.toastBg, Color(0xFF000000 | a.darkTop),

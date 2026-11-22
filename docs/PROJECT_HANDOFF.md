@@ -1,8 +1,8 @@
-# 阿尤日记 · 项目交接摘要
+# 阿尤日记 · 项目交接与推进指南
 
-> 截至 **v4.9.32**（versionCode 139，commit `9324d18`）。
-> 本文件是跨设备 / 跨会话接手的**唯一入口**：新会话先读它，即可无缝续接，无需重新口述背景。
-> 关键信息均以源码为准，文中标注了对应文件与行号/符号，便于核对。
+> 截至 **v5.0.0**（versionCode 158，全量 **569** 项测试通过）。
+> 本文件是跨设备 / 跨会话接手的**唯一入口**：新会话先完整读它，即可无缝续接，无需重新口述背景。
+> 关键信息均以源码为准，文中标注对应文件或符号，便于核对。改代码前务必读完 §2 规范与 §4 发版流程。
 
 ---
 
@@ -10,12 +10,14 @@
 
 | 项 | 值 |
 |---|---|
-| 名称 / 包名 | 阿尤日记 / `com.shiguang.diary_app` |
+| 名称 / 包名 | 阿尤日记（AyoDiray）/ `com.Ayo.diary_app`（v4.9.50 由 `com.shiguang.diary_app` 改名；Flutter 包名 `ayodiray`） |
 | 仓库 | `HarineBreeze/Arrow_Dairy_Project`（main 分支） |
-| 技术栈 | Flutter 3（Dart），无任何网络库；纯本地 JSON 存储 |
+| 技术栈 | Flutter 3（Dart），**无任何网络依赖**；纯本地 JSON 存储 |
 | 核心依赖 | `path_provider`、`image_picker`、`file_picker`、`share_plus`、`path`、`cupertino_icons` |
 | 当前定位 | **离线单机版生活账本**：日记 + 物品 + 资产 + 倒计时四模块打通 |
-| 商业模式现状 | 全功能免费；灵感/徽章/兑换码/VIP 为荣誉与留存体系，不锁功能 |
+| 商业模式现状 | 免费用户功能完整；**灵感兑换的 VIP 权益解锁若干增值项**（VIP 主题色 3 套、VIP 信纸 3 款、未来信件、事件到期提醒、回收站 30 天、置顶不限量），不锁核心记录功能 |
+| 本地 / 构建目录 | 代码 `/workspace/diary_app`；APK 交付 `/workspace/ArrowDiary_V.x.y.z.apk` |
+| Android SDK | `ANDROID_SDK_ROOT=/opt/android-sdk`（环境变量默认缺失，构建时须显式指定） |
 
 ---
 
@@ -23,14 +25,15 @@
 
 ```
 lib/
-├─ main.dart                    入口：主题订阅、路由表
+├─ main.dart                    入口：DiaryApp 主题订阅（themeModeNotifier / 系统亮度）、路由表
 ├─ models/                      diary_entry / item / asset / countdown_event / user_profile
 ├─ services/                    各 *_storage（本地 JSON 读写）、app_settings、backup_service、
-│                                reward_service（灵感/兑换码/杂货店）、countdown_reminder
+│                                reward_service（灵感/兑换码/杂货店/VIP）、各类 *_reminder 通知
 ├─ screens/                     18 个页面（见下）
-├─ widgets/                     通用组件（pressable / app_icons / save_bar / rich_note_text 等）
-├─ theme/                       app_palette（语义色板）、app_theme_scope（明暗即时重建）
-└─ utils/                       app_motion / app_sheet / app_toast / haptics / app_version 等
+├─ widgets/                     通用组件（pressable / app_icons / save_bar / stationery_paper 等）
+├─ theme/                       app_palette（语义色板 + 主题色）、app_theme_scope（明暗即时重建）
+└─ utils/                       app_motion / app_sheet / app_toast / haptics / stationery /
+                                writing_prompts / usable_days / app_version 等
 ```
 
 **18 个页面**：home（日记主页）、edit（笔记编辑）、note_view（笔记浏览）、item_list / item_edit（物品）、asset_screen / asset_edit（资产）、countdown_screen / countdown_edit（事件）、global_search、trash（回收站）、points_shop（灵感杂货店）、profile_edit（档案）、settings、side_menu（侧边栏）、font_picker、image_crop、usable_days_settings_sheet。
@@ -40,106 +43,80 @@ lib/
 | 文件 | 内容 |
 |---|---|
 | `diaries.json` / `items.json` / `assets.json` / `countdowns.json` | 四类主数据 |
-| `trash.json` | 回收站（保留 7 天） |
-| `user_profile.json` | 档案：昵称/性别/头像/灵感/徽章/VIP 时效/userId/注册日 |
+| `trash.json` | 回收站（普通 7 天 / 权益身份 30 天，见 §6.3） |
+| `user_profile.json` | 档案：昵称/性别/生日/头像/灵感/徽章/VIP 时效/userId/注册日 |
 | `user_id_seq.json` | 用户 ID 顺序发号（与档案分离，删档不回退） |
 | `asset_pin.json` | 资产页密码 |
-| `app_settings.json` | 主题模式 / 字体 / 震动总开关 |
+| `app_settings.json` | 主题模式 `themeMode` / 字体 / 震动总开关 / 主题色 `accentId` / 可使用天数参数 |
 
-> 资产密码用 `b ^ 0x5A` 逐字节混淆后存储（`asset_storage.dart:66`），非强加密，仅为防止误看。
+> 资产密码用 `b ^ 0x5A` 逐字节混淆后存储（`asset_storage.dart`），非强加密，仅为防止误看。
 
 ---
 
-## 2. UI 设计规则（必须遵守）
+## 2. UI 与代码规范（改代码前必须遵守）
 
 ### 2.1 色彩体系 —— 语义色板 `AppPalette`（`lib/theme/app_palette.dart`）
 
-**铁律：代码里不直接写深色判断，一律走 `AppPalette.c(argb)` / `.surface` / `.topBar`。**
+**铁律 1：代码里不直接写深色判断，一律走 `AppPalette.c(argb)` / `.surface` / `.topBar` / `.accentColor`。**
+**铁律 2：不写死绿色主色字面量，凡主色相关一律走 `AppPalette.c(0xFF3E8E6D)` 或 `.accentColor`，让主题色切换能全局生效。**
 
-- `c(int argb)`：**浅色模式原样返回**传入色值（保证既有精确颜色断言零回归），深色模式查 `darkMap` 转换，未登记的颜色保持原值。
-- `surface` = `c(0xFFFFFFFF)`：白色卡片/容器/弹窗背景，深色下为 `0xFF18221E`。项目约 84 处白卡片统一走它。
-- `topBar`：实心顶栏背景，浅色竹青 `0xFF3E8E6D` / 深色深墨绿 `0xFF22342C`。
-- 半透明顶栏色块 `0xB3/0xCC/0xE6 3E8E6D`（70%/80%/90% 绿）在深色下统一映射为 `0xFF22342C`，避免"深色页顶亮绿块"。`0xB33E8E6D` 是各主页顶栏标准色。
-- `darkMap` **只登记中性色**（页面底/卡片底/文字/边框/顶栏色块）。品牌色与语义色一律不登记、跨主题保持原值：
-  - 主色竹青 `0xFF3E8E6D`、警示红 `0xFFCB5C50`、橙 `0xFFF08C3A`
-  - 身份色、图表色、渐变、半透明黑白遮罩
-- 主文字 `0xFF24382F`（深）→ `0xFFE9F2EB`（浅）；次要 `0xFF647A70` → `0xFFA8BCB0`；辅助 `0xFF8FA09A` → `0xFF90A69A`。
+- `c(int argb)`：**浅色竹青模式原样返回**传入色值（保证既有精确颜色断言零回归）；深色模式查 `darkMap` 转换；主题色切换时把「绿色家族」色值重映射到当前 `accent`。未登记颜色保持原值。
+- `surface` = `c(0xFFFFFFFF)`：白色卡片/容器/弹窗背景。
+- `topBar`：实心顶栏背景，随主题色/明暗取色。
+- `accentColor` = `Color(0xFF000000 | accent.rgb)`：当前主题主色（按钮、高亮字、置顶边框、图标色）。
+- `toastBg`：AppToast 背景，竹青返回原深墨值，其它主题返回各自深色顶栏色。
+- 半透明顶栏色块 `0xB33E8E6D`（70% 绿）是各主页顶栏标准色。
+- `darkMap` **只登记中性色**（页面底/卡片底/文字/边框/顶栏色块）；品牌色与语义色不登记、跨主题保持原值。
 - 顶栏/主色块上的前景文字与图标**始终 `Colors.white`**，不参与映射。
-- 主题模式三态 `AppThemeMode { system, light, dark }`，持久化到 `app_settings.json` 的 `themeMode` 字段。
-- 深浅切换靠 `AppThemeScope`（InheritedWidget，`lib/theme/app_theme_scope.dart`）：所有页面 build 订阅，切换即时全量重建且保留 State / 导航栈。
+- 主题模式三态 `AppThemeMode { system, light, dark }`，持久化到 `app_settings.json` 的 `themeMode`。
+- 深浅切换靠 `AppThemeScope`（InheritedWidget）：所有页面 build 订阅，即时全量重建且保留 State / 导航栈。
 
-### 2.2 圆角档位（实际统计频次）
+### 2.2 主题色体系（v4.9.43 起，`AccentStyle` / `AccentCatalog`）
 
-| 档位 | 语义 | 使用 |
-|---|---|---|
-| **16** | 卡片、弹窗、底部抽屉 | 68 处（最多） |
-| **12** | 输入框、按钮、内层容器、侧栏项 | 49 处 |
-| **8** | 小卡、工具栏项、日期地点格、小标签 | 24 处 |
-| **2** | 细分条、进度条、滑块（非卡片语义） | 7 处 |
-| 999 | 胶囊 / 头像 | 圆形场景 |
+- 6 套主题色（v5.0.0）：**免费 3 套** `bamboo` 竹青（默认）/ `amber` 暖棕 / `ink` 墨灰；**VIP 3 套** `lotus` 藕粉 / `ocean` 雾蓝 / `violet` 霞紫（紫色系）。
+  > v4.9.50 起暖棕 / 墨灰由 VIP 改为免费；v5.0.0 新增霞紫（VIP），放在 styles 列表末尾。
+- 每套 `AccentStyle` 提供浅色 `rgb / tintRgb / pageRgb` 与深色 `darkTop / darkTint / darkPage / darkSurface / darkTintBg`。**竹青全套与原写死值逐字节一致**，保证零回归。
+- **新增主题色**：只需在 `AccentCatalog.styles` 末尾加一条 `AccentStyle`（填齐 8 个色值 + `vip` 判定），设置页抽屉会遍历 `styles` 自动接入、自动加 VIP 角标；无需改 `AppPalette.c()` 的映射表（它按 `accent` 当前值动态重映射）。
+- 切换主题色时 `AppPalette.c()` 会把整族颜色重映射：按钮、标签底、置顶边框、页面底、卡片底、顶栏、高亮字一起换色。
+- 设置页「主题色」抽屉：VIP 过期后保留已设主题色、可切回竹青，但不可再选其它 VIP 色（`settings_screen.dart:_pickAccent`）。
+- **新增任何页面背景/卡片底/顶栏取色，都必须走主题色字段，不要写死中性色**——否则会出现"别的页面都换色、就这页还是淡绿"的 bug（v4.9.44/45/46 连修三轮的问题）。
 
-> 历史注记：曾有 `design_tokens.dart`（AppRadius/AppFont）试图固化档位，但零引用，已在 v4.9.32 删除。**档位靠约定维持，不要写字面量之外的新值**；若新增档位请在本文登记。
+### 2.3 圆角 / 字号 / 边距档位
 
-### 2.3 字号档位（实际统计频次）
-
-| 档位 | 语义 |
+| 类别 | 常用档位 |
 |---|---|
-| **15**（112 处）/ **13**（145 处） | 正文 / 辅助说明、时间戳、卡片副标题（两大主力） |
-| **11** | 小标签、字段名、角标 |
-| **17** | 卡片标题、设置项、页内区块标题 |
-| **22** | 页面标题、编辑页标题输入 |
-| **32** | 资产看板大数字 |
+| 圆角 | **16**（卡片/弹窗/抽屉，最多）、**12**（输入框/按钮/内层容器）、**8**（小卡/工具栏项）、2（细分条/进度条）、999（胶囊/头像） |
+| 字号 | **15 / 13**（正文 / 辅助，两大主力）、11（小标签/角标）、17（卡片标题/设置项）、22（页面标题）、32（资产大数字） |
+| 边距 | **16、20、12、14、8、10、24、6、4**；页面左右安全边距 16，卡片内边距 14 横 / 12~16 纵 |
 
-> 历史遗留例外值仍在用：14、19（滚轮选择器）、12、9.5（密码遮罩）、9 / 8 / 7（极小角标）。新代码优先用上表档位，不要再造半像素值（11.5/12.5/13.5/14.5/15.5）。
+> 不要造新档位或半像素字号（11.5/13.5 等）。历史例外值 14、19（滚轮）、12、9.5（密码遮罩）、9/8/7（极小角标）仅限既有代码。
 
-### 2.4 边距 / 间距常用档位
+### 2.4 顶栏高度（v4.9.31 统一）
 
-高频值（按频次）：**16、20、12、14、8、10、24、6、4**（px）。
-
-- 页面左右安全边距：`16`
-- 卡片内边距：`14` 横向 / `12~16` 纵向
-- 控件间距：`8` / `12`
-- 列表项间隔：`10`
-- 区块间距：`20` / `24`
-- 密集元素：`4` / `6`
-
-### 2.5 顶栏高度（v4.9.31 统一）
-
-- **所有主页与对应编辑页 / 浏览页顶栏高度统一 `48`**（AppBar `toolbarHeight: 48`）。
-- 各主页顶栏自定义色 `0xB33E8E6D`（70% 绿）；编辑页 AppBar 同色 `AppPalette.c(0xB33E8E6D)`。
-- 笔记浏览页：返回键与右上图标热区均 `48×48`（`leadingWidth: 48` + 图标 `BoxConstraints.tightFor(48,48)`）。
-- 右上「更多」图标为**横三点** `AppIcons.moreH`（v4.9.28 从竖三点改来）。
+- 所有主页与对应编辑页 / 浏览页顶栏高度统一 `48`（`toolbarHeight: 48`）。
+- 各主页顶栏色 `0xB33E8E6D`（70% 绿，走 `AppPalette.c()`）；编辑页 AppBar 同色。
+- 笔记浏览页：返回键与右上图标热区均 `48×48`（`leadingWidth: 48` + `BoxConstraints.tightFor(48,48)`）。
+- 右上「更多」为**横三点** `AppIcons.moreH`。
 
 ---
 
 ## 3. 交互逻辑与动效规范
 
 ### 3.1 全局动效 `AppMotion`（`lib/utils/app_motion.dart`）
-
-- 页面转场时长 `300ms`，曲线 `easeOutCubic`，入场/退场对称。
-- `AppMotion.slide(page)`：新页从右推入（Offset 1→0），旧页向左让出 25%（0→-0.25），避免来回晃眼。**新增页面转场一律用它，不要各自复制 `_slideRoute`**。
-- 列表滚动超过 `600px` 才显示「回顶」按钮。
+- 页面转场 `300ms` / `easeOutCubic`。`AppMotion.slide(page)`：新页从右推入，旧页左让 25%。**新增页面转场一律用它**。
 
 ### 3.2 按压回弹 `Pressable`（`lib/widgets/pressable.dart`）
-
-- 按下缩到 **90%**（90ms 干脆），松手弹簧回弹 **1.00→1.02→1.00**（420ms）。
-- 用 `Transform.scale` 纯绘制变换（不参与布局/命中），`Listener` 原始指针事件（不抢 InkWell/GestureDetector 的手势竞技场）。
-- 必须用 `AnimationController.unbounded`，否则弹簧过冲被 `[0,1]` 钳掉。
-- 已有指针监听的卡片（资产卡拖拽）用 `external: true` + `PressableHandle` 由外层驱动，避免叠加 Listener。
+- 按下缩到 90%（90ms），松手弹簧 1.00→1.02→1.00（420ms）。`Transform.scale` + `Listener` 原始指针，不抢手势竞技场。必须用 `AnimationController.unbounded`。
 
 ### 3.3 震动反馈 `Haptics`（`lib/utils/haptics.dart`）
-
-- 单一来源：Android 直驱原生 Vibrator（MethodChannel `vector_diary/haptic`），失败才退回 `HapticFeedback`；**绝不两路同发**（会互相取消）。
-- 分级：`light()` 12ms（选择/开关/切换）、`medium()` 24ms（删除确认/保存成功/长按菜单）、`tick()` 8ms（边界/翻页）；`mediumNow()` / `lightNow()` 同步触发，用于"弹菜单前先震"。
-- 节流：最小间隔 40ms，丢弃密集重复请求；`throttleEnabled` 测试可关。
-- **全局总开关 `Haptics.enabled`**：设置页「震动」Switch（与深色模式同款），关闭后所有点位静默；开启瞬间震一次确认。持久化到 `app_settings.json`。
+- Android 直驱原生 Vibrator（MethodChannel `vector_diary/haptic`），失败才退回 `HapticFeedback`；**绝不两路同发**。
+- 分级：`light()` / `medium()` / `tick()`（8ms），`mediumNow()` / `lightNow()` 同步触发。节流最小间隔 40ms。
+- 全局总开关 `Haptics.enabled`（设置页「震动」Switch），关闭后所有点位静默；持久化 `app_settings.json`。
 
 ### 3.4 底部弹层 `AppSheet`（`lib/utils/app_sheet.dart`）
-
-- 全站统一入口，**不要再用散装 `showModalBottomSheet`**（v4.9.28 已迁移全站 21 处）。
-- 圆角 `24`，顶部拖拽手柄 `36×4`（`AppSheet.handle(context)`），遮罩 `0x66000000`，`enableDrag: true`。
-- 内容区**不要自己画顶部手柄与留白**，本方法已统一提供。
-- 确认/取消按钮：统一为**右下角文字按钮**，「完成/确定」主色强调、「取消」灰色次级，**无底纹色块、无描边**（v4.9.29/30）。
+- 全站统一入口，**不要再用散装 `showModalBottomSheet`**。圆角 24，手柄 36×4，遮罩 `0x66000000`，可拖拽。
+- 内容区不要自己画顶部手柄与留白。确认/取消按钮统一右下角文字按钮（无底纹、无描边）。
+- **抽屉标题规则（多轮迭代结论）**：编辑页/选择类抽屉普遍**不要标题**——身份抽屉「选择身份」、性别抽屉「选择性别」、可使用天数「可使用天数 参数」、事件类型/重复规则/到期提醒、物品/资产类型与状态、主题色抽屉的标题与提示语，均已移除。
 
 ### 3.5 其它关键交互
 
@@ -147,71 +124,91 @@ lib/
 |---|---|---|
 | 双击顶栏回顶 | `GestureDetector.onDoubleTap` → `_scrollToTop()` | home |
 | 下拉刷新 | `RefreshIndicator` | home / asset / countdown / item_list |
-| 长按卡片菜单 | 长按 → Haptics.mediumNow() → `AppSheet` 动作菜单；含编辑/删除/分享等 | 各主页 |
-| 笔记页「更多」 | `showMenu` 从按钮处弹下拉（编辑/删除/分享），弹层外截图截不到 | note_view |
-| 单选输入回车链 | `textInputAction: next` + `onSubmitted → 下一 FocusNode.requestFocus()`；末项 `done` 收键盘 | 各编辑页 |
-| 搜索高亮 | `RichNoteText` 接收 `searchQuery`，命中浅黄底 `0xFFFFF0B3` + 深墨字 `0xFF24382F`（深色可见） | note_view / search |
-| 回收站 | 7 天保留；还原/删除均二次确认；支持选择模式多选、全部还原 | trash |
-| 删除确认 | 部分危险操作二次确认弹窗（`showDialog<bool>`） | trash 等 |
-| 未保存守卫 | 退出编辑页时提示是否丢弃（`unsaved_guard.dart`） | 各编辑页 |
-| 空态 | `empty_state.dart`：图标 + 说明文字（尚未加行动按钮，属待优化项） | 通用 |
+| 长按卡片菜单 | 长按 → `Haptics.mediumNow()` → `AppSheet` 动作菜单 | 各主页 |
+| 笔记页「更多」 | `showMenu` 从按钮处弹下拉（编辑/删除/分享） | note_view |
+| 单选输入回车链 | `next` + `onSubmitted → 下一 FocusNode`；末项 `done` 收键盘 | 各编辑页 |
+| 搜索高亮 | `RichNoteText` + `searchQuery`，命中浅黄底 + 深墨字（深色可见） | note_view / search |
+| 回收站 | 普通 7 天 / VIP 30 天；还原/删除二次确认；选择模式多选、全部还原 | trash |
+| 未保存守卫 | 退出编辑页提示丢弃（`unsaved_guard.dart`） | 各编辑页 |
+| 内容信息吸底取消 | 笔记浏览页时间/地点、回收站提示语均置于**滚动内容最底部**（滑到底才可见，非固定吸附视口） | note_view / trash（v4.9.48） |
+| 空态 | `empty_state.dart`：图标 + 说明文字（尚无行动按钮，待优化） | 通用 |
 
-### 3.6 主题与显示
+### 3.6 设置页结构（v4.9.48 现状）
 
-- 设置页分组：**外观**（深色模式 / 跟随系统 / 字体）、**反馈**（震动）、**数据**（导出/导入）、**活动**（兑换码）。
-- 字体：可切换，设置持久化，切换全站即时生效。
-- 每日首次发布笔记 +20 点（`RewardService.dailyWritePoints`）。
+分组：**活动**（兑换码）、**反馈**（震动 Switch）、**数据**（导出/导入）、**外观**。
+「外观」卡三行：深色模式 / 字体 / 主题色。其中：
+
+- **深色模式**：右箭头，点击开抽屉，内含**两个震动同款 Switch**——「跟随系统」与「深色模式」（key：`theme-follow-system` / `theme-dark-mode`）。跟随系统开启时深色开关置灰禁用；原「已开启/已关闭」二行已合并为单一「深色模式」开关。
+- **字体**：进入 `FontPickerScreen`。
+- **主题色**：进抽屉选 6 套主题色（免费 3 / VIP 3，限制见 §2.2）。
 
 ---
 
 ## 4. 发版标准化流程（每次改动必须完整走完）
 
-1. **改代码**，同步两处版本号：
-   - `pubspec.yaml` → `version: x.y.z+build`（build 每次 +1）
-   - `lib/utils/app_version.dart` → `displayVersion = 'Vx.y.z'`
-2. **静态分析**：`flutter --no-version-check analyze`，要求 **0 error / 0 warning**（info 为历史基线，允许）。
-3. **全量测试**：`flutter --no-version-check test`，要求全绿（当前 442 项）。
-   - 新增改动必须配套回归测试（历史命名 `test/vXXYY_features_test.dart`）。
-4. **巡检截图目检**（可选但建议）：写临时 `test/_inspect_*_test.dart`，用 `--dart-define=TARGET=xxx` 出图，`ViewImage` 目检浅/深两态。
-   - 注意：`showMenu` 弹层在 `RepaintBoundary` 外截不到；CJK 字体需 `runAsync` 加载；`pumpAndSettle` 遇粒子动画会卡，用有限帧 pump；搜索页截图常有花屏（已知工具问题），靠 widget 测试覆盖。
-5. **构建**：`ANDROID_SDK_ROOT=/opt/android-sdk flutter build apk --release`。
-6. **复制 + 核验**：`cp build/app/outputs/flutter-apk/app-release.apk /workspace/ArrowDiary_V.x.y.z.apk`；用 `/opt/android-sdk/build-tools/33.0.0/aapt dump badging` 核验 versionCode/versionName。
-7. **提交推送**：`git add -A && git commit -m "vX.Y.Z: ..." && git push origin main`（网络常波动，带 3~4 次重试循环）。
-8. **Release**：
-   ```bash
-   GH_TOKEN=$(git remote get-url origin | sed -E 's#.*x-access-token:([^@]+)@.*#\1#') \
-     gh release create V.x.y.z /workspace/ArrowDiary_V.x.y.z.apk \
-     --title "阿尤日记 V.x.y.z" --notes "..."
-   ```
-   随后 `gh release view ... --json assets` 核验附件 `state=uploaded`。
-9. **present_files**：呈现 APK + Release 链接。
+> 固定 SOP，顺序不可跳过。APK 命名 `ArrowDiary_V.x.y.z.apk`（如 `ArrowDiary_V.5.0.0.apk`），Release tag `v5.0.0`（小写 v 前缀 + 版本数字，无大写 V，见历史 release）。
 
-> APK 命名固定 `ArrowDiary_V.x.y.z.apk`；Release tag 固定 `V.x.y.z`。
+1. **改代码** + 同步两处版本号（各 +1 构建号）：
+   - `pubspec.yaml` → `version: x.y.z+BUILD`
+   - `lib/utils/app_version.dart` → `displayVersion = 'Vx.y.z'`
+2. **静态分析**：`flutter analyze`，要求 0 error / 0 warning（约 127 条 info 为历史基线，允许）。
+3. **全量测试**：`flutter test`，要求全绿（当前 **569** 项）。新增改动必须配套回归测试，命名 `test/vXXYY_features_test.dart`。
+   - 测试偶发：全量并行时 trash / 手势类测试偶有 1 项时序失败，重跑一遍通常即过；不要因此反复改测试。
+   - 含真实文件 IO 的页面（TrashScreen 等）测试要用 `runAsync` 让 IO 完成（参考 `_settleWithIo`），否则 `_loading` 未结束、内容未渲染。
+4. **构建**：
+   ```bash
+   export JAVA_HOME=/opt/jdk17            # 关键：默认 sdkman java 是 20，Gradle 7.4 会报 Unsupported class file major version 64
+   export PATH="$JAVA_HOME/bin:$PATH"
+   export ANDROID_SDK_ROOT=/opt/android-sdk
+   flutter build apk --release
+   ```
+   Kotlin 版本冲突 warning（`incompatible version of Kotlin ... expected 1.5.1`）是历史遗留，非致命，可忽略。
+5. **复制 + aapt 核验**：`cp build/app/outputs/flutter-apk/app-release.apk /workspace/ArrowDiary_V.x.y.z.apk`；用 aapt dump badging 核验 `versionCode` / `versionName` 与 pubspec 一致。
+6. **提交推送**：
+   ```bash
+   git add -A
+   git commit -m "feat(vx.y.z): ..."
+   git -c http.version=HTTP/1.1 push origin main   # 默认 HTTP/2 常遇 GnuTLS/TLS 中断
+   ```
+   推送后用 `gh api repos/HarineBreeze/Arrow_Dairy_Project/commits/main --jq .sha` 复核远程 HEAD == 本地 HEAD。
+7. **Release**（gh 未登录，token 从 remote URL 提取）：
+   ```bash
+   TOKEN=$(git remote get-url origin | sed -E 's#https://x-access-token:([^@]+)@.*#\1#')
+   GH_TOKEN="$TOKEN" gh release create vX.Y.Z /workspace/ArrowDiary_V.X.Y.Z.apk \
+     --repo HarineBreeze/Arrow_Dairy_Project --title "vX.Y.Z" --notes "..."
+   GH_TOKEN="$TOKEN" gh release view vX.Y.Z --repo HarineBreeze/Arrow_Dairy_Project \
+     --json tagName,name,assets
+   ```
+8. **附件核验**：确认 assets 中 APK `state=uploaded`、size 与本地一致。下载复核可能因 GitHub 网络超时中断；更可靠的是比对本地 `sha256sum` 与 release JSON 里的 `digest`（`sha256:...`）。
+9. **present_files**：呈现 APK。
 
 ---
 
-## 5. 版本历史（v4.9.15 → v4.9.32）
+## 5. 版本历史（v4.9.33 → v5.0.0）
 
 | 版本 | 关键变更 |
 |---|---|
-| v4.9.15 | 笔记分享长图（底部信息条：Logo/应用名/日期时间地点） |
-| v4.9.16 | 分享图信息条上移内容区正下方、去多余白区 |
-| v4.9.17 | 兑换码体系 + 灵感 + 每日发布 +20；长按菜单加分享 |
-| v4.9.18 | 身份体系（普通/内测/VIP/诞生日）、每 ID 每码限兑一次 |
-| v4.9.19 | 灵感杂货店 VIP 日卡（200 点 / 24h / 限 30） |
-| v4.9.20 | 待办回车续行；回收站选择模式；灵感杂货店整卡兑换 |
-| v4.9.21 | 待办输入法回车修复；资产看板图标对齐；档案白卡化 |
-| v4.9.22 | 回收站抽屉改长按菜单；身份有效期显示；用户 ID/注册日/使用时间 |
-| v4.9.23 | 用户 ID 改 10001 起顺序号；VIP 时效累加；VIP 周卡；终身 VIP 铭牌 |
-| v4.9.24 | **深色模式**：AppPalette 语义色板、双主题、84 处白卡映射、顶栏深墨绿 |
-| v4.9.25 | 修复深色切换需滑侧栏才全量刷新（AppThemeScope）；多处深色细节 |
-| v4.9.26 | 设置页「字体」并入「外观」；事件/物品编辑页选项改行式（标签+值+箭头） |
-| v4.9.27 | 输入回车跳转链；双击顶栏回顶；搜索命中逐条跳转+深色；笔记「更多」菜单；注册日格式化；VIP 日卡口径「1天」 |
-| v4.9.28 | 搜索页去命中条/选框；更多改横三点；图片全屏查看；全站 AppSheet；震动总开关 |
-| v4.9.29 | 弹层按钮去底纹收右下角；排序选项去描边；图片查看改纯淡入 |
-| v4.9.30 | 确认按钮去色块改文字；回收站提示语吸附底部；移除图片预览入口 |
-| v4.9.31 | 编辑页/浏览页顶栏颜色统一 70% 绿、高度统一 48 |
-| v4.9.32 | **清理冗余代码**（8 项死代码 + 5 处双分号），纯整洁度维护 |
+| v4.9.33 | 删除 mood/weather 废弃字段，导入时自动无视旧备份残留字段 |
+| v4.9.34 | 新增 6 张抹茶绿 UI 插画资源（**后续 v4.9.35 已移除**） |
+| v4.9.35 | 移除 6 张 UI 插画；全局文案改版（积分→灵感 / 身份牌→身份 / 个人信息→档案 / 灵感商城→灵感杂货店）；档案页新增生日轮盘；FAB 改编辑图标 |
+| v4.9.36 | 单位「分」改「点」；首次新增事件/物品/资产各 +20 灵感；提醒时间加 VIP 门槛与角标；新增 `novip` 清除会员码 |
+| v4.9.37 | **今日一句 100 条**（按日期确定性）+ **未来信件**（VIP 专属 / 封存 / 到期提醒 / 通知） |
+| v4.9.38 | 浏览页更多图标左移放大；VIP 未解锁文案精简；未来信件预览标题 |
+| v4.9.39 | 置顶数量上限（VIP 不限）；**回收站 VIP 30 天**；保存后定位；编辑页 UI 微调 |
+| v4.9.40 | **6 套 VIP 信纸实装**；修复资产拖拽置顶失效 bug |
+| v4.9.41 | 信纸精简（4 款全 VIP、改名抹茶横纹、去副标题图标、图文分板块、分享保留信纸） |
+| v4.9.42 | 移除抹茶横纹；修复分享 logo 丢失；编辑页信纸所见即所得；星夜页面压暗 |
+| v4.9.43 | 事件当天「就是今天」；**主题色自定义（VIP）**；物品/资产/事件编辑页布局调整 |
+| v4.9.44 | 主题色 VIP 牌移到标题后；134 处写死主色统一走 `AppPalette.c()` |
+| v4.9.45 | 7 个页面背景跟随主题色；主题色抽屉去标题/提示语 |
+| v4.9.46 | 深色模式主题色适配；移除多个抽屉标题 |
+| v4.9.47 | 事件 VIP 角标移到「到期提醒」后；AppToast 主题色；档案/侧栏适配；深色模式改抽屉 |
+| v4.9.48 | 可使用天数标题移除；深色模式双开关（跟随系统/深色模式）；笔记时间地点 + 回收站提示语移到底部；档案身份/性别抽屉去标题 |
+| v4.9.49 | **写作里程碑庆祝特效**：日记达 7/30/100/200/365/500/1000 篇各 +20 灵感 + 粒子庆祝层；`claimedWriteMilestones` 判重与跨节点补发 |
+| v4.9.50 | **品牌统一 AyoDiray**（包名 `com.Ayo.diary_app`）；兑换码不限次；顶栏标题字号统一 15；暖棕/墨灰改免费；修深色抽屉刷新 BUG；未来信件日期确认；杂货店禁用态；资金参数页按钮改版 |
+| **v5.0.0** | 修复非 VIP 已设提醒后点击提示语丢失；回收站提示语改「超过时间的内容将彻底删除」；**新增紫色系主题「霞紫」（VIP）**；笔记编辑页「更多」文字加粗 |
+
+> v4.9.32 及更早（深色模式、AppSheet、震动总开关、用户 ID 顺序号等奠基改动）见 git log，此处不再展开。
 
 ---
 
@@ -219,31 +216,44 @@ lib/
 
 > 详细码表见 `docs/redeem_codes.md`。
 
+### 6.1 基础规则
 - **用户 ID**：10001 起纯数字顺序号，`user_id_seq.json` 独立发号；旧 `AYO-xxxx` 自动迁移。
-- **灵感**：每日首发 +20；兑换码发放/扣减；杂货店消费。
-- **身份**：普通（灰）/ 内测版（橙）/ VIP（红）/ 终身 VIP / 诞生日（绿）；档案页可切换佩戴。
-- **VIP 时效道具**：日卡（+24h，限 30）/ 周卡（+7d，限 6），共用 `vipCardExpireAt`，**在原剩余时间上累加**；到期自动摘牌。限时 VIP 不进 `ownedBadges`。
-- **兑换码**：`ayouriji`/`neice`/`vip`/`zhongshenvip` 限 1 次；`17381113325`（+1000）、`13031210237`（-1000）无限次。
-- 核心实现：`lib/services/reward_service.dart`、`lib/models/user_profile.dart`、`lib/widgets/identity_badge.dart`。
+- **灵感**：每日首发 +20；首次新增事件/物品/资产各 +20；兑换码发放/扣减；杂货店消费。
+- **身份**：普通 / 内测版 / VIP / 终身 VIP / 诞生日；档案页可切换佩戴。
+- **VIP 时效道具**：日卡（+24h，限 30）/ 周卡（+7d，限 6），共用 `vipCardExpireAt` 累加；到期自动摘牌。限时 VIP 不进 `ownedBadges`。
+- 核心实现：`lib/services/reward_service.dart`、`lib/models/user_profile.dart`、`lib/widgets/identity_badge.dart`。判定入口 `RewardService.hasVipPrivilege(profile)`。
+
+### 6.2 VIP 解锁的功能点（免费用户看到入口但点击提示充值）
+| 功能 | 位置 |
+|---|---|
+| 事件「到期提醒」 | `countdown_edit_screen.dart` |
+| 未来信件 | `edit_screen.dart` |
+| VIP 信纸 3 款（手账方格/星夜来信/牛皮旧信） | `edit_screen.dart` + `utils/stationery.dart` |
+| VIP 主题色 3 套（藕粉/雾蓝/霞紫；暖棕/墨灰已免费） | `settings_screen.dart:_pickAccent` |
+| 回收站保留 30 天（否则 7 天） | `services/trash_storage.dart` |
+| 置顶不限量（否则有上限） | 主页逻辑 |
+
+### 6.3 回收站天数规则
+- 删除时若佩戴权益身份（内测版/VIP/终身VIP）且权益生效 → 保留 **30 天**，否则 **7 天**；保留期固化在条目上（`trash_storage.dart`）。旧记录缺省 7。
+- 底部提示语文案为「超过时间的内容将彻底删除」（v5.0.0 由「超过7天…」改来）；v4.9.48 起该提示语置于内容最底部（随列表滚动），非固定吸附视口。
+- 到期提醒 VIP 门槛：非 VIP 点击一律弹「到期提醒是VIP专属权益，请充值后再尝试～」，含 VIP 期间曾设过提醒时间的情况（v5.0.0 修复该分支静默 return 导致提示语丢失的 bug）；已设提醒值保持不变、不可改。
 
 ---
 
 ## 7. 已定战略决策（跨会话必须延续）
 
 ### 7.1 上云方向（用户已拍板，尚未开工）
-
 1. **目标模式**：联网化；**云服务 VIP 收费，其它用户仍存本地**。
 2. **数据主权铁律**：本地为根、云为可选镜像。免费=完整功能；付费=多设备同步便利；**欠费/断网绝不锁数据**，到期可一键导出全量回本地。
-3. **双轨合并 VIP**：现有灵感兑换的限时 VIP（日卡/周卡）自动赋予等时长云同步体验，作为付费试用装；荣誉徽章独立存在，不绑架功能。
+3. **双轨合并 VIP**：现有灵感兑换的限时 VIP 自动赋予等时长云同步体验作为试用装；荣誉徽章独立存在。
 4. **差异化定位**：数据主权 + 四模块打通；主标语"记日记、管物品、理资产、数日子——数据默认只在手机里，想上云再付费"。
-5. **合规红线**：Google Play 数字商品必须走 Play Billing、iOS 必须 IAP（否则拒审）；日记属敏感档案，上云需隐私政策/用户协议/加密说明/备案。
-6. **架构建议**：一期整包上传+时间戳仲裁（复用 `BackupService.mergeBackup` 按 id 合并逻辑），二期按 id 增量；老用户本地 uid 用绑定码认领到云端；WiFi+变更后 30s 合并上传。
+5. **合规红线**：Google Play 数字商品必须走 Play Billing、iOS 必须 IAP；日记属敏感档案，上云需隐私政策/备案。
+6. **架构权威划分**：内容（日记等）本地权威；契约账本（userId/points/badge/VIP 时效等）与运营开关服务端权威；禁止整份 profile 互相覆盖，按字段粒度同步。详见 `docs/CLOUD_ARCHITECTURE.md`。
 
 ### 7.2 差异化卖点（对外口径）
-
-- 四模块打通（日记/物品/资产/倒计时），`@物品引用` 跨模块联动 —— 结构性护城河。
+- 四模块打通，`@物品引用` 跨模块联动 —— 结构性护城河。
 - 免费用户拿到完整产品，不是阉割版 —— 订阅制泛滥下的稀缺承诺。
-- 数据主权可分叉、可视化加密封条卡、手工级视觉一致性。
+- 数据主权可分叉、手工级视觉一致性。
 
 ---
 
@@ -251,24 +261,36 @@ lib/
 
 | 组 | 状态 | 内容 |
 |---|---|---|
-| A 组死代码 | ✅ v4.9.32 已清 | design_tokens 死文件、_StripeBandPainter、_closeToolbar、_decoration、两处 _openSearch、_saving、_hlNames/_currentMark、_fitSize |
+| A 组死代码 | ✅ v4.9.32 已清 | design_tokens 死文件、多处死代码 |
 | B 组笔误 | ✅ v4.9.32 已清 | 5 处 `;;` 双分号 |
-| **C 组冗余参数** | ⬜ 未动 | `UserProfile.validityLabel` 的 `owned`（注释自认兼容参数，函数体未用，改签名需连带改 10+ 调用/测试）；`_DashedRRectPainter` 的 dashWidth/dashGap/strokeWidth（全用默认值） |
-| **E 组 lint** | ⬜ 未动 | 约 117 条 info：`prefer_const_constructors`、未用 import、`use_build_context_synchronously` 等，仅整洁度 |
-| 兼容逻辑 | ✅ v4.9.33 精简 | `diary_entry` 的 mood / weather 已彻底删除；旧备份含这两个字段时 `fromJson` 不再读取，自动无视、不报错、不回写 |
-| 兼容逻辑 | ⛔ 勿删 | `countdown_event.loop`、`app_settings` 旧开关/主题缺字段回落、`asset_storage` 理财→基金迁移、`trash_storage` 旧档兜底、`todo_text` 旧 `[ ]/[x]` 格式 —— 老用户数据升级路径 |
+| C 组冗余参数 | ⬜ 未动 | `UserProfile.validityLabel` 的 `owned`（兼容参数，函数体未用，改签名需连带改 10+ 调用/测试）；`_DashedRRectPainter` 的多处默认参数 |
+| E 组 lint | ⬜ 未动 | 约 127 条 info：`prefer_const_*`、未用 import、`use_build_context_synchronously` 等，仅整洁度 |
+| 兼容逻辑 | ⛔ 勿删 | `countdown_event.loop`、`app_settings` 旧开关/主题缺字段回落、`asset_storage` 理财→基金迁移、`trash_storage` 旧档兜底、`todo_text` 旧 `[ ]/[x]` 格式、`stationery` 已下架 id 回退经典 —— 均为老用户数据升级路径 |
 
 ### 产品待优化（灵感池，未立项）
-
-可撤销删除（Toast+撤销，替代反复确认）、列表左滑操作、`empty_state` 空态加行动按钮、滚动时顶栏渐显、长按预览气泡、编辑自动留草稿、触感分级语义化。
+可撤销删除（Toast+撤销）、列表左滑操作、`empty_state` 加行动按钮、滚动时顶栏渐显、长按预览气泡、编辑自动留草稿、触感分级语义化。
 
 ---
 
-## 9. 交接检查清单（新会话开场）
+## 9. 新会话交接检查清单
 
-- [ ] 读本文件 + `docs/redeem_codes.md`
-- [ ] `git status` 确认干净；`git log -1` 确认版本
-- [ ] 如需改代码：analyze 0/0 → 全量测试 → （可选）截图目检 → 构建 → commit/push → Release → present_files
-- [ ] 版本号两处同步（pubspec + app_version.dart），build +1
-- [ ] 涉及 UI：遵守 §2 色板/圆角/字号/边距/顶栏，动效走 AppMotion/AppSheet/Pressable/Haptics
-- [ ] 涉及上云：遵守 §7 数据主权铁律与双轨 VIP 方案
+- [ ] 读本文件 + `docs/redeem_codes.md`（+ 若涉及上云再读 `docs/CLOUD_ARCHITECTURE.md`）
+- [ ] `git status` 确认干净；`git log -1` 确认版本为 v5.0.0
+- [ ] `grep '^version:' pubspec.yaml` 与 `app_version.dart` 版本号一致（当前 5.0.0+158 / V5.0.0）
+- [ ] 改代码：analyze 0 error → 全量测试全绿（当前 569 项）→ 构建 → commit/push → Release → present_files
+- [ ] 版本号两处同步 + 构建号 +1；新增改动配 `vXXYY_features_test.dart` 回归测试
+- [ ] 涉及 UI：遵守 §2 色板（尤其主题色走 `AppPalette.c()`、抽屉去标题）、§3 动效组件
+- [ ] 涉及 VIP：新增强功能按 §6.2 接入 `hasVipPrivilege` 门槛与提示文案
+- [ ] 涉及上云：遵守 §7 数据主权铁律与字段权威划分，先改 `CLOUD_ARCHITECTURE.md` 再改代码
+
+### 关键命令速查
+```bash
+export JAVA_HOME=/opt/jdk17 && export PATH="$JAVA_HOME/bin:$PATH"  # 构建必设，否则 Java20 破坏 Gradle7.4
+export ANDROID_SDK_ROOT=/opt/android-sdk
+flutter analyze
+flutter test
+flutter build apk --release
+cp build/app/outputs/flutter-apk/app-release.apk /workspace/ArrowDiary_V.x.y.z.apk
+git -c http.version=HTTP/1.1 push origin main
+TOKEN=$(git remote get-url origin | sed -E 's#https://x-access-token:([^@]+)@.*#\1#'); echo ${#TOKEN}
+```

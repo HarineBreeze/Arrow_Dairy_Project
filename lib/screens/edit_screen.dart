@@ -962,7 +962,11 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
             SizedBox(width: 6),
             Text(
               '更多',
-              style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF24382F)),
+              style: TextStyle(
+                fontSize: 13,
+                color: AppPalette.c(0xFF24382F),
+                fontWeight: FontWeight.w600, // v5.0.0：与「地点」按钮同款加粗
+              ),
             ),
           ],
         ),

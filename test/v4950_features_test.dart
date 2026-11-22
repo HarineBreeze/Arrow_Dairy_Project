@@ -14,7 +14,7 @@ import 'package:ayodiray/utils/haptics.dart';
 
 /// v4.9.50 行为回归：
 /// 1. 版本号同步到 V4.9.50；
-/// 2. 主题色：暖棕 / 墨灰免费且紧跟竹青，藕粉 / 雾蓝仍 VIP；
+/// 2. 主题色：暖棕 / 墨灰免费且紧跟竹青，藕粉 / 雾蓝 / 霞紫仍 VIP；
 /// 3. 兑换码 vip / zhongshenvip / neice 不限次、每次生效、不写 redeemedCodes。
 class _FakePathProvider extends PathProviderPlatform {
   final String path;
@@ -62,24 +62,25 @@ void main() {
   Future<UserProfile> readProfile() async => UserStorage.load();
 
   group('版本号', () {
-    test('展示版本同步到 V4.9.50', () {
-      expect(AppVersion.displayVersion, 'V4.9.50');
+    test('展示版本已推进到 V5.0.0', () {
+      expect(AppVersion.displayVersion, 'V5.0.0');
     });
   });
 
   group('主题色免费属性与排序', () {
-    test('暖棕 / 墨灰为免费，藕粉 / 雾蓝为 VIP', () {
+    test('暖棕 / 墨灰为免费，藕粉 / 雾蓝 / 霞紫为 VIP', () {
       final byId = {for (final s in AccentCatalog.styles) s.id: s};
       expect(byId['bamboo']!.vip, false);
       expect(byId['amber']!.vip, false); // 暖棕
       expect(byId['ink']!.vip, false); // 墨灰
       expect(byId['lotus']!.vip, true); // 藕粉
       expect(byId['ocean']!.vip, true); // 雾蓝
+      expect(byId['violet']!.vip, true); // 霞紫
     });
 
     test('暖棕 / 墨灰排在竹青之后、VIP 色之前', () {
       final ids = AccentCatalog.styles.map((s) => s.id).toList();
-      expect(ids, ['bamboo', 'amber', 'ink', 'lotus', 'ocean']);
+      expect(ids, ['bamboo', 'amber', 'ink', 'lotus', 'ocean', 'violet']);
     });
 
     test('按序 Free 色共 3 套', () {
