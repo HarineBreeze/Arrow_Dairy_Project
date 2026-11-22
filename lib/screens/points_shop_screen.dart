@@ -213,8 +213,15 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
     final soldOut = _soldOut(profile, item);
     final affordable = profile.points >= item.price;
     final enabled = !soldOut && affordable;
-    // 不可兑换时整卡置灰，只保留极淡的边界感
-    final cardColor = enabled ? AppPalette.c(0xFFFFFFFF) : AppPalette.c(0xFFF2F6F4);
+    // v4.9.50：已购买 / 无法购买状态的卡片加明显的禁用态灰色底纹。
+    // 白底上叠一层半透明灰 + 灰色描边，普通/深色模式都能一眼看出不可兑换。
+    final cardColor = enabled
+        ? AppPalette.c(0xFFFFFFFF)
+        : Color.alphaBlend(
+            Colors.black.withOpacity(0.06), AppPalette.c(0xFFF2F6F4));
+    final cardBorder = enabled
+        ? null
+        : Border.all(color: AppPalette.c(0xFFE8EDF5), width: 1);
     final titleColor =
         enabled ? AppPalette.c(0xFF24382F) : AppPalette.c(0xFF8FA09A);
     final priceColor =
@@ -236,6 +243,7 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
           decoration: BoxDecoration(
             color: cardColor,
             borderRadius: BorderRadius.circular(16),
+            border: cardBorder,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

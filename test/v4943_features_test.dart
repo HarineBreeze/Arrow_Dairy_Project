@@ -52,12 +52,16 @@ void main() {
   });
 
   group('主题色注册表', () {
-    test('共 5 套，竹青免费且为默认，其余 4 套 VIP', () {
+    test('共 5 套，竹青免费且为默认，v4.9.50 起 3 免费 2 VIP', () {
       expect(AccentCatalog.styles.length, 5);
       expect(AccentCatalog.styles.first.id, 'bamboo');
       expect(AccentCatalog.styles.first.vip, false);
       expect(AccentCatalog.styles.first.rgb, 0x3E8E6D);
-      expect(AccentCatalog.styles.where((s) => s.vip).length, 4);
+      // 暖棕 / 墨灰改为免费，仅藕粉 / 雾蓝为 VIP
+      expect(AccentCatalog.styles.where((s) => s.vip).length, 2);
+      expect(AccentCatalog.styles.where((s) => !s.vip).length, 3);
+      expect(AccentCatalog.styles.map((s) => s.id).toList(),
+          ['bamboo', 'amber', 'ink', 'lotus', 'ocean']);
     });
 
     test('byId 非法值回落竹青', () {

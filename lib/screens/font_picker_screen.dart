@@ -54,12 +54,12 @@ class _FontPickerScreenState extends State<FontPickerScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: selected
-                          ? AppPalette.c(0xFF3E8E6D)
-                          : AppPalette.c(0xFFE8EDF5),
-                      width: selected ? 1.5 : 1,
-                    ),
+                    // v4.9.50：仅当前选中项保留描边，未选中项取消描边，
+                    // 普通/深色模式都走 AppPalette 映射，避免浅色描边在深色下发亮。
+                    border: selected
+                        ? Border.all(
+                            color: AppPalette.c(0xFF3E8E6D), width: 1.5)
+                        : null,
                   ),
                   child: Row(
                     children: [

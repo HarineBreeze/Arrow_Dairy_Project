@@ -362,7 +362,7 @@ void main() {
   });
 
   group('终身VIP', () {
-    test('zhongshenvip：获得终身VIP、永久拥有、限兑一次', () async {
+    test('zhongshenvip：获得终身VIP、永久拥有、不限次（v4.9.50 内测）', () async {
       final r = await RewardService.redeem('zhongshenvip');
       expect(r.ok, isTrue);
       expect(r.message, contains('终身VIP'));
@@ -370,11 +370,12 @@ void main() {
       final p = await UserStorage.load();
       expect(p.badge, UserProfile.badgeVipForever);
       expect(p.owns(UserProfile.badgeVipForever), isTrue);
-      expect(p.redeemedCodes, contains('zhongshenvip'));
+      // v4.9.50：身份码改为不限次，不写 redeemedCodes
+      expect(p.redeemedCodes, isNot(contains('zhongshenvip')));
 
       final again = await RewardService.redeem(' ZHONGSHENVIP ');
-      expect(again.ok, isFalse);
-      expect(again.message, '该兑换码已使用过');
+      expect(again.ok, isTrue);
+      expect(again.message, contains('终身VIP'));
     });
 
     test('终身VIP 不受限时 VIP 到期摘牌影响', () async {

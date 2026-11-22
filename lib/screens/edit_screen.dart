@@ -601,6 +601,46 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _save() async {
+    // v4.9.50：设置了「未来信件」可见日期时，保存前弹确认。
+    // 到期前将无法打开和修改，必须让用户明确知情；取消则复位保存按钮、
+    // 中止落盘（SaveDoneButton 点击后已起收缩动画，需要 reset 回可点态）。
+    if (_revealAt != null) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: AppPalette.c(0xFFFFFFFF),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('未来信件', style: TextStyle(fontSize: 17)),
+          content: const Text(
+            '当前笔记设置了可见日期，到期前将无法打开和修改，是否确认设置？',
+            style: TextStyle(fontSize: 13, height: 1.6),
+          ),
+          actions: [
+            Pressable(
+              enabled: true,
+              child: TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('取消'),
+              ),
+            ),
+            Pressable(
+              enabled: true,
+              child: TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text('确认',
+                    style: TextStyle(color: AppPalette.c(0xFF3E8E6D))),
+              ),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) {
+        _doneKey.currentState?.reset();
+        if (mounted) setState(() => _saving = false);
+        return;
+      }
+    }
+
     setState(() => _saving = true);
 
     final title = _vTitle;

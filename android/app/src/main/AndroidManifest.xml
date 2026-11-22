@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.shiguang.diary_app">
+    package="com.Ayo.diary_app">
 
     <!-- 震动反馈（长按菜单、资产小眼睛等 HapticFeedback） -->
     <uses-permission android:name="android.permission.VIBRATE"/>

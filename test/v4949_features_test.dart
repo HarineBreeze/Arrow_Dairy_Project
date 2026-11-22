@@ -10,16 +10,14 @@ import 'package:ayodiray/models/user_profile.dart';
 import 'package:ayodiray/services/reward_service.dart';
 import 'package:ayodiray/services/user_storage.dart';
 import 'package:ayodiray/theme/app_palette.dart';
-import 'package:ayodiray/utils/app_version.dart';
 import 'package:ayodiray/utils/haptics.dart';
 import 'package:ayodiray/widgets/milestone_celebration.dart';
 
 /// v4.9.49 行为回归：
-/// 1. 版本号同步到 V4.9.49；
-/// 2. 写作里程碑常量与奖励分值正确；
-/// 3. awardWriteMilestone：未达节点不发、首次达成 +20、跨多节点补发、
+/// 1. 写作里程碑常量与奖励分值正确；
+/// 2. awardWriteMilestone：未达节点不发、首次达成 +20、跨多节点补发、
 ///    重复调用不再发、判重持久化、旧档案回落；
-/// 4. 庆祝特效渲染篇数 / 奖励 / 关闭按钮，且配色走主题色。
+/// 3. 庆祝特效渲染篇数 / 奖励 / 关闭按钮，且配色走主题色。
 class _FakePathProvider extends PathProviderPlatform {
   final String path;
   _FakePathProvider(this.path);
@@ -65,12 +63,6 @@ void main() {
     File('${dir.path}/user_profile.json')
         .writeAsStringSync(jsonEncode(p.toJson()));
   }
-
-  group('版本号', () {
-    test('展示版本同步到 V4.9.49', () {
-      expect(AppVersion.displayVersion, 'V4.9.49');
-    });
-  });
 
   group('写作里程碑常量', () {
     test('节点列表与奖励分值固定', () {

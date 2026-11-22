@@ -102,8 +102,15 @@ class RewardService {
   /// 使用后移除非普通版身份牌与 VIP 权益，并返还杂货店里非 VIP 身份牌的兑换次数。
   static const String noVipCode = 'novip';
 
-  /// 兑换码 → 身份 id
-  static const Map<String, String> badgeCodes = {
+  /// 兑换码 → 身份 id（限 1 次，写 redeemedCodes）
+  ///
+  /// v4.9.50：内测用的 3 个身份码改为不限次，移到 [unlimitedBadgeCodes]，
+  /// 方便反复切换身份测试权益；本表保留给未来可能新增的限次身份码。
+  static const Map<String, String> badgeCodes = <String, String>{};
+
+  /// 不限次使用的身份兑换码（不查重、不写 redeemedCodes，可反复兑换）。
+  /// 内测期间 vip / zhongshenvip / neice 随时可反复领取并立即佩戴。
+  static const Map<String, String> unlimitedBadgeCodes = {
     'neice': UserProfile.badgeBeta,
     'vip': UserProfile.badgeVip,
     'zhongshenvip': UserProfile.badgeVipForever,
@@ -192,6 +199,19 @@ class RewardService {
           ? '已是普通版，无需清除'
           : '已清除身份与会员权益：${removed.map(_badgeName).join('、')}';
       return RedeemOutcome(true, msg);
+    }
+
+    // 不限次身份码：不查重、不记录，每次都能兑换并立即佩戴。
+    // 放在查重之前，避免内测期间这些码被历史记录挡住。
+    final unlimitedBadge = unlimitedBadgeCodes[code];
+    if (unlimitedBadge != null) {
+      profile.badge = unlimitedBadge;
+      if (!profile.ownedBadges.contains(unlimitedBadge)) {
+        profile.ownedBadges.add(unlimitedBadge);
+      }
+      await UserStorage.save(profile);
+      final name = _badgeName(unlimitedBadge);
+      return RedeemOutcome(true, '兑换成功，已获得「$name」身份');
     }
 
     if (profile.redeemedCodes.contains(code)) {

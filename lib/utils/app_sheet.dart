@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_palette.dart';
+import '../theme/app_theme_scope.dart';
 
 /// 全站底部弹层统一入口（v4.9.28）。
 ///
@@ -53,18 +54,39 @@ class AppSheet {
       isScrollControlled: isScrollControlled,
       isDismissible: barrierDismissible,
       enableDrag: true,
-      backgroundColor: AppPalette.c(0xFFFFFFFF),
+      // v4.9.50：面板底色不再用 backgroundColor（该值在弹层创建时固定，
+      // 深色模式抽屉内手动切换模式时不会刷新，只有重弹才恢复）。
+      // 改为透明 + 内部 [_ThemedSheetSurface] 自绘底色，它订阅 AppThemeScope，
+      // 主题/模式切换即重建，外圈与内部颜色同步更新。
+      backgroundColor: Colors.transparent,
       barrierColor: const Color(0x66000000),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(radius)),
       ),
-      builder: (ctx) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          handle(ctx),
-          Flexible(child: builder(ctx)),
-        ],
+      clipBehavior: Clip.antiAlias,
+      builder: (ctx) => _ThemedSheetSurface(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            handle(ctx),
+            Flexible(child: builder(ctx)),
+          ],
+        ),
       ),
     );
+  }
+}
+
+/// 弹层面板：订阅主题明暗，切换模式时自绘底色随之重建。
+class _ThemedSheetSurface extends StatelessWidget {
+  final Widget child;
+  const _ThemedSheetSurface({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    // 建立对 AppThemeScope 的依赖：主题/模式变化时本组件重建，
+    // 面板底色读取的就是映射后的新值（深色下为深灰绿）。
+    AppThemeScope.watch(context);
+    return ColoredBox(color: AppPalette.c(0xFFFFFFFF), child: child);
   }
 }

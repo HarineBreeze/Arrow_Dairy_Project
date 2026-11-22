@@ -749,8 +749,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  /// v4.9.43：主题色抽屉。默认竹青免费，其余 4 套 VIP 专属。
-  /// VIP 过期后已设置的主题色保留、可切回竹青，但不可再选其它 VIP 色。
+  /// 主题色抽屉。v4.9.50 起竹青 / 暖棕 / 墨灰免费，藕粉 / 雾蓝 VIP 专属。
+  /// VIP 过期后已设置的主题色保留、可切回免费色，但不可再选其它 VIP 色。
   Future<void> _pickAccent() async {
     final profile = await UserStorage.load();
     if (!mounted) return;

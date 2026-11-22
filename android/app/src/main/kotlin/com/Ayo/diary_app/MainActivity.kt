@@ -1,4 +1,4 @@
-package com.shiguang.diary_app
+package com.Ayo.diary_app
 
 import android.app.AlarmManager
 import android.app.NotificationChannel

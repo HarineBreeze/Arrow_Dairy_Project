@@ -435,13 +435,14 @@ class ItemListScreenState extends State<ItemListScreen> {
             icon: const AppIcon(AppIcons.menu, color: Colors.white),
             onPressed: widget.onOpenMenu,
           ),
-          // 页面标题：与资产全景主页顶栏一致（菜单键右侧、白色 17 号加粗）
+          // 页面标题：v4.9.50 四主页顶栏字号统一为 15（菜单键右侧、白色加粗），
+          // 与日记/事件/资产页一致，视觉上与 24 号菜单图标对齐。
           if (!_searching)
             const Padding(
               padding: EdgeInsets.only(right: 8),
               child: Text('物品',
                   style: TextStyle(
-                      fontSize: 17,
+                      fontSize: 15,
                       fontWeight: FontWeight.w600,
                       color: Colors.white)),
             ),

@@ -1,6 +1,6 @@
-# diary_app
+# AyoDiray
 
-A new Flutter project.
+阿尤日记（AyoDiray）—— 离线单机生活账本，日记 / 物品 / 资产 / 倒计时四模块打通。
 
 ## Getting Started
 

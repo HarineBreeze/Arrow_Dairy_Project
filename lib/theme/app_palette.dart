@@ -48,12 +48,13 @@ class AccentStyle {
   });
 }
 
-/// 主题色注册表。第一套免费，其余为 VIP 权益。
+/// 主题色注册表。竹青 / 暖棕 / 墨灰免费，藕粉 / 雾蓝为 VIP 权益。
 class AccentCatalog {
   AccentCatalog._();
 
   static const String bamboo = 'bamboo';
 
+  /// v4.9.50：暖棕 / 墨灰改为免费，紧跟竹青之后；藕粉 / 雾蓝仍为 VIP。
   static const List<AccentStyle> styles = <AccentStyle>[
     AccentStyle(
         id: 'bamboo',
@@ -66,6 +67,30 @@ class AccentCatalog {
         darkPage: 0x101613, // 原深色页面底，逐字节不变
         darkSurface: 0x18221E, // 原深色卡片底
         darkTintBg: 0x233A2F, // 原深色底纹
+        vip: false),
+    AccentStyle(
+        id: 'amber',
+        name: '暖棕',
+        rgb: 0xB07D4F,
+        tintRgb: 0xF4EADA,
+        pageRgb: 0xFBF6F0,
+        darkTop: 0x33261C,
+        darkTint: 0xC9A47A,
+        darkPage: 0x1A1510,
+        darkSurface: 0x261E16,
+        darkTintBg: 0x372A1D,
+        vip: false),
+    AccentStyle(
+        id: 'ink',
+        name: '墨灰',
+        rgb: 0x5B6B66,
+        tintRgb: 0xE7ECEA,
+        pageRgb: 0xF5F7F6,
+        darkTop: 0x222A27,
+        darkTint: 0x8A9C95,
+        darkPage: 0x141816,
+        darkSurface: 0x1E241F,
+        darkTintBg: 0x2B332E,
         vip: false),
     AccentStyle(
         id: 'lotus',
@@ -90,30 +115,6 @@ class AccentCatalog {
         darkPage: 0x101720,
         darkSurface: 0x18222E,
         darkTintBg: 0x22303F,
-        vip: true),
-    AccentStyle(
-        id: 'amber',
-        name: '暖棕',
-        rgb: 0xB07D4F,
-        tintRgb: 0xF4EADA,
-        pageRgb: 0xFBF6F0,
-        darkTop: 0x33261C,
-        darkTint: 0xC9A47A,
-        darkPage: 0x1A1510,
-        darkSurface: 0x261E16,
-        darkTintBg: 0x372A1D,
-        vip: true),
-    AccentStyle(
-        id: 'ink',
-        name: '墨灰',
-        rgb: 0x5B6B66,
-        tintRgb: 0xE7ECEA,
-        pageRgb: 0xF5F7F6,
-        darkTop: 0x222A27,
-        darkTint: 0x8A9C95,
-        darkPage: 0x141816,
-        darkSurface: 0x1E241F,
-        darkTintBg: 0x2B332E,
         vip: true),
   ];
 

@@ -5,7 +5,6 @@ import '../services/app_settings.dart';
 import '../utils/app_toast.dart';
 import '../utils/haptics.dart';
 import '../utils/usable_days.dart';
-import '../widgets/app_icons.dart';
 import '../widgets/pressable.dart';
 
 import '../theme/app_palette.dart';
@@ -175,20 +174,8 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              // v4.9.48：「可使用天数 参数」标题移除，仅保留右上角关闭按钮
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 12, 4),
-                child: Row(
-                  children: [
-                    const Spacer(),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      icon: AppIcon(AppIcons.close,
-                          size: 20, color: AppPalette.c(0xFF8FA09A)),
-                    ),
-                  ],
-                ),
-              ),
+              // v4.9.50：移除右上角关闭按钮，改由底部「取消」关闭。
+              const SizedBox(height: 12),
               Flexible(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
@@ -233,28 +220,35 @@ class _UsableDaysSettingsSheetState extends State<UsableDaysSettingsSheet> {
                   ),
                 ),
               ),
+              // v4.9.50：保存按钮取消底纹、移到右下角，并排增加取消按钮。
+              // 排版 / 样式沿用「还原」弹窗的 取消 + 还原 两个 TextButton。
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 6, 20, 12),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: Pressable(
-                    enabled: true,
-                    child: ElevatedButton(
-                      onPressed: _save,
-                      style: ElevatedButton.styleFrom(
-                        primary: AppPalette.c(0xFF3E8E6D),
-                        onPrimary: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                padding: const EdgeInsets.fromLTRB(20, 6, 12, 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Pressable(
+                      enabled: true,
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('取消',
+                            style: TextStyle(fontSize: 15)),
                       ),
-                      child: const Text('保存',
-                          style: TextStyle(
-                              fontSize: 15, fontWeight: FontWeight.w600)),
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    Pressable(
+                      enabled: true,
+                      child: TextButton(
+                        onPressed: _save,
+                        child: Text('保存',
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: AppPalette.c(0xFF3E8E6D),
+                              fontWeight: FontWeight.w600,
+                            )),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],

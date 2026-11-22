@@ -272,8 +272,9 @@ void main() {
               of: find.byKey(const ValueKey('shop-item-birthday')),
               matching: find.byType(Container))
           .first);
+      // v4.9.50：禁用态卡片在浅色底上叠 6% 黑，得到更明显的灰色底纹
       expect((card.decoration as BoxDecoration).color,
-          const Color(0xFFF2F6F4));
+          const Color(0xFFE3E7E5));
 
       await tester.tap(find.byKey(const ValueKey('shop-item-birthday')));
       await tester.pump(const Duration(milliseconds: 300));
@@ -486,8 +487,9 @@ void main() {
               of: find.byKey(const ValueKey('shop-item-vip')),
               matching: find.byType(Container))
           .first);
+      // v4.9.50：禁用态卡片在浅色底上叠 6% 黑，得到更明显的灰色底纹
       expect((card.decoration as BoxDecoration).color,
-          const Color(0xFFF2F6F4));
+          const Color(0xFFE3E7E5));
 
       await tester.tap(find.byKey(const ValueKey('shop-item-vip')));
       await tester.pump(const Duration(milliseconds: 300));

@@ -645,10 +645,12 @@ class AssetScreenState extends State<AssetScreen> {
                 icon: const AppIcon(AppIcons.menu, color: Colors.white),
                 onPressed: widget.onOpenMenu,
               ),
+              // v4.9.50：四主页顶栏标题字号统一为 15，与日记/物品/事件页一致，
+              // 视觉上与 24 号菜单图标对齐。
               const Expanded(
                 child: Text('资产',
                     style: TextStyle(
-                        fontSize: 17,
+                        fontSize: 15,
                         fontWeight: FontWeight.w600,
                         color: Colors.white)),
               ),
