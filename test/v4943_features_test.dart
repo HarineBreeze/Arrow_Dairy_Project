@@ -52,16 +52,20 @@ void main() {
   });
 
   group('主题色注册表', () {
-    test('共 6 套，竹青免费且为默认，v5.0.0 起 3 免费 3 VIP', () {
+    test('共 6 套，竹青免费且为默认，v5.0.5 起暖棕改为兑换型', () {
       expect(AccentCatalog.styles.length, 6);
       expect(AccentCatalog.styles.first.id, 'bamboo');
       expect(AccentCatalog.styles.first.vip, false);
       expect(AccentCatalog.styles.first.rgb, 0x3E8E6D);
-      // 暖棕 / 墨灰免费，藕粉 / 雾蓝 / 霞紫为 VIP
+      // 竹青 / 墨灰免费，暖棕需杂货店兑换，藕粉 / 雾蓝 / 霞紫为 VIP
       expect(AccentCatalog.styles.where((s) => s.vip).length, 3);
       expect(AccentCatalog.styles.where((s) => !s.vip).length, 3);
+      expect(AccentCatalog.styles.where((s) => s.needsShop).length, 1);
+      expect(AccentCatalog.needsShop('amber'), true);
+      expect(AccentCatalog.needsShop('ink'), false);
+      // v5.0.5：暖棕移到墨灰与藕粉之间
       expect(AccentCatalog.styles.map((s) => s.id).toList(),
-          ['bamboo', 'amber', 'ink', 'lotus', 'ocean', 'violet']);
+          ['bamboo', 'ink', 'amber', 'lotus', 'ocean', 'violet']);
     });
 
     test('byId 非法值回落竹青', () {

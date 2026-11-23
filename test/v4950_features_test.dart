@@ -61,19 +61,20 @@ void main() {
   Future<UserProfile> readProfile() async => UserStorage.load();
 
   group('主题色免费属性与排序', () {
-    test('暖棕 / 墨灰为免费，藕粉 / 雾蓝 / 霞紫为 VIP', () {
+    test('暖棕改为兑换型、墨灰为免费，藕粉 / 雾蓝 / 霞紫为 VIP', () {
       final byId = {for (final s in AccentCatalog.styles) s.id: s};
       expect(byId['bamboo']!.vip, false);
-      expect(byId['amber']!.vip, false); // 暖棕
+      expect(byId['amber']!.vip, false); // 暖棕（v5.0.5 起需杂货店兑换）
+      expect(byId['amber']!.needsShop, true);
       expect(byId['ink']!.vip, false); // 墨灰
       expect(byId['lotus']!.vip, true); // 藕粉
       expect(byId['ocean']!.vip, true); // 雾蓝
       expect(byId['violet']!.vip, true); // 霞紫
     });
 
-    test('暖棕 / 墨灰排在竹青之后、VIP 色之前', () {
+    test('暖棕移到墨灰与藕粉之间', () {
       final ids = AccentCatalog.styles.map((s) => s.id).toList();
-      expect(ids, ['bamboo', 'amber', 'ink', 'lotus', 'ocean', 'violet']);
+      expect(ids, ['bamboo', 'ink', 'amber', 'lotus', 'ocean', 'violet']);
     });
 
     test('按序 Free 色共 3 套', () {

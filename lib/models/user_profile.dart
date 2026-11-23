@@ -43,6 +43,11 @@ class UserProfile {
   /// 已拥有的身份（[badgeNormal] 恒在首位，其余由兑换码 / 灵感杂货店获得）
   List<String> ownedBadges;
 
+  /// v5.0.5：已解锁的「兑换型主题色」id（当前只有 `amber` 暖棕）。
+  /// 灵感杂货店花 1400 点永久兑换后写入；免费色（竹青 / 墨灰）不记录，
+  /// 旧档案无此字段时回落空列表（零迁移）。
+  List<String> ownedAccents;
+
   /// 已使用过的兑换码（同一用户 ID 下每码只能用一次）
   List<String> redeemedCodes;
 
@@ -86,6 +91,7 @@ class UserProfile {
     this.points = 0,
     this.badge = badgeNormal,
     List<String>? ownedBadges,
+    List<String>? ownedAccents,
     List<String>? redeemedCodes,
     this.lastWriteReward = '',
     this.firstEventReward = false,
@@ -98,6 +104,7 @@ class UserProfile {
     String? initialUserId,
     String? initialRegisteredAt,
   })  : ownedBadges = _normalizeOwned(ownedBadges, badge),
+        ownedAccents = ownedAccents ?? <String>[],
         redeemedCodes = redeemedCodes ?? <String>[],
         claimedWriteMilestones = claimedWriteMilestones ?? <int>[],
         userId = (initialUserId == null || initialUserId.isEmpty)
@@ -177,6 +184,9 @@ class UserProfile {
   /// 是否已拥有某个身份
   bool owns(String badgeId) => ownedBadges.contains(badgeId);
 
+  /// v5.0.5：是否已解锁某个「兑换型主题色」（暖棕）。
+  bool ownsAccent(String accentId) => ownedAccents.contains(accentId);
+
   /// VIP 权益到期时间（未设置返回 null）
   DateTime? get vipCardExpireTime =>
       vipCardExpireAt.isEmpty ? null : DateTime.tryParse(vipCardExpireAt);
@@ -195,6 +205,7 @@ class UserProfile {
         'points': points,
         'badge': badge,
         'ownedBadges': ownedBadges,
+        'ownedAccents': ownedAccents,
         'redeemedCodes': redeemedCodes,
         'lastWriteReward': lastWriteReward,
         'firstEventReward': firstEventReward,
@@ -246,6 +257,10 @@ class UserProfile {
       points: (json['points'] as num?)?.toInt() ?? 0,
       badge: current,
       ownedBadges: rawOwned,
+      // 旧档案无此字段：回落空列表（零迁移）
+      ownedAccents: (json['ownedAccents'] as List?)
+          ?.map((e) => e.toString())
+          .toList(),
       redeemedCodes:
           (json['redeemedCodes'] as List?)?.map((e) => e.toString()).toList() ??
               <String>[],

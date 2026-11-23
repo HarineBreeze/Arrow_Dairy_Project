@@ -99,11 +99,12 @@ void main() {
 
     expect(find.text('有图的笔记'), findsOneWidget);
     expect(find.text('无图的笔记'), findsOneWidget);
-    // 有图卡：图片渲染（4:3 容器 124×93）
+    // 有图卡：图片渲染（v5.0.5 起 1:1 方图 93×93）
     expect(find.byType(Image), findsOneWidget);
     final imgBox = tester.getSize(find.byType(Image));
-    expect(imgBox.width / imgBox.height, closeTo(4 / 3, 0.02),
-        reason: '图片区必须是 4:3');
+    expect(imgBox.width / imgBox.height, closeTo(1, 0.02),
+        reason: '图片区必须是 1:1');
+    expect(imgBox.height, closeTo(93, 0.5), reason: '卡片高度保持不变');
     // 无图卡：日期徽章显示「日」数字
     final day = DateTime(now.year, now.month, now.day - 1).day;
     expect(find.text('$day'), findsWidgets,

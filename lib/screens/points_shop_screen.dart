@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/user_profile.dart';
+import '../services/app_settings.dart';
 import '../services/reward_service.dart';
 import '../services/user_storage.dart';
 import '../utils/app_toast.dart';
@@ -49,9 +50,10 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
     setState(() => _profile = p);
   }
 
-  /// 商品是否已不可再兑（限时 VIP 卡看次数上限；永久牌看已拥有）
+  /// 商品是否已不可再兑（限时 VIP 卡看次数上限；永久牌 / 主题看已拥有）
   bool _soldOut(UserProfile p, ShopBadge item) {
     if (item.isVipTimeCard) return item.usedCount(p) >= item.limit;
+    if (item.isTheme) return p.ownsAccent(item.accentId);
     return p.owns(item.id);
   }
 
@@ -108,10 +110,17 @@ class _PointsShopScreenState extends State<PointsShopScreen> {
     if (ok != true || !mounted) return;
 
     final outcome = await (widget.buyOverride ??
-        (isTimeCard ? RewardService.buyVipCard : RewardService.buyBadge))(
-        item.id);
+        (isTimeCard
+            ? RewardService.buyVipCard
+            : item.isTheme
+                ? RewardService.buyThemeAccent
+                : RewardService.buyBadge))(item.id);
     if (!mounted) return;
-    if (outcome.ok) Haptics.light();
+    if (outcome.ok) {
+      Haptics.light();
+      // v5.0.5：主题色兑换成功即切换，省去用户再跑一趟设置页
+      if (item.isTheme) await AppSettings.setAccentId(item.accentId);
+    }
     _toast(outcome.message);
     // 无论成功与否都重读一次：成功时刷新余额与已购状态
     await _load();

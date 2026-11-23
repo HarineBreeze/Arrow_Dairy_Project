@@ -173,7 +173,12 @@ void main() {
       expect(find.text('诞生日-身份'), findsOneWidget);
       expect(find.text('纪念APP正式上线，1年后下架'), findsOneWidget);
       expect(find.text('50 点'), findsOneWidget);
-      expect(find.text('0/1'), findsOneWidget, reason: '次数改为「已兑/上限」');
+      // 诞生日与「主题·暖棕」都是 0/1，按卡片 key 精确定位（次数为「已兑/上限」）
+      expect(
+          find.descendant(
+              of: find.byKey(const ValueKey('shop-item-birthday')),
+              matching: find.text('0/1')),
+          findsOneWidget);
 
       // VIP日卡
       expect(find.text('VIP日卡'), findsOneWidget);

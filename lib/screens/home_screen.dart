@@ -228,7 +228,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         if (e.imagePath.isEmpty) continue;
         if (!File(e.imagePath).existsSync()) continue;
         precacheImage(
-          EntryImage.provider(context, e.imagePath, 124),
+          EntryImage.provider(context, e.imagePath, 93),
           context,
         ).catchError((Object _) {}); // 单张失败不影响其它
       }
@@ -2229,7 +2229,7 @@ class _DiaryCard extends StatelessWidget {
     final isEncrypted = entry.isSealed || entry.encrypted;
     // 加密笔记：封条风卡片（斜纹密封带 + 虚线边框），只外显副标题与日期时间
     if (isEncrypted) return _buildEncryptedCard();
-    // 有图走「左图右文」（图片 4:3）；无图沿用原撕页日历排版。
+    // 有图走「左图右文」（v5.0.5：图片 1:1 正方形）；无图沿用原撕页日历排版。
     // 图片文件可能已被系统清理：以实际存在为准，缺失自动回退无图版。
     final hasImage =
         entry.imagePath.isNotEmpty && File(entry.imagePath).existsSync();
@@ -2254,7 +2254,9 @@ class _DiaryCard extends StatelessWidget {
     );
   }
 
-  /// 有图版（方案 D）：左 4:3 图 + 右侧标题/摘要/元信息，单卡最矮
+  /// 有图版（方案 D）：左 1:1 方图 + 右侧标题/摘要/元信息，单卡最矮。
+  /// v5.0.5：图片由 4:3 改为 1:1（自动居中裁剪），卡片高度不变；
+  /// 图片变窄后右侧文字区自然左移占位。
   Widget _buildImageCard() {
     return Padding(
       padding: const EdgeInsets.all(10),
@@ -2265,10 +2267,10 @@ class _DiaryCard extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: SizedBox(
-              width: 124,
-              height: 93, // 4:3
-              // 按 124 逻辑宽降采样解码，避免原图整幅驻留内存
-              child: EntryImage(path: entry.imagePath, displayWidth: 124),
+              width: 93,
+              height: 93, // 1:1（与原来的 4:3 同高，卡片整体尺寸不变）
+              // 按 93 逻辑宽降采样解码，避免原图整幅驻留内存
+              child: EntryImage(path: entry.imagePath, displayWidth: 93),
             ),
           ),
           const SizedBox(width: 12),

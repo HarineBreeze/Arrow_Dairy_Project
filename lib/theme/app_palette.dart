@@ -33,6 +33,10 @@ class AccentStyle {
   /// 是否 VIP 专属
   final bool vip;
 
+  /// v5.0.5：是否需要在「灵感杂货店」兑换后才能使用（暖棕）。
+  /// 与 [vip] 互斥：兑换型是永久买断，走灵感而非 VIP 权益。
+  final bool needsShop;
+
   const AccentStyle({
     required this.id,
     required this.name,
@@ -45,16 +49,21 @@ class AccentStyle {
     required this.darkSurface,
     required this.darkTintBg,
     required this.vip,
+    this.needsShop = false,
   });
 }
 
-/// 主题色注册表。竹青 / 暖棕 / 墨灰免费，藕粉 / 雾蓝 / 霞紫为 VIP 权益。
+/// 主题色注册表。
+///
+/// v5.0.5 起：竹青 / 墨灰免费；暖棕改为「灵感杂货店」1400 点永久兑换；
+/// 藕粉 / 雾蓝 / 霞紫仍为 VIP 权益。
 class AccentCatalog {
   AccentCatalog._();
 
   static const String bamboo = 'bamboo';
 
-  /// v4.9.50：暖棕 / 墨灰改为免费，紧跟竹青之后；藕粉 / 雾蓝仍为 VIP。
+  /// 顺序（v5.0.5）：竹青 → 墨灰 → 暖棕（兑换）→ 藕粉 → 雾蓝 → 霞紫。
+  /// 暖棕从「紧跟竹青」移到墨灰与藕粉之间，并改为杂货店兑换型。
   static const List<AccentStyle> styles = <AccentStyle>[
     AccentStyle(
         id: 'bamboo',
@@ -69,18 +78,6 @@ class AccentCatalog {
         darkTintBg: 0x233A2F, // 原深色底纹
         vip: false),
     AccentStyle(
-        id: 'amber',
-        name: '暖棕',
-        rgb: 0xB07D4F,
-        tintRgb: 0xF4EADA,
-        pageRgb: 0xFBF6F0,
-        darkTop: 0x33261C,
-        darkTint: 0xC9A47A,
-        darkPage: 0x1A1510,
-        darkSurface: 0x261E16,
-        darkTintBg: 0x372A1D,
-        vip: false),
-    AccentStyle(
         id: 'ink',
         name: '墨灰',
         rgb: 0x5B6B66,
@@ -92,6 +89,20 @@ class AccentCatalog {
         darkSurface: 0x1E241F,
         darkTintBg: 0x2B332E,
         vip: false),
+    // v5.0.5：暖棕从免费改为「灵感杂货店」1400 点永久兑换，位置移到墨灰之后。
+    AccentStyle(
+        id: 'amber',
+        name: '暖棕',
+        rgb: 0xB07D4F,
+        tintRgb: 0xF4EADA,
+        pageRgb: 0xFBF6F0,
+        darkTop: 0x33261C,
+        darkTint: 0xC9A47A,
+        darkPage: 0x1A1510,
+        darkSurface: 0x261E16,
+        darkTintBg: 0x372A1D,
+        vip: false,
+        needsShop: true),
     AccentStyle(
         id: 'lotus',
         name: '藕粉',
@@ -137,6 +148,9 @@ class AccentCatalog {
       );
 
   static bool isVip(String? id) => byId(id).vip;
+
+  /// v5.0.5：该主题色是否需要在灵感杂货店兑换（暖棕）。
+  static bool needsShop(String? id) => byId(id).needsShop;
 }
 
 /// 全局语义调色板。

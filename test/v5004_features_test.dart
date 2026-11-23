@@ -18,8 +18,8 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('版本号', () {
-    test('展示版本推进到 V5.0.4', () {
-      expect(AppVersion.displayVersion, 'V5.0.4');
+    test('展示版本推进到 V5.0.5', () {
+      expect(AppVersion.displayVersion, 'V5.0.5');
     });
   });
 

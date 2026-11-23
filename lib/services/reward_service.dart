@@ -1,8 +1,8 @@
 import '../models/user_profile.dart';
 import 'user_storage.dart';
 
-/// 杂货店商品类型：永久身份 / 限时 VIP 日卡 / 限时 VIP 周卡
-enum ShopItemKind { badge, vipDayCard, vipWeekCard }
+/// 杂货店商品类型：永久身份 / 限时 VIP 日卡 / 限时 VIP 周卡 / 永久主题色
+enum ShopItemKind { badge, vipDayCard, vipWeekCard, theme }
 
 /// 首次新增奖励的类别（事件 / 物品 / 资产，各仅 1 次）
 enum FirstAddKind { event, item, asset }
@@ -26,6 +26,9 @@ class ShopBadge {
   /// 确认框里的「有效期xx」文案
   final String effectLabel;
 
+  /// v5.0.5：[ShopItemKind.theme] 商品对应的主题色 id（如 `amber`）。
+  final String accentId;
+
   const ShopBadge({
     required this.id,
     required this.name,
@@ -35,16 +38,21 @@ class ShopBadge {
     this.limit = 1,
     this.duration = Duration.zero,
     this.effectLabel = '',
+    this.accentId = '',
   });
 
   /// 是否是「在原剩余时间上累加」的限时 VIP 道具
   bool get isVipTimeCard =>
       kind == ShopItemKind.vipDayCard || kind == ShopItemKind.vipWeekCard;
 
+  /// 是否是「永久买断」的主题色
+  bool get isTheme => kind == ShopItemKind.theme;
+
   /// 该商品在本档案里已兑换的次数
   int usedCount(UserProfile p) {
     if (kind == ShopItemKind.vipDayCard) return p.vipCardCount;
     if (kind == ShopItemKind.vipWeekCard) return p.vipWeekCardCount;
+    if (kind == ShopItemKind.theme) return p.ownsAccent(accentId) ? 1 : 0;
     return p.owns(id) ? 1 : 0;
   }
 }
@@ -144,6 +152,16 @@ class RewardService {
       limit: vipWeekCardMaxCount,
       duration: vipWeekCardDuration,
       effectLabel: '有效期7天',
+    ),
+    // v5.0.5：暖棕主题色从免费改为灵感杂货店永久兑换
+    ShopBadge(
+      id: 'themeAmber',
+      name: '主题·暖棕',
+      price: 1400,
+      kind: ShopItemKind.theme,
+      note: '兑换后可永久使用「暖棕」主题色',
+      limit: 1,
+      accentId: 'amber',
     ),
   ];
 
@@ -294,6 +312,31 @@ class RewardService {
     await UserStorage.save(profile);
     final gain = item.kind == ShopItemKind.vipWeekCard ? '7天' : '1天';
     return RedeemOutcome(true, '兑换成功，VIP有效期增加$gain');
+  }
+
+  /// v5.0.5：用灵感永久解锁「兑换型主题色」（暖棕）。
+  ///
+  /// 扣分 → 记入 [UserProfile.ownedAccents]。主题的实际切换由 UI 层负责
+  /// （兑换成功后直接切到该主题，与身份牌「兑换即佩戴」保持一致）。
+  static Future<RedeemOutcome> buyThemeAccent(String itemId) async {
+    final item = shopBadgeOf(itemId);
+    if (item == null || !item.isTheme) {
+      return const RedeemOutcome(false, '商品不存在');
+    }
+
+    final profile = await UserStorage.load();
+    if (profile.ownsAccent(item.accentId)) {
+      return const RedeemOutcome(false, '已拥有该主题色');
+    }
+    if (profile.points < item.price) {
+      final lack = item.price - profile.points;
+      return RedeemOutcome(false, '灵感不足，还差 $lack 点');
+    }
+
+    profile.points -= item.price;
+    profile.ownedAccents.add(item.accentId);
+    await UserStorage.save(profile);
+    return RedeemOutcome(true, '兑换成功，已解锁「${item.name}」');
   }
 
   /// 切换当前佩戴的身份（永久拥有的牌随时可切；

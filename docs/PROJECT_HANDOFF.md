@@ -1,8 +1,9 @@
 # 阿尤日记 · 项目交接与推进指南
 
-> 截至 **v5.0.4**（versionCode 162，全量 **614** 项测试通过）。
+> 截至 **v5.0.5**（versionCode 163，全量 **630** 项测试通过）。
 > v5.0.2 / v5.0.3 由电脑端发布：隐私锁 4 步向导（`app_lock_setup_wizard.dart`）、关闭验证、深色默认关闭、通用密码向导 `pin_setup_wizard.dart`（3 步资产 / 2 步笔记）、多页 UI 优化。
 > **v5.0.4**（本会话叠加）：① 深色模式下向导「未选中项」由亮灰白改为同主题暗底纹（`0xFFF5F8F6` 登记进 darkMap → `0xFF233A2F`，随主题色变）；② 修改资产密码在验证身份后复用通用 3 步向导（设置密码→确认密码→设置密保），与「开启加密访问」样式/流程完全一致。版本号顺延至 5.0.4 是因为远程已有 v5.0.3 tag。
+> **v5.0.5**：① 笔记预览卡图片由 4:3 改为 **1:1** 方图（卡片高度与编辑页尺寸不变，文字区自然左移）；② **暖棕**主题从免费改为「灵感杂货店」**1400 点永久兑换**（商品名「主题·暖棕」），位置移到墨灰与藕粉之间；未解锁时置灰，点击提示「未解锁，赶紧前往灵感杂货店兑换吧～」。
 > 本文件是跨设备 / 跨会话接手的**唯一入口**：新会话先完整读它，即可无缝续接，无需重新口述背景。
 > 关键信息均以源码为准，文中标注对应文件或符号，便于核对。改代码前务必读完 §2 规范与 §4 发版流程。
 
@@ -75,12 +76,12 @@ lib/
 
 ### 2.2 主题色体系（v4.9.43 起，`AccentStyle` / `AccentCatalog`）
 
-- 6 套主题色（v5.0.0）：**免费 3 套** `bamboo` 竹青（默认）/ `amber` 暖棕 / `ink` 墨灰；**VIP 3 套** `lotus` 藕粉 / `ocean` 雾蓝 / `violet` 霞紫（紫色系）。
-  > v4.9.50 起暖棕 / 墨灰由 VIP 改为免费；v5.0.0 新增霞紫（VIP），放在 styles 列表末尾。
+- 6 套主题色（**v5.0.5 顺序**）：`bamboo` 竹青（默认）/ `ink` 墨灰（免费）/ `amber` 暖棕（**杂货店 1400 点永久兑换**）/ `lotus` 藕粉 / `ocean` 雾蓝 / `violet` 霞紫（VIP 3 套）。
+  > v4.9.50 起暖棕 / 墨灰由 VIP 改为免费；v5.0.0 新增霞紫（VIP）；**v5.0.5 暖棕取消免费**，移到墨灰与藕粉之间，改为 `needsShop: true`，由 `RewardService.buyThemeAccent` 解锁并写入 `UserProfile.ownedAccents`。
 - 每套 `AccentStyle` 提供浅色 `rgb / tintRgb / pageRgb` 与深色 `darkTop / darkTint / darkPage / darkSurface / darkTintBg`。**竹青全套与原写死值逐字节一致**，保证零回归。
-- **新增主题色**：只需在 `AccentCatalog.styles` 末尾加一条 `AccentStyle`（填齐 8 个色值 + `vip` 判定），设置页抽屉会遍历 `styles` 自动接入、自动加 VIP 角标；无需改 `AppPalette.c()` 的映射表（它按 `accent` 当前值动态重映射）。
+- **新增主题色**：只需在 `AccentCatalog.styles` 末尾加一条 `AccentStyle`（填齐 8 个色值 + `vip` / `needsShop` 判定），设置页抽屉会遍历 `styles` 自动接入、自动加 VIP 角标；无需改 `AppPalette.c()` 的映射表（它按 `accent` 当前值动态重映射）。
 - 切换主题色时 `AppPalette.c()` 会把整族颜色重映射：按钮、标签底、置顶边框、页面底、卡片底、顶栏、高亮字一起换色。
-- 设置页「主题色」抽屉：VIP 过期后保留已设主题色、可切回竹青，但不可再选其它 VIP 色（`settings_screen.dart:_pickAccent`）。
+- 设置页「主题色」抽屉：VIP 过期后保留已设主题色、可切回竹青，但不可再选其它 VIP 色；**兑换型（暖棕）未解锁时整行置灰（opacity 0.45），点击提示「未解锁，赶紧前往灵感杂货店兑换吧～」**；当前正在使用的暖棕视为已解锁（避免老用户升级后被锁死）（`settings_screen.dart:_pickAccent` / `_accentRow`）。
 - **新增任何页面背景/卡片底/顶栏取色，都必须走主题色字段，不要写死中性色**——否则会出现"别的页面都换色、就这页还是淡绿"的 bug（v4.9.44/45/46 连修三轮的问题）。
 
 ### 2.3 圆角 / 字号 / 边距档位
@@ -142,7 +143,7 @@ lib/
 
 - **深色模式**：右箭头，点击开抽屉，内含**两个震动同款 Switch**——「跟随系统」与「深色模式」（key：`theme-follow-system` / `theme-dark-mode`）。跟随系统开启时深色开关置灰禁用；原「已开启/已关闭」二行已合并为单一「深色模式」开关。
 - **字体**：进入 `FontPickerScreen`。
-- **主题色**：进抽屉选 6 套主题色（免费 3 / VIP 3，限制见 §2.2）。
+- **主题色**：进抽屉选 6 套主题色（竹青 / 墨灰免费、暖棕需杂货店兑换、藕粉 / 雾蓝 / 霞紫为 VIP，限制见 §2.2）。
 
 **隐私锁（v5.0.1）**：「隐私锁」Switch（key `privacy_lock_switch`），仅 **冷启动** 校验一次（解锁后本次会话不再验证）。
 - 首次开启 → `AppLockSetupDialog`：选「密码」或「九宫格手势」，两次输入/绘制 + **密保问题与答案必填**；点「取消」→ 返回并保持关闭（不写凭证）。
@@ -159,7 +160,7 @@ lib/
 
 ## 4. 发版标准化流程（每次改动必须完整走完）
 
-> 固定 SOP，顺序不可跳过。APK 命名 `ArrowDiary_V.x.y.z.apk`（如 `ArrowDiary_V.5.0.4.apk`），Release tag `v5.0.4`（小写 v 前缀 + 版本数字，无大写 V，见历史 release）。
+> 固定 SOP，顺序不可跳过。APK 命名 `ArrowDiary_V.x.y.z.apk`（如 `ArrowDiary_V.5.0.5.apk`），Release tag `v5.0.5`（小写 v 前缀 + 版本数字，无大写 V，见历史 release）。
 > 推送前必须先 `git fetch origin`：电脑端会独立发版，本地可能落后（如本会话 v5.0.1 → 远程已有 v5.0.2/v5.0.3），须 rebase 到远程最新之上再叠加改动，切勿强推覆盖。
 
 1. **改代码** + 同步两处版本号（各 +1 构建号）：
@@ -232,6 +233,7 @@ lib/
 | **v5.0.2**（电脑端） | 隐私锁设置拆成 4 步向导（`app_lock_setup_wizard.dart`）；关闭隐私锁需先验证；关闭验证弹窗；弹窗主题化适配深色/5 套主题；Kotlin 升级 1.8.22 |
 | **v5.0.3**（电脑端） | 加密访问改 3 步向导、笔记单篇密码 2 步向导（通用组件 `pin_setup_wizard.dart`）；深色默认关闭；版本号移至列表底；回收站空态/资产空态/设置抽屉等多页 UI 优化 |
 | **v5.0.4** | 深色模式下向导**未选中项**由亮灰白改为**同主题暗底纹**（`0xFFF5F8F6`→darkMap `0xFF233A2F`，随主题色变化）；**修改资产密码**验证身份后复用通用 3 步向导（设置密码→确认密码→设置密保），与「开启加密访问」样式/流程一致；`_ChangePinDialog` 简化为纯身份验证 + `v5004_features_test.dart` |
+| **v5.0.5** | 笔记预览卡图片由 4:3 改为 **1:1** 方图（卡片高度 / 编辑页尺寸不变，文字区自然左移）；**暖棕**主题从免费改为「灵感杂货店」**1400 点永久兑换**「主题·暖棕」，位置移到墨灰与藕粉之间；未解锁时置灰 + 引导提示；新增 `UserProfile.ownedAccents` + `v5005_features_test.dart` |
 
 > v4.9.32 及更早（深色模式、AppSheet、震动总开关、用户 ID 顺序号等奠基改动）见 git log，此处不再展开。
 
@@ -300,8 +302,8 @@ lib/
 ## 9. 新会话交接检查清单
 
 - [ ] 读本文件 + `docs/redeem_codes.md`（+ 若涉及上云再读 `docs/CLOUD_ARCHITECTURE.md`）
-- [ ] `git fetch origin && git rebase origin/main`，确认未落后电脑端；`git log -1` 确认版本为 v5.0.4
-- [ ] `grep '^version:' pubspec.yaml` 与 `app_version.dart` 版本号一致（当前 5.0.4+162 / V5.0.4）
+- [ ] `git fetch origin && git rebase origin/main`，确认未落后电脑端；`git log -1` 确认版本为 v5.0.5
+- [ ] `grep '^version:' pubspec.yaml` 与 `app_version.dart` 版本号一致（当前 5.0.5+163 / V5.0.5）
 - [ ] 改代码：analyze 0 error → 全量测试全绿（当前 585 项）→ 构建 → commit/push → Release → present_files
 - [ ] 版本号两处同步 + 构建号 +1；新增改动配 `vXXYY_features_test.dart` 回归测试
 - [ ] 涉及 UI：遵守 §2 色板（尤其主题色走 `AppPalette.c()`、抽屉去标题）、§3 动效组件

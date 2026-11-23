@@ -326,7 +326,12 @@ void main() {
 
       expect(find.byKey(const ValueKey('shop-item-vipWeekCard')), findsOneWidget);
       expect(find.text('VIP周卡'), findsOneWidget);
-      expect(find.text('1400 点'), findsOneWidget);
+      // v5.0.5 起「主题·暖棕」同为 1400 点，按卡片 key 精确定位
+      expect(
+          find.descendant(
+              of: find.byKey(const ValueKey('shop-item-vipWeekCard')),
+              matching: find.text('1400 点')),
+          findsOneWidget);
       expect(find.text('0/6'), findsOneWidget);
       expect(find.text('兑换后可获得VIP权益7日'), findsOneWidget);
       await tester.pump(const Duration(seconds: 2));

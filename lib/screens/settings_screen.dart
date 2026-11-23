@@ -824,13 +824,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  /// 主题色抽屉。v4.9.50 起竹青 / 暖棕 / 墨灰免费，藕粉 / 雾蓝 / 霞紫 VIP 专属。
-  /// VIP 过期后已设置的主题色保留、可切回免费色，但不可再选其它 VIP 色。
+  /// 主题色抽屉。v5.0.5 起：竹青 / 墨灰免费，暖棕需灵感杂货店 1400 点兑换，
+  /// 藕粉 / 雾蓝 / 霞紫 VIP 专属。VIP 过期后已设置的主题色保留、可切回免费色，
+  /// 但不可再选其它 VIP 色。未解锁的暖棕置灰，点击引导去杂货店。
   Future<void> _pickAccent() async {
     final profile = await UserStorage.load();
     if (!mounted) return;
     final bool vip = RewardService.hasVipPrivilege(profile);
     final current = AppSettings.accentId;
+    // 已解锁的兑换型主题；当前正在使用的也算（避免升级后正在用暖棕的老用户被锁死）
+    final unlockedAccents = <String>{
+      ...profile.ownedAccents,
+      if (current == 'amber') 'amber',
+    };
     final chosen = await AppSheet.show<String>(
       context,
       builder: (ctx) => SafeArea(
@@ -848,7 +854,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Column(
                   children: [
                     for (final s in AccentCatalog.styles)
-                      _accentRow(ctx, s, current, vip),
+                      _accentRow(ctx, s, current, vip, unlockedAccents),
                   ],
                 ),
               ),
@@ -864,16 +870,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Widget _accentRow(
-      BuildContext ctx, AccentStyle s, String current, bool vip) {
-    // 可选项：免费色、或当前正戴着且 VIP 已过期时仍可保留/切回
-    final canPick = !s.vip || vip || s.id == current;
+  Widget _accentRow(BuildContext ctx, AccentStyle s, String current, bool vip,
+      Set<String> unlockedAccents) {
+    // 兑换型（暖棕）：需已解锁，或为当前正在使用的主题
+    final shopReady = !s.needsShop || unlockedAccents.contains(s.id);
+    // 可选项：免费色 / 已兑换的主题 / 或当前正戴着（VIP 过期时仍可保留）
+    final canPick = shopReady && (!s.vip || vip || s.id == current);
     final selected = s.id == current;
     return InkWell(
       onTap: () {
         if (canPick) {
           Haptics.light();
           Navigator.pop(ctx, s.id);
+        } else if (!shopReady) {
+          // v5.0.5：暖棕未兑换——引导去灵感杂货店
+          AppToast.show(context, '未解锁，赶紧前往灵感杂货店兑换吧～');
         } else {
           AppToast.show(context, '${s.name}是VIP专属权益，请充值后再尝试～');
         }
