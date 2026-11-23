@@ -498,10 +498,11 @@ class ItemListScreenState extends State<ItemListScreen> {
     );
   }
 
+  /// v5.0.6：上下留白 14 → 10，整体高度与笔记数据栏同步收窄。
   Widget _buildDataView() {
     return Container(
       color: AppPalette.c(0xFFFFFFFF),
-      padding: const EdgeInsets.symmetric(vertical: 14),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
         children: [
           _buildDataItem('物品数', '${_ownedItems.length}'),
@@ -643,7 +644,7 @@ class ItemListScreenState extends State<ItemListScreen> {
   }
 
   Widget _buildDivider() =>
-      Container(width: 1, height: 30, color: AppPalette.c(0xFFE8EDF5));
+      Container(width: 1, height: 24, color: AppPalette.c(0xFFE8EDF5));
 }
 
 class _ItemCard extends StatefulWidget {

@@ -170,7 +170,7 @@ void main() {
           findsOneWidget);
 
       // 诞生日（商品名带「-身份」后缀）
-      expect(find.text('诞生日-身份'), findsOneWidget);
+      expect(find.text('身份·诞生日'), findsOneWidget);
       expect(find.text('纪念APP正式上线，1年后下架'), findsOneWidget);
       expect(find.text('50 点'), findsOneWidget);
       // 诞生日与「主题·暖棕」都是 0/1，按卡片 key 精确定位（次数为「已兑/上限」）
@@ -283,7 +283,7 @@ void main() {
 
       await tester.tap(find.byKey(const ValueKey('shop-item-birthday')));
       await tester.pump(const Duration(milliseconds: 300));
-      expect(find.textContaining('已拥有「诞生日-身份」'), findsOneWidget);
+      expect(find.textContaining('已拥有「身份·诞生日」'), findsOneWidget);
       await tester.pump(const Duration(seconds: 2));
     });
 
@@ -309,7 +309,7 @@ void main() {
 
       await tester.tap(find.byKey(const ValueKey('shop-item-birthday')));
       await tester.pump(const Duration(milliseconds: 300));
-      expect(find.textContaining('是否要花费 50 点灵感兑换「诞生日-身份」'),
+      expect(find.textContaining('是否要花费 50 点灵感兑换「身份·诞生日」'),
           findsOneWidget);
       expect(find.textContaining('兑换后剩余'), findsNothing,
           reason: '确认框不再提示兑换后剩余灵感');

@@ -1286,7 +1286,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return ListView.builder(
       key: const PageStorageKey('note_list_grouped'),
       controller: _listCtrl,
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+      padding: EdgeInsets.fromLTRB(16, hasRail ? 8 : 0, 16, 96),
       itemCount: rows.length + (hasRail ? 1 : 0) + 1,
       itemBuilder: (context, i) {
         var index = i;
@@ -1312,6 +1312,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return RepaintBoundary(
       key: _cardKeys.putIfAbsent(e.id, () => GlobalKey()),
       child: Padding(
+        key: ValueKey('note-row-${e.id}'), // 供测试测量卡片间距
         padding: const EdgeInsets.only(top: 8),
         child: Listener(
           onPointerDown: (ev) => _onCardPointerDown(e, ev.position),
@@ -1410,11 +1411,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   /// 数据栏（v5.0.1）：位于「全部/按日/按月/按年」下方，样式同物品页数据栏。
   /// 统计全部笔记（含置顶、加密、未来信件），不受当前筛选/搜索影响。
+  /// v5.0.6：上下留白 14 → 10，整体高度收窄一档。
   Widget _buildStatsBar() {
     final s = NoteStats.compute(_entries);
     return Container(
       color: AppPalette.c(0xFFFFFFFF),
-      padding: const EdgeInsets.symmetric(vertical: 14),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
         children: [
           _buildStatItem('总篇数', '${s.totalCount}'),
@@ -1452,7 +1454,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Widget _buildStatDivider() {
     return Container(
       width: 1,
-      height: 28,
+      height: 24,
       color: AppPalette.c(0xFFE8EDF5),
     );
   }
@@ -1467,61 +1469,51 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return PageGestureGate(swipeAxis: Axis.horizontal, child: child);
   }
 
-  /// 置顶横滑卡带（P3）：一行小标题 + 可左右滑动的迷你卡
+  /// 置顶横滑卡带（P3）：可左右滑动的迷你卡。
+  ///
+  /// v5.0.6：去掉「置顶 x 篇」小标题，卡片整体上移；
+  /// 上下留白取同值，使「数据栏 → 置顶卡」与「置顶卡 → 首张笔记卡」间距相等
+  /// （列表自身 paddingTop 8 + 这里 6 = 18；这里 6 + 卡片自身 paddingTop 8 = 18）。
   Widget _buildPinnedRail(List<DiaryEntry> pinned) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(top: 12, left: 2, bottom: 7),
-          // 用与长按菜单一致的置顶图标，不再用 📌 emoji：
-          // emoji 在不同系统里字形差异大，且颜色不受主题控制
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AppIcon(AppIcons.pinOn, size: 12, color: AppPalette.c(0xFF3E8E6D)),
-              const SizedBox(width: 3),
-              Text(
-                '置顶 ${pinned.length} 篇',
-                style: TextStyle(
-                    fontSize: 11, color: AppPalette.c(0xFF3E8E6D)),
-              ),
-            ],
-          ),
-        ),
-        // 页面横向手势优先：横滑卡带期间不让主页把菜单拖出来；
-        // 无障碍（TalkBack 触摸浏览）时不区分，避免菜单被永久让位
-        _gatePinnedRail(
-          SizedBox(
-            height: 62,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.only(right: 4),
-              itemCount: pinned.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (context, i) {
-                final e = pinned[i];
-                return Listener(
-                  onPointerDown: (ev) => _onCardPointerDown(e, ev.position),
-                  onPointerMove: (ev) => _onCardPointerMove(ev.position),
-                  onPointerUp: (_) => _cancelPressTracking(),
-                  onPointerCancel: (_) => _cancelPressTracking(),
-                  child: SizedBox(
-                    width: 132,
-                    child: _PinnedMiniCard(
-                      entry: e,
-                      onTap: () => _openNote(e),
+    return Padding(
+      key: const ValueKey('pinned-rail'),
+      padding: const EdgeInsets.only(top: 6, bottom: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 页面横向手势优先：横滑卡带期间不让主页把菜单拖出来；
+          // 无障碍（TalkBack 触摸浏览）时不区分，避免菜单被永久让位
+          _gatePinnedRail(
+            SizedBox(
+              height: 62,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.only(right: 4),
+                itemCount: pinned.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                itemBuilder: (context, i) {
+                  final e = pinned[i];
+                  return Listener(
+                    onPointerDown: (ev) => _onCardPointerDown(e, ev.position),
+                    onPointerMove: (ev) => _onCardPointerMove(ev.position),
+                    onPointerUp: (_) => _cancelPressTracking(),
+                    onPointerCancel: (_) => _cancelPressTracking(),
+                    child: SizedBox(
+                      width: 132,
+                      child: _PinnedMiniCard(
+                        entry: e,
+                        onTap: () => _openNote(e),
+                      ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 4),
-      ],
+        ],
+      ),
     );
   }
 
@@ -2081,10 +2073,15 @@ class _PinnedMiniCard extends StatelessWidget {
                       // 第 2 行：完整日期时间（加密笔记额外带锁标）
                       Row(
                         children: [
-                          Text(
-                            '${d.year}/${d.month}/${d.day} $hh:$mm',
-                            style:
-                                TextStyle(fontSize: 9.5, color: kTextLight),
+                          // Flexible：大字号 / 极窄机型下日期不至于把 Row 挤爆
+                          Flexible(
+                            child: Text(
+                              '${d.year}/${d.month}/${d.day} $hh:$mm',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style:
+                                  TextStyle(fontSize: 9.5, color: kTextLight),
+                            ),
                           ),
                           if (encrypted) ...[
                             const SizedBox(width: 3),

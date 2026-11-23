@@ -128,7 +128,7 @@ class RewardService {
   static const List<ShopBadge> shopBadges = [
     ShopBadge(
       id: UserProfile.badgeBirthday,
-      name: '诞生日-身份',
+      name: '身份·诞生日',
       price: 50,
       note: '纪念APP正式上线，1年后下架',
       limit: 1,

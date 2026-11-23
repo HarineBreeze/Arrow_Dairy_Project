@@ -21,8 +21,8 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('版本号', () {
-    test('展示版本同步到 V5.0.5', () {
-      expect(AppVersion.displayVersion, 'V5.0.5');
+    test('展示版本同步到 V5.0.6', () {
+      expect(AppVersion.displayVersion, 'V5.0.6');
     });
   });
 
