@@ -228,14 +228,25 @@ class AssetScreenState extends State<AssetScreen> {
   }
 
   Future<void> _openChangePin() async {
+    // 第 1 步：验证当前密码 / 密保答案
     final ok = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => const _ChangePinDialog(),
     );
-    if (ok == true && mounted) {
-      AppToast.show(context, '资产密码已更新');
-    }
+    if (ok != true || !mounted) return;
+
+    // 第 2 步：复用「开启加密访问」同款 3 步向导收集新凭证
+    // （设置密码 → 确认密码 → 设置密保），样式与流程完全一致。
+    final result = await showPinSetupWizard3(context);
+    if (result == null || !mounted) return;
+
+    await AssetStorage.updatePin(
+      newPin: result.pin,
+      question: result.question,
+      answer: result.answer,
+    );
+    if (mounted) AppToast.show(context, '资产密码已更新');
   }
 
   // ---------- 筛选 ----------
@@ -1885,7 +1896,11 @@ class _DisablePinDialogState extends State<_DisablePinDialog> {
   }
 }
 
-// ==================== 修改资产密码弹窗 ====================
+// ==================== 修改资产密码：身份验证弹窗 ====================
+//
+// v5.0.4：验证身份后不再在本弹窗里一步填完新密码，而是复用「开启加密访问」
+// 同一套通用 3 步向导（pin_setup_wizard.dart：设置密码→确认密码→设置密保），
+// 保证修改密码与开启加密访问的样式/流程完全一致。本弹窗只做身份验证。
 
 class _ChangePinDialog extends StatefulWidget {
   const _ChangePinDialog({Key? key}) : super(key: key);
@@ -1899,13 +1914,7 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
   String _mode = 'pin';
 
   final _vCtrl = TextEditingController(); // 当前密码 / 密保答案
-  final _p1 = TextEditingController();
-  final _p2 = TextEditingController();
-  final _qCtrl = TextEditingController();
-  final _aCtrl = TextEditingController();
-
-  bool _verified = false; // 验证通过后显示新密码表单
-  bool _saving = false;
+  bool _checking = false;
   String? _error;
   late Future<String> _question;
 
@@ -1918,10 +1927,6 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
   @override
   void dispose() {
     _vCtrl.dispose();
-    _p1.dispose();
-    _p2.dispose();
-    _qCtrl.dispose();
-    _aCtrl.dispose();
     super.dispose();
   }
 
@@ -1931,42 +1936,23 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
       setState(() => _error = _mode == 'pin' ? '请输入当前密码' : '请输入密保答案');
       return;
     }
+    setState(() {
+      _checking = true;
+      _error = null;
+    });
     final ok = _mode == 'pin'
         ? await AssetStorage.verifyPin(v)
         : await AssetStorage.verifyAnswer(v);
     if (!mounted) return;
     if (!ok) {
-      setState(() =>
-          _error = _mode == 'pin' ? '当前密码不正确' : '密保答案不正确');
+      setState(() {
+        _checking = false;
+        _error = _mode == 'pin' ? '当前密码不正确' : '密保答案不正确';
+      });
       return;
     }
-    setState(() {
-      _verified = true;
-      _error = null;
-    });
-  }
-
-  Future<void> _save() async {
-    final p1 = _p1.text.trim();
-    final p2 = _p2.text.trim();
-    if (p1.length < 4) {
-      setState(() => _error = '新密码至少 4 位');
-      return;
-    }
-    if (p1 != p2) {
-      setState(() => _error = '两次输入的新密码不一致');
-      return;
-    }
-    setState(() {
-      _saving = true;
-      _error = null;
-    });
-    await AssetStorage.updatePin(
-      newPin: p1,
-      question: _qCtrl.text,
-      answer: _aCtrl.text,
-    );
-    if (mounted) Navigator.pop(context, true);
+    // 验证通过：关闭本弹窗，由调用方弹出 3 步向导收集新凭证
+    Navigator.pop(context, true);
   }
 
   Widget _errorBox() {
@@ -2020,123 +2006,66 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
     // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
     AppThemeScope.watch(context);
     return WillPopScope(
-      onWillPop: () async => !_saving,
+      onWillPop: () async => !_checking,
       child: AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(_verified ? '设置新密码' : '验证身份'),
+        title: const Text('验证身份'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: _verified
-                ? [
-                    TextField(
-                      controller: _p1,
-                      obscureText: true,
-                      keyboardType: TextInputType.number,
-                      maxLength: 12,
-                      decoration: const InputDecoration(
-                        labelText: '新密码（至少 4 位）',
-                        counterText: '',
-                        border: OutlineInputBorder(),
-                      ),
-                      onChanged: (_) => setState(() => _error = null),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _p2,
-                      obscureText: true,
-                      keyboardType: TextInputType.number,
-                      maxLength: 12,
-                      decoration: const InputDecoration(
-                        labelText: '再输入一遍新密码',
-                        counterText: '',
-                        border: OutlineInputBorder(),
-                      ),
-                      onChanged: (_) => setState(() => _error = null),
-                    ),
-                    const SizedBox(height: 14),
-                    Text('如需同时修改密保，可填写下面两项（选填）',
-                        style:
-                            TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
-                    const SizedBox(height: 8),
-                    FutureBuilder<String>(
-                      future: _question,
-                      builder: (c, snap) => TextField(
-                        controller: _qCtrl,
-                        maxLength: 30,
-                        decoration: InputDecoration(
-                          labelText: '密保问题',
-                          hintText: snap.data ?? '',
-                          counterText: '',
-                          border: const OutlineInputBorder(),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _aCtrl,
-                      maxLength: 30,
-                      decoration: const InputDecoration(
-                        labelText: '密保答案',
-                        counterText: '',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    _errorBox(),
-                  ]
-                : [
-                    Row(
-                      children: [
-                        _modeChip('pin', '当前密码'),
-                        const SizedBox(width: 8),
-                        _modeChip('answer', '密保答案'),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    if (_mode == 'pin')
-                      TextField(
-                        controller: _vCtrl,
-                        obscureText: true,
-                        keyboardType: TextInputType.number,
-                        autofocus: true,
-                        decoration: const InputDecoration(
-                          labelText: '当前资产密码',
-                          border: OutlineInputBorder(),
-                        ),
-                        onSubmitted: (_) => _verify(),
-                        onChanged: (_) => setState(() => _error = null),
-                      )
-                    else ...[
-                      FutureBuilder<String>(
-                        future: _question,
-                        builder: (c, snap) => Text(
-                          snap.data ?? '',
-                          style: const TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w500),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      TextField(
-                        controller: _vCtrl,
-                        autofocus: true,
-                        decoration: const InputDecoration(
-                          labelText: '密保答案',
-                          border: OutlineInputBorder(),
-                        ),
-                        onSubmitted: (_) => _verify(),
-                        onChanged: (_) => setState(() => _error = null),
-                      ),
-                    ],
-                    _errorBox(),
-                  ],
+            children: [
+              Row(
+                children: [
+                  _modeChip('pin', '当前密码'),
+                  const SizedBox(width: 8),
+                  _modeChip('answer', '密保答案'),
+                ],
+              ),
+              const SizedBox(height: 16),
+              if (_mode == 'pin')
+                TextField(
+                  controller: _vCtrl,
+                  obscureText: true,
+                  keyboardType: TextInputType.number,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    labelText: '当前资产密码',
+                    border: OutlineInputBorder(),
+                  ),
+                  onSubmitted: (_) => _checking ? null : _verify(),
+                  onChanged: (_) => setState(() => _error = null),
+                )
+              else ...[
+                FutureBuilder<String>(
+                  future: _question,
+                  builder: (c, snap) => Text(
+                    snap.data ?? '',
+                    style: const TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w500),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _vCtrl,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    labelText: '密保答案',
+                    border: OutlineInputBorder(),
+                  ),
+                  onSubmitted: (_) => _checking ? null : _verify(),
+                  onChanged: (_) => setState(() => _error = null),
+                ),
+              ],
+              _errorBox(),
+            ],
           ),
         ),
         actions: [
           Pressable(
             enabled: true,
             child: TextButton(
-              onPressed: _saving ? null : () => Navigator.pop(context, false),
+              onPressed: _checking ? null : () => Navigator.pop(context, false),
               child: Text('取消',
                   style: TextStyle(color: AppPalette.c(0xFF7C8F86))),
             ),
@@ -2144,8 +2073,8 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
           Pressable(
             enabled: true,
             child: TextButton(
-              onPressed: _saving ? null : (_verified ? _save : _verify),
-              child: Text(_verified ? '保存' : '下一步',
+              onPressed: _checking ? null : _verify,
+              child: Text(_checking ? '验证中…' : '下一步',
                   style: TextStyle(color: AppPalette.c(0xFF3E8E6D))),
             ),
           ),

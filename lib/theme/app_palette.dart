@@ -284,6 +284,10 @@ class AppPalette {
     0xFFF0CBD4: 0xFF3A2630,
     // —— 浅绿底纹 / 选中态 / 边框 ——
     0xFFE4F2EB: 0xFF233A2F, // 浅绿底纹 / 选中
+    // v5.0.4：隐私锁/密码向导「未选中项」底色原用 0xFFF5F8F6（未登记），
+    // 深色模式下保持亮灰白、过于亮眼。登记为深墨绿底纹（属 _darkTintBgMapped，
+    // 会随主题色变成各主题暗底纹），浅色观感原样不变。
+    0xFFF5F8F6: 0xFF233A2F,
     0xFFE4EDE8: 0xFF22322A,
     0xFFE1ECE6: 0xFF213029,
     0xFFDFEAE5: 0xFF25352D,
