@@ -7,7 +7,6 @@ import 'package:ayodiray/screens/trash_screen.dart';
 import 'package:ayodiray/services/app_settings.dart';
 import 'package:ayodiray/theme/app_palette.dart';
 import 'package:ayodiray/utils/app_toast.dart';
-import 'package:ayodiray/utils/app_version.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
@@ -53,12 +52,6 @@ void main() {
   tearDown(() {
     AppPalette.dark = false;
     AppPalette.accent = AccentCatalog.byId('bamboo');
-  });
-
-  group('版本号', () {
-    test('展示版本推进到 V5.0.1', () {
-      expect(AppVersion.displayVersion, 'V5.0.1');
-    });
   });
 
   group('非 VIP 到期提醒提示语', () {

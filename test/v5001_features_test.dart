@@ -5,7 +5,6 @@ import 'package:ayodiray/screens/settings_screen.dart';
 import 'package:ayodiray/services/app_lock_storage.dart';
 import 'package:ayodiray/services/app_settings.dart';
 import 'package:ayodiray/theme/app_palette.dart';
-import 'package:ayodiray/utils/app_version.dart';
 import 'package:ayodiray/utils/note_stats.dart';
 import 'package:ayodiray/widgets/pattern_lock_view.dart';
 import 'package:flutter/material.dart';
@@ -57,12 +56,6 @@ void main() {
     AppPalette.dark = false;
     AppPalette.accent = AccentCatalog.byId('bamboo');
     if (dir.existsSync()) dir.deleteSync(recursive: true);
-  });
-
-  group('版本号', () {
-    test('展示版本同步到 V5.0.1', () {
-      expect(AppVersion.displayVersion, 'V5.0.1');
-    });
   });
 
   group('笔记数据栏统计 NoteStats', () {

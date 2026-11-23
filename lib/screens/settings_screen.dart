@@ -16,7 +16,7 @@ import '../utils/app_version.dart';
 import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
 import '../widgets/identity_badge.dart';
-import 'app_lock_screen.dart';
+import 'app_lock_setup_wizard.dart';
 import 'font_picker_screen.dart';
 
 import '../theme/app_palette.dart';
@@ -54,26 +54,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  /// 隐私锁开关：开启走设置向导（密保必填，取消则不开启）；
-  /// 关闭直接删除锁文件。仅冷启动生效，设置页不触发验证。
+  /// 隐私锁开关（v5.0.2）：
+  /// - 开启：走 4 步向导（形式→密码→确认→密保），任一步取消都不开启。
+  /// - 关闭：必须先验证当前凭证，验证通过才删除锁文件。
+  /// 关闭后锁文件被删除，重新开启必然走完整向导设置新密码，不沿用旧凭证。
   Future<void> _onLockToggle(bool value) async {
     Haptics.light();
     if (!value) {
+      final verified = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => const AppLockVerifyDialog(),
+      );
+      if (verified != true) {
+        // 取消或验证失败 → 保持开启（锁文件不动）
+        if (mounted) setState(() => _lockEnabled = true);
+        return;
+      }
       await AppLockStorage.clearLock();
       if (mounted) setState(() => _lockEnabled = false);
       if (mounted) AppToast.show(context, '隐私锁已关闭');
       return;
     }
-    final ok = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => const AppLockSetupDialog(),
-    );
-    if (ok == true && mounted) {
+    final ok = await showAppLockSetupWizard(context);
+    if (ok && mounted) {
       setState(() => _lockEnabled = true);
       AppToast.show(context, '隐私锁已开启，下次打开 App 需解锁');
     } else {
-      // 取消 → 保持关闭（不写入任何凭证）
+      // 任一步取消 → 保持关闭（不写入任何凭证）
       if (mounted) setState(() => _lockEnabled = false);
     }
   }

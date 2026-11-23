@@ -140,9 +140,11 @@ void main() {
   group('侧边栏设置按钮', () {
     test('设置图标走主题主色而非中性灰（源码断言）', () {
       final src = File('lib/screens/side_menu.dart').readAsStringSync();
-      // 设置按钮的 settings 图标应传主题主色 c(0xFF3E8E6D)
+      // 设置按钮的 settings 图标应传主题主色 c(0xFF3E8E6D)。
+      // 用正则忽略缩进差异，避免格式化改动造成脆弱失败。
       expect(
-        src.contains('AppIcons.settings,\n                    size: 22, color: AppPalette.c(0xFF3E8E6D)'),
+        RegExp(r'AppIcons\.settings,\s*size:\s*22,\s*color:\s*AppPalette\.c\(0xFF3E8E6D\)')
+            .hasMatch(src),
         isTrue,
         reason: '设置按钮图标应走主题主色，普通/深色都随主题色换',
       );

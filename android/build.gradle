@@ -1,5 +1,7 @@
 buildscript {
-    ext.kotlin_version = '1.6.10'
+    // v5.0.2：v5.0.0 引入的未来信件原生通知拉入了 kotlin-stdlib 1.8.22，
+    // 原 1.6.10 编译器无法解析其 1.8.0 metadata，统一升到 1.8.22 对齐。
+    ext.kotlin_version = '1.8.22'
     repositories {
         google()
         mavenCentral()

@@ -9,7 +9,6 @@ import 'package:ayodiray/models/user_profile.dart';
 import 'package:ayodiray/services/reward_service.dart';
 import 'package:ayodiray/services/user_storage.dart';
 import 'package:ayodiray/theme/app_palette.dart';
-import 'package:ayodiray/utils/app_version.dart';
 import 'package:ayodiray/utils/haptics.dart';
 
 /// v4.9.50 行为回归：
@@ -60,12 +59,6 @@ void main() {
   }
 
   Future<UserProfile> readProfile() async => UserStorage.load();
-
-  group('版本号', () {
-    test('展示版本已推进到 V5.0.1', () {
-      expect(AppVersion.displayVersion, 'V5.0.1');
-    });
-  });
 
   group('主题色免费属性与排序', () {
     test('暖棕 / 墨灰为免费，藕粉 / 雾蓝 / 霞紫为 VIP', () {
