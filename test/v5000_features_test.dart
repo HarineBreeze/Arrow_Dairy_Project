@@ -56,8 +56,8 @@ void main() {
   });
 
   group('版本号', () {
-    test('展示版本推进到 V5.0.0', () {
-      expect(AppVersion.displayVersion, 'V5.0.0');
+    test('展示版本推进到 V5.0.1', () {
+      expect(AppVersion.displayVersion, 'V5.0.1');
     });
   });
 

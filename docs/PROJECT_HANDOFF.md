@@ -1,6 +1,6 @@
 # 阿尤日记 · 项目交接与推进指南
 
-> 截至 **v5.0.0**（versionCode 158，全量 **569** 项测试通过）。
+> 截至 **v5.0.1**（versionCode 159，全量 **585** 项测试通过）。
 > 本文件是跨设备 / 跨会话接手的**唯一入口**：新会话先完整读它，即可无缝续接，无需重新口述背景。
 > 关键信息均以源码为准，文中标注对应文件或符号，便于核对。改代码前务必读完 §2 规范与 §4 发版流程。
 
@@ -29,14 +29,14 @@ lib/
 ├─ models/                      diary_entry / item / asset / countdown_event / user_profile
 ├─ services/                    各 *_storage（本地 JSON 读写）、app_settings、backup_service、
 │                                reward_service（灵感/兑换码/杂货店/VIP）、各类 *_reminder 通知
-├─ screens/                     18 个页面（见下）
+├─ screens/                     19 个页面（见下）
 ├─ widgets/                     通用组件（pressable / app_icons / save_bar / stationery_paper 等）
 ├─ theme/                       app_palette（语义色板 + 主题色）、app_theme_scope（明暗即时重建）
 └─ utils/                       app_motion / app_sheet / app_toast / haptics / stationery /
                                 writing_prompts / usable_days / app_version 等
 ```
 
-**18 个页面**：home（日记主页）、edit（笔记编辑）、note_view（笔记浏览）、item_list / item_edit（物品）、asset_screen / asset_edit（资产）、countdown_screen / countdown_edit（事件）、global_search、trash（回收站）、points_shop（灵感杂货店）、profile_edit（档案）、settings、side_menu（侧边栏）、font_picker、image_crop、usable_days_settings_sheet。
+**19 个页面**：home（日记主页）、edit（笔记编辑）、note_view（笔记浏览）、item_list / item_edit（物品）、asset_screen / asset_edit（资产）、countdown_screen / countdown_edit（事件）、global_search、trash（回收站）、points_shop（灵感杂货店）、profile_edit（档案）、settings、side_menu（侧边栏）、font_picker、image_crop、usable_days_settings_sheet、app_lock_screen（隐私锁设置/解锁，v5.0.1）。
 
 **本地存储文件**（均在 `getApplicationDocumentsDirectory()` 下）：
 
@@ -133,26 +133,37 @@ lib/
 | 内容信息吸底取消 | 笔记浏览页时间/地点、回收站提示语均置于**滚动内容最底部**（滑到底才可见，非固定吸附视口） | note_view / trash（v4.9.48） |
 | 空态 | `empty_state.dart`：图标 + 说明文字（尚无行动按钮，待优化） | 通用 |
 
-### 3.6 设置页结构（v4.9.48 现状）
+### 3.6 设置页结构（v5.0.1 现状）
 
-分组：**活动**（兑换码）、**反馈**（震动 Switch）、**数据**（导出/导入）、**外观**。
+分组（自上而下）：**外观** → **隐私**（v5.0.1 新增）→ **数据备份**（导出/导入）→ **活动**（兑换码）→ **反馈**（震动 Switch）。
 「外观」卡三行：深色模式 / 字体 / 主题色。其中：
 
 - **深色模式**：右箭头，点击开抽屉，内含**两个震动同款 Switch**——「跟随系统」与「深色模式」（key：`theme-follow-system` / `theme-dark-mode`）。跟随系统开启时深色开关置灰禁用；原「已开启/已关闭」二行已合并为单一「深色模式」开关。
 - **字体**：进入 `FontPickerScreen`。
 - **主题色**：进抽屉选 6 套主题色（免费 3 / VIP 3，限制见 §2.2）。
 
+**隐私锁（v5.0.1）**：「隐私锁」Switch（key `privacy_lock_switch`），仅 **冷启动** 校验一次（解锁后本次会话不再验证）。
+- 首次开启 → `AppLockSetupDialog`：选「密码」或「九宫格手势」，两次输入/绘制 + **密保问题与答案必填**；点「取消」→ 返回并保持关闭（不写凭证）。
+- 关闭 → 直接删除锁文件（`AppLockStorage.clearLock()`），无需验证。
+- 存储 `services/app_lock_storage.dart`（独立 `app_lock.json`，混淆存储，与资产密码 `asset_pin.json` 互不干扰）；手势组件 `widgets/pattern_lock_view.dart`（至少 4 点，`patternToString`/`isValidPattern`）。
+- 冷启动门禁在 `main.dart` 的 `_LockGate`：有锁先显示 `AppLockUnlockScreen`（支持密码/手势验证 + 忘记密码走密保重置），成功后切 `DiaryApp`。
+- 测试注入：`SettingsScreen(lockStateOverride: bool)` 避免 widget 测试走真实 IO。
+
+**笔记主页数据栏（v5.0.1）**：位于「全部/按日/按月/按年」标签栏下方（`_buildStatsBar`），样式同物品页数据栏（上绿加粗值 / 下灰标签 + 竖分隔线）。
+- 三栏：**总篇数**（`_entries.length`）、**总字数**（全部 `content.length` 之和）、**连续记录 / 最长记录**。
+- 统计算法在 `utils/note_stats.dart:NoteStats.compute()`（可注入 `now` 便于测试）：按 `publishDate` 归集自然日、去重；今天或昨天有记录→当前连续（标题「连续记录」+`X天`），否则断更→显示历史最长段（标题「最长记录」+`X天`）。统计全量笔记，不受筛选/搜索影响。
+
 ---
 
 ## 4. 发版标准化流程（每次改动必须完整走完）
 
-> 固定 SOP，顺序不可跳过。APK 命名 `ArrowDiary_V.x.y.z.apk`（如 `ArrowDiary_V.5.0.0.apk`），Release tag `v5.0.0`（小写 v 前缀 + 版本数字，无大写 V，见历史 release）。
+> 固定 SOP，顺序不可跳过。APK 命名 `ArrowDiary_V.x.y.z.apk`（如 `ArrowDiary_V.5.0.1.apk`），Release tag `v5.0.1`（小写 v 前缀 + 版本数字，无大写 V，见历史 release）。
 
 1. **改代码** + 同步两处版本号（各 +1 构建号）：
    - `pubspec.yaml` → `version: x.y.z+BUILD`
    - `lib/utils/app_version.dart` → `displayVersion = 'Vx.y.z'`
 2. **静态分析**：`flutter analyze`，要求 0 error / 0 warning（约 127 条 info 为历史基线，允许）。
-3. **全量测试**：`flutter test`，要求全绿（当前 **569** 项）。新增改动必须配套回归测试，命名 `test/vXXYY_features_test.dart`。
+3. **全量测试**：`flutter test`，要求全绿（当前 **585** 项）。新增改动必须配套回归测试，命名 `test/vXXYY_features_test.dart`。
    - 测试偶发：全量并行时 trash / 手势类测试偶有 1 项时序失败，重跑一遍通常即过；不要因此反复改测试。
    - 含真实文件 IO 的页面（TrashScreen 等）测试要用 `runAsync` 让 IO 完成（参考 `_settleWithIo`），否则 `_loading` 未结束、内容未渲染。
 4. **构建**：
@@ -163,6 +174,13 @@ lib/
    flutter build apk --release
    ```
    Kotlin 版本冲突 warning（`incompatible version of Kotlin ... expected 1.5.1`）是历史遗留，非致命，可忽略。
+
+   > **签名对齐（重要）**：release 构建已接入与电脑端 v4.9.50 相同的 keystore，产出包名可直接覆盖安装、不丢数据。
+   > - 密钥材料：`android/app/ayodiary_debug.keystore` + `android/key.properties`（storePassword/keyPassword 均 `android`，alias `androiddebugkey`，PKCS12）。**两者被 `.gitignore` 排除，绝不提交**（本仓库为 public，外传 keystore 任何人都能签出可覆盖包）。
+   > - 证书指纹：SHA-256 `75FFB3904BA166E6A8EA19B85B15D0F5B9B451DB68B38A62446D0FE2D7581C01` / SHA-1 `7898EF177C59169C0618E7025DEEA4CB84BE54B6`（`CN=Android Debug`）。
+   > - `android/app/build.gradle` 中 `hasReleaseKeystore` 为 true 时用 `signingConfigs.release`，否则回退 `signingConfigs.debug`（保证无密钥环境仍可构建）。
+   > - 换环境/换机器时须重新放入这两个文件，否则签名变回沙箱默认 debug key（SHA1 `fdb4c8ad…`）会再次导致覆盖安装失败。
+   > - 核验产出签名：`apksigner verify --print-certs app-release.apk`，SHA-256 digest 应为上面那串。
 5. **复制 + aapt 核验**：`cp build/app/outputs/flutter-apk/app-release.apk /workspace/ArrowDiary_V.x.y.z.apk`；用 aapt dump badging 核验 `versionCode` / `versionName` 与 pubspec 一致。
 6. **提交推送**：
    ```bash
@@ -206,7 +224,8 @@ lib/
 | v4.9.48 | 可使用天数标题移除；深色模式双开关（跟随系统/深色模式）；笔记时间地点 + 回收站提示语移到底部；档案身份/性别抽屉去标题 |
 | v4.9.49 | **写作里程碑庆祝特效**：日记达 7/30/100/200/365/500/1000 篇各 +20 灵感 + 粒子庆祝层；`claimedWriteMilestones` 判重与跨节点补发 |
 | v4.9.50 | **品牌统一 AyoDiray**（包名 `com.Ayo.diary_app`）；兑换码不限次；顶栏标题字号统一 15；暖棕/墨灰改免费；修深色抽屉刷新 BUG；未来信件日期确认；杂货店禁用态；资金参数页按钮改版 |
-| **v5.0.0** | 修复非 VIP 已设提醒后点击提示语丢失；回收站提示语改「超过时间的内容将彻底删除」；**新增紫色系主题「霞紫」（VIP）**；笔记编辑页「更多」文字加粗 |
+| **v5.0.0** | 修复非 VIP 已设提醒后点击提示语丢失；回收站提示语改「超过时间的内容将彻底删除」；**新增紫色系主题「霞紫」（VIP）**；笔记编辑页「更多」文字加粗；签名对齐电脑端 keystore（本地不入库） |
+| **v5.0.1** | 笔记主页「全部/按日/按月/按年」下方新增**数据栏**（总篇数 / 总字数 / 连续记录·最长记录，样式同物品页）；设置页新增**隐私锁**（密码 + 九宫格手势，密保必填，冷启动解锁） |
 
 > v4.9.32 及更早（深色模式、AppSheet、震动总开关、用户 ID 顺序号等奠基改动）见 git log，此处不再展开。
 
@@ -275,9 +294,9 @@ lib/
 ## 9. 新会话交接检查清单
 
 - [ ] 读本文件 + `docs/redeem_codes.md`（+ 若涉及上云再读 `docs/CLOUD_ARCHITECTURE.md`）
-- [ ] `git status` 确认干净；`git log -1` 确认版本为 v5.0.0
-- [ ] `grep '^version:' pubspec.yaml` 与 `app_version.dart` 版本号一致（当前 5.0.0+158 / V5.0.0）
-- [ ] 改代码：analyze 0 error → 全量测试全绿（当前 569 项）→ 构建 → commit/push → Release → present_files
+- [ ] `git status` 确认干净；`git log -1` 确认版本为 v5.0.1
+- [ ] `grep '^version:' pubspec.yaml` 与 `app_version.dart` 版本号一致（当前 5.0.1+159 / V5.0.1）
+- [ ] 改代码：analyze 0 error → 全量测试全绿（当前 585 项）→ 构建 → commit/push → Release → present_files
 - [ ] 版本号两处同步 + 构建号 +1；新增改动配 `vXXYY_features_test.dart` 回归测试
 - [ ] 涉及 UI：遵守 §2 色板（尤其主题色走 `AppPalette.c()`、抽屉去标题）、§3 动效组件
 - [ ] 涉及 VIP：新增强功能按 §6.2 接入 `hasVipPrivilege` 门槛与提示文案

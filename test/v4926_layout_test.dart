@@ -65,9 +65,9 @@ void main() {
       expect(find.text('字体'), findsOneWidget,
           reason: '字体分组标题已并入外观，全页只剩功能项一处');
       expect(find.text('外观'), findsOneWidget);
-      // v4.9.47：深色模式/跟随系统改为右箭头+抽屉，外观分组已无开关，
-      // 只剩反馈「震动」1 个 Switch
-      expect(find.byType(Switch), findsOneWidget);
+      // v4.9.47：深色模式/跟随系统改为右箭头+抽屉，外观分组已无开关；
+      // v5.0.1 新增「隐私锁」开关，现共「震动」+「隐私锁」2 个
+      expect(find.byType(Switch), findsNWidgets(2));
     });
 
     testWidgets('点字体行进入字体选择页', (tester) async {

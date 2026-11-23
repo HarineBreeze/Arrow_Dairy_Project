@@ -62,8 +62,8 @@ void main() {
   Future<UserProfile> readProfile() async => UserStorage.load();
 
   group('版本号', () {
-    test('展示版本已推进到 V5.0.0', () {
-      expect(AppVersion.displayVersion, 'V5.0.0');
+    test('展示版本已推进到 V5.0.1', () {
+      expect(AppVersion.displayVersion, 'V5.0.1');
     });
   });
 

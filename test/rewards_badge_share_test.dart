@@ -379,16 +379,15 @@ void main() {
           },
         ),
       ));
-      await tester.pump();
-
-      expect(find.text('兑换码'), findsOneWidget);
-      // v4.9.43：外观栏新增「主题色」行后页面变长，先滚动到兑换码再点
+      await tester.pumpAndSettle();
+      // v5.0.1 新增「隐私锁」分组后页面变长：先滚动到兑换码再断言/点击
       await tester.scrollUntilVisible(
         find.text('兑换码'),
         200,
         scrollable: find.byType(Scrollable).first,
       );
-      await tester.pump();
+      await tester.pumpAndSettle();
+      expect(find.text('兑换码'), findsOneWidget);
       await tester.tap(find.text('兑换码'));
       await tester.pump(const Duration(milliseconds: 300));
 

@@ -11,6 +11,14 @@ if (flutterRoot == null) {
     throw new GradleException("Flutter SDK not found. Define location with flutter.sdk in the local.properties file.")
 }
 
+// 读取本地签名配置（key.properties 与 keystore 均被 .gitignore 排除，不进公开仓库）
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+def hasReleaseKeystore = keystorePropertiesFile.exists() && rootProject.file('app/ayodiary_debug.keystore').exists()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
 if (flutterVersionCode == null) {
     flutterVersionCode = '1'
@@ -53,11 +61,23 @@ android {
         versionName flutterVersionName
     }
 
+    // 与电脑端对齐的正式签名：仅当 key.properties 与 ayodiary_debug.keystore 同时存在时启用。
+    // 缺失时回退到 debug 签名，保证无密钥环境（如公开仓库的其他协作者）仍可构建。
+    signingConfigs {
+        release {
+            if (hasReleaseKeystore) {
+                storeFile rootProject.file('app/' + keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig signingConfigs.debug
+            // 有电脑端同款 keystore 时用 release 签名（可覆盖安装）；否则回退 debug 签名。
+            signingConfig hasReleaseKeystore ? signingConfigs.release : signingConfigs.debug
         }
     }
 }

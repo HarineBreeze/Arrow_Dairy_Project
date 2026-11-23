@@ -144,9 +144,15 @@ void main() {
       expect(find.text(label), findsWidgets, reason: '视图栏应有「$label」');
     }
 
-    // 全部：平铺，无「x 篇」日期收纳栏
-    expect(find.textContaining('篇'), findsNothing,
-        reason: '「全部」视图不应出现日期收纳栏');
+    // 全部：平铺，无日期收纳栏。收纳栏头格式为「N 篇」（数字+空格+篇），
+    // 与数据栏「总篇数」区分：后者不匹配该正则。
+    bool hasGroupHeader() => tester.widgetList<Text>(find.byType(Text)).any(
+          (t) => t.data != null && RegExp(r'^\d+ 篇$').hasMatch(t.data!),
+        );
+    expect(hasGroupHeader(), false,
+        reason: '「全部」视图不应出现日期收纳栏分组头');
+    expect(find.text('总篇数'), findsOneWidget,
+        reason: '数据栏应常驻显示总篇数');
 
     // 切到按日：出现按日分组头（昨天那篇在最近 7 天内，默认展开）
     await tester.tap(find.text('按日').first);
@@ -157,7 +163,7 @@ void main() {
         DateTime(now.year, now.month, now.day - 1);
     final key = DiaryGroupDefaults.dateKey(yesterday);
     expect(key, isNotEmpty);
-    expect(find.textContaining('篇'), findsWidgets,
+    expect(hasGroupHeader(), true,
         reason: '「按日」视图应按日折叠并显示分组头');
     expect(find.text('昨天的笔记'), findsOneWidget);
   });

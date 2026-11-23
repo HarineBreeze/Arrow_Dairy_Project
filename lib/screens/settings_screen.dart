@@ -6,6 +6,7 @@ import '../utils/app_motion.dart';
 import 'package:share_plus/share_plus.dart';
 import '../utils/app_toast.dart';
 import '../services/app_settings.dart';
+import '../services/app_lock_storage.dart';
 import '../services/backup_service.dart';
 import '../services/reward_service.dart';
 import '../services/user_storage.dart';
@@ -15,6 +16,7 @@ import '../utils/app_version.dart';
 import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
 import '../widgets/identity_badge.dart';
+import 'app_lock_screen.dart';
 import 'font_picker_screen.dart';
 
 import '../theme/app_palette.dart';
@@ -24,7 +26,12 @@ class SettingsScreen extends StatefulWidget {
   @visibleForTesting
   final Future<RedeemOutcome> Function(String code)? redeemOverride;
 
-  const SettingsScreen({Key? key, this.redeemOverride}) : super(key: key);
+  /// 仅测试使用：注入隐私锁初始状态，避免走真实文件 IO
+  @visibleForTesting
+  final bool? lockStateOverride;
+
+  const SettingsScreen({Key? key, this.redeemOverride, this.lockStateOverride})
+      : super(key: key);
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -33,6 +40,43 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _exporting = false;
   bool _importing = false;
+  bool _lockEnabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.lockStateOverride != null) {
+      _lockEnabled = widget.lockStateOverride!;
+    } else {
+      AppLockStorage.hasLock().then((v) {
+        if (mounted) setState(() => _lockEnabled = v);
+      });
+    }
+  }
+
+  /// 隐私锁开关：开启走设置向导（密保必填，取消则不开启）；
+  /// 关闭直接删除锁文件。仅冷启动生效，设置页不触发验证。
+  Future<void> _onLockToggle(bool value) async {
+    Haptics.light();
+    if (!value) {
+      await AppLockStorage.clearLock();
+      if (mounted) setState(() => _lockEnabled = false);
+      if (mounted) AppToast.show(context, '隐私锁已关闭');
+      return;
+    }
+    final ok = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => const AppLockSetupDialog(),
+    );
+    if (ok == true && mounted) {
+      setState(() => _lockEnabled = true);
+      AppToast.show(context, '隐私锁已开启，下次打开 App 需解锁');
+    } else {
+      // 取消 → 保持关闭（不写入任何凭证）
+      if (mounted) setState(() => _lockEnabled = false);
+    }
+  }
 
   Future<void> _export() async {
     setState(() => _exporting = true);
@@ -269,6 +313,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
               children: [
                 _buildAppearanceSection(context),
+                const SizedBox(height: 16),
+                Padding(
+                  padding: EdgeInsets.only(left: 4, bottom: 8),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text('隐私',
+                        style: TextStyle(
+                            fontSize: 13,
+                            color: AppPalette.c(0xFF8FA09A),
+                            fontWeight: FontWeight.w600)),
+                  ),
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppPalette.c(0xFFFFFFFF),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: _buildSwitchItem(
+                    icon: AppIcons.lock,
+                    title: '隐私锁',
+                    subtitle: _lockEnabled
+                        ? '已开启，每次打开 App 需解锁'
+                        : '未开启，打开 App 无需解锁',
+                    value: _lockEnabled,
+                    enabled: true,
+                    switchKey: 'privacy_lock_switch',
+                    onChanged: _onLockToggle,
+                  ),
+                ),
                 const SizedBox(height: 16),
                 Padding(
                   padding: const EdgeInsets.only(left: 4, bottom: 8),

@@ -229,8 +229,8 @@ void main() {
       expect(find.text('跟随系统'), findsNothing);
       // 副标题反映当前状态（跟随系统 + 浅色 → 已关闭（跟随系统））
       expect(find.text('已关闭（跟随系统）'), findsOneWidget);
-      // 外观分组已无 Switch，只剩反馈「震动」1 个
-      expect(find.byType(Switch), findsOneWidget);
+      // 外观分组已无 Switch；现仅「震动」+「隐私锁」2 个开关
+      expect(find.byType(Switch), findsNWidgets(2));
     });
 
     testWidgets('点「深色模式」开抽屉，双开关：跟随系统 + 深色模式（震动同款）',

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'services/app_settings.dart';
+import 'services/app_lock_storage.dart';
 import 'screens/home_screen.dart';
+import 'screens/app_lock_screen.dart';
 import 'theme/app_palette.dart';
 import 'theme/app_theme_scope.dart';
 
@@ -14,7 +16,38 @@ void main() async {
   cache.maximumSize = 300;
   cache.maximumSizeBytes = 60 << 20;
   await AppSettings.load(); // 提前读入字体、主题模式等设置
-  runApp(const DiaryApp());
+  // 隐私锁：冷启动时若已开启，先展示解锁界面，验证通过才进入主 App。
+  final locked = await AppLockStorage.hasLock();
+  runApp(locked
+      ? const _LockGate()
+      : const DiaryApp());
+}
+
+/// 冷启动门禁：未解锁时显示解锁页；解锁成功后切换到主 App。
+/// 仅冷启动触发一次，解锁后本次会话不再重复验证。
+class _LockGate extends StatefulWidget {
+  const _LockGate({Key? key}) : super(key: key);
+
+  @override
+  State<_LockGate> createState() => _LockGateState();
+}
+
+class _LockGateState extends State<_LockGate> {
+  bool _unlocked = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (_unlocked) return const DiaryApp();
+    // 解锁页独立成根：自带 MaterialApp，仅用 AppPalette 语义色取色，
+    // 无需完整主题（其 build 不依赖 ThemeData 的精确配置）。
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(primarySwatch: createBambooSwatch(kPrimaryGreen)),
+      home: AppLockUnlockScreen(
+        onUnlocked: () => setState(() => _unlocked = true),
+      ),
+    );
+  }
 }
 
 /// 竹青主题色 #3E8E6D。

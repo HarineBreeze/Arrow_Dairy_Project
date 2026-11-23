@@ -10,6 +10,7 @@ import 'package:flutter/services.dart' show SystemUiOverlayStyle;
 import '../utils/app_toast.dart';
 import '../utils/diary_group_defaults.dart';
 import '../utils/haptics.dart';
+import '../utils/note_stats.dart';
 import '../widgets/pressable.dart';
 import '../models/diary_entry.dart';
 import '../models/user_profile.dart';
@@ -1184,6 +1185,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       children: [
         _buildTopBar(),
         _buildViewBar(),
+        _buildStatsBar(),
         if (_activeTopic != null) _buildTopicBar(),
         ClipRect(
           child: AnimatedSize(
@@ -1401,6 +1403,55 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           ),
         );
       },
+    );
+  }
+
+  /// 数据栏（v5.0.1）：位于「全部/按日/按月/按年」下方，样式同物品页数据栏。
+  /// 统计全部笔记（含置顶、加密、未来信件），不受当前筛选/搜索影响。
+  Widget _buildStatsBar() {
+    final s = NoteStats.compute(_entries);
+    return Container(
+      color: AppPalette.c(0xFFFFFFFF),
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      child: Row(
+        children: [
+          _buildStatItem('总篇数', '${s.totalCount}'),
+          _buildStatDivider(),
+          _buildStatItem('总字数', '${s.totalChars}'),
+          _buildStatDivider(),
+          _buildStatItem(s.streakLabel, s.streakValue),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String label, String value) {
+    return Expanded(
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+              color: AppPalette.c(0xFF3E8E6D),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatDivider() {
+    return Container(
+      width: 1,
+      height: 28,
+      color: AppPalette.c(0xFFE8EDF5),
     );
   }
 
