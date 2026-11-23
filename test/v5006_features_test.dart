@@ -213,7 +213,7 @@ void main() {
     });
 
     test('版本号推进到 V5.0.6', () {
-      expect(AppVersion.displayVersion, 'V5.0.6');
+      expect(AppVersion.displayVersion, 'V5.0.7');
     });
   });
 }

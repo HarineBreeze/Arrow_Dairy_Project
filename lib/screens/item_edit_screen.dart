@@ -55,6 +55,10 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
   late double _savedAmount;
   bool _saving = false;
 
+  /// 单次落盘 IO 的超时上限。真机上正常几十毫秒；超时说明存储出了
+  /// 异常状况（文件锁死/磁盘异常），此时按保存失败处理而不是永远等。
+  static const Duration _ioTimeout = Duration(seconds: 8);
+
 
   final GlobalKey<SaveDoneButtonState> _doneKey =
       GlobalKey<SaveDoneButtonState>();
@@ -136,7 +140,11 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
     final name = _nameCtrl.text.trim();
     final price = double.tryParse(_priceCtrl.text.trim()) ?? 0;
     if (name.isEmpty) return '请填写物品名';
-    if (price <= 0) return '请填写物品价格';
+    // NaN/Infinity 能通过 `<= 0` 判断，但 jsonEncode 会直接抛异常，
+    // 导致保存卡死 —— 必须在入口拦下
+    if (price <= 0 || price.isInfinite || price.isNaN) {
+      return '请填写正确的物品价格';
+    }
 
     // 已拥有物品必须选择拥有日
     final wasWishlist = widget.item?.wishlist ?? false;
@@ -161,46 +169,61 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
   Future<void> _save() async {
     setState(() => _saving = true);
 
-    final name = _vName ?? '';
-    final price = _vPrice ?? 0;
-    final acquired = _vAcquired ?? DateTime.now();
-    final extra = double.tryParse(_extraCtrl.text.trim()) ?? 0;
-    final list = await ItemStorage.load();
-    final usage = int.tryParse(_usageCtrl.text.trim()) ?? 0;
-    if (_isNew) {
-      list.add(Item(
-        id: DateTime.now().microsecondsSinceEpoch.toString(),
-        name: name,
-        category: _category,
-        icon: _icon,
-        price: price,
-        acquiredDate: acquired,
-        lostDate: _lostDate,
-        calcMethod: _calcMethod,
-        usageCount: usage,
-        wishlist: _wishlist,
-        savePerTime: _savePerTime,
-        savedAmount: _savedAmount,
-        extraPrice: _wishlist ? 0 : extra,
-      ));
-    } else {
-      final idx = list.indexWhere((e) => e.id == widget.item!.id);
-      if (idx >= 0) {
-        list[idx].name = name;
-        list[idx].category = _category;
-        list[idx].icon = _icon;
-        list[idx].price = price;
-        list[idx].acquiredDate = acquired;
-        list[idx].lostDate = _lostDate;
-        list[idx].calcMethod = _calcMethod;
-        list[idx].usageCount = usage;
-        list[idx].wishlist = _wishlist;
-        list[idx].savePerTime = _savePerTime;
-        list[idx].savedAmount = _wishlist ? _savedAmount : 0;
-        list[idx].extraPrice = _wishlist ? 0 : extra;
+    try {
+      final name = _vName ?? '';
+      final price = _vPrice ?? 0;
+      final acquired = _vAcquired ?? DateTime.now();
+      var extra = double.tryParse(_extraCtrl.text.trim()) ?? 0;
+      if (extra.isNaN || extra.isInfinite) extra = 0;
+      final list = await ItemStorage.load().timeout(_ioTimeout);
+      final usage = int.tryParse(_usageCtrl.text.trim()) ?? 0;
+      // 攒钱字段来自输入弹窗，同样过滤非法值，避免 jsonEncode 抛异常
+      double safe(double v) => (v.isNaN || v.isInfinite) ? 0 : v;
+      if (_isNew) {
+        list.add(Item(
+          id: DateTime.now().microsecondsSinceEpoch.toString(),
+          name: name,
+          category: _category,
+          icon: _icon,
+          price: price,
+          acquiredDate: acquired,
+          lostDate: _lostDate,
+          calcMethod: _calcMethod,
+          usageCount: usage,
+          wishlist: _wishlist,
+          savePerTime: safe(_savePerTime),
+          savedAmount: safe(_savedAmount),
+          extraPrice: _wishlist ? 0 : extra,
+        ));
+      } else {
+        final idx = list.indexWhere((e) => e.id == widget.item!.id);
+        if (idx >= 0) {
+          list[idx].name = name;
+          list[idx].category = _category;
+          list[idx].icon = _icon;
+          list[idx].price = price;
+          list[idx].acquiredDate = acquired;
+          list[idx].lostDate = _lostDate;
+          list[idx].calcMethod = _calcMethod;
+          list[idx].usageCount = usage;
+          list[idx].wishlist = _wishlist;
+          list[idx].savePerTime = safe(_savePerTime);
+          list[idx].savedAmount = _wishlist ? safe(_savedAmount) : 0;
+          list[idx].extraPrice = _wishlist ? 0 : extra;
+        }
       }
+      await ItemStorage.save(list).timeout(_ioTimeout);
+    } catch (e) {
+      // v5.0.7：落盘失败/超时不再让按钮停在打勾界面。
+      // 之前任何一处 IO 异常都会让 finish() 永远不被调用，
+      // 表现为「按钮停在打勾状态、页面不返回、物品没保存」。
+      // 现在提示用户并复位按钮，可重试或取消。
+      if (!mounted) return;
+      setState(() => _saving = false);
+      AppToast.show(context, '保存失败，请重试');
+      _doneKey.currentState?.reset();
+      return;
     }
-    await ItemStorage.save(list);
 
     // 首次新增物品奖励灵感（仅新增、每类 1 次，异步不阻塞动画）
     if (_isNew) {

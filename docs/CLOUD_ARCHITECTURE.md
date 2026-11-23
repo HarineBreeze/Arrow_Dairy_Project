@@ -27,7 +27,7 @@
 | 权益规则 | 每日首发 +20 分；VIP 日卡 24h（上限 30 次）、周卡 7 天（上限 6 次），累加到同一到期时间 | `reward_service.dart:61-70` |
 | 兑换码 | 灵感码 / 身份码 / 无限次灵感码 / 无限次扣分码，均记在 `redeemedCodes`（无限次码除外） | `reward_service.dart:72-93` |
 | 存储文件 | `user_profile.json`、`user_id_seq.json` 等，均在 `getApplicationDocumentsDirectory()` | `user_storage.dart:12-22` |
-| 测试 | 74 个测试文件、636 项测试全绿 | `test/` |
+| 测试 | 75 个测试文件、639 项测试全绿 | `test/` |
 
 **关键判断**：权益逻辑已经高度集中在 `user_profile.dart` + `reward_service.dart` + `user_storage.dart`，这是接云的最大有利条件——变化点少，改造面可控。
 
@@ -142,7 +142,7 @@
 | 收敛权益写入口 | `reward_service.dart`、`user_storage.dart` | 所有 VIP/灵感/badge 改动走统一入口，禁止散落直接改字段 |
 | UI 改用数据源 | `profile_edit_screen.dart`、主页/侧边栏 | 从直接读 `UserProfile` 字段改为读 repository |
 
-验收：636 项测试全过，功能无变化。
+验收：639 项测试全过，功能无变化。
 
 ### 阶段 2：云端权威层（多用户基础）
 

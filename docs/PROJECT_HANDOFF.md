@@ -1,6 +1,6 @@
 # 阿尤日记 · 项目交接与推进指南
 
-> 截至 **v5.0.6**（versionCode 164，全量 **636** 项测试通过）。
+> 截至 **v5.0.7**（versionCode 165，全量 **639** 项测试通过）。
 > v5.0.2 / v5.0.3 由电脑端发布：隐私锁 4 步向导（`app_lock_setup_wizard.dart`）、关闭验证、深色默认关闭、通用密码向导 `pin_setup_wizard.dart`（3 步资产 / 2 步笔记）、多页 UI 优化。
 > **v5.0.4**（本会话叠加）：① 深色模式下向导「未选中项」由亮灰白改为同主题暗底纹（`0xFFF5F8F6` 登记进 darkMap → `0xFF233A2F`，随主题色变）；② 修改资产密码在验证身份后复用通用 3 步向导（设置密码→确认密码→设置密保），与「开启加密访问」样式/流程完全一致。版本号顺延至 5.0.4 是因为远程已有 v5.0.3 tag。
 > **v5.0.5**：① 笔记预览卡图片由 4:3 改为 **1:1** 方图（卡片高度与编辑页尺寸不变，文字区自然左移）；② **暖棕**主题从免费改为「灵感杂货店」**1400 点永久兑换**（商品名「主题·暖棕」），位置移到墨灰与藕粉之间；未解锁时置灰，点击提示「未解锁，赶紧前往灵感杂货店兑换吧～」。
@@ -161,7 +161,7 @@ lib/
 
 ## 4. 发版标准化流程（每次改动必须完整走完）
 
-> 固定 SOP，顺序不可跳过。APK 命名 `ArrowDiary_V.x.y.z.apk`（如 `ArrowDiary_V.5.0.6.apk`），Release tag `v5.0.6`（小写 v 前缀 + 版本数字，无大写 V，见历史 release）。
+> 固定 SOP，顺序不可跳过。APK 命名 `ArrowDiary_V.x.y.z.apk`（如 `ArrowDiary_V.5.0.7.apk`），Release tag `v5.0.7`（小写 v 前缀 + 版本数字，无大写 V，见历史 release）。
 > 推送前必须先 `git fetch origin`：电脑端会独立发版，本地可能落后（如本会话 v5.0.1 → 远程已有 v5.0.2/v5.0.3），须 rebase 到远程最新之上再叠加改动，切勿强推覆盖。
 
 1. **改代码** + 同步两处版本号（各 +1 构建号）：
@@ -236,6 +236,7 @@ lib/
 | **v5.0.4** | 深色模式下向导**未选中项**由亮灰白改为**同主题暗底纹**（`0xFFF5F8F6`→darkMap `0xFF233A2F`，随主题色变化）；**修改资产密码**验证身份后复用通用 3 步向导（设置密码→确认密码→设置密保），与「开启加密访问」样式/流程一致；`_ChangePinDialog` 简化为纯身份验证 + `v5004_features_test.dart` |
 | **v5.0.5** | 笔记预览卡图片由 4:3 改为 **1:1** 方图（卡片高度 / 编辑页尺寸不变，文字区自然左移）；**暖棕**主题从免费改为「灵感杂货店」**1400 点永久兑换**「主题·暖棕」，位置移到墨灰与藕粉之间；未解锁时置灰 + 引导提示；新增 `UserProfile.ownedAccents` + `v5005_features_test.dart` |
 | **v5.0.6** | 置顶卡带移除「置顶 x 篇」标题，卡片顺位上移且上/下留白相等；笔记数据栏与物品数据栏高度收窄（竖向 14→10，分隔线 28/30→24）；杂货店身份名改「身份·诞生日」；`v5006_features_test.dart` |
+| **v5.0.7** | 修复：物品编辑点「完成」卡在打勾界面不返回且未保存 —— `_save` 加 try/catch + 8s IO 超时，失败提示「保存失败，请重试」并复位按钮；价格校验拦 NaN/Infinity；`ItemStorage` 增加测试注入钩子；`item_edit_save_bug_test.dart` |
 
 > v4.9.32 及更早（深色模式、AppSheet、震动总开关、用户 ID 顺序号等奠基改动）见 git log，此处不再展开。
 
@@ -304,8 +305,8 @@ lib/
 ## 9. 新会话交接检查清单
 
 - [ ] 读本文件 + `docs/redeem_codes.md`（+ 若涉及上云再读 `docs/CLOUD_ARCHITECTURE.md`）
-- [ ] `git fetch origin && git rebase origin/main`，确认未落后电脑端；`git log -1` 确认版本为 v5.0.6
-- [ ] `grep '^version:' pubspec.yaml` 与 `app_version.dart` 版本号一致（当前 5.0.6+164 / V5.0.6）
+- [ ] `git fetch origin && git rebase origin/main`，确认未落后电脑端；`git log -1` 确认版本为 v5.0.7
+- [ ] `grep '^version:' pubspec.yaml` 与 `app_version.dart` 版本号一致（当前 5.0.7+165 / V5.0.7）
 - [ ] 改代码：analyze 0 error → 全量测试全绿（当前 585 项）→ 构建 → commit/push → Release → present_files
 - [ ] 版本号两处同步 + 构建号 +1；新增改动配 `vXXYY_features_test.dart` 回归测试
 - [ ] 涉及 UI：遵守 §2 色板（尤其主题色走 `AppPalette.c()`、抽屉去标题）、§3 动效组件
