@@ -198,18 +198,18 @@ void main() {
       expect(AppSettings.themeModeNotifier.value, AppThemeMode.dark);
     });
 
-    test('load 兼容旧档缺 themeMode（回落跟随系统）', () async {
+    test('load 兼容旧档缺 themeMode（v5.0.3 回落浅色/深色关闭）', () async {
       final f = File('${dir.path}/app_settings.json');
       await f.writeAsString(jsonEncode({'fontFamily': ''}));
       await AppSettings.load();
-      expect(AppSettings.themeMode, AppThemeMode.system);
+      expect(AppSettings.themeMode, AppThemeMode.light);
     });
 
     test('load 忽略非法 themeMode 值', () async {
       final f = File('${dir.path}/app_settings.json');
       await f.writeAsString(jsonEncode({'themeMode': 'weird'}));
       await AppSettings.load();
-      expect(AppSettings.themeMode, AppThemeMode.system);
+      expect(AppSettings.themeMode, AppThemeMode.light);
     });
   });
 

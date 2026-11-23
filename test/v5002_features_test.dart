@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:ayodiray/screens/app_lock_setup_wizard.dart';
 import 'package:ayodiray/services/app_lock_storage.dart';
 import 'package:ayodiray/theme/app_palette.dart';
-import 'package:ayodiray/utils/app_version.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
@@ -43,12 +42,6 @@ void main() {
     AppPalette.dark = false;
     AppPalette.accent = AccentCatalog.byId('bamboo');
     if (dir.existsSync()) dir.deleteSync(recursive: true);
-  });
-
-  group('版本号', () {
-    test('展示版本同步到 V5.0.2', () {
-      expect(AppVersion.displayVersion, 'V5.0.2');
-    });
   });
 
   group('4 步向导 · 步骤与文案', () {
@@ -159,7 +152,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('设置密保'), findsOneWidget);
       await tester.enterText(find.byType(TextField).last, '上海');
-      await tester.tap(find.text('完成设置'));
+      await tester.tap(find.text('完成'));
       await tester.pumpAndSettle();
 
       expect(setupResult, true);
@@ -277,6 +270,41 @@ void main() {
       );
       expect(await AppLockStorage.verifyPin('9999'), true);
       expect(await AppLockStorage.verifyPin('1111'), false);
+    });
+  });
+
+  group('向导按钮与选项样式（右下角无底纹 / 主题底纹 / 文案）', () {
+    test('步骤主按钮走无底纹 TextButton，无全宽 ElevatedButton', () {
+      final source = File(
+              '${Directory.current.path}/lib/screens/app_lock_setup_wizard.dart')
+          .readAsStringSync();
+      expect(source.contains('Widget _stepActionRow'), true);
+      expect(source.contains('ElevatedButton'), false);
+      // 取消在左、主按钮在右，整体右对齐
+      expect(source.contains('MainAxisAlignment.end'), true);
+      // 末步按钮改名为「完成」
+      expect(source.contains("label: '完成'"), true);
+      expect(source.contains('完成设置'), false);
+    });
+
+    test('选项卡片移除描边，选中底纹跟随主题色', () {
+      final source = File(
+              '${Directory.current.path}/lib/screens/app_lock_setup_wizard.dart')
+          .readAsStringSync();
+      expect(source.contains('Border.all('), false);
+      expect(source.contains('accent.withOpacity(0.12)'), true);
+      expect(source.contains('0xFFEAF3EE'), false);
+    });
+
+    test('设置页指定文案已移除状态前缀', () {
+      final source = File(
+              '${Directory.current.path}/lib/screens/settings_screen.dart')
+          .readAsStringSync();
+      expect(source.contains('未开启，打开 App 无需解锁'), false);
+      expect(source.contains('打开 App 无需解锁'), true);
+      expect(source.contains('已开启，操作时有触感反馈'), false);
+      expect(source.contains('已关闭，全局不再震动'), false);
+      expect(source.contains("on ? '操作时有触感反馈' : '全局不再震动'"), true);
     });
   });
 

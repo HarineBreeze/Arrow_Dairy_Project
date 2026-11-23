@@ -1185,6 +1185,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       children: [
         _buildTopBar(),
         _buildViewBar(),
+        // v5.0.3：筛选栏与数据栏之间加分割线，与物品页同款
+        Divider(height: 1, color: AppPalette.c(0xFFE8EDF5)),
         _buildStatsBar(),
         if (_activeTopic != null) _buildTopicBar(),
         ClipRect(

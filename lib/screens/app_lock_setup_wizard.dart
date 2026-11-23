@@ -188,19 +188,45 @@ class _StepFrame<T> extends StatelessWidget {
         ),
         contentPadding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
         content: SingleChildScrollView(child: builder(context)),
-        actionsPadding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
-        actions: [
-          Pressable(
-            child: TextButton(
-              onPressed: () => _cancel(context),
-              child: Text('取消',
-                  style: TextStyle(color: AppPalette.c(0xFF7C8F86))),
-            ),
-          ),
-        ],
       ),
     );
   }
+}
+
+/// 每步底部操作行：取消（左）+ 主按钮（右），无底纹、缩小、整体右对齐。
+/// 取消与主按钮同处一行，任一取消都向向导返回 null（即整体取消）。
+Widget _stepActionRow({
+  required BuildContext context,
+  required String label,
+  required VoidCallback onSubmit,
+}) {
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.end,
+    children: [
+      Pressable(
+        child: TextButton(
+          onPressed: () {
+            Haptics.light();
+            Navigator.pop(context);
+          },
+          child: Text('取消',
+              style:
+                  TextStyle(fontSize: 13, color: AppPalette.c(0xFF7C8F86))),
+        ),
+      ),
+      const SizedBox(width: 8),
+      Pressable(
+        child: TextButton(
+          onPressed: onSubmit,
+          child: Text(label,
+              style: TextStyle(
+                  fontSize: 13,
+                  color: AppPalette.accentColor,
+                  fontWeight: FontWeight.w600)),
+        ),
+      ),
+    ],
+  );
 }
 
 /// 第 1 步：选择形式（默认密码，选中即高亮，底部「下一步」）。
@@ -227,13 +253,12 @@ class _TypeStepState extends State<_TypeStep> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(
+            // 选中底纹由当前主题色淡化而来，5 套主题 / 深浅模式自动跟随。
             color: selected
-                ? AppPalette.c(0xFFEAF3EE)
+                ? Color.alphaBlend(
+                    accent.withOpacity(0.12), AppPalette.c(0xFFFFFFFF))
                 : AppPalette.c(0xFFF5F8F6),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-                color: selected ? accent : AppPalette.c(0xFFDCE7E0),
-                width: selected ? 1.5 : 1),
           ),
           child: Column(
             children: [
@@ -269,20 +294,10 @@ class _TypeStepState extends State<_TypeStep> {
           _tile(AppLockType.gesture, '九宫格手势', AppIcons.event),
         ]),
         const SizedBox(height: 16),
-        SizedBox(
-          width: double.infinity,
-          child: Pressable(
-            child: ElevatedButton(
-              onPressed: () => Navigator.pop<AppLockType>(context, _type),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppPalette.accentColor,
-                foregroundColor: AppPalette.c(0xFFFFFFFF),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              child: const Text('下一步', style: TextStyle(fontSize: 15)),
-            ),
-          ),
+        _stepActionRow(
+          context: context,
+          label: '下一步',
+          onSubmit: () => Navigator.pop<AppLockType>(context, _type),
         ),
       ],
     );
@@ -369,20 +384,10 @@ class _CredentialStepState extends State<_CredentialStep> {
                 style: const TextStyle(fontSize: 13, color: Color(0xFFCB5C50))),
           ),
         const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: Pressable(
-            child: ElevatedButton(
-              onPressed: _submit,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppPalette.accentColor,
-                foregroundColor: AppPalette.c(0xFFFFFFFF),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              child: const Text('下一步', style: TextStyle(fontSize: 15)),
-            ),
-          ),
+        _stepActionRow(
+          context: context,
+          label: '下一步',
+          onSubmit: _submit,
         ),
       ],
     );
@@ -475,20 +480,10 @@ class _ConfirmStepState extends State<_ConfirmStep> {
                 style: const TextStyle(fontSize: 13, color: Color(0xFFCB5C50))),
           ),
         const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: Pressable(
-            child: ElevatedButton(
-              onPressed: _submit,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppPalette.accentColor,
-                foregroundColor: AppPalette.c(0xFFFFFFFF),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              child: const Text('下一步', style: TextStyle(fontSize: 15)),
-            ),
-          ),
+        _stepActionRow(
+          context: context,
+          label: '下一步',
+          onSubmit: _submit,
         ),
       ],
     );
@@ -566,20 +561,10 @@ class _SecurityStepState extends State<_SecurityStep> {
                 style: const TextStyle(fontSize: 13, color: Color(0xFFCB5C50))),
           ),
         const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: Pressable(
-            child: ElevatedButton(
-              onPressed: _submit,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppPalette.accentColor,
-                foregroundColor: AppPalette.c(0xFFFFFFFF),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              child: const Text('完成设置', style: TextStyle(fontSize: 15)),
-            ),
-          ),
+        _stepActionRow(
+          context: context,
+          label: '完成',
+          onSubmit: _submit,
         ),
       ],
     );

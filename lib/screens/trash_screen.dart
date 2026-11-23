@@ -678,15 +678,6 @@ class TrashScreenState extends State<TrashScreen> {
                         fontWeight: FontWeight.w600,
                         color: AppPalette.c(0xFF647A70)),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '删除的内容支持7日内恢复哦～',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                        fontSize: 13,
-                        height: 1.7,
-                        color: AppPalette.c(0xFF8FA09A).withOpacity(0.95)),
-                  ),
                 ],
               ),
             ),

@@ -19,6 +19,7 @@ import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
 import '../widgets/asset_pie_card.dart';
 import '../widgets/app_icons.dart';
+import '../widgets/pin_setup_wizard.dart';
 
 import '../theme/app_palette.dart';
 import '../theme/app_theme_scope.dart';
@@ -129,12 +130,8 @@ class AssetScreenState extends State<AssetScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 18, 20, 10),
-              child: Text('设置',
-                  style:
-                      TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-            ),
+            // v5.0.3：移除「设置」标题，抽屉直接列出选项
+            const SizedBox(height: 14),
             // 加密访问开关（在上方）
             ListTile(
               leading: AppIcon(
@@ -198,14 +195,16 @@ class AssetScreenState extends State<AssetScreen> {
     );
   }
 
-  /// 开启加密访问：设置密码（两次）+ 密保问题与答案
+  /// 开启加密访问：3 步向导（设置密码 → 确认密码 → 密保）。
   Future<void> _openSetupPin() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => const _PinSetupDialog(),
+    final result = await showPinSetupWizard3(context);
+    if (result == null || !mounted) return;
+    await AssetStorage.savePin(
+      pin: result.pin,
+      question: result.question,
+      answer: result.answer,
     );
-    if (ok != true || !mounted) return;
+    if (!mounted) return;
     setState(() {
       _hasPin = true;
       _unlocked = true; // 刚设置完密码，本次访问无需再解锁
@@ -682,7 +681,13 @@ class AssetScreenState extends State<AssetScreen> {
                           ? ListView(
                               // 空态也要可滚动，否则无法下拉刷新
                               physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.fromLTRB(16, 14, 16, 96),
                               children: [
+                                // v5.0.3：空状态也保留数据看板，数值显示 0
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 18),
+                                  child: _buildOverview(),
+                                ),
                                 EmptyState(
                                   icon: '💰',
                                   title: _hasFilter
@@ -1453,180 +1458,6 @@ class _HoldDetectorState extends State<_HoldDetector> {
       onPointerUp: (_) => _stop(),
       onPointerCancel: (_) => _stop(),
       child: widget.child,
-    );
-  }
-}
-
-// ==================== 首次设置密码弹窗 ====================
-
-class _PinSetupDialog extends StatefulWidget {
-  const _PinSetupDialog({Key? key}) : super(key: key);
-
-  @override
-  State<_PinSetupDialog> createState() => _PinSetupDialogState();
-}
-
-class _PinSetupDialogState extends State<_PinSetupDialog> {
-  final _p1 = TextEditingController();
-  final _p2 = TextEditingController();
-  final _qCtrl = TextEditingController(text: '你的生日是几号？');
-  final _aCtrl = TextEditingController();
-  bool _saving = false;
-  String? _tip; // 确认时未填全的提示
-
-  bool get _valid =>
-      _p1.text.trim().length >= 4 &&
-      _p1.text.trim() == _p2.text.trim() &&
-      _qCtrl.text.trim().isNotEmpty &&
-      _aCtrl.text.trim().isNotEmpty;
-
-  /// 逐项检查，返回第一条不满足的提示；全部满足返回 null
-  String? get _missing {
-    final p1 = _p1.text.trim();
-    final p2 = _p2.text.trim();
-    if (p1.isEmpty) return '请先设置密码（至少 4 位）';
-    if (p1.length < 4) return '密码至少 4 位';
-    if (p2.isEmpty) return '请再输入一遍密码';
-    if (p1 != p2) return '两次输入的密码不一致';
-    if (_qCtrl.text.trim().isEmpty) return '请填写密保问题';
-    if (_aCtrl.text.trim().isEmpty) return '请填写密保答案';
-    return null;
-  }
-
-  Future<void> _submit() async {
-    final miss = _missing;
-    if (miss != null) {
-      setState(() => _tip = miss);
-      return;
-    }
-    setState(() {
-      _saving = true;
-      _tip = null;
-    });
-    await AssetStorage.savePin(
-      pin: _p1.text.trim(),
-      question: _qCtrl.text.trim(),
-      answer: _aCtrl.text,
-    );
-    if (mounted) Navigator.pop(context, true);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // v4.9.25：订阅主题明暗，切换深色模式时整页重新 build
-    AppThemeScope.watch(context);
-    return WillPopScope(
-      // 侧滑 / 返回键一次即取消
-      onWillPop: () async {
-        Navigator.pop(context, false);
-        return false;
-      },
-      child: AlertDialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('开启加密访问'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('开启后，进入资产全景需输入密码；密码仅保存在本机',
-                  style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
-              const SizedBox(height: 14),
-              TextField(
-                controller: _p1,
-                obscureText: true,
-                keyboardType: TextInputType.number,
-                maxLength: 12,
-                decoration: const InputDecoration(
-                  labelText: '密码（至少 4 位）',
-                  counterText: '',
-                  border: OutlineInputBorder(),
-                ),
-                onChanged: (_) => setState(() => _tip = null),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _p2,
-                obscureText: true,
-                keyboardType: TextInputType.number,
-                maxLength: 12,
-                decoration: InputDecoration(
-                  labelText: '再输入一遍',
-                  counterText: '',
-                  border: const OutlineInputBorder(),
-                  errorText: (_p2.text.isNotEmpty &&
-                          _p2.text.trim() != _p1.text.trim())
-                      ? '两次输入不一致'
-                      : null,
-                ),
-                onChanged: (_) => setState(() => _tip = null),
-              ),
-              const SizedBox(height: 14),
-              Text('密保（忘记密码时用于重置）',
-                  style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _qCtrl,
-                maxLength: 30,
-                decoration: const InputDecoration(
-                  labelText: '密保问题',
-                  counterText: '',
-                  border: OutlineInputBorder(),
-                ),
-                onChanged: (_) => setState(() => _tip = null),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _aCtrl,
-                maxLength: 30,
-                decoration: const InputDecoration(
-                  labelText: '密保答案',
-                  counterText: '',
-                  border: OutlineInputBorder(),
-                ),
-                onChanged: (_) => setState(() => _tip = null),
-              ),
-              if (_tip != null) ...[
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    const AppIcon(AppIcons.warn,
-                        size: 16, color: Color(0xFFCB5C50)),
-                    const SizedBox(width: 6),
-                    Flexible(
-                      child: Text(_tip!,
-                          style: const TextStyle(
-                              fontSize: 13, color: Color(0xFFCB5C50))),
-                    ),
-                  ],
-                ),
-              ],
-            ],
-          ),
-        ),
-        actions: [
-          Pressable(
-            enabled: true,
-            child: TextButton(
-              onPressed: _saving ? null : () => Navigator.pop(context, false),
-              child: Text('取消',
-                  style: TextStyle(color: AppPalette.c(0xFF7C8F86))),
-            ),
-          ),
-          Pressable(
-            enabled: true,
-            child: TextButton(
-              onPressed: _saving ? null : _submit,
-              child: Text('确认',
-                  style: TextStyle(
-                      color: _valid
-                          ? AppPalette.c(0xFF3E8E6D)
-                          : AppPalette.c(0xFF8FA09A))),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

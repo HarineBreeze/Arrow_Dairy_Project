@@ -40,13 +40,13 @@ class AppSettings {
 
   // ---------------- 深色模式 ----------------
 
-  /// 主题模式偏好，默认跟随系统。持久化到 app_settings.json 的 themeMode。
-  static AppThemeMode _themeMode = AppThemeMode.system;
+  /// 主题模式偏好，默认浅色（深色默认关闭，v5.0.3）。持久化到 themeMode。
+  static AppThemeMode _themeMode = AppThemeMode.light;
   static AppThemeMode get themeMode => _themeMode;
 
   /// 主题模式变更通知：MaterialApp 监听后重建，实现全局换肤。
   static final ValueNotifier<AppThemeMode> themeModeNotifier =
-      ValueNotifier<AppThemeMode>(AppThemeMode.system);
+      ValueNotifier<AppThemeMode>(AppThemeMode.light);
 
   /// 按「模式 + 当前系统亮度」解析出实际是否深色。
   /// 跟随系统时由调用方传入 platformBrightness；手动模式忽略系统亮度。
@@ -206,11 +206,11 @@ class AppSettings {
       final infl = map['inflationRate'];
       if (infl is num) _inflationRate = infl.toDouble();
 
-      // 主题模式：兼容旧档缺字段（默认跟随系统）；非法值回落 system
+      // 主题模式：兼容旧档缺字段（v5.0.3 起默认浅色/深色关闭）；非法值回落 light
       final tm = map['themeMode'];
       _themeMode = AppThemeMode.values.firstWhere(
         (m) => m.name == tm,
-        orElse: () => AppThemeMode.system,
+        orElse: () => AppThemeMode.light,
       );
 
       // 主题色：兼容旧档缺字段（默认竹青）；非法值回落竹青

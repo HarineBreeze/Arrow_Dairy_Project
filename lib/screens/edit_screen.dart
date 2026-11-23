@@ -1,5 +1,6 @@
 import '../widgets/app_icons.dart';
 import '../widgets/entry_image.dart';
+import '../widgets/pin_setup_wizard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
@@ -861,85 +862,16 @@ class _EditScreenState extends State<EditScreen> with WidgetsBindingObserver {
     }
   }
 
+  /// 设置单篇笔记密码：2 步向导（设置密码 → 密保），v5.0.3。
   Future<void> _setPassword() async {
-    final ctrl = TextEditingController(text: _password);
-    final hintCtrl = TextEditingController(text: _passwordHint);
-    final ansCtrl = TextEditingController(text: _passwordAnswer);
-    final result = await showDialog<Map<String, String>>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('设置密码'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: ctrl,
-                autofocus: true,
-                obscureText: true,
-                decoration: const InputDecoration(hintText: '请输入密码'),
-              ),
-              const SizedBox(height: 10),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text('密保问题（选填）',
-                    style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
-              ),
-              TextField(
-                controller: hintCtrl,
-                maxLength: 20,
-                decoration: const InputDecoration(
-                  hintText: '如：我的生日是几号？',
-                  counterText: '',
-                ),
-              ),
-              const SizedBox(height: 6),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text('密保问题答案',
-                    style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
-              ),
-              TextField(
-                controller: ansCtrl,
-                maxLength: 20,
-                decoration: const InputDecoration(
-                  hintText: '答案（忘记密码时用于找回）',
-                  counterText: '',
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          Pressable(
-            enabled: true,
-            child: TextButton(
-                onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
-          ),
-          Pressable(
-            enabled: true,
-            child: TextButton(
-                onPressed: () => Navigator.pop(ctx, {
-                      'pwd': ctrl.text,
-                      'hint': hintCtrl.text.trim(),
-                      'answer': ansCtrl.text.trim(),
-                    }),
-                child: const Text('确定')),
-          ),
-        ],
-      ),
-    );
-    if (result != null && (result['pwd'] ?? '').isNotEmpty) {
-      setState(() {
-        _encrypted = true;
-        _password = result['pwd']!;
-        _passwordHint = result['hint'] ?? '';
-        _passwordAnswer = result['answer'] ?? '';
-      });
-    }
-    ctrl.dispose();
-    hintCtrl.dispose();
-    ansCtrl.dispose();
+    final result = await showPinSetupWizard2(context);
+    if (result == null) return;
+    setState(() {
+      _encrypted = true;
+      _password = result.pin;
+      _passwordHint = result.question;
+      _passwordAnswer = result.answer;
+    });
   }
 
   // 「更多」按钮：置顶开关 + 可见度（原独立按钮已收进此面板）

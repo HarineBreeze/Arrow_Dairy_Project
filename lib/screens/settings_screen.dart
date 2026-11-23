@@ -313,13 +313,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     AppThemeScope.watch(context);
     return Scaffold(
       appBar: AppBar(title: const Text('设置')),
-      // 版本号固定在整个页面最底部（不随列表滚动），列表内容在其上方滚动
-      body: Column(
+      // 版本号放在列表内容最底部，随页面滚动到底可见（不再吸底常驻）。
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
         children: [
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-              children: [
                 _buildAppearanceSection(context),
                 const SizedBox(height: 16),
                 Padding(
@@ -343,7 +340,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     title: '隐私锁',
                     subtitle: _lockEnabled
                         ? '已开启，每次打开 App 需解锁'
-                        : '未开启，打开 App 无需解锁',
+                        : '打开 App 无需解锁',
                     value: _lockEnabled,
                     enabled: true,
                     switchKey: 'privacy_lock_switch',
@@ -440,7 +437,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     builder: (context, on, _) => _buildSwitchItem(
                       icon: AppIcons.vibrate,
                       title: '震动',
-                      subtitle: on ? '已开启，操作时有触感反馈' : '已关闭，全局不再震动',
+                      subtitle: on ? '操作时有触感反馈' : '全局不再震动',
                       value: on,
                       enabled: true,
                       onChanged: (v) {
@@ -451,14 +448,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
-              ],
-            ),
-          ),
-          // 底部居中版本号（灰字，随发版同步更新 AppVersion.displayVersion）
-          Padding(
-            padding: EdgeInsets.only(top: 6, bottom: 10),
-            child: Center(
+          const SizedBox(height: 16),
+          // 版本号置于列表内容最底部，滑到底才可见（灰字，随发版同步）
+          Center(
+            child: Padding(
+              padding: EdgeInsets.only(top: 6, bottom: 10),
               child: Text(
                 AppVersion.displayVersion,
                 style: TextStyle(
