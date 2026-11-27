@@ -97,8 +97,10 @@ void main() {
     await pumpScreen(tester);
 
     // 1. 数据看板正常渲染
-    expect(find.text('净资产'), findsOneWidget);
-    expect(find.text('¥5000'), findsOneWidget); // 7500 + (-2500)
+    // v5.0.8：看板新增第三张桑基图卡，它也标注「净资产」与同一金额
+    // （堆叠里常驻但不可见），因此两处各 2 个。
+    expect(find.text('净资产'), findsNWidgets(2));
+    expect(find.text('¥5000'), findsNWidgets(2)); // 7500 + (-2500)
 
     // 2. 结构条元素存在且已挂载
     final barEl = findBarElement(tester);

@@ -8,5 +8,5 @@ class AppVersion {
   AppVersion._();
 
   /// 展示用版本号（设置页底部灰色小字）
-  static const String displayVersion = 'V5.0.7';
+  static const String displayVersion = 'V5.0.8';
 }

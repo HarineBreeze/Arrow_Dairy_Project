@@ -33,8 +33,14 @@ class OverviewStack extends StatefulWidget {
   /// 第二张：金额为正的资产细分饼图
   final Widget card2;
 
+  /// 第三张（可选）：资产构成桑基图。未传入时退化为原来的两张卡。
+  final Widget? card3;
+
   /// 是否允许切到第二张（资产为空等场景下不显示堆叠）
   final bool hasSecond;
+
+  /// 是否允许切到第三张（净资产为负等场景下不显示桑基图）
+  final bool hasThird;
 
   /// 当前第几层（供外部同步其他入口，可选）
   final ValueChanged<int>? onPageChanged;
@@ -43,7 +49,9 @@ class OverviewStack extends StatefulWidget {
     Key? key,
     required this.card1,
     required this.card2,
+    this.card3,
     this.hasSecond = true,
+    this.hasThird = false,
     this.onPageChanged,
   }) : super(key: key);
 
@@ -86,10 +94,18 @@ class OverviewStackState extends State<OverviewStack>
   /// 水平位移（正 = 往右拖）
   final ValueNotifier<double> _dx = ValueNotifier<double>(0);
 
-  /// 两张卡各自的「瞬时层级」：0 = 被压在下面（露边），1 = 完全在顶层。
+  /// 各卡各自的「瞬时层级」：0 = 被压在下面（露边），1 = 完全在顶层。
   /// 拖动/翻页途中连续变化，因此不会出现「瞬移换层」。
-  final ValueNotifier<double> _levelA = ValueNotifier<double>(1);
-  final ValueNotifier<double> _levelB = ValueNotifier<double>(0);
+  /// 下标 0/1/2 对应 card1/card2/card3。
+  final List<ValueNotifier<double>> _levels = [
+    ValueNotifier<double>(1),
+    ValueNotifier<double>(0),
+    ValueNotifier<double>(0),
+  ];
+
+  ValueNotifier<double> get _levelA => _levels[0];
+  ValueNotifier<double> get _levelB => _levels[1];
+  ValueNotifier<double> get _levelC => _levels[2];
 
   /// 轮盘高度锁：一旦量到就固定，翻页、切卡、转场都不再变（见 [_stackHeight]）
   double? _card1Height;
@@ -100,6 +116,9 @@ class OverviewStackState extends State<OverviewStack>
   /// 因此轮盘高度 = max(净资产卡自然高度, 饼图卡高度)，
   /// max 是常数，翻页时下方列表依旧不会被推挤。
   double? _card2Height;
+
+  /// 桑基图卡（role 2）的实测内容高度。参与 [_stackHeight] 定高。
+  double? _card3Height;
 
   /// 上一次参与定高的可用宽度 —— 宽度变了（旋转屏 / 分屏）才允许重新定高
   double _lockedAtWidth = 0;
@@ -133,10 +152,14 @@ class OverviewStackState extends State<OverviewStack>
   void dispose() {
     _anim.dispose();
     _dx.dispose();
-    _levelA.dispose();
-    _levelB.dispose();
+    for (final l in _levels) {
+      l.dispose();
+    }
     super.dispose();
   }
+
+  /// 实际挂载的卡数量：最多 3 张，缺省退化为 2 张（与旧版一致）。
+  int get _count => widget.hasSecond ? (widget.hasThird ? 3 : 2) : 1;
 
   bool get _topIsSecond => widget.hasSecond && _index == 1;
 
@@ -161,16 +184,20 @@ class OverviewStackState extends State<OverviewStack>
   ///
   /// 于是顶部数据栏有了稳定、专属的位置，下方列表里的卡片 y 坐标永远不变。
   double get _stackHeight {
-    final h1 = _card1Height ?? _fallbackHeight;
+    var h = _card1Height ?? _fallbackHeight;
     final h2 = _card2Height;
-    return (h2 != null && h2 > h1) ? h2 : h1;
+    if (h2 != null && h2 > h) h = h2;
+    final h3 = _card3Height;
+    if (h3 != null && h3 > h) h = h3;
+    return h;
   }
 
-  /// 净资产卡是否被拉伸到轮盘高度（饼图卡更高时成立）。
+  /// 净资产卡是否被拉伸到轮盘高度（饼图/桑基卡更高时成立）。
   bool get _stretching {
-    final h1 = _card1Height;
+    final h1 = _card1Height ?? _fallbackHeight;
     final h2 = _card2Height;
-    return h2 != null && h2 > (h1 ?? _fallbackHeight);
+    final h3 = _card3Height;
+    return (h2 != null && h2 > h1) || (h3 != null && h3 > h1);
   }
 
   /// 每张卡的内容高度变化时调用（在布局完成后回传）。
@@ -180,10 +207,14 @@ class OverviewStackState extends State<OverviewStack>
   /// 不能再写回来（否则反馈环把自然高度污染掉，高度再也缩不回去）。
   void _onMeasure(int role, double h) {
     if (h <= 0) return;
-    if (role == 1) {
-      final locked = _card2Height;
+    if (role == 1 || role == 2) {
+      final locked = role == 1 ? _card2Height : _card3Height;
       if (locked != null && (locked - h).abs() < 0.5) return;
-      _card2Height = h;
+      if (role == 1) {
+        _card2Height = h;
+      } else {
+        _card3Height = h;
+      }
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) setState(() {});
       });
@@ -214,6 +245,7 @@ class OverviewStackState extends State<OverviewStack>
     // 宽度变了：旧高度不再适用，放开锁重新量一帧
     _card1Height = null;
     _card2Height = null;
+    _card3Height = null;
   }
 
   /// 首帧还没有测量结果时的保底高度（净资产卡大约就这么高）
@@ -262,7 +294,11 @@ class OverviewStackState extends State<OverviewStack>
 
     if (far || fling) {
       Haptics.light();
-      _pageTo(1 - _index);
+      final goingNext = _dx.value < 0;
+      final target = goingNext
+          ? (_index + 1) % _count
+          : (_index - 1 + _count) % _count;
+      _pageTo(target);
     } else {
       _animateTo(0, OverviewStack.kSnapBack, Curves.easeOutCubic, () {
         _syncLevels(progress: 0);
@@ -290,7 +326,7 @@ class OverviewStackState extends State<OverviewStack>
 
   /// 程序化切换（外部按钮等）
   void jumpTo(int index) {
-    if (index == _index || !widget.hasSecond) return;
+    if (index == _index || index < 0 || index >= _count) return;
     _pageTo(index);
   }
 
@@ -301,14 +337,17 @@ class OverviewStackState extends State<OverviewStack>
     final p = progress ?? (_dx.value.abs() / _maxDrag).clamp(0.0, 1.0);
     // 有位移就露出背面那张（它的内容要一起参与接位动画）
     final peeking = p > 0.0001;
-    final wantRole = peeking ? (widget.hasSecond && _index == 1 ? 0 : 1) : null;
+    // 进来的那张由拖动方向决定：左滑 = 下一张，右滑 = 上一张（轮换）。
+    // dx 为 0 时 peeking=false，incoming 不会被用到，方向取值无影响。
+    final goingNext = _dx.value < 0;
+    final incoming = goingNext
+        ? (_index + 1) % _count
+        : (_index - 1 + _count) % _count;
+    final wantRole = peeking ? incoming : null;
     if (wantRole != _peekRole.value) _peekRole.value = wantRole;
-    if (_topIsSecond) {
-      _levelB.value = 1;
-      _levelA.value = p;
-    } else {
-      _levelA.value = 1;
-      _levelB.value = p;
+    for (var i = 0; i < _count; i++) {
+      _levels[i].value =
+          (i == _index) ? 1 : (peeking && i == incoming ? p : 0);
     }
   }
 
@@ -378,6 +417,22 @@ class OverviewStackState extends State<OverviewStack>
                             onHeight: (h) => _onMeasure(1, h),
                           ),
                         ),
+                      if (allowed && widget.hasThird && widget.card3 != null)
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          top: 0,
+                          child: _CardRole(
+                            role: 2,
+                            level: _levelC,
+                            dx: _dx,
+                            maxDrag: _maxDrag,
+                            stack: this,
+                            peeking: peek == 2,
+                            child: widget.card3!,
+                            onHeight: (h) => _onMeasure(2, h),
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -395,21 +450,24 @@ class OverviewStackState extends State<OverviewStack>
     );
   }
 
-  /// 卡片下方的页面指示圈：两枚空心圈 + 一枚实心圈，
+  /// 卡片下方的页面指示圈：N 枚空心圈 + 一枚实心圈（N = 实际卡数，2 或 3），
   /// 翻篇时实心圈滑到对应位置（与翻页动画同时开始）。
+  /// 两卡时 alignment 恰为 centerLeft / centerRight，与旧版完全一致。
   Widget _buildPageDots() {
     const dot = 7.0;
     const gap = 10.0;
+    final n = _count;
+    final alignX = n > 1 ? -1.0 + 2.0 * _dotIndex / (n - 1) : 0.0;
     return Center(
       child: SizedBox(
-        width: dot * 2 + gap,
+        width: dot * n + gap * (n - 1),
         height: dot,
         child: Stack(
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                for (var i = 0; i < 2; i++)
+                for (var i = 0; i < n; i++)
                   Container(
                     width: dot,
                     height: dot,
@@ -425,9 +483,7 @@ class OverviewStackState extends State<OverviewStack>
             AnimatedAlign(
               duration: const Duration(milliseconds: 250),
               curve: Curves.easeOutCubic,
-              alignment: _dotIndex == 0
-                  ? Alignment.centerLeft
-                  : Alignment.centerRight,
+              alignment: Alignment(alignX, 0),
               child: Container(
                 width: dot,
                 height: dot,

@@ -18,6 +18,7 @@ import 'usable_days_settings_sheet.dart';
 import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
 import '../widgets/asset_pie_card.dart';
+import '../widgets/asset_sankey_card.dart';
 import '../widgets/app_icons.dart';
 import '../widgets/pin_setup_wizard.dart';
 
@@ -810,8 +811,11 @@ class AssetScreenState extends State<AssetScreen> {
 
   Widget _buildOverview() {
     final slices = buildSlices(_assets);
+    final sankey = buildSankeyData(_assets);
     return OverviewStack(
       hasSecond: slices.isNotEmpty,
+      // 净资产为负时桑基图不自洽（带宽无法守恒），此时不挂载第三张卡
+      hasThird: sankey.isValid,
       card1: _buildNetWorthCard(),
       card2: AssetPieCard(
         slices: slices,
@@ -821,6 +825,10 @@ class AssetScreenState extends State<AssetScreen> {
           // 点图例 = 按该类型筛列表
           setState(() => _typeFilter = type);
         },
+      ),
+      card3: AssetSankeyCard(
+        data: sankey,
+        money: _money,
       ),
     );
   }
