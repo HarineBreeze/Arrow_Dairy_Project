@@ -40,6 +40,20 @@ class AppToast {
   /// 提示停留时长。校验类提示只需一眼就能读完，久留反而挡视线。
   static const Duration kDuration = Duration(milliseconds: 1600);
 
+  /// VIP 权益未解锁的**统一提示文案**。
+  ///
+  /// 全 App 所有「VIP 专属但未解锁」的功能共用这句，格式为：
+  /// 「{功能名}是VIP专属权益，请充值后重试～」
+  /// 例：桑基图 → 「桑基图是VIP专属权益，请充值后重试～」。
+  static String vipRequiredMessage(String feature) =>
+      '$feature是VIP专属权益，请充值后重试～';
+
+  /// 显示 VIP 权益未解锁提示（统一口径）。
+  ///
+  /// 用法：`AppToast.vipRequired(context, '桑基图')`。
+  static void vipRequired(BuildContext context, String feature) =>
+      show(context, vipRequiredMessage(feature), key: 'vip:$feature');
+
   /// 显示一条去重提示（模态底部抽屉）。
   ///
   /// [key] 用于区分「同一类提示」，默认用文案本身。

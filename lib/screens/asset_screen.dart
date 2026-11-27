@@ -6,8 +6,10 @@ import '../utils/app_motion.dart';
 import '../utils/app_toast.dart';
 import '../services/reward_service.dart';
 import '../models/asset.dart';
+import '../models/user_profile.dart';
 import '../services/app_settings.dart';
 import '../services/asset_storage.dart';
+import '../services/user_storage.dart';
 import '../services/trash_storage.dart';
 import '../utils/usable_days.dart';
 import '../widgets/empty_state.dart';
@@ -32,8 +34,16 @@ class AssetScreen extends StatefulWidget {
   final VoidCallback? onOpenMenu;
   /// 用户在密码页点了「取消」时回调，由首页切回笔记主页（保留兼容，正常不再触发）
   final VoidCallback? onCancel;
-  const AssetScreen({Key? key, this.onOpenMenu, this.onCancel})
-      : super(key: key);
+
+  /// 仅供测试：注入用户档案加载（验证 VIP 权益锁态）。
+  final Future<UserProfile> Function()? loadProfileOverride;
+
+  const AssetScreen({
+    Key? key,
+    this.onOpenMenu,
+    this.onCancel,
+    this.loadProfileOverride,
+  }) : super(key: key);
 
   @override
   State<AssetScreen> createState() => AssetScreenState();
@@ -48,6 +58,7 @@ class AssetScreenState extends State<AssetScreen> {
   String _typeFilter = '全部'; // 全部 | 总资产 | 负资产 | 现金流
   String _signFilter = '全部'; // 全部 | 金额为正 | 金额为负
   bool _hideNumbers = false; // 看板数字是否隐藏（默认显示）
+  bool _isVip = false; // 是否拥有 VIP 权益（桑基图等权益功能解锁）
 
   @override
   void initState() {
@@ -79,6 +90,18 @@ class AssetScreenState extends State<AssetScreen> {
       _assets = list;
       _loading = false;
     });
+    // VIP 权益状态：决定桑基图是否上锁。失败按未解锁处理（保守）。
+    _loadVip();
+  }
+
+  Future<void> _loadVip() async {
+    try {
+      final profile = await (widget.loadProfileOverride ?? UserStorage.load)();
+      final vip = RewardService.hasVipPrivilege(profile);
+      if (mounted && vip != _isVip) setState(() => _isVip = vip);
+    } catch (_) {
+      // 档案读取失败：保持未解锁，不影响资产主流程
+    }
   }
 
   /// 供外部（首页 FAB）调用的快捷入口
@@ -829,6 +852,7 @@ class AssetScreenState extends State<AssetScreen> {
       card3: AssetSankeyCard(
         data: sankey,
         money: _money,
+        unlocked: _isVip,
       ),
     );
   }

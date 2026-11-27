@@ -1,7 +1,13 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 
 import '../models/asset.dart';
+import '../models/user_profile.dart';
 import '../theme/app_palette.dart';
+import '../utils/app_toast.dart';
+import 'app_icons.dart';
+import 'identity_badge.dart';
 
 /// 桑基图右侧「金融资产」包含的类型（基金 / 黄金 / 股票）。
 const Set<String> kSankeyFinanceTypes = {'基金', '黄金', '股票'};
@@ -271,10 +277,20 @@ class AssetSankeyCard extends StatefulWidget {
   /// 金额格式化（与看板同一套，内部已处理隐藏数字）。
   final String Function(double) money;
 
+  /// 是否已解锁 VIP 权益。默认 true 以兼容直接构造本卡片的旧调用/测试；
+  /// 资产页会按真实 VIP 状态传入。
+  final bool unlocked;
+
+  /// 未解锁时点击卡片的回调（由调用方弹统一 VIP 提示）。
+  /// 不传时本组件自行弹出统一提示。
+  final VoidCallback? onLockedTap;
+
   const AssetSankeyCard({
     Key? key,
     required this.data,
     required this.money,
+    this.unlocked = true,
+    this.onLockedTap,
   }) : super(key: key);
 
   @override
@@ -309,64 +325,84 @@ class _AssetSankeyCardState extends State<AssetSankeyCard>
     super.dispose();
   }
 
+  void _handleTap() {
+    if (widget.unlocked) return;
+    if (widget.onLockedTap != null) {
+      widget.onLockedTap!();
+    } else {
+      // context 来自 build 传入，点击时宿主仍在树中，安全。
+      AppToast.vipRequired(context, '桑基图');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-      decoration: BoxDecoration(
-        color: AppPalette.c(0xFFFFFFFF),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0F24382F),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('资产构成',
-              style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppPalette.c(0xFF24382F))),
-          const SizedBox(height: 10),
-          if (!widget.data.isValid)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 60),
-              child: Center(
-                child: Text('净资产为负，暂不展示构成图',
-                    style: TextStyle(
-                        fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
-              ),
-            )
-          else
-            LayoutBuilder(
-              builder: (context, constraints) {
-                const h = 150.0;
-                final w = constraints.maxWidth;
-                final g = _layout(widget.data, w, h);
-                return SizedBox(
-                  height: h,
-                  child: Stack(
-                    children: [
-                      Positioned.fill(
-                        child: RepaintBoundary(
-                          child: AnimatedBuilder(
-                            animation: _c,
-                            builder: (_, __) => CustomPaint(
-                              painter: _SankeyPainter(
-                                data: widget.data,
-                                g: g,
-                                progress: Curves.easeOutCubic.transform(
-                                    _c.value),
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: widget.unlocked ? null : _handleTap,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+        decoration: BoxDecoration(
+          color: AppPalette.c(0xFFFFFFFF),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x0F24382F),
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              Text('资产构成',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppPalette.c(0xFF24382F))),
+              if (!widget.unlocked) ...[
+                const SizedBox(width: 6),
+                AppIcon(AppIcons.lock,
+                    size: 12, color: AppPalette.c(0xFF8FA09A)),
+              ],
+            ]),
+            const SizedBox(height: 10),
+            if (!widget.data.isValid)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 60),
+                child: Center(
+                  child: Text('净资产为负，暂不展示构成图',
+                      style: TextStyle(
+                          fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
+                ),
+              )
+            else
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  const h = 150.0;
+                  final w = constraints.maxWidth;
+                  final g = _layout(widget.data, w, h);
+                  return SizedBox(
+                    height: h,
+                    child: Stack(
+                      children: [
+                        Positioned.fill(
+                          child: RepaintBoundary(
+                            child: AnimatedBuilder(
+                              animation: _c,
+                              builder: (_, __) => CustomPaint(
+                                painter: _SankeyPainter(
+                                  data: widget.data,
+                                  g: g,
+                                  progress: Curves.easeOutCubic.transform(
+                                      _c.value),
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
                       _label(
                         label: widget.data.debt.label,
                         amount: widget.money(-widget.data.debt.amount),
@@ -411,12 +447,39 @@ class _AssetSankeyCardState extends State<AssetSankeyCard>
                         barW: g.barW,
                         isLeft: false,
                       ),
+                      // VIP 锁态蒙版：毛玻璃盖住图表 + 居中锁图标 + VIP 标识。
+                      if (!widget.unlocked)
+                        Positioned.fill(child: _buildLockOverlay()),
                     ],
                   ),
                 );
               },
             ),
-        ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 未解锁时的毛玻璃锁态蒙版：模糊底层图表，居中显示锁图标与 VIP 标识。
+  Widget _buildLockOverlay() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+        child: Container(
+          color: AppPalette.c(0xB3FFFFFF),
+          alignment: Alignment.center,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppIcon(AppIcons.lock,
+                  size: 34, color: AppPalette.c(0xFF6E7F77)),
+              const SizedBox(height: 8),
+              const IdentityBadge(badge: UserProfile.badgeVip, scale: 1.35),
+            ],
+          ),
+        ),
       ),
     );
   }
