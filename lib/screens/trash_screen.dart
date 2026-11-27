@@ -722,59 +722,75 @@ class TrashScreenState extends State<TrashScreen> {
     );
   }
 
-  /// 收纳栏：全部 / 笔记 / 物品 / 事件 / 资产（与全局搜索同款横滑胶囊）
+  /// 分类栏（v5.0.11）：与日记页「全部/按日/按月/按年」同款 ——
+  /// 等宽文字标签 + 底部 40×3 主题色滑块（AnimatedPositioned 250ms）。
+  /// 保留类型筛选语义与「数量为 0 置灰不可点」逻辑。
   Widget _buildFilterBar() {
-    final cats = <_Cat>[
-      _Cat('全部', _entries.length, null),
-      for (final k in TrashKind.values) _Cat(k.label, _countOf(k), k),
-    ];
-    return SizedBox(
-      height: 52,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        itemCount: cats.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemBuilder: (_, i) {
-          final c = cats[i];
-          final selected = _category == c.kind;
-          final disabled = c.kind != null && c.count == 0;
-          return GestureDetector(
-            onTap: disabled
-                ? null
-                : () {
-                    Haptics.light();
-                    setState(() {
-                      _category = c.kind;
-                      _selected.clear();
-                    });
-                  },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: selected ? AppPalette.c(0xB33E8E6D) : AppPalette.c(0xFFFFFFFF),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                    color: selected
-                        ? AppPalette.c(0xB33E8E6D)
-                        : AppPalette.c(0xFFE8EDF5)),
+    final kinds = <TrashKind?>[null, ...TrashKind.values];
+    final labels = ['全部', for (final k in TrashKind.values) k.label];
+    final index = kinds.indexOf(_category);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cellW = constraints.maxWidth / kinds.length;
+        final left = index * cellW + (cellW - 40) / 2;
+        return Container(
+          height: 48,
+          color: AppPalette.c(0xFFFFFFFF),
+          child: Stack(
+            children: [
+              Row(
+                children: List.generate(kinds.length, (i) {
+                  final selected = i == index;
+                  final disabled = kinds[i] != null && _countOf(kinds[i]!) == 0;
+                  return Expanded(
+                    child: InkWell(
+                      onTap: disabled
+                          ? null
+                          : () {
+                              if (selected) return;
+                              Haptics.light();
+                              setState(() {
+                                _category = kinds[i];
+                                _selected.clear();
+                              });
+                            },
+                      child: Center(
+                        child: Text(
+                          labels[i],
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight:
+                                selected ? FontWeight.w600 : FontWeight.w400,
+                            color: selected
+                                ? AppPalette.c(0xFF3E8E6D)
+                                : (disabled
+                                    ? AppPalette.c(0xFFC6D6CD)
+                                    : AppPalette.c(0xFF647A70)),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
               ),
-              child: Center(
-                child: Text('${c.name} ${c.count}',
-                    style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: selected
-                            ? Colors.white
-                            : (disabled
-                                ? AppPalette.c(0xFFC6D6CD)
-                                : AppPalette.c(0xFF24382F)))),
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOutCubic,
+                left: left,
+                bottom: 0,
+                child: Container(
+                  width: 40,
+                  height: 3,
+                  decoration: BoxDecoration(
+                    color: AppPalette.c(0xFF3E8E6D),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
               ),
-            ),
-          );
-        },
-      ),
+            ],
+          ),
+        );
+      },
     );
   }
 

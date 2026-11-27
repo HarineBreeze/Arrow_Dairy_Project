@@ -1282,11 +1282,12 @@ class AssetScreenState extends State<AssetScreen> {
               child: Row(
                 children: [
             // 图标（无底纹：直接摆放 emoji，与整体浅色调更统一）
+            // v5.0.11：预览卡片图标放大（46→56 容器 / 24→34 图标）
             SizedBox(
-              width: 46,
-              height: 46,
+              width: 56,
+              height: 56,
               child: Center(
-                child: EntryIcon(a.icon, size: 24),
+                child: EntryIcon(a.icon, size: 34),
               ),
             ),
             const SizedBox(width: 12),

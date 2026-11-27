@@ -539,9 +539,10 @@ class CountdownScreenState extends State<CountdownScreen> {
           ),
           child: Row(
             children: [
+              // v5.0.11：预览卡片图标放大（46→56 容器 / 24→34 图标）
               Container(
-                width: 46,
-                height: 46,
+                width: 56,
+                height: 56,
                 alignment: Alignment.center,
                 // 不再给图标加底纹色块，图标直接落在卡片底色上
                 child: Builder(builder: (_) {
@@ -549,7 +550,7 @@ class CountdownScreenState extends State<CountdownScreen> {
                       ? CountdownEvent.defaultIconFor(e.type)
                       : e.icon;
                   return EntryIcon(icon,
-                      size: 24,
+                      size: 34,
                       color: grey ? AppPalette.c(0xFF8FA09A) : null);
                 }),
               ),

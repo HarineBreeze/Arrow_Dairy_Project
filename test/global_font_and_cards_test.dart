@@ -203,7 +203,8 @@ void main() {
     await _settle(tester);
 
     expect(find.text('旅行随记'), findsOneWidget);
-    expect(find.text('笔记 1'), findsOneWidget, reason: '计数不带量词');
+    // v5.0.11：筛选栏改为日记页同款纯文字标签（不再带数量），仍无量词
+    expect(find.text('全部'), findsOneWidget, reason: '筛选栏含「全部」标签');
     expect(find.textContaining('篇'), findsNothing);
 
     // 结果卡内不应有笔记图标

@@ -302,6 +302,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
             ),
             // v4.9.47：移除「点击更换头像」提示语，功能栏上移一行文字高度
             const SizedBox(height: 36),
+            // v5.0.11：身份栏上方新增「解锁专属权益」入口（暂未实装）
+            _buildRightsEntry(),
+            const SizedBox(height: 12),
             _buildIdentityCard(),
             const SizedBox(height: 16),
             // 昵称 / 性别 / 生日 / 用户ID / 使用时间合为一张白卡：
@@ -352,6 +355,39 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     );
   }
 
+
+  /// 解锁专属权益入口（v5.0.11）：底纹为当前主题色，左文案 + 右箭头。
+  /// 功能暂未实装，点击提示。
+  Widget _buildRightsEntry() {
+    return InkWell(
+      onTap: () => AppToast.show(context, '功能暂未实装'),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: double.infinity,
+        height: 52,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          // AppPalette.c(0xFF3E8E6D) 会随当前主题色映射（含暖棕等）
+          color: AppPalette.c(0xFF3E8E6D),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            const Text(
+              '解锁专属权益',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+            const Spacer(),
+            const AppIcon(AppIcons.chevR, size: 18, color: Colors.white),
+          ],
+        ),
+      ),
+    );
+  }
 
   /// 身份与灵感：数据来自 user_profile.json（兑换码 / 发布奖励 / 杂货店消费）。
   /// 两行都可点：身份行切佩戴、灵感行进杂货店。

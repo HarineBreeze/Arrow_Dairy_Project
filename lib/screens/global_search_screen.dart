@@ -269,63 +269,12 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
       );
     }
 
-    // 收纳栏：从左到右固定顺序 笔记/物品/事件/资产
-    final cats = <_SearchCategory>[
-      _SearchCategory('笔记', '${diaries.length}', diaries.isNotEmpty),
-      _SearchCategory('物品', '${items.length}', items.isNotEmpty),
-      _SearchCategory('事件', '${events.length}', events.isNotEmpty),
-      _SearchCategory('资产', _assetLocked ? '已加密' : '${assets.length}',
-          assets.isNotEmpty),
-    ];
-
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
+      padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
       children: [
-        // 收纳栏：类似笔记页置顶收纳栏的横滑样式
-        SizedBox(
-          height: 40,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            itemCount: cats.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 8),
-            itemBuilder: (_, i) {
-              final c = cats[i];
-              final selected = _category == c.name;
-              return GestureDetector(
-                onTap: () {
-                  Haptics.light();
-                  setState(() => _category = selected ? null : c.name);
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: selected ? AppPalette.c(0xB33E8E6D) : AppPalette.c(0xFFFFFFFF),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                        color: selected
-                            ? AppPalette.c(0xB33E8E6D)
-                            : AppPalette.c(0xFFE8EDF5)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text('${c.name} ${c.count}',
-                          style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: selected
-                                  ? Colors.white
-                                  : (c.hasHit
-                                      ? AppPalette.c(0xFF24382F)
-                                      : AppPalette.c(0xFFC6D6CD)))),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
+        // v5.0.11：分类栏改为日记页「全部/按日/按月/按年」同款
+        // —— 等宽文字标签 + 底部 40×3 主题色滑块（AnimatedPositioned 250ms）。
+        _buildFilterBar(),
         const SizedBox(height: 12),
         // 分区结果（按收纳栏选中状态过滤）
         if (_category == null || _category == '笔记')
@@ -406,6 +355,70 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
   String _assetAmountLabel(Asset e) {
     if (_hideAssetAmount) return '¥ ****';
     return '¥${e.amount.toStringAsFixed(e.amount.truncateToDouble() == e.amount ? 0 : 2)}';
+  }
+
+  /// 分类栏（v5.0.11）：与日记页「全部/按日/按月/按年」同款 ——
+  /// 等宽文字标签 + 底部 40×3 主题色滑块（AnimatedPositioned 250ms）。
+  /// 保留类型筛选语义：null = 全部，其余为笔记/物品/事件/资产。
+  Widget _buildFilterBar() {
+    const cats = <String?>[null, '笔记', '物品', '事件', '资产'];
+    const labels = ['全部', '笔记', '物品', '事件', '资产'];
+    final index = cats.indexOf(_category);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cellW = constraints.maxWidth / cats.length;
+        final left = index * cellW + (cellW - 40) / 2;
+        return Container(
+          height: 48,
+          color: AppPalette.c(0xFFFFFFFF),
+          child: Stack(
+            children: [
+              Row(
+                children: List.generate(cats.length, (i) {
+                  final selected = i == index;
+                  return Expanded(
+                    child: InkWell(
+                      onTap: () {
+                        if (selected) return;
+                        Haptics.light();
+                        setState(() => _category = cats[i]);
+                      },
+                      child: Center(
+                        child: Text(
+                          labels[i],
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight:
+                                selected ? FontWeight.w600 : FontWeight.w400,
+                            color: selected
+                                ? AppPalette.c(0xFF3E8E6D)
+                                : AppPalette.c(0xFF647A70),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOutCubic,
+                left: left,
+                bottom: 0,
+                child: Container(
+                  width: 40,
+                  height: 3,
+                  decoration: BoxDecoration(
+                    color: AppPalette.c(0xFF3E8E6D),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   /// 资产结果卡的小眼睛开关（默认关闭态）
