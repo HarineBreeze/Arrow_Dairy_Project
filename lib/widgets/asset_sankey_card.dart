@@ -372,6 +372,7 @@ class _AssetSankeyCardState extends State<AssetSankeyCard>
                         amount: widget.money(-widget.data.debt.amount),
                         centerY: g.debtTop + g.debtH / 2,
                         w: w,
+                        h: h,
                         leftX: g.leftX,
                         rightX: g.rightX,
                         barW: g.barW,
@@ -382,6 +383,7 @@ class _AssetSankeyCardState extends State<AssetSankeyCard>
                         amount: widget.money(widget.data.net.amount),
                         centerY: g.netTop + g.netH / 2,
                         w: w,
+                        h: h,
                         leftX: g.leftX,
                         rightX: g.rightX,
                         barW: g.barW,
@@ -392,6 +394,7 @@ class _AssetSankeyCardState extends State<AssetSankeyCard>
                         amount: widget.money(widget.data.finance.amount),
                         centerY: g.finTop + g.finH / 2,
                         w: w,
+                        h: h,
                         leftX: g.leftX,
                         rightX: g.rightX,
                         barW: g.barW,
@@ -402,6 +405,7 @@ class _AssetSankeyCardState extends State<AssetSankeyCard>
                         amount: widget.money(widget.data.fixed.amount),
                         centerY: g.fixTop + g.fixH / 2,
                         w: w,
+                        h: h,
                         leftX: g.leftX,
                         rightX: g.rightX,
                         barW: g.barW,
@@ -422,14 +426,19 @@ class _AssetSankeyCardState extends State<AssetSankeyCard>
     required String amount,
     required double centerY,
     required double w,
+    required double h,
     required double leftX,
     required double rightX,
     required double barW,
     required bool isLeft,
   }) {
     final cross = isLeft ? CrossAxisAlignment.end : CrossAxisAlignment.start;
+    // 标签块（两行文字 + 间距）约 32px 高。以节点中心对齐，但把 top 夹在
+    // 图表区内，避免顶部/底部节点的文字溢出卡片边框被裁切。
+    const labelH = 32.0;
+    final top = (centerY - labelH / 2).clamp(0.0, (h - labelH).clamp(0.0, h));
     return Positioned(
-      top: centerY - 17,
+      top: top,
       left: isLeft ? 0 : rightX + barW + 8,
       right: isLeft ? w - leftX + 8 : 0,
       child: Column(

@@ -192,40 +192,24 @@ class OverviewStackState extends State<OverviewStack>
     return h;
   }
 
-  /// 净资产卡是否被拉伸到轮盘高度（饼图/桑基卡更高时成立）。
-  bool get _stretching {
-    final h1 = _card1Height ?? _fallbackHeight;
-    final h2 = _card2Height;
-    final h3 = _card3Height;
-    return (h2 != null && h2 > h1) || (h3 != null && h3 > h1);
-  }
-
-  /// 每张卡的内容高度变化时调用（在布局完成后回传）。
+  /// 每张卡的**自然内容高度**变化时调用（布局完成后回传）。
   ///
-  /// 饼图卡只记录高度（参与定高）；净资产卡记录**自然**高度 ——
-  /// 它被拉伸到轮盘高度后量出来的就是轮盘高度本身，
-  /// 不能再写回来（否则反馈环把自然高度污染掉，高度再也缩不回去）。
+  /// [_RenderMeasure] 用「无上限高度」测量子树，因此这里拿到的始终是卡片
+  /// 内容的自然高度，不受外层拉伸影响 —— 三张卡都被拉伸到 [_stackHeight]
+  /// 渲染（保证长宽完全统一），但定高只依据自然高度，不会形成反馈环。
   void _onMeasure(int role, double h) {
-    if (h <= 0) return;
-    if (role == 1 || role == 2) {
-      final locked = role == 1 ? _card2Height : _card3Height;
-      if (locked != null && (locked - h).abs() < 0.5) return;
-      if (role == 1) {
-        _card2Height = h;
-      } else {
-        _card3Height = h;
-      }
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) setState(() {});
-      });
-      return;
-    }
-    if (role != 0) return;
-    // 拉伸状态下量到的 = 轮盘高度，跳过
-    if (_stretching && (h - _stackHeight).abs() < 0.5) return;
-    final locked = _card1Height;
+    if (h <= 0 || role < 0 || role > 2) return;
+    final locked = role == 0
+        ? _card1Height
+        : (role == 1 ? _card2Height : _card3Height);
     if (locked != null && (locked - h).abs() < 0.5) return;
-    _card1Height = h;
+    if (role == 0) {
+      _card1Height = h;
+    } else if (role == 1) {
+      _card2Height = h;
+    } else {
+      _card3Height = h;
+    }
     // 高度在布局后才拿到，推到帧后重建一次
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) setState(() {});
@@ -390,14 +374,9 @@ class OverviewStackState extends State<OverviewStack>
                           maxDrag: _maxDrag,
                           stack: this,
                           peeking: peek == 0,
-                          // 饼图卡更高时把净资产卡拉到同一高度（两卡等大）；
-                          // 拉伸后量到的就是轮盘高度本身，不会再写回自然高度
-                          child: _stretching
-                              ? SizedBox(
-                                  height: _stackHeight,
-                                  child: widget.card1,
-                                )
-                              : widget.card1,
+                          // 三张卡统一在 _CardRole._body 里拉伸到轮盘高度，
+                          // 保证长宽完全一致；这里只传原卡，测量走无上限约束
+                          child: widget.card1,
                           onHeight: (h) => _onMeasure(0, h),
                         ),
                       ),
@@ -605,14 +584,22 @@ class _CardRole extends StatelessWidget {
 
     return Transform.translate(
       offset: Offset(shift, dy),
-      child: _Measure(
-        onHeight: onHeight,
-        child: Opacity(
-          opacity: fade,
-          child: Transform.scale(
-            scale: scale,
-            alignment: onTop ? Alignment.center : Alignment.topCenter,
-            child: card,
+      // 三卡统一尺寸：外层 SizedBox 给 tight 高度 = 轮盘高度，卡片白底框
+      // 因此被拉满，三卡长宽完全一致。[_Measure] 内部先用「无上限高度」测
+      // 内容自然高度（用于定高，不被拉伸污染），再按 tight 约束重排一次，
+      // 卡片内容顶部对齐、多余高度留在底部（见 [_RenderMeasure]）。
+      child: SizedBox(
+        width: double.infinity,
+        height: stack._stackHeight,
+        child: _Measure(
+          onHeight: onHeight,
+          child: Opacity(
+            opacity: fade,
+            child: Transform.scale(
+              scale: scale,
+              alignment: onTop ? Alignment.center : Alignment.topCenter,
+              child: card,
+            ),
           ),
         ),
       ),
@@ -645,13 +632,29 @@ class _RenderMeasure extends RenderProxyBox {
 
   @override
   void performLayout() {
-    super.performLayout();
-    final h = size.height;
-    if ((_last - h).abs() > 0.5) {
-      _last = h;
-      final cb = onHeight;
-      WidgetsBinding.instance.addPostFrameCallback((_) => cb(h));
+    // 两遍布局：
+    // ① 无上限高度约束下测「内容自然高度」——轮盘定高只认这个值，
+    //    不受外层拉伸影响，避免「拉伸高度写回定高」的反馈环。
+    // ② 再用父给的（拉伸后的）tight 约束重排，使卡片白底框填满轮盘高度，
+    //    三张卡因此长宽完全一致。
+    if (child != null) {
+      child!.layout(
+        BoxConstraints(
+          minWidth: constraints.minWidth,
+          maxWidth: constraints.maxWidth,
+          minHeight: 0,
+          maxHeight: double.infinity,
+        ),
+        parentUsesSize: true,
+      );
+      final natural = child!.size.height;
+      if ((_last - natural).abs() > 0.5) {
+        _last = natural;
+        final cb = onHeight;
+        WidgetsBinding.instance.addPostFrameCallback((_) => cb(natural));
+      }
     }
+    super.performLayout();
   }
 }
 

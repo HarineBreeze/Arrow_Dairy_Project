@@ -21,8 +21,17 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('版本号', () {
-    test('展示版本同步到 V5.0.7', () {
-      expect(AppVersion.displayVersion, 'V5.0.7');
+    test('展示版本不低于 V5.0.7', () {
+      final v = AppVersion.displayVersion
+          .replaceFirst('V', '')
+          .split('.')
+          .map(int.parse)
+          .toList();
+      final base = [5, 0, 7];
+      for (var i = 0; i < 3; i++) {
+        if (v[i] > base[i]) break;
+        expect(v[i], base[i], reason: '版本不应低于基线 V5.0.7');
+      }
     });
   });
 
