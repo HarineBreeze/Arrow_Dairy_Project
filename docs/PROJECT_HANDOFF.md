@@ -1,6 +1,6 @@
 # 阿尤日记 · 项目交接与推进指南
 
-> 截至 **v5.0.11**（versionCode 169，全量 **670** 项测试通过）。
+> 截至 **v5.0.12**（versionCode 170，全量 **672** 项测试通过）。
 > v5.0.2 / v5.0.3 由电脑端发布：隐私锁 4 步向导（`app_lock_setup_wizard.dart`）、关闭验证、深色默认关闭、通用密码向导 `pin_setup_wizard.dart`（3 步资产 / 2 步笔记）、多页 UI 优化。
 > **v5.0.4**（本会话叠加）：① 深色模式下向导「未选中项」由亮灰白改为同主题暗底纹（`0xFFF5F8F6` 登记进 darkMap → `0xFF233A2F`，随主题色变）；② 修改资产密码在验证身份后复用通用 3 步向导（设置密码→确认密码→设置密保），与「开启加密访问」样式/流程完全一致。版本号顺延至 5.0.4 是因为远程已有 v5.0.3 tag。
 > **v5.0.5**：① 笔记预览卡图片由 4:3 改为 **1:1** 方图（卡片高度与编辑页尺寸不变，文字区自然左移）；② **暖棕**主题从免费改为「灵感杂货店」**1400 点永久兑换**（商品名「主题·暖棕」），位置移到墨灰与藕粉之间；未解锁时置灰，点击提示「未解锁，赶紧前往灵感杂货店兑换吧～」。
@@ -241,6 +241,7 @@ lib/
 | **v5.0.9** | 修复：资产看板「资产数据/资产细分/资产构成」三卡长宽不统一 —— `OverviewStack` 三卡统一拉伸到轮盘高度，`_RenderMeasure` 改两遍布局（无上限高度测自然高度用于定高 / 紧约束填满卡片白底框）；修复资产构成卡标签溢出边框 —— 桑基 `_label` 的 top 夹在图表区内，顶部矮节点文字不再被卡片裁切；版本号测试由硬编码改为「不低于基线」稳健断言；`v5009_card_size_test.dart` |
 | **v5.0.10** | 资产构成桑基图改为 **VIP 权益功能**：未解锁时 `BackdropFilter` 毛玻璃蒙版盖住图表 + 居中锁图标（`AppIcons.lock`）+ 下方 `IdentityBadge(VIP)`，单击整卡弹统一提示；已解锁正常显示。`AppToast.vipRequired(context, feature)` 新增统一口径「{功能}是VIP专属权益，请充值后重试～」，后续权益功能都复用；资产页加载 `UserProfile` 用 `RewardService.hasVipPrivilege` 判断解锁（含 `loadProfileOverride` 测试钩子）；`v5010_vip_sankey_test.dart`（7 项） |
 | **v5.0.11** | ① 全局搜索页 / 回收站分类栏改用日记页「全部/按日/按月/按年」同款样式——5 个等宽文字标签 + 底部 40×3 主题色滑块（`AnimatedPositioned` 250ms），保留各自筛选/置灰逻辑（搜索页 `_category=null`=全部，回收站保留数量为 0 置灰）；② 档案页身份栏上方新增「解锁专属权益」入口（主题色底纹 + 右箭头，点击提示「功能暂未实装」）；③ 资产卡片 / 事件（倒计时）卡片预览图标放大：容器 46→56、`EntryIcon` 24→34。`v5011_filterbar_rights_test.dart`（4 项）、`v5011_preview_icon_size_test.dart`（3 项） |
+| **v5.0.12** | 搜索页分类栏改为**固定在搜索栏下方**、始终显示（原先嵌在结果区内，仅 `total>0` 有结果时才渲染）——从 `_buildResults()` 提升到 `build()` 的 `Column` 中紧跟 `_buildSearchBar()`，结果列表补回 12px 顶部间距；无搜索词 / 搜索无结果均显示分类栏。`v5011_filterbar_rights_test.dart` 新增「固定显示」2 项 |
 
 > v4.9.32 及更早（深色模式、AppSheet、震动总开关、用户 ID 顺序号等奠基改动）见 git log，此处不再展开。
 
@@ -309,9 +310,9 @@ lib/
 ## 9. 新会话交接检查清单
 
 - [ ] 读本文件 + `docs/redeem_codes.md`（+ 若涉及上云再读 `docs/CLOUD_ARCHITECTURE.md`）
-- [ ] `git fetch origin && git rebase origin/main`，确认未落后电脑端；`git log -1` 确认版本为 v5.0.11
-- [ ] `grep '^version:' pubspec.yaml` 与 `app_version.dart` 版本号一致（当前 5.0.11+169 / V5.0.11）
-- [ ] 改代码：analyze 0 error → 全量测试全绿（当前 670 项）→ 构建 → commit/push → Release → present_files
+- [ ] `git fetch origin && git rebase origin/main`，确认未落后电脑端；`git log -1` 确认版本为 v5.0.12
+- [ ] `grep '^version:' pubspec.yaml` 与 `app_version.dart` 版本号一致（当前 5.0.12+170 / V5.0.12）
+- [ ] 改代码：analyze 0 error → 全量测试全绿（当前 672 项）→ 构建 → commit/push → Release → present_files
 - [ ] 版本号两处同步 + 构建号 +1；新增改动配 `vXXYY_features_test.dart` 回归测试
 - [ ] 涉及 UI：遵守 §2 色板（尤其主题色走 `AppPalette.c()`、抽屉去标题）、§3 动效组件
 - [ ] 涉及 VIP：新增强功能按 §6.2 接入 `hasVipPrivilege` 门槛与提示文案

@@ -69,6 +69,38 @@ void main() {
     if (dir.existsSync()) dir.deleteSync(recursive: true);
   });
 
+  group('搜索页分类栏固定显示（v5.0.12）', () {
+    testWidgets('无搜索词时分类栏仍固定在搜索栏下方', (tester) async {
+      // 不注入任何数据、不输入搜索词 —— 分类栏应始终渲染
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(body: GlobalSearchScreen(onOpenMenu: () {})),
+      ));
+      await _settle(tester);
+
+      for (final label in ['全部', '笔记', '物品', '事件', '资产']) {
+        expect(find.text(label), findsOneWidget,
+            reason: '无搜索词时也应固定显示分类 $label');
+      }
+      // 分类栏应紧跟在搜索栏（56 高）下方：顶边 y 约等于 56
+      final barTop = tester.getTopLeft(find.text('全部')).dy;
+      expect(barTop, lessThan(90), reason: '分类栏应固定在搜索栏下方，不居中');
+    });
+
+    testWidgets('搜索无结果时分类栏仍显示', (tester) async {
+      _seedDiary(dir.path);
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+            body: GlobalSearchScreen(
+                onOpenMenu: () {}, initialQuery: '绝不可能匹配的关键词')),
+      ));
+      await _settle(tester);
+
+      expect(find.text('没有匹配的内容'), findsOneWidget);
+      expect(find.text('全部'), findsOneWidget,
+          reason: '无结果时分类栏仍应固定显示');
+    });
+  });
+
   group('搜索页分类栏（日记页同款）', () {
     testWidgets('五个等宽文字标签 + 底部滑块', (tester) async {
       _seedDiary(dir.path);

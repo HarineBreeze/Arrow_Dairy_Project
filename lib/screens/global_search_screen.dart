@@ -149,6 +149,8 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
     return Column(
       children: [
         _buildSearchBar(),
+        // v5.0.12：分类栏固定在搜索栏下方，不随是否有搜索结果而显隐。
+        _buildFilterBar(),
         Expanded(
           child: _loading
               ? const SizedBox()
@@ -270,12 +272,9 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
     }
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
+      // v5.0.12：分类栏已提升到搜索栏下方固定显示，这里补回原先 12px 顶部间距。
+      padding: const EdgeInsets.fromLTRB(0, 12, 0, 24),
       children: [
-        // v5.0.11：分类栏改为日记页「全部/按日/按月/按年」同款
-        // —— 等宽文字标签 + 底部 40×3 主题色滑块（AnimatedPositioned 250ms）。
-        _buildFilterBar(),
-        const SizedBox(height: 12),
         // 分区结果（按收纳栏选中状态过滤）
         if (_category == null || _category == '笔记')
           if (diaries.isNotEmpty)
