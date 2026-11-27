@@ -1,6 +1,6 @@
 # 阿尤日记 · 项目交接与推进指南
 
-> 截至 **v5.0.9**（versionCode 167，全量 **656** 项测试通过）。
+> 截至 **v5.0.10**（versionCode 168，全量 **663** 项测试通过）。
 > v5.0.2 / v5.0.3 由电脑端发布：隐私锁 4 步向导（`app_lock_setup_wizard.dart`）、关闭验证、深色默认关闭、通用密码向导 `pin_setup_wizard.dart`（3 步资产 / 2 步笔记）、多页 UI 优化。
 > **v5.0.4**（本会话叠加）：① 深色模式下向导「未选中项」由亮灰白改为同主题暗底纹（`0xFFF5F8F6` 登记进 darkMap → `0xFF233A2F`，随主题色变）；② 修改资产密码在验证身份后复用通用 3 步向导（设置密码→确认密码→设置密保），与「开启加密访问」样式/流程完全一致。版本号顺延至 5.0.4 是因为远程已有 v5.0.3 tag。
 > **v5.0.5**：① 笔记预览卡图片由 4:3 改为 **1:1** 方图（卡片高度与编辑页尺寸不变，文字区自然左移）；② **暖棕**主题从免费改为「灵感杂货店」**1400 点永久兑换**（商品名「主题·暖棕」），位置移到墨灰与藕粉之间；未解锁时置灰，点击提示「未解锁，赶紧前往灵感杂货店兑换吧～」。
@@ -168,7 +168,7 @@ lib/
    - `pubspec.yaml` → `version: x.y.z+BUILD`
    - `lib/utils/app_version.dart` → `displayVersion = 'Vx.y.z'`
 2. **静态分析**：`flutter analyze`，要求 0 error / 0 warning（约 127 条 info 为历史基线，允许）。
-3. **全量测试**：`flutter test`，要求全绿（当前 **656** 项）。新增改动必须配套回归测试，命名 `test/vXXYY_features_test.dart`。
+3. **全量测试**：`flutter test`，要求全绿（当前 **663** 项）。新增改动必须配套回归测试，命名 `test/vXXYY_features_test.dart`。
    - 测试偶发：全量并行时 trash / 手势类测试偶有 1 项时序失败，重跑一遍通常即过；不要因此反复改测试。
    - 含真实文件 IO 的页面（TrashScreen 等）测试要用 `runAsync` 让 IO 完成（参考 `_settleWithIo`），否则 `_loading` 未结束、内容未渲染。
 4. **构建**：
@@ -239,6 +239,7 @@ lib/
 | **v5.0.7** | 修复：物品编辑点「完成」卡在打勾界面不返回且未保存 —— `_save` 加 try/catch + 8s IO 超时，失败提示「保存失败，请重试」并复位按钮；价格校验拦 NaN/Infinity；`ItemStorage` 增加测试注入钩子；`item_edit_save_bug_test.dart` |
 | **v5.0.8** | 资产看板新增**第三张桑基图卡「资产构成」**（`asset_sankey_card.dart`）：左侧 净资产+负债 → 右侧 金融资产+固定资产，带宽按金额守恒；金融=基金/黄金/股票，固定=银行储蓄/货币基金，负债=负数类型；净资产为负时自动降级不展示。`OverviewStack` 泛化为 N 卡轮换（左滑前进/右滑回绕）+ 指示圈随卡数 + 定高纳入第三卡 + 兼容旧两卡；`v5008_sankey_test.dart`。另附上架/上云规划文档（docs/上架清单_GO_LIVE_CHECKLIST.md、docs/权威上云规划.md） |
 | **v5.0.9** | 修复：资产看板「资产数据/资产细分/资产构成」三卡长宽不统一 —— `OverviewStack` 三卡统一拉伸到轮盘高度，`_RenderMeasure` 改两遍布局（无上限高度测自然高度用于定高 / 紧约束填满卡片白底框）；修复资产构成卡标签溢出边框 —— 桑基 `_label` 的 top 夹在图表区内，顶部矮节点文字不再被卡片裁切；版本号测试由硬编码改为「不低于基线」稳健断言；`v5009_card_size_test.dart` |
+| **v5.0.10** | 资产构成桑基图改为 **VIP 权益功能**：未解锁时 `BackdropFilter` 毛玻璃蒙版盖住图表 + 居中锁图标（`AppIcons.lock`）+ 下方 `IdentityBadge(VIP)`，单击整卡弹统一提示；已解锁正常显示。`AppToast.vipRequired(context, feature)` 新增统一口径「{功能}是VIP专属权益，请充值后重试～」，后续权益功能都复用；资产页加载 `UserProfile` 用 `RewardService.hasVipPrivilege` 判断解锁（含 `loadProfileOverride` 测试钩子）；`v5010_vip_sankey_test.dart`（7 项） |
 
 > v4.9.32 及更早（深色模式、AppSheet、震动总开关、用户 ID 顺序号等奠基改动）见 git log，此处不再展开。
 
@@ -309,7 +310,7 @@ lib/
 - [ ] 读本文件 + `docs/redeem_codes.md`（+ 若涉及上云再读 `docs/CLOUD_ARCHITECTURE.md`）
 - [ ] `git fetch origin && git rebase origin/main`，确认未落后电脑端；`git log -1` 确认版本为 v5.0.7
 - [ ] `grep '^version:' pubspec.yaml` 与 `app_version.dart` 版本号一致（当前 5.0.7+165 / V5.0.7）
-- [ ] 改代码：analyze 0 error → 全量测试全绿（当前 656 项）→ 构建 → commit/push → Release → present_files
+- [ ] 改代码：analyze 0 error → 全量测试全绿（当前 663 项）→ 构建 → commit/push → Release → present_files
 - [ ] 版本号两处同步 + 构建号 +1；新增改动配 `vXXYY_features_test.dart` 回归测试
 - [ ] 涉及 UI：遵守 §2 色板（尤其主题色走 `AppPalette.c()`、抽屉去标题）、§3 动效组件
 - [ ] 涉及 VIP：新增强功能按 §6.2 接入 `hasVipPrivilege` 门槛与提示文案
