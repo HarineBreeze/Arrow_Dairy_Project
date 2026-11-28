@@ -93,13 +93,15 @@ class _AssetTrendScreenState extends State<AssetTrendScreen> {
     return points;
   }
 
-  Future<void> _deleteEntry(AssetHistoryEntry e) async {
+  /// 按条删除：长按某一笔改动后确认删除。
+  Future<void> _deleteChange(AssetHistoryEntry e, int changeIndex) async {
+    final change = e.changes[changeIndex];
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('删除这条调整记录？'),
-        content: const Text('删除后资产趋势与更新记录将同步更新'),
+        title: const Text('删除这笔改动记录？'),
+        content: Text('删除「${change.name}」这笔改动后，更新记录将同步更新。'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -115,7 +117,7 @@ class _AssetTrendScreenState extends State<AssetTrendScreen> {
     );
     if (confirmed != true || !mounted) return;
     Haptics.medium();
-    await AssetHistoryStorage.removeById(e.id);
+    await AssetHistoryStorage.removeChange(e.id, changeIndex);
     await _load();
   }
 
@@ -182,7 +184,8 @@ class _AssetTrendScreenState extends State<AssetTrendScreen> {
   List<Widget> _buildDayGroups(List<_DayGroup> groups) {
     final widgets = <Widget>[];
     for (final g in groups) {
-      widgets.add(_buildDayLabel(g.key));
+      // 同一天内最新在前：索引 0 即当天最后一次调整后的净资产。
+      widgets.add(_buildDayLabel(g.key, g.entries.first.netWorth));
       widgets.add(const SizedBox(height: 6));
       widgets.add(Container(
         decoration: BoxDecoration(
@@ -208,9 +211,10 @@ class _AssetTrendScreenState extends State<AssetTrendScreen> {
     return widgets;
   }
 
-  Widget _buildDayLabel(String day) {
+  Widget _buildDayLabel(String day, double netWorth) {
+    final negative = netWorth < 0;
     return Padding(
-      padding: const EdgeInsets.only(left: 6),
+      padding: const EdgeInsets.only(left: 6, right: 6),
       child: Row(
         children: [
           Container(
@@ -225,6 +229,14 @@ class _AssetTrendScreenState extends State<AssetTrendScreen> {
           Text(day,
               style: TextStyle(
                   fontSize: 12, color: AppPalette.c(0xFF8FA09A))),
+          const Spacer(),
+          Text('净资产 ${_money(netWorth)}',
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: negative
+                      ? const Color(0xFFCB5C50)
+                      : AppPalette.c(0xFF24382F))),
         ],
       ),
     );
@@ -232,56 +244,57 @@ class _AssetTrendScreenState extends State<AssetTrendScreen> {
 
   Widget _buildEntryTile(AssetHistoryEntry e) {
     // 一条记录可能含多张卡片的变更（基线种子时会有多条），逐条展开。
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onLongPress: () => _deleteEntry(e),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (var i = 0; i < e.changes.length; i++) ...[
-              _buildChangeRow(e.changes[i]),
-              if (i < e.changes.length - 1) const SizedBox(height: 8),
-            ],
+    // v5.0.16：删除粒度从「整条记录」改为「单笔改动」，每行独立长按删除。
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < e.changes.length; i++) ...[
+            _buildChangeRow(e.changes[i], onLongPress: () => _deleteChange(e, i)),
+            if (i < e.changes.length - 1) const SizedBox(height: 8),
           ],
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildChangeRow(AssetChange c) {
+  Widget _buildChangeRow(AssetChange c, {required VoidCallback onLongPress}) {
     final negative = c.amount < 0;
     final label = c.deleted ? '${c.name}（已删除）' : c.name;
-    return Row(
-      children: [
-        EntryIcon(Asset.defaultIconFor(c.type), size: 20),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                      fontSize: 14, color: AppPalette.c(0xFF24382F))),
-              if (c.autoImported)
-                Text('自动导入',
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onLongPress: onLongPress,
+      child: Row(
+        children: [
+          EntryIcon(Asset.defaultIconFor(c.type), size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                        fontSize: 11, color: AppPalette.c(0xFF8FA09A))),
-            ],
+                        fontSize: 14, color: AppPalette.c(0xFF24382F))),
+                if (c.autoImported)
+                  Text('自动导入',
+                      style: TextStyle(
+                          fontSize: 11, color: AppPalette.c(0xFF8FA09A))),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(width: 10),
-        Text(_money(c.amount),
-            style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: negative
-                    ? const Color(0xFFCB5C50)
-                    : AppPalette.c(0xFF24382F))),
-      ],
+          const SizedBox(width: 10),
+          Text(_money(c.amount),
+              style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: negative
+                      ? const Color(0xFFCB5C50)
+                      : AppPalette.c(0xFF24382F))),
+        ],
+      ),
     );
   }
 

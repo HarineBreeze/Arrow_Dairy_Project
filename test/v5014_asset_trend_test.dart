@@ -85,9 +85,9 @@ void main() {
     for (final label in ['近3月', '近6月', '今年', '近1年']) {
       expect(find.text(label), findsOneWidget);
     }
-    // 两条金额记录（千分位）；负债金额出现在 info bar 拼接文本中
+    // 更新记录的资产金额（千分位）。v5.0.16 起图例不再显示金额，
+    // 负债金额改由点击折线图某日点的 tooltip 展示，见 v5016 测试。
     expect(find.text('38,609'), findsWidgets);
-    expect(find.textContaining('-1,075'), findsWidgets);
   });
 
   testWidgets('空历史且无资产：显示空态，不报错', (tester) async {

@@ -69,6 +69,9 @@ class AssetTrendChart extends StatefulWidget {
 class _AssetTrendChartState extends State<AssetTrendChart> {
   TrendRange _range = TrendRange.oneYear;
 
+  /// 当前选中的点在 [points] 中的索引（点击折线图定位最近日）。
+  int? _selectedIndex;
+
   List<TrendPoint> get _visible {
     final cutoff = _range.cutoff(DateTime.now());
     return widget.points.where((p) => !p.time.isBefore(cutoff)).toList();
@@ -93,21 +96,49 @@ class _AssetTrendChartState extends State<AssetTrendChart> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildInfoBar(points),
+          _buildInfoBar(),
           const SizedBox(height: 10),
-          SizedBox(
-            height: 240,
-            child: points.isEmpty
-                ? Center(
-                    child: Text('该时间段暂无资产变动记录',
-                        style: TextStyle(
-                            fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
-                  )
-                : RepaintBoundary(
-                    child: CustomPaint(
-                      painter: _TrendPainter(points: points),
-                    ),
-                  ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final chartWidth = constraints.maxWidth;
+              return SizedBox(
+                height: 240,
+                child: points.isEmpty
+                    ? Center(
+                        child: Text('该时间段暂无资产变动记录',
+                            style: TextStyle(
+                                fontSize: 13,
+                                color: AppPalette.c(0xFF8FA09A))),
+                      )
+                    : GestureDetector(
+                        key: const Key('asset_trend_chart_tap'),
+                        behavior: HitTestBehavior.opaque,
+                        onTapDown: (d) {
+                          final idx = _nearestIndex(
+                              d.localPosition.dx, chartWidth, points);
+                          setState(() => _selectedIndex =
+                              _selectedIndex == idx ? null : idx);
+                        },
+                        child: Stack(
+                          children: [
+                            RepaintBoundary(
+                              child: CustomPaint(
+                                painter: _TrendPainter(points: points),
+                              ),
+                            ),
+                            if (_selectedIndex != null &&
+                                _selectedIndex! < points.length)
+                              Positioned(
+                                left: _tooltipLeft(
+                                    points[_selectedIndex!], chartWidth),
+                                top: 2,
+                                child: _buildTooltip(points[_selectedIndex!]),
+                              ),
+                          ],
+                        ),
+                      ),
+              );
+            },
           ),
           const SizedBox(height: 12),
           _buildRangeSelector(),
@@ -116,15 +147,9 @@ class _AssetTrendChartState extends State<AssetTrendChart> {
     );
   }
 
-  /// 顶部汇总条：最后一点的日期 + 全资产（蓝）+ 净资产（红）+ 负债（绿）。
-  Widget _buildInfoBar(List<TrendPoint> points) {
-    final last = points.isEmpty ? null : points.last;
-    final date = last == null
-        ? '--'
-        : '${last.time.month.toString().padLeft(2, '0')}-${last.time.day.toString().padLeft(2, '0')}';
-    final assets = last?.totalAssets ?? 0;
-    final debt = last?.totalDebt ?? 0;
-    final netWorth = last?.netWorth ?? 0;
+  /// 顶部图例：只显示颜色代表的类型，不写具体金额。
+  /// 具体金额改为点击折线图某日的点后，在小窗中预览。
+  Widget _buildInfoBar() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
       decoration: BoxDecoration(
@@ -132,37 +157,117 @@ class _AssetTrendChartState extends State<AssetTrendChart> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          Text(date,
-              style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppPalette.c(0xFF24382F))),
-          const SizedBox(width: 10),
-          Expanded(child: _legendDot(_kAssetColor, '全资产', assets)),
-          const SizedBox(width: 6),
-          Expanded(child: _legendDot(_kNetWorthColor, '净资产', netWorth)),
-          const SizedBox(width: 6),
-          Expanded(child: _legendDot(_kDebtColor, '负债', debt)),
+          _legendLabel(_kAssetColor, '全资产'),
+          _legendLabel(_kNetWorthColor, '净资产'),
+          _legendLabel(_kDebtColor, '负债'),
         ],
       ),
     );
   }
 
-  /// 汇总条里的单项图例：色块 + 「标签 金额」（金额千分位）。
-  Widget _legendDot(Color color, String label, double value) {
+  /// 图例单项：色块 + 类型名（无金额）。
+  Widget _legendLabel(Color color, String label) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(width: 10, height: 3, color: color),
-        const SizedBox(width: 4),
-        Flexible(
-          child: Text('$label ${_thousands(value)}',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+        Container(width: 14, height: 3, color: color),
+        const SizedBox(width: 6),
+        Text(label,
+            style: TextStyle(fontSize: 12, color: AppPalette.c(0xFF24382F))),
+      ],
+    );
+  }
+
+  /// 根据点击的横坐标，找到时间上最近的点索引。
+  /// 坐标口径与 [_TrendPainter] 一致：leftPad=46 / rightPad=14。
+  int _nearestIndex(double dx, double width, List<TrendPoint> pts) {
+    final left = _TrendPainter.leftPad;
+    final right = width - _TrendPainter.rightPad;
+    final plotW = right - left;
+    final first = pts.first.time;
+    final span = pts.last.time.difference(first).inMilliseconds.toDouble();
+    var best = 0;
+    var bestDist = double.infinity;
+    for (var i = 0; i < pts.length; i++) {
+      final x = span <= 0
+          ? left
+          : left + pts[i].time.difference(first).inMilliseconds / span * plotW;
+      final dist = (x - dx).abs();
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = i;
+      }
+    }
+    return best;
+  }
+
+  /// tooltip 水平位置：跟随选中点、并夹在图表可视区内。
+  double _tooltipLeft(TrendPoint p, double width) {
+    const cardW = 156.0;
+    final left = _TrendPainter.leftPad;
+    final right = width - _TrendPainter.rightPad;
+    final plotW = right - left;
+    final first = _visible.first.time;
+    final span = _visible.last.time.difference(first).inMilliseconds.toDouble();
+    final x = span <= 0
+        ? left
+        : left + p.time.difference(first).inMilliseconds / span * plotW;
+    return (x - cardW / 2).clamp(0.0, (width - cardW).clamp(0.0, double.infinity));
+  }
+
+  /// 点击某日点后弹出的小窗：该日三类资产的具体金额。
+  Widget _buildTooltip(TrendPoint p) {
+    final date =
+        '${p.time.month.toString().padLeft(2, '0')}-${p.time.day.toString().padLeft(2, '0')}';
+    return Container(
+      width: 156,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppPalette.c(0xFFFFFFFF),
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x33000000),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(date,
               style: TextStyle(
-                  fontSize: 11, color: AppPalette.c(0xFF24382F))),
-        ),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppPalette.c(0xFF24382F))),
+          const SizedBox(height: 5),
+          _tipRow(_kAssetColor, '全资产', p.totalAssets),
+          const SizedBox(height: 3),
+          _tipRow(_kNetWorthColor, '净资产', p.netWorth),
+          const SizedBox(height: 3),
+          _tipRow(_kDebtColor, '负债', p.totalDebt),
+        ],
+      ),
+    );
+  }
+
+  Widget _tipRow(Color color, String label, double value) {
+    return Row(
+      children: [
+        Container(width: 8, height: 3, color: color),
+        const SizedBox(width: 5),
+        Text(label,
+            style: TextStyle(fontSize: 10, color: AppPalette.c(0xFF647A70))),
+        const Spacer(),
+        Text(_thousands(value),
+            style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: AppPalette.c(0xFF24382F))),
       ],
     );
   }
@@ -175,7 +280,10 @@ class _AssetTrendChartState extends State<AssetTrendChart> {
             child: PressableRangeChip(
               label: r.label,
               selected: r == _range,
-              onTap: () => setState(() => _range = r),
+              onTap: () => setState(() {
+                _range = r;
+                _selectedIndex = null;
+              }),
             ),
           ),
         ],

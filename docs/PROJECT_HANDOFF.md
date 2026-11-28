@@ -1,6 +1,6 @@
 # 阿尤日记 · 项目交接与推进指南
 
-> 截至 **v5.0.15**（versionCode 173，全量 **692** 项测试通过）。
+> 截至 **v5.0.16**（versionCode 174，全量 **697** 项测试通过）。
 > v5.0.2 / v5.0.3 由电脑端发布：隐私锁 4 步向导（`app_lock_setup_wizard.dart`）、关闭验证、深色默认关闭、通用密码向导 `pin_setup_wizard.dart`（3 步资产 / 2 步笔记）、多页 UI 优化。
 > **v5.0.4**（本会话叠加）：① 深色模式下向导「未选中项」由亮灰白改为同主题暗底纹（`0xFFF5F8F6` 登记进 darkMap → `0xFF233A2F`，随主题色变）；② 修改资产密码在验证身份后复用通用 3 步向导（设置密码→确认密码→设置密保），与「开启加密访问」样式/流程完全一致。版本号顺延至 5.0.4 是因为远程已有 v5.0.3 tag。
 > **v5.0.5**：① 笔记预览卡图片由 4:3 改为 **1:1** 方图（卡片高度与编辑页尺寸不变，文字区自然左移）；② **暖棕**主题从免费改为「灵感杂货店」**1400 点永久兑换**（商品名「主题·暖棕」），位置移到墨灰与藕粉之间；未解锁时置灰，点击提示「未解锁，赶紧前往灵感杂货店兑换吧～」。
@@ -245,6 +245,7 @@ lib/
 | **v5.0.13** | ① 资产构成桑基卡移除左上角「资产构成」标题，图表作为唯一内容改为 `MainAxisAlignment.center` 垂直居中，卡片被拉伸后上下留白相等（视觉上图表小幅上移）；同步更新 `v5008`/`v5010` 相关断言（标题 `findsNothing`、锁图标 2→1、点击锚点改为卡片本体）；② 资产数据看板第一张净资产卡 padding 由 `fromLTRB(16,24,16,18)` 改为 `symmetric(horizontal:16, vertical:21)`、内容列 `spaceBetween`→`center`，数据排版不变、整体上下左右居中、上下/左右边距各相等。`v5013_card_center_test.dart`（4 项） |
 | **v5.0.14** | 新增 **VIP 权益「资产趋势」**：资产页设置弹层新增入口（带 VIP 徽章），点击时实时读档案判断，非 VIP 走统一提示 `AppToast.vipRequired(context,'资产趋势')`。数据层 `models/asset_history.dart`（`AssetHistoryEntry` 快照：全资产/负债/净资产 + 本改涉及的 `AssetChange`）+ `services/asset_history_storage.dart`（`asset_history.json`，append/removeById/seedIfEmpty + 测试钩子）；资产新增/编辑/删除三处落盘点统一 `_recordAssetChange` 写入快照。`screens/asset_trend_screen.dart`：折线图 + 更新记录（按天分组、长按删除某次调整）+ 底部说明「本页面包含手工录入数据，不作为对账凭证。」；`widgets/asset_trend_chart.dart`：按天取当天最后快照打点、阶梯折线（全资产蓝/负债灰取绝对值高度）、Y 轴万级刻度网格、末端竖直虚线+双色端点、近3月/近6月/今年/近1年筛选。历史为空且未建过基线时用当前资产 seed 一条起点（标记文件防删后重建）。`v5014_asset_trend_test.dart`（9 项） |
 | **v5.0.15** | ① 资产趋势折线图新增 **净资产线**（`TrendPoint.netWorth = 总资产 - 负债绝对值`，红色 `0xFFE05252`），负债线由灰改绿 `0xFF3FA96F`，汇总条图例改为「全资产(蓝)/净资产(红)/负债(绿)」三项、`_legendDot` 自适应宽度；② 资产页设置弹层「资产趋势」入口**未解锁时置灰**（图标/文字/副标题/箭头按 `_isVip` 分支，仍可点击弹权益提示）；③ **深色模式底纹修复**：`app_palette.dart` darkMap 登记资产趋势两处新底纹 `0xFFEDF3FD→0xFF212A33`（汇总条淡蓝底）、`0xFFE4E8EB→0xFF2B3530`（胶囊选中底），避免浅底+浅字看不清；④ 设置抽屉 4 个图标统一 `_shiftedIcon`（`Transform.translate(Offset(3,3))` 纯视觉右下微移，文字/布局不变）。`v5015_trend_line_and_dark_test.dart`（7 项） |
+| **v5.0.16** | 资产趋势页交互优化：① **图例去金额**——顶部汇总条只显示三个色块+类型名（全资产/净资产/负债），不再写金额、去掉日期；② **点击点小窗预览**——`AssetTrendChart` 用 `GestureDetector(onTapDown)` + `LayoutBuilder` 按横坐标定位最近日（`_nearestIndex` 口径与 painter 一致），在图上弹 `Positioned` 小窗显示该日三项金额（`_tooltipLeft` 夹在可视区、再点同点关闭、切时间范围清除选中，测试 key `asset_trend_chart_tap`）；③ **日期栏净资产**——更新记录每天分组的日期行右侧显示当日调整后净资产（取当天最后一条 `entry.netWorth`、千分位、负数红）；④ **按条删除**——`AssetHistoryStorage.removeChange(entryId, changeIndex)` 删除指定笔、changes 删空则移除整条（不重算历史快照），长按从整条 entry 改为单行 change，确认文案改「删除这笔改动记录？」。`v5016_trend_interaction_test.dart`（5 项）；同步 v5014 旧断言（图例不再含金额） |
 
 > v4.9.32 及更早（深色模式、AppSheet、震动总开关、用户 ID 顺序号等奠基改动）见 git log，此处不再展开。
 
@@ -313,9 +314,9 @@ lib/
 ## 9. 新会话交接检查清单
 
 - [ ] 读本文件 + `docs/redeem_codes.md`（+ 若涉及上云再读 `docs/CLOUD_ARCHITECTURE.md`）
-- [ ] `git fetch origin && git rebase origin/main`，确认未落后电脑端；`git log -1` 确认版本为 v5.0.15
-- [ ] `grep '^version:' pubspec.yaml` 与 `app_version.dart` 版本号一致（当前 5.0.15+173 / V5.0.15）
-- [ ] 改代码：analyze 0 error → 全量测试全绿（当前 692 项；手势类并行偶发失败用 `--concurrency=1` 复核）→ 构建 → commit/push → Release → present_files
+- [ ] `git fetch origin && git rebase origin/main`，确认未落后电脑端；`git log -1` 确认版本为 v5.0.16
+- [ ] `grep '^version:' pubspec.yaml` 与 `app_version.dart` 版本号一致（当前 5.0.16+174 / V5.0.16）
+- [ ] 改代码：analyze 0 error → 全量测试全绿（当前 697 项；手势类并行偶发失败用 `--concurrency=1` 复核）→ 构建 → commit/push → Release → present_files
 - [ ] 版本号两处同步 + 构建号 +1；新增改动配 `vXXYY_features_test.dart` 回归测试
 - [ ] 涉及 UI：遵守 §2 色板（尤其主题色走 `AppPalette.c()`、抽屉去标题）、§3 动效组件
 - [ ] 涉及 VIP：新增强功能按 §6.2 接入 `hasVipPrivilege` 门槛与提示文案

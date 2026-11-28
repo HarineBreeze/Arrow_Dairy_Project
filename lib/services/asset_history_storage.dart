@@ -78,10 +78,42 @@ class AssetHistoryStorage {
     await _write([entry, ...list]);
   }
 
-  /// 按 id 删除某条调整记录（长按删除用）。
+  /// 按 id 删除某条调整记录（保留兼容，整条删除用）。
   static Future<void> removeById(String id) async {
     final list = await load();
     await _write(list.where((e) => e.id != id).toList());
+  }
+
+  /// 按条删除：删除某条记录里的第 [changeIndex] 笔改动。
+  /// 若该记录的 changes 被删空，则整条移除。
+  /// 历史快照（totalAssets/totalDebt/netWorth）不重算——它记录的是当时时点，
+  /// 删除只影响「更新记录」展示，不代表撤销那笔资产变动。
+  static Future<void> removeChange(String entryId, int changeIndex) async {
+    final list = await load();
+    final result = <AssetHistoryEntry>[];
+    for (final e in list) {
+      if (e.id != entryId) {
+        result.add(e);
+        continue;
+      }
+      final changes = List<AssetChange>.from(e.changes);
+      if (changeIndex < 0 || changeIndex >= changes.length) {
+        result.add(e);
+        continue;
+      }
+      changes.removeAt(changeIndex);
+      if (changes.isEmpty) continue; // 删空则整条移除
+      result.add(AssetHistoryEntry(
+        id: e.id,
+        time: e.time,
+        changes: changes,
+        totalAssets: e.totalAssets,
+        totalDebt: e.totalDebt,
+        netWorth: e.netWorth,
+        source: e.source,
+      ));
+    }
+    await _write(result);
   }
 
   /// 基线是否曾建立过（用于避免删除后重复生成）。
