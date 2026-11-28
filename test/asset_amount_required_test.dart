@@ -40,10 +40,17 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
   });
 
-  testWidgets('金额分区标出必填星号', (tester) async {
+  testWidgets('v5.0.19：金额标题已移除，必填校验仍生效', (tester) async {
     await openEditor(tester);
-    expect(find.text('资产金额'), findsOneWidget);
-    expect(find.text(' *'), findsOneWidget, reason: '资产金额应带必填标记');
+    // 标题与星号随 v5.0.19 去标题化一并移除
+    expect(find.text('资产金额'), findsNothing);
+    expect(find.text(' *'), findsNothing);
+    // 必填语义由空值拦截保留：点完成仍被拦下
+    await tester.tap(find.text('完成'));
+    await tester.pump(const Duration(milliseconds: 120));
+    expect(find.text('请输入资产金额'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 1800));
+    await tester.pump(const Duration(milliseconds: 400));
   });
 
   testWidgets('金额填乱码：提示「请输入正确的金额」', (tester) async {

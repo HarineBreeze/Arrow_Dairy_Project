@@ -178,9 +178,9 @@ void main() {
       await _tall(tester);
       await tester.pumpWidget(_wrap(const CountdownEditScreen()));
       await tester.pumpAndSettle();
-      // 三块都回到占位态
-      expect(find.text('选择日期'), findsOneWidget);
-      expect(find.text('选择时间'), findsOneWidget);
+      // 三块都回到占位态（v5.0.19：占位文案改为「事件日期/发生时间」）
+      expect(find.text('事件日期'), findsOneWidget);
+      expect(find.text('发生时间'), findsOneWidget);
       expect(find.text('--'), findsOneWidget);
     });
   });

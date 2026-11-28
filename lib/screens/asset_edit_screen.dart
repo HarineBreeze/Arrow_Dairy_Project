@@ -192,7 +192,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
             const SizedBox(height: 16),
 
             // 资产类型：右箭头打开抽屉，在抽屉内选择（v4.9.43）
-            _sectionLabel('资产类型'),
+            // v5.0.19：移除「资产类型」节标题，行内值已能自解释
             Pressable(
               enabled: true,
               child: GestureDetector(
@@ -217,8 +217,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
             ),
             const SizedBox(height: 16),
 
-            // 资产备注
-            _sectionLabel('资产备注'),
+            // 资产备注：v5.0.19 移除节标题，占位文案已能自解释
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14),
               decoration: _box(),
@@ -238,36 +237,23 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
             const SizedBox(height: 16),
 
             // 资产金额（必填）
-            _sectionLabel('资产金额', required: true),
+            // v5.0.19：移除节标题；金额输入移除 ¥ 金钱符号、取消加粗，
+            // 提示语与其他待输入提示语同格式（13 灰），字号与正文统一 15。
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14),
               decoration: _box(),
-              child: Row(
-                children: [
-                  Text('¥',
-                      style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w600,
-                          color: AppPalette.c(0xFF24382F))),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: TextField(
-                      controller: _amountCtrl,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                      style: const TextStyle(
-                          fontSize: 17, fontWeight: FontWeight.w600),
-                      decoration: InputDecoration(
-                        hintText: _isLiability ? '输入欠款金额' : '输入数额',
-                        hintStyle: TextStyle(
-                            fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
-                        border: InputBorder.none,
-                        contentPadding:
-                            const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                    ),
-                  ),
-                ],
+              child: TextField(
+                controller: _amountCtrl,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                style: const TextStyle(fontSize: 15),
+                decoration: InputDecoration(
+                  hintText: _isLiability ? '输入欠款金额' : '输入数额',
+                  hintStyle:
+                      TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                ),
               ),
             ),
             const SizedBox(height: 28),
@@ -296,30 +282,6 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
       onDone: () {
         if (mounted) Navigator.pop(context, _pending);
       },
-    );
-  }
-
-  /// 分区小标题。[required] 为 true 时追加红色星号，让「必填」在填写前
-  /// 就能看见，而不是点完成被弹提示才知道。
-  Widget _sectionLabel(String text, {bool required = false}) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 8),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(text,
-              style: TextStyle(
-                  fontSize: 13,
-                  color: AppPalette.c(0xFF8FA09A),
-                  fontWeight: FontWeight.w600)),
-          if (required)
-            const Text(' *',
-                style: TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFFCB5C50),
-                    fontWeight: FontWeight.w700)),
-        ],
-      ),
     );
   }
 

@@ -288,8 +288,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
             ),
             const SizedBox(height: 16),
 
-            // 事件名称
-            _sectionLabel('事件名称'),
+            // v5.0.19：移除「事件名称」节标题，字段名由输入框占位文案表达
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14),
               decoration: _box(),
@@ -311,8 +310,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
             ),
             const SizedBox(height: 16),
 
-            // 事件备注
-            _sectionLabel('事件备注'),
+            // v5.0.19：移除「事件备注」节标题，待输入占位文案改为「奖励一顿火锅?」
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14),
               decoration: _box(),
@@ -324,7 +322,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                 maxLength: 15,
                 style: const TextStyle(fontSize: 15),
                 decoration: InputDecoration(
-                  hintText: '写点什么…（选填）',
+                  hintText: '奖励一顿火锅?',
                   hintStyle: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
                   counterText: '',
                   border: InputBorder.none,
@@ -338,7 +336,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
             // 事件日期 : 具体时间 : 正数/倒数 = 2 : 2 : 1（= 五分之二 / 五分之二 / 五分之一）。
             // 三块各自独立：前两块分别点开「日期滚轮」「时间滚轮」，
             // 第三块只是状态提示（未来=倒数、过去=正数），不可点。
-            _sectionLabel('事件日期'),
+            // v5.0.19：移除「事件日期」节标题，占位文案见下方两块。
             Row(
               children: [
                 // 第 1 块：日期
@@ -366,7 +364,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                               fit: BoxFit.scaleDown,
                               alignment: Alignment.centerLeft,
                               child: Text(
-                                _target == null ? '选择日期' : _dateLabel,
+                                _target == null ? '事件日期' : _dateLabel,
                                 maxLines: 1,
                                 style: TextStyle(
                                   fontSize: _target == null ? 13 : 14,
@@ -407,7 +405,7 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                               fit: BoxFit.scaleDown,
                               alignment: Alignment.centerLeft,
                               child: Text(
-                                _target == null ? '选择时间' : _timeLabel,
+                                _target == null ? '发生时间' : _timeLabel,
                                 maxLines: 1,
                                 style: TextStyle(
                                   fontSize: _target == null ? 13 : 14,
@@ -715,15 +713,6 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
       if (followType) _iconCtrl.text = newDefault;
     });
   }
-
-  Widget _sectionLabel(String text) => Padding(
-        padding: const EdgeInsets.only(left: 4, bottom: 8),
-        child: Text(text,
-            style: TextStyle(
-                fontSize: 13,
-                color: AppPalette.c(0xFF8FA09A),
-                fontWeight: FontWeight.w600)),
-      );
 
   BoxDecoration _box() => BoxDecoration(
         color: AppPalette.c(0xFFFFFFFF),

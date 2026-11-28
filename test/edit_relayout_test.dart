@@ -70,20 +70,28 @@ void main() {
     expect(find.text('重复规则'), findsOneWidget, reason: '节本身保留');
   });
 
-  testWidgets('物品编辑页：节标题在上，四个节名按新文案', (tester) async {
+  testWidgets('物品编辑页：v5.0.19 移除物品名称/价格/附加价/日期节标题', (tester) async {
     usePhone(tester);
     await tester.pumpWidget(const MaterialApp(home: ItemEditScreen()));
     await _settle(tester);
 
-    for (final label in ['物品类型', '日期', '计算方式']) {
-      expect(find.text(label), findsOneWidget, reason: '$label 节标题/行标签应存在');
+    // 行内标签（物品类型/计算方式）仍保留
+    for (final label in ['物品类型', '计算方式']) {
+      expect(find.text(label), findsOneWidget, reason: '$label 行标签应存在');
     }
+    // v5.0.19：四个字段节标题移除
+    expect(find.text('物品名称'), findsNothing);
+    expect(find.text('物品价格'), findsNothing);
+    expect(find.text('附加价格'), findsNothing);
+    expect(find.text('日期'), findsNothing);
+    // 占位文案承担字段说明
+    expect(find.text('请输入物品名'), findsOneWidget);
+    expect(find.text('请输入物品价格'), findsOneWidget);
+
     // v4.9.43：移除「物品图标」节标题
     expect(find.text('物品图标'), findsNothing);
     expect(find.text('均价计算方式'), findsNothing, reason: '旧节名应移除');
     expect(find.text('物品状态'), findsOneWidget);
-    expect(find.text('物品名称'), findsOneWidget);
-    expect(find.text('物品价格'), findsOneWidget);
 
     // 行内标签不再存在（已改为节标题）
     expect(find.text('物品名'), findsNothing);

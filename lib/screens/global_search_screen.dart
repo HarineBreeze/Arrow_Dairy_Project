@@ -447,8 +447,10 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // v5.0.19：标题原为 left:2，比预览卡片标题（内边距 14）偏左；
+          // 改为 left:14，与卡片标题左边缘对齐。
           Padding(
-            padding: const EdgeInsets.only(left: 2, bottom: 7),
+            padding: const EdgeInsets.only(left: 14, bottom: 7),
             child: Text(title,
                 style: TextStyle(
                     fontSize: 13,

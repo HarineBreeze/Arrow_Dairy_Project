@@ -421,17 +421,15 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
             // 图标行改为与事件/资产同款的「一行白色底纹 + 选中高亮」
             _buildIconRow(),
             const SizedBox(height: 16),
-            _sectionLabel('物品名称'),
+            // v5.0.19：移除「物品名称/物品价格/附加价格/日期」节标题，
+            // 字段名改由各输入框自身的占位文案表达。
             _buildNameField(),
             const SizedBox(height: 16),
-            _sectionLabel('物品价格'),
             _buildPriceField(),
             if (!_wishlist) ...[
               const SizedBox(height: 16),
-              _sectionLabel('附加价格'),
               _buildExtraPriceField(),
               const SizedBox(height: 16),
-              _sectionLabel('日期'),
               _buildDateRow(),
               const SizedBox(height: 16),
               // v4.9.43：移除「计算方式」标题，行内 label 改为「计算方式」
@@ -889,10 +887,9 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         onSubmitted: (_) => _extraFocus.requestFocus(),
         keyboardType: TextInputType.number,
         style: const TextStyle(fontSize: 15),
-        // v4.9.43：去掉 prefixText（¥ 占宽会把 hint 右推），
-        // 改为并入 hintText，让提示文字与「物品名称」行左对齐
+        // v5.0.19：待输入提示语改为「请输入物品价格」
         decoration: const InputDecoration(
-          hintText: '¥ 0.00',
+          hintText: '请输入物品价格',
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(vertical: 14),
         ),
@@ -918,8 +915,9 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
               keyboardType: const TextInputType.numberWithOptions(
                   decimal: true, signed: true),
               style: const TextStyle(fontSize: 15),
+              // v5.0.19：待输入提示语改为「输入附加价格，如卖出/折扣（选填）」
               decoration: const InputDecoration(
-                hintText: '¥ 可为负数（选填）',
+                hintText: '输入附加价格，如卖出/折扣（选填）',
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.symmetric(vertical: 14),
               ),
