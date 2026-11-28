@@ -120,7 +120,8 @@ void main() {
       )));
       await tester.pumpAndSettle();
 
-      expect(find.text('资产构成'), findsOneWidget);
+      // v5.0.13：左上角「资产构成」标题已移除
+      expect(find.text('资产构成'), findsNothing);
       expect(find.text('净资产'), findsOneWidget);
       expect(find.text('1项金融资产'), findsOneWidget);
       expect(find.text('1项固定资产'), findsOneWidget);

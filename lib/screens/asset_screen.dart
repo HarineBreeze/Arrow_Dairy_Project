@@ -860,9 +860,10 @@ class AssetScreenState extends State<AssetScreen> {
   Widget _buildNetWorthCard() {
     final net = _netWorth;
     return Container(
-      // 白底黑字（与资产细分卡同款观感）：白底 + 轻投影 + 顶部 16 → 24
-      // 内容整体下移，底部留白（18px）与上方视觉一致。
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 18),
+      // v5.0.13：数据排版不变，整体上下左右居中——上下 padding 相等、
+      // 左右 padding 相等；内容块用 center 在拉伸后的卡片里垂直居中，
+      // 多余高度平均分到上下两侧，不再堆顶。
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 21),
       decoration: BoxDecoration(
         color: AppPalette.c(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(16),
@@ -876,10 +877,9 @@ class AssetScreenState extends State<AssetScreen> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        // 两卡等大：饼图卡更高时本卡被 OverviewStack 拉伸到同高，
-        // 多出的高度用 spaceBetween 均匀分到各段之间（自然高度时无空余，
-        // 与原来的 top 排列完全一致），不会全部堆在卡片底部。
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        // v5.0.13：整体上下居中，上下边距相等。卡片被拉伸到轮盘高度后，
+        // 多出的高度平均分到上下两侧（不再是 spaceBetween 分到各段之间）。
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           // 左：净资产　右：可使用 x 天 —— 两栏同版式（同一行内左标题右数字）。
           //

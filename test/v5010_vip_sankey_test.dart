@@ -61,9 +61,10 @@ void main() {
       )));
       await tester.pumpAndSettle();
 
-      expect(find.text('资产构成'), findsOneWidget);
+      // v5.0.13：左上角「资产构成」标题已移除
+      expect(find.text('资产构成'), findsNothing);
       expect(find.text('1项金融资产'), findsOneWidget);
-      // 标题行不带小锁（锁图标只在未解锁时出现）
+      // 标题行已移除，锁图标只在未解锁蒙版中出现
       expect(_lockIcons(), findsNothing);
       expect(find.byType(IdentityBadge), findsNothing);
     });
@@ -76,8 +77,8 @@ void main() {
       )));
       await tester.pumpAndSettle();
 
-      // 标题行小锁 + 蒙版居中大锁，共两处锁图标
-      expect(_lockIcons(), findsNWidgets(2));
+      // v5.0.13：标题行小锁随标题移除，仅蒙版居中一处大锁图标
+      expect(_lockIcons(), findsOneWidget);
       // VIP 标识（IdentityBadge 渲染文本 VIP）
       expect(find.text('VIP'), findsOneWidget);
       // 底层图表标签仍在（毛玻璃只是覆盖，不是移除）
@@ -92,7 +93,7 @@ void main() {
       )));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('资产构成'));
+      await tester.tap(find.byType(AssetSankeyCard));
       await tester.pumpAndSettle();
 
       expect(find.text('桑基图是VIP专属权益，请充值后重试～'), findsOneWidget);
@@ -109,7 +110,7 @@ void main() {
       )));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('资产构成'));
+      await tester.tap(find.byType(AssetSankeyCard));
       await tester.pumpAndSettle();
 
       expect(tapped, 1);
@@ -124,7 +125,7 @@ void main() {
       )));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('资产构成'));
+      await tester.tap(find.byType(AssetSankeyCard));
       await tester.pumpAndSettle();
 
       expect(find.textContaining('VIP专属权益'), findsNothing);

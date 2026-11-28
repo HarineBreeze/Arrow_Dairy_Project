@@ -355,20 +355,11 @@ class _AssetSankeyCardState extends State<AssetSankeyCard>
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          // v5.0.13：移除左上角「资产构成」标题，图表作为唯一内容整体垂直
+          // 居中——卡片被 OverviewStack 拉伸到统一高度后，上下留白始终相等
+          // （原先内容堆在顶部，上边距远小于下边距）。
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Row(children: [
-              Text('资产构成',
-                  style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppPalette.c(0xFF24382F))),
-              if (!widget.unlocked) ...[
-                const SizedBox(width: 6),
-                AppIcon(AppIcons.lock,
-                    size: 12, color: AppPalette.c(0xFF8FA09A)),
-              ],
-            ]),
-            const SizedBox(height: 10),
             if (!widget.data.isValid)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 60),
