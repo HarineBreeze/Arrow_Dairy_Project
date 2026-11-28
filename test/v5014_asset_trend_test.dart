@@ -128,7 +128,7 @@ void main() {
       File('$root/lib/screens/asset_screen.dart').readAsStringSync();
 
   test('设置弹层含「资产趋势」VIP 入口', () {
-    expect(assetSrc, contains("const Text('资产趋势')"),
+    expect(assetSrc, contains("Text('资产趋势'"),
         reason: '设置弹层应有资产趋势入口标题');
     expect(assetSrc, contains('badge: UserProfile.badgeVip'),
         reason: '入口应带 VIP 标识');

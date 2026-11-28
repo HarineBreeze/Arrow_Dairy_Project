@@ -15,6 +15,10 @@ class TrendPoint {
     required this.totalAssets,
     required this.totalDebt,
   });
+
+  /// 净资产 = 总资产 - 负资产（负债取绝对值）。
+  /// totalDebt 为带符号的负债之和（负数），故等价于 totalAssets + totalDebt。
+  double get netWorth => totalAssets - totalDebt.abs();
 }
 
 /// 时间范围。
@@ -112,7 +116,7 @@ class _AssetTrendChartState extends State<AssetTrendChart> {
     );
   }
 
-  /// 顶部汇总条：最后一点的日期 + 全资产 + 负债。
+  /// 顶部汇总条：最后一点的日期 + 全资产（蓝）+ 净资产（红）+ 负债（绿）。
   Widget _buildInfoBar(List<TrendPoint> points) {
     final last = points.isEmpty ? null : points.last;
     final date = last == null
@@ -120,8 +124,9 @@ class _AssetTrendChartState extends State<AssetTrendChart> {
         : '${last.time.month.toString().padLeft(2, '0')}-${last.time.day.toString().padLeft(2, '0')}';
     final assets = last?.totalAssets ?? 0;
     final debt = last?.totalDebt ?? 0;
+    final netWorth = last?.netWorth ?? 0;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
       decoration: BoxDecoration(
         color: AppPalette.c(0xFFEDF3FD),
         borderRadius: BorderRadius.circular(12),
@@ -130,34 +135,35 @@ class _AssetTrendChartState extends State<AssetTrendChart> {
         children: [
           Text(date,
               style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: AppPalette.c(0xFF24382F))),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Row(
-              children: [
-                Container(width: 12, height: 3, color: _kAssetColor),
-                const SizedBox(width: 6),
-                Text('全资产 ${_thousands(assets)}',
-                    style: TextStyle(
-                        fontSize: 13, color: AppPalette.c(0xFF24382F))),
-              ],
-            ),
-          ),
-          Expanded(
-            child: Row(
-              children: [
-                Container(width: 12, height: 3, color: _kDebtColor),
-                const SizedBox(width: 6),
-                Text('负债 ${_thousands(debt)}',
-                    style: TextStyle(
-                        fontSize: 13, color: AppPalette.c(0xFF24382F))),
-              ],
-            ),
-          ),
+          const SizedBox(width: 10),
+          Expanded(child: _legendDot(_kAssetColor, '全资产', assets)),
+          const SizedBox(width: 6),
+          Expanded(child: _legendDot(_kNetWorthColor, '净资产', netWorth)),
+          const SizedBox(width: 6),
+          Expanded(child: _legendDot(_kDebtColor, '负债', debt)),
         ],
       ),
+    );
+  }
+
+  /// 汇总条里的单项图例：色块 + 「标签 金额」（金额千分位）。
+  Widget _legendDot(Color color, String label, double value) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(width: 10, height: 3, color: color),
+        const SizedBox(width: 4),
+        Flexible(
+          child: Text('$label ${_thousands(value)}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                  fontSize: 11, color: AppPalette.c(0xFF24382F))),
+        ),
+      ],
     );
   }
 
@@ -226,14 +232,15 @@ class PressableRangeChip extends StatelessWidget {
   }
 }
 
-const Color _kAssetColor = Color(0xFF6BA7E8);
-const Color _kDebtColor = Color(0xFFA9B2AC);
+const Color _kAssetColor = Color(0xFF6BA7E8); // 全资产：蓝
+const Color _kNetWorthColor = Color(0xFFE05252); // 净资产：红（总资产 - 负资产）
+const Color _kDebtColor = Color(0xFF3FA96F); // 负资产/负债：绿
 
 /// 阶梯折线绘制器。
 ///
-/// - 全资产（蓝）与负债（灰，取绝对值高度）两条阶梯线；
+/// - 三条阶梯线：全资产（蓝）、净资产（红，总资产-负债）、负债（绿，取绝对值高度）；
 /// - 左 Y 轴按「万」给出 5 条水平虚线网格 + 标签；
-/// - 末端竖直虚线落到 0 线 + 实心端点；
+/// - 末端竖直虚线落到 0 线 + 三色实心端点；
 /// - X 轴两端标注起止日期。
 class _TrendPainter extends CustomPainter {
   final List<TrendPoint> points;
@@ -256,7 +263,8 @@ class _TrendPainter extends CustomPainter {
     if (plotW <= 0 || plotH <= 0) return;
 
     final maxAbs = points.fold<double>(0.0, (m, p) {
-      final v = math.max(p.totalAssets, p.totalDebt.abs());
+      final v = math.max(p.totalAssets,
+          math.max(p.netWorth, p.totalDebt.abs()));
       return math.max(m, v);
     });
     final step = _niceStep(maxAbs / 4);
@@ -289,21 +297,27 @@ class _TrendPainter extends CustomPainter {
       tp.paint(canvas, Offset(left - 8 - tp.width, y - tp.height / 2));
     }
 
-    // 2) 两条阶梯线
+    // 2) 三条阶梯线：全资产（蓝）、净资产（红）、负债（绿）
     _drawStepLine(canvas, points, left, right, xOf, yOf, _kAssetColor,
         (p) => p.totalAssets);
+    _drawStepLine(canvas, points, left, right, xOf, yOf, _kNetWorthColor,
+        (p) => p.netWorth);
     _drawStepLine(canvas, points, left, right, xOf, yOf, _kDebtColor,
         (p) => p.totalDebt.abs());
 
-    // 3) 末端竖直虚线（落到 0 线）+ 端点
+    // 3) 末端竖直虚线（落到 0 线）+ 三色端点
     final lx = xOf(last);
-    _dashedLine(canvas, Offset(lx, yOf(points.last.totalAssets)),
+    final lastPoint = points.last;
+    _dashedLine(canvas, Offset(lx, yOf(lastPoint.totalAssets)),
         Offset(lx, bottom), Color(0x806BA7E8));
     canvas.drawCircle(
-        Offset(lx, yOf(points.last.totalAssets)), 4.5,
+        Offset(lx, yOf(lastPoint.totalAssets)), 4.5,
         Paint()..color = _kAssetColor);
     canvas.drawCircle(
-        Offset(lx, yOf(points.last.totalDebt.abs())), 4.5,
+        Offset(lx, yOf(lastPoint.netWorth)), 4.5,
+        Paint()..color = _kNetWorthColor);
+    canvas.drawCircle(
+        Offset(lx, yOf(lastPoint.totalDebt.abs())), 4.5,
         Paint()..color = _kDebtColor);
 
     // 4) X 轴两端日期

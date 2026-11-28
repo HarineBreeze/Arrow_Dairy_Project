@@ -308,6 +308,10 @@ class AppPalette {
     0xFFD5E2DB: 0xFF26362F,
     0xFFD5DDEA: 0xFF242C34,
     0xFFE8EDF5: 0xFF242C33, // 分隔线 / 淡边框
+    // v5.0.15：资产趋势图新增底纹——浅色下为淡蓝/淡灰，深色下翻为深底，
+    // 否则汇总条/选中胶囊的底纹保持浅色、上面的文字却翻成浅色导致看不清。
+    0xFFEDF3FD: 0xFF212A33, // 汇总条淡蓝底 → 深蓝灰
+    0xFFE4E8EB: 0xFF2B3530, // 时间胶囊选中底 → 深灰
     0xFFC6D6CD: 0xFF3A4C42, // 淡图标 / 箭头 / 边框
     0xFFC2D4C9: 0xFF3A4A41,
     0xFFC2CFC8: 0xFF3A4740,

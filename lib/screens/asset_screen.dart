@@ -151,6 +151,13 @@ class AssetScreenState extends State<AssetScreen> {
 
   // ---------- 设置 ----------
 
+  /// v5.0.15：设置抽屉图标统一向右下小幅偏移。
+  /// Transform 仅为绘制位移，不改变布局占位，因此文字内容与位置完全不变。
+  Widget _shiftedIcon(Widget icon) => Transform.translate(
+        offset: const Offset(3, 3),
+        child: icon,
+      );
+
   /// 齿轮 → 设置选项卡（底部弹层）
   void _openSettings() {
     AppSheet.show(
@@ -163,12 +170,19 @@ class AssetScreenState extends State<AssetScreen> {
             // v5.0.3：移除「设置」标题，抽屉直接列出选项
             const SizedBox(height: 14),
             // v5.0.14：资产趋势（VIP 权益入口）
+            // v5.0.15：未解锁时整项置灰（图标/文字/箭头），仍可点击弹权益提示
             ListTile(
-              leading: AppIcon(AppIcons.asset,
-                  color: AppPalette.c(0xFF3E8E6D)),
+              leading: _shiftedIcon(AppIcon(AppIcons.asset,
+                  color: _isVip
+                      ? AppPalette.c(0xFF3E8E6D)
+                      : AppPalette.c(0xFFC2D4C9))),
               title: Row(
                 children: [
-                  const Text('资产趋势'),
+                  Text('资产趋势',
+                      style: TextStyle(
+                          color: _isVip
+                              ? AppPalette.c(0xFF24382F)
+                              : AppPalette.c(0xFFB2C4BA))),
                   const SizedBox(width: 6),
                   IdentityBadge(
                       badge: UserProfile.badgeVip, scale: 0.85),
@@ -176,9 +190,15 @@ class AssetScreenState extends State<AssetScreen> {
               ),
               subtitle: Text('按天记录每次金额调整，查看资产走势',
                   style: TextStyle(
-                      fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
-              trailing: AppIcon(AppIcons.chevR,
-                  size: 18, color: AppPalette.c(0xFF647A70)),
+                      fontSize: 13,
+                      color: _isVip
+                          ? AppPalette.c(0xFF8FA09A)
+                          : AppPalette.c(0xFFC2D4C9))),
+              trailing: _shiftedIcon(AppIcon(AppIcons.chevR,
+                  size: 18,
+                  color: _isVip
+                      ? AppPalette.c(0xFF647A70)
+                      : AppPalette.c(0xFFC2D4C9))),
               onTap: () {
                 Navigator.pop(ctx);
                 _openAssetTrend();
@@ -186,9 +206,9 @@ class AssetScreenState extends State<AssetScreen> {
             ),
             // 加密访问开关（在上方）
             ListTile(
-              leading: AppIcon(
+              leading: _shiftedIcon(AppIcon(
                   _hasPin ? AppIcons.lock : AppIcons.unlock,
-                  color: AppPalette.c(0xFF3E8E6D)),
+                  color: AppPalette.c(0xFF3E8E6D))),
               title: const Text('设置加密访问'),
               subtitle: Text(
                   _hasPin
@@ -219,10 +239,10 @@ class AssetScreenState extends State<AssetScreen> {
             ),
             // 修改密码：仅开启加密后可用
             ListTile(
-              leading: AppIcon(AppIcons.lock,
+              leading: _shiftedIcon(AppIcon(AppIcons.lock,
                   color: _hasPin
                       ? AppPalette.c(0xFF3E8E6D)
-                      : AppPalette.c(0xFFC2D4C9)),
+                      : AppPalette.c(0xFFC2D4C9))),
               enabled: _hasPin,
               title: Text('修改资产密码',
                   style: TextStyle(
