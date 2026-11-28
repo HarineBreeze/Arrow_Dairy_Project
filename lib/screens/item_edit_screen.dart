@@ -812,11 +812,41 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         borderRadius: BorderRadius.circular(12),
       );
 
-  Widget _buildNameField() {
+  /// v5.0.22：物品名 / 物品价格 / 附加价格三行改为「档案页昵称行」同款——
+  /// 白卡内左侧固定宽 76 的标签 + 右侧无边框输入，标签列与档案昵称对齐。
+  /// 待输入提示语（hintText）保持原样不变。
+  Widget _buildLabeledField({
+    required String label,
+    required TextField field,
+    Widget? trailing,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: _box(),
-      child: TextField(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 76,
+            child: Text(
+              label,
+              style: TextStyle(fontSize: 15, color: AppPalette.c(0xFF24382F)),
+            ),
+          ),
+          Expanded(child: field),
+          if (trailing != null) ...[
+            const SizedBox(width: 8),
+            trailing,
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNameField() {
+    return _buildLabeledField(
+      label: '物品名',
+      field: TextField(
         controller: _nameCtrl,
         focusNode: _nameFocus,
         textInputAction: TextInputAction.next,
@@ -877,10 +907,9 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
   }
 
   Widget _buildPriceField() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: _box(),
-      child: TextField(
+    return _buildLabeledField(
+      label: '物品价格',
+      field: TextField(
         controller: _priceCtrl,
         focusNode: _priceFocus,
         textInputAction: TextInputAction.next,
@@ -899,45 +928,40 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
   }
 
   /// 附加价格：选填，可为负数；实际价格 = 物品价格 + 附加价格
+  /// v5.0.22：与物品名/物品价格同款「档案昵称行」样式，提示语保持原样。
   Widget _buildExtraPriceField() {
     final extra = double.tryParse(_extraCtrl.text.trim()) ?? 0;
     final price = double.tryParse(_priceCtrl.text.trim()) ?? 0;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: _box(),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _extraCtrl,
-              focusNode: _extraFocus,
-              textInputAction: TextInputAction.next,
-              onSubmitted: (_) => _usageFocus.requestFocus(),
-              keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true, signed: true),
-              style: const TextStyle(fontSize: 15),
-              // v5.0.20：hintStyle 与「输入物品名」一致（13/灰）
-              decoration: InputDecoration(
-                hintText: '输入附加价格，如卖出/折扣（选填）',
-                hintStyle:
-                    TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 14),
-              ),
-              onChanged: (_) => setState(() {}),
-            ),
-          ),
-          if (extra != 0 || price > 0)
-            Text(
+    return _buildLabeledField(
+      label: '附加价格',
+      field: TextField(
+        controller: _extraCtrl,
+        focusNode: _extraFocus,
+        textInputAction: TextInputAction.next,
+        onSubmitted: (_) => _usageFocus.requestFocus(),
+        keyboardType: const TextInputType.numberWithOptions(
+            decimal: true, signed: true),
+        style: const TextStyle(fontSize: 15),
+        // v5.0.20：hintStyle 与「输入物品名」一致（13/灰）
+        decoration: InputDecoration(
+          hintText: '输入附加价格，如卖出/折扣（选填）',
+          hintStyle:
+              TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(vertical: 14),
+        ),
+        onChanged: (_) => setState(() {}),
+      ),
+      trailing: (extra != 0 || price > 0)
+          ? Text(
               '实际 ¥${_fmtAmount(price + extra)}',
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: AppPalette.c(0xFF3E8E6D),
               ),
-            ),
-        ],
-      ),
+            )
+          : null,
     );
   }
 

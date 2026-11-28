@@ -247,97 +247,6 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
             ),
             const SizedBox(height: 16),
 
-            // 资产所有人（v5.0.21，选项型，默认「本人」）
-            Pressable(
-              enabled: true,
-              child: GestureDetector(
-                onTap: _pickOwnerSheet,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  decoration: _box(),
-                  height: 48,
-                  child: Row(
-                    children: [
-                      const SizedBox(
-                        width: 76,
-                        child: Text('资产所有人',
-                            style: TextStyle(
-                                fontSize: 15,
-                                color: Color(0xFF24382F))),
-                      ),
-                      Expanded(
-                        child: Text(_owner,
-                            textAlign: TextAlign.right,
-                            style: TextStyle(
-                                fontSize: 14, color: AppPalette.c(0xFF647A70))),
-                      ),
-                      const SizedBox(width: 6),
-                      AppIcon(AppIcons.chevR,
-                          size: 18, color: AppPalette.c(0xFF647A70)),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // 还款时间（v5.0.21，权益功能 + 仅负资产生效）
-            Pressable(
-              enabled: true,
-              child: GestureDetector(
-                onTap: _onRepayTap,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  decoration: _box(),
-                  height: 48,
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 76,
-                        child: Row(
-                          children: [
-                            Flexible(
-                              child: Text('还款时间',
-                                  style: TextStyle(
-                                      fontSize: 15,
-                                      color: _repayEnabled
-                                          ? AppPalette.c(0xFF24382F)
-                                          : AppPalette.c(0xFFC2D4C9))),
-                            ),
-                            if (!_isVip)
-                              const IdentityBadge(
-                                  badge: UserProfile.badgeVip, scale: 0.62),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: Text(
-                          _repayDate == null
-                              ? '选择还款日期'
-                              : '${_repayDate!.year}.${_repayDate!.month.toString().padLeft(2, '0')}.${_repayDate!.day.toString().padLeft(2, '0')}',
-                          textAlign: TextAlign.right,
-                          style: TextStyle(
-                              fontSize: 14,
-                              color: _repayEnabled
-                                  ? (_repayDate == null
-                                      ? AppPalette.c(0xFF8FA09A)
-                                      : AppPalette.c(0xFF647A70))
-                                  : AppPalette.c(0xFFC2D4C9)),
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      AppIcon(AppIcons.chevR,
-                          size: 18,
-                          color: _repayEnabled
-                              ? AppPalette.c(0xFF647A70)
-                              : AppPalette.c(0xFFC2D4C9)),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-
             // 资产备注：v5.0.19 移除节标题，占位文案已能自解释
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -374,6 +283,101 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                       TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // 资产归属（v5.0.22 由「资产所有人」更名；选项型，默认「本人」）
+            Pressable(
+              enabled: true,
+              child: GestureDetector(
+                onTap: _pickOwnerSheet,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  decoration: _box(),
+                  height: 48,
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 76,
+                        child: Text('资产归属',
+                            style: TextStyle(
+                                fontSize: 15,
+                                color: AppPalette.c(0xFF24382F))),
+                      ),
+                      Expanded(
+                        child: Text(_owner,
+                            textAlign: TextAlign.right,
+                            style: TextStyle(
+                                fontSize: 14, color: AppPalette.c(0xFF647A70))),
+                      ),
+                      const SizedBox(width: 6),
+                      AppIcon(AppIcons.chevR,
+                          size: 18, color: AppPalette.c(0xFF647A70)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // 还款时间（v5.0.21，权益功能 + 仅负资产生效）
+            // v5.0.22：标题不换行、VIP 标识缩小、移除「选择还款日期」占位
+            Pressable(
+              enabled: true,
+              child: GestureDetector(
+                onTap: _onRepayTap,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  decoration: _box(),
+                  height: 48,
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 92,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('还款时间',
+                                maxLines: 1,
+                                overflow: TextOverflow.clip,
+                                style: TextStyle(
+                                    fontSize: 15,
+                                    color: _repayEnabled
+                                        ? AppPalette.c(0xFF24382F)
+                                        : AppPalette.c(0xFFC2D4C9))),
+                            if (!_isVip) ...[
+                              SizedBox(width: 4),
+                              const IdentityBadge(
+                                  badge: UserProfile.badgeVip, scale: 0.5),
+                            ],
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          _repayEnabled && _repayDate != null
+                              ? '${_repayDate!.year}.${_repayDate!.month.toString().padLeft(2, '0')}.${_repayDate!.day.toString().padLeft(2, '0')}'
+                              : '',
+                          textAlign: TextAlign.right,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              fontSize: 14,
+                              color: _repayEnabled
+                                  ? AppPalette.c(0xFF647A70)
+                                  : AppPalette.c(0xFFC2D4C9)),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      AppIcon(AppIcons.chevR,
+                          size: 18,
+                          color: _repayEnabled
+                              ? AppPalette.c(0xFF647A70)
+                              : AppPalette.c(0xFFC2D4C9)),
+                    ],
+                  ),
                 ),
               ),
             ),

@@ -79,10 +79,11 @@ void main() {
       final b = Asset.fromJson(a.toJson());
       expect(b.owner, '配偶');
     });
-    testWidgets('编辑页：资产所有人默认本人，选项型行渲染', (tester) async {
+    testWidgets('编辑页：资产归属（原资产所有人）默认本人，选项型行渲染', (tester) async {
       await tester.pumpWidget(const MaterialApp(home: AssetEditScreen()));
       await settle(tester);
-      expect(find.text('资产所有人'), findsOneWidget);
+      expect(find.text('资产归属'), findsOneWidget);
+      expect(find.text('资产所有人'), findsNothing);
       expect(find.text('本人'), findsOneWidget);
     });
   });
@@ -114,11 +115,12 @@ void main() {
       await tester.pumpWidget(const MaterialApp(home: AssetEditScreen()));
       await settle(tester);
       expect(find.text('还款时间'), findsOneWidget);
-      expect(find.text('选择还款日期'), findsOneWidget);
+      // v5.0.22：移除「选择还款日期」占位，未选日期时右侧留空
+      expect(find.text('选择还款日期'), findsNothing);
     });
-    test('源码：VIP 身份牌用在还款时间行', () {
+    test('源码：VIP 身份牌用在还款时间行（v5.0.22 缩小到 0.5）', () {
       expect(assetEditSrc, contains('const IdentityBadge('));
-      expect(assetEditSrc, contains('badge: UserProfile.badgeVip, scale: 0.62'));
+      expect(assetEditSrc, contains('badge: UserProfile.badgeVip, scale: 0.5'));
     });
   });
 
@@ -148,8 +150,10 @@ void main() {
   });
 
   group('v5.0.21 ⑤ 愿望单转正特效 + 使用次数样式', () {
-    test('源码：转正调用庆祝层且含粒子', () {
-      expect(itemListSrc, contains('showWishlistConvertCelebration'));
+    test('源码：转正特效作用在卡片上且含翻转/粒子（v5.0.22 移除弹窗）', () {
+      expect(itemListSrc, contains('WishlistConvertEffect'));
+      expect(itemListSrc, contains('_celebratingIds'));
+      expect(convertSrc, contains('rotateY'));
       expect(convertSrc, contains('CustomPaint'));
       expect(convertSrc, contains('_ConvertBurst'));
       expect(convertSrc, contains('Haptics.medium'));
@@ -167,9 +171,9 @@ void main() {
   });
 
   group('v5.0.21 ⑥ 颜色适配（规范 4/6）', () {
-    test('新增庆祝组件主体走 AppPalette，不写死卡片底色', () {
-      expect(convertSrc, contains('AppPalette.surface'));
-      expect(convertSrc, contains('AppPalette.c(0xFF24382F)'));
+    test('转正特效粒子色走 AppPalette，不写死颜色', () {
+      expect(convertSrc, contains("import '../theme/app_palette.dart';"));
+      expect(convertSrc, contains('AppPalette.c(0xFFE58BA0)'));
     });
     test('还款横幅主体走 AppPalette', () {
       final bannerSrc = src('lib/widgets/asset_repay_banner.dart');

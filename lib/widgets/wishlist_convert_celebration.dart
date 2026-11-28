@@ -3,191 +3,136 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../theme/app_palette.dart';
-import '../utils/app_motion.dart';
 import '../utils/haptics.dart';
-import 'pressable.dart';
 
-/// v5.0.21 愿望单物品攒满「转正」为已拥有时的庆祝层。
-/// 粉色主题（愿望单色）+ 对勾徽章 + 粒子迸发，主题色随 AppPalette 自适应。
-Future<void> showWishlistConvertCelebration(
-  BuildContext context, {
-  required String name,
-}) {
-  return showDialog<void>(
-    context: context,
-    barrierDismissible: true,
-    barrierColor: const Color(0x99000000),
-    builder: (_) => WishlistConvertCelebration(name: name),
-  );
-}
+/// v5.0.22 愿望单物品攒满「转正」时的庆祝特效。
+///
+/// 与 v5.0.21 的差别：不再弹一个独立对话框，而是把**翻转 + 粒子**直接
+/// 作用在被转正的那张卡片本身。卡片用物品 id 作 ValueKey，转正后即使
+/// 因排序变化被移动到别的物理位置，State（及动画）也会随卡片一起走，
+/// 不会出现「卡片换位置特效就丢」的情况。
+///
+/// 用法：
+/// ```dart
+/// WishlistConvertEffect(
+///   celebrate: _celebratingIds.contains(item.id),
+///   onDone: () => _celebratingIds.remove(item.id),
+///   child: card,
+/// )
+/// ```
+class WishlistConvertEffect extends StatefulWidget {
+  /// false → true 的跳变触发一次特效
+  final bool celebrate;
 
-class WishlistConvertCelebration extends StatefulWidget {
-  final String name;
-  const WishlistConvertCelebration({Key? key, required this.name})
-      : super(key: key);
+  /// 特效播完回调（调用方据此清掉 celebrating 标记）
+  final VoidCallback? onDone;
+
+  /// 被作用的目标卡片
+  final Widget child;
+
+  const WishlistConvertEffect({
+    Key? key,
+    required this.celebrate,
+    this.onDone,
+    required this.child,
+  }) : super(key: key);
 
   @override
-  State<WishlistConvertCelebration> createState() =>
-      _WishlistConvertCelebrationState();
+  State<WishlistConvertEffect> createState() => _WishlistConvertEffectState();
 }
 
-class _WishlistConvertCelebrationState extends State<WishlistConvertCelebration>
-    with TickerProviderStateMixin {
-  late final AnimationController _enter = AnimationController(
+class _WishlistConvertEffectState extends State<WishlistConvertEffect>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl = AnimationController(
     vsync: this,
-    duration: AppMotion.pageDuration,
-  );
-  late final AnimationController _burst = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 620),
-  );
+    duration: const Duration(milliseconds: 820),
+  )..addStatusListener((status) {
+      if (status == AnimationStatus.completed) widget.onDone?.call();
+    });
 
   @override
   void initState() {
     super.initState();
+    if (widget.celebrate) _start();
+  }
+
+  @override
+  void didUpdateWidget(WishlistConvertEffect oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.celebrate && !oldWidget.celebrate) _start();
+  }
+
+  void _start() {
     Haptics.medium();
-    _enter.forward();
-    _burst.forward();
+    if (mounted) _ctrl.forward(from: 0);
   }
 
   @override
   void dispose() {
-    _enter.dispose();
-    _burst.dispose();
+    _ctrl.dispose();
     super.dispose();
-  }
-
-  void _close() {
-    final nav = Navigator.of(context);
-    if (nav.canPop()) nav.pop();
   }
 
   @override
   Widget build(BuildContext context) {
-    // 愿望单粉（沿用 item_edit 的 0xFFE58BA0），文字/底纹走 AppPalette 适配
-    const pink = Color(0xFFE58BA0);
-    final titleColor = AppPalette.c(0xFF24382F);
-
-    return FadeTransition(
-      opacity: _enter,
-      child: ScaleTransition(
-        scale: CurvedAnimation(parent: _enter, curve: AppMotion.pageCurve),
-        child: Center(
-          child: SingleChildScrollView(
-            child: Material(
-              color: Colors.transparent,
-              child: Container(
-                key: const ValueKey('wishlist-convert-celebration'),
-                width: 300,
-                margin: const EdgeInsets.symmetric(horizontal: 20),
-                padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
-                decoration: BoxDecoration(
-                  color: AppPalette.surface,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      width: 120,
-                      height: 120,
-                      child: AnimatedBuilder(
-                        animation: _burst,
-                        builder: (_, child) => Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            CustomPaint(
-                              size: const Size.square(120),
-                              painter: _ConvertBurst(
-                                progress: _burst.value,
-                                color: pink,
-                              ),
-                            ),
-                            Container(
-                              width: 92,
-                              height: 92,
-                              decoration: const BoxDecoration(
-                                color: pink,
-                                shape: BoxShape.circle,
-                              ),
-                              alignment: Alignment.center,
-                              child: const Icon(Icons.check,
-                                  key: ValueKey('wishlist-convert-check'),
-                                  size: 48,
-                                  color: Colors.white),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Text('愿望成真！',
-                        style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w500,
-                            color: titleColor)),
-                    const SizedBox(height: 12),
-                    Text(
-                      '「${widget.name}」已加入拥有中',
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 15, color: titleColor),
-                    ),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 48,
-                      child: Pressable(
-                        child: Material(
-                          color: pink,
-                          borderRadius: BorderRadius.circular(12),
-                          clipBehavior: Clip.antiAlias,
-                          child: InkWell(
-                            key: const ValueKey('wishlist-convert-confirm'),
-                            onTap: _close,
-                            child: const Center(
-                              child: Text('太棒了',
-                                  style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.white)),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+    return AnimatedBuilder(
+      animation: _ctrl,
+      child: widget.child,
+      builder: (context, child) {
+        final t = _ctrl.value;
+        // 卡片绕 Y 轴翻转一整圈，中途略微放大做出「弹一下」的手感
+        final angle = t * math.pi * 2;
+        final scale = 1 + 0.06 * math.sin(t * math.pi);
+        return Stack(
+          fit: StackFit.passthrough,
+          children: [
+            Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.identity()
+                ..setEntry(3, 2, 0.0018) // 透视，避免翻转像纸片平移
+                ..rotateY(angle)
+                ..scale(scale),
+              child: child,
+            ),
+            if (t > 0 && t < 1)
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: CustomPaint(
+                    painter: _ConvertBurst(progress: t),
+                  ),
                 ),
               ),
-            ),
-          ),
-        ),
-      ),
+          ],
+        );
+      },
     );
   }
 }
 
-/// 转正粒子：一圈小圆点从中心向外扩散并淡出（固定种子，轨迹稳定）。
+/// 转正粒子：一圈小圆点从卡片中心向外扩散并淡出（固定种子，轨迹稳定）。
+/// 半径随卡片尺寸自适应，正方形物品卡上呈现为环绕卡片的一圈点缀。
 class _ConvertBurst extends CustomPainter {
   final double progress;
-  final Color color;
-  static const int _count = 12;
+  static const int _count = 14;
 
-  _ConvertBurst({required this.progress, required this.color});
+  _ConvertBurst({required this.progress});
 
   @override
   void paint(Canvas canvas, Size size) {
     if (progress <= 0) return;
     final center = size.center(Offset.zero);
     final t = Curves.easeOutCubic.transform(progress.clamp(0.0, 1.0));
+    final base = size.shortestSide * 0.34;
     final paint = Paint()..style = PaintingStyle.fill;
     for (var i = 0; i < _count; i++) {
       final rnd = math.Random(i * 31 + 7);
       final angle = (i / _count) * math.pi * 2 + rnd.nextDouble() * 0.22;
-      final spread = 40 + (18 + rnd.nextDouble() * 14) * t;
-      final dotR = (2.2 + rnd.nextDouble() * 1.4) * (1 - t).clamp(0.25, 1.0);
-      paint.color = color.withOpacity((1 - t).clamp(0.0, 1.0) * 0.9);
+      final spread = base + (18 + rnd.nextDouble() * 14) * t;
+      final dotR =
+          (2.6 + rnd.nextDouble() * 1.6) * (1 - t).clamp(0.25, 1.0);
+      // 愿望单粉走主题色板（与 item_edit 的 0xFFE58BA0 语义一致）
+      paint.color = AppPalette.c(0xFFE58BA0)
+          .withOpacity((1 - t).clamp(0.0, 1.0) * 0.9);
       canvas.drawCircle(
         center + Offset(math.cos(angle), math.sin(angle)) * spread,
         dotR,
@@ -197,6 +142,5 @@ class _ConvertBurst extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_ConvertBurst old) =>
-      old.progress != progress || old.color != color;
+  bool shouldRepaint(_ConvertBurst old) => old.progress != progress;
 }

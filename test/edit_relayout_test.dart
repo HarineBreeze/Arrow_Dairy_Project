@@ -79,12 +79,15 @@ void main() {
     for (final label in ['物品类型', '计算方式']) {
       expect(find.text(label), findsOneWidget, reason: '$label 行标签应存在');
     }
-    // v5.0.19：四个字段节标题移除
+    // v5.0.19：四个字段节标题移除（「物品名称」全称不再出现）
     expect(find.text('物品名称'), findsNothing);
-    expect(find.text('物品价格'), findsNothing);
-    expect(find.text('附加价格'), findsNothing);
     expect(find.text('日期'), findsNothing);
-    // 占位文案承担字段说明
+    // v5.0.22：物品名/物品价格/附加价格三行改为档案昵称行同款——
+    // 左侧 76px 标签 + 右侧输入框，故这三个词作为行标签出现（非节标题）
+    expect(find.text('物品名'), findsOneWidget);
+    expect(find.text('物品价格'), findsOneWidget);
+    expect(find.text('附加价格'), findsOneWidget);
+    // 占位文案保持不变
     expect(find.text('输入物品名'), findsOneWidget);
     expect(find.text('输入物品价格'), findsOneWidget);
 
@@ -93,7 +96,7 @@ void main() {
     expect(find.text('均价计算方式'), findsNothing, reason: '旧节名应移除');
     expect(find.text('物品状态'), findsOneWidget);
 
-    // 行内标签不再存在（已改为节标题）
-    expect(find.text('物品名'), findsNothing);
+    // v5.0.22：物品名已是行内标签（档案昵称行同款），不再是「不存在」
+    expect(find.text('物品名'), findsOneWidget);
   });
 }

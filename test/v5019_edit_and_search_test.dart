@@ -32,8 +32,14 @@ void main() {
       await tester.pumpWidget(const MaterialApp(home: ItemEditScreen()));
       await tester.pumpAndSettle();
 
-      for (final label in ['物品名称', '物品价格', '附加价格', '日期']) {
+      // v5.0.19 移除的四个节标题中，「物品名称」全称与「日期」仍不存在；
+      // 「物品价格」「附加价格」在 v5.0.22 作为档案昵称行同款的行标签回归，
+      // 不再是节标题（位于输入框左侧同一白卡内）。
+      for (final label in ['物品名称', '日期']) {
         expect(find.text(label), findsNothing, reason: '$label 节标题应移除');
+      }
+      for (final label in ['物品价格', '附加价格']) {
+        expect(find.text(label), findsOneWidget, reason: '$label 行标签应存在');
       }
       expect(find.text('输入物品名'), findsOneWidget);
       expect(find.text('输入物品价格'), findsOneWidget);

@@ -38,6 +38,10 @@ class ItemListScreenState extends State<ItemListScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
   String _query = '';
 
+  /// v5.0.22：刚转正的物品 id 集合。卡片用 id 作 ValueKey，转正后即使
+  /// 被排序移到别的物理位置，特效仍随这张卡片走（见 WishlistConvertEffect）。
+  final Set<String> _celebratingIds = <String>{};
+
   _ItemFilter _filter = _ItemFilter.all;
   _ItemSortField _sortField = _ItemSortField.acquired;
   bool _sortAscending = false;
@@ -173,9 +177,10 @@ class ItemListScreenState extends State<ItemListScreen> {
       it.acquiredDate = DateTime.now();
       await ItemStorage.save(list);
       if (!mounted) return;
-      // v5.0.21：转正特效 + 粒子（替代原纯 toast 提示）
+      // v5.0.22：转正特效直接作用在卡片上（翻转 + 粒子），不再弹窗；
+      // 标记 id 后刷新，卡片按 id 命中标记播放特效，播完回调移除标记。
+      setState(() => _celebratingIds.add(it.id));
       _load();
-      await showWishlistConvertCelebration(context, name: it.name);
       return;
     }
     it.savedAmount = saved;
@@ -414,6 +419,12 @@ class ItemListScreenState extends State<ItemListScreen> {
                               : null,
                           onAdjustSaved:
                               it.wishlist ? (d) => _adjustSaved(it, d) : null,
+                          celebrate: _celebratingIds.contains(it.id),
+                          onCelebrateDone: () {
+                            if (mounted) {
+                              setState(() => _celebratingIds.remove(it.id));
+                            }
+                          },
                         );
                       },
                     ),
@@ -652,6 +663,8 @@ class _ItemCard extends StatefulWidget {
   final VoidCallback? onLongPress; // 长按：编辑 / 删除
   final VoidCallback? onUse;
   final ValueChanged<int>? onAdjustSaved; // 愿望单 +1/-1 攒钱
+  final bool celebrate; // v5.0.22：转正特效（翻转 + 粒子）开关
+  final VoidCallback? onCelebrateDone; // 特效播完回调
 
   const _ItemCard(
       {Key? key,
@@ -659,7 +672,9 @@ class _ItemCard extends StatefulWidget {
       required this.onTap,
       this.onLongPress,
       this.onUse,
-      this.onAdjustSaved})
+      this.onAdjustSaved,
+      this.celebrate = false,
+      this.onCelebrateDone})
       : super(key: key);
 
   @override
@@ -681,27 +696,37 @@ class _ItemCardState extends State<_ItemCard> {
     final child = wishlist
         ? _buildWishlistBody()
         : _buildOwnedBody(item.lostDate != null);
+    final Widget card;
     if (!wishlist) {
-      return _buildAnimatedCard(child);
+      card = _buildAnimatedCard(child);
+    } else {
+      // 愿望单：左右滑动攒钱（页面手势闸门：滑动期间菜单让位）
+      card = PageGestureGate(
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onHorizontalDragUpdate: (d) =>
+              setState(() => _dx = (_dx + d.delta.dx).clamp(-_maxDx, _maxDx)),
+          onHorizontalDragEnd: (d) {
+            final v = d.primaryVelocity ?? 0;
+            if (_dx < -_triggerDx || v < -600) {
+              widget.onAdjustSaved?.call(-1);
+            } else if (_dx > _triggerDx || v > 600) {
+              widget.onAdjustSaved?.call(1);
+            }
+            setState(() => _dx = 0);
+          },
+          onHorizontalDragCancel: () => setState(() => _dx = 0),
+          child: _buildAnimatedCard(child),
+        ),
+      );
     }
-    // 愿望单：左右滑动攒钱（页面手势闸门：滑动期间菜单让位）
-    return PageGestureGate(
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onHorizontalDragUpdate: (d) =>
-            setState(() => _dx = (_dx + d.delta.dx).clamp(-_maxDx, _maxDx)),
-        onHorizontalDragEnd: (d) {
-          final v = d.primaryVelocity ?? 0;
-          if (_dx < -_triggerDx || v < -600) {
-            widget.onAdjustSaved?.call(-1);
-          } else if (_dx > _triggerDx || v > 600) {
-            widget.onAdjustSaved?.call(1);
-          }
-          setState(() => _dx = 0);
-        },
-        onHorizontalDragCancel: () => setState(() => _dx = 0),
-        child: _buildAnimatedCard(child),
-      ),
+    // v5.0.22：转正特效（翻转 + 粒子）直接作用在这张卡片上。
+    // 外层按物品 id 作 ValueKey，转正后即使被排序移到别的物理位置，
+    // 这个 State 仍随卡片复用，动画不会丢。
+    return WishlistConvertEffect(
+      celebrate: widget.celebrate,
+      onDone: widget.onCelebrateDone,
+      child: card,
     );
   }
 
