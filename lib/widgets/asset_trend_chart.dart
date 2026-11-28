@@ -121,9 +121,14 @@ class _AssetTrendChartState extends State<AssetTrendChart> {
                         },
                         child: Stack(
                           children: [
-                            RepaintBoundary(
-                              child: CustomPaint(
-                                painter: _TrendPainter(points: points),
+                            // v5.0.17 修复：Stack 给非定位 child 的是松散约束，
+                            // CustomPaint 无 child 也无 size 时会塌缩成 Size.zero，
+                            // 导致折线图完全不显示。用 Positioned.fill 给紧约束撑满。
+                            Positioned.fill(
+                              child: RepaintBoundary(
+                                child: CustomPaint(
+                                  painter: _TrendPainter(points: points),
+                                ),
                               ),
                             ),
                             if (_selectedIndex != null &&

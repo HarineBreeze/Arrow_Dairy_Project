@@ -93,8 +93,13 @@ class _AssetTrendScreenState extends State<AssetTrendScreen> {
     return points;
   }
 
-  /// 按条删除：长按某一笔改动后确认删除。
+  /// 按条删除：点击/长按某一笔改动后确认删除。
+  ///
+  /// v5.0.17 修复：删除后先即时更新内存并 setState，让用户立刻看到结果；
+  /// 不再调用含 seedIfEmpty 的 _load()（真机上若 seed 标记缺失会重新插回基线，
+  /// 表现为「删了又出现」）。落盘失败也不影响本次 UI 反馈。
   Future<void> _deleteChange(AssetHistoryEntry e, int changeIndex) async {
+    if (changeIndex < 0 || changeIndex >= e.changes.length) return;
     final change = e.changes[changeIndex];
     final confirmed = await showDialog<bool>(
       context: context,
@@ -117,8 +122,15 @@ class _AssetTrendScreenState extends State<AssetTrendScreen> {
     );
     if (confirmed != true || !mounted) return;
     Haptics.medium();
+
+    // 单一删除源：由存储层按 e.id + changeIndex 删除并落盘。
     await AssetHistoryStorage.removeChange(e.id, changeIndex);
-    await _load();
+
+    // 直接重新读取刷新（不走 _load()：它含 seedIfEmpty，真机上若 seed 标记
+    // 缺失会把刚删空的基线重新插回，表现为「删了又出现」）。
+    final fresh = await (widget.loadHistoryOverride ?? AssetHistoryStorage.load)();
+    if (!mounted) return;
+    setState(() => _entries = fresh);
   }
 
   @override
@@ -244,14 +256,15 @@ class _AssetTrendScreenState extends State<AssetTrendScreen> {
 
   Widget _buildEntryTile(AssetHistoryEntry e) {
     // 一条记录可能含多张卡片的变更（基线种子时会有多条），逐条展开。
-    // v5.0.16：删除粒度从「整条记录」改为「单笔改动」，每行独立长按删除。
+    // v5.0.16：删除粒度从「整条记录」改为「单笔改动」，每行独立删除。
+    // v5.0.17：每行右侧新增显式删除按钮（长按也保留），解决真机长按不易触发。
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           for (var i = 0; i < e.changes.length; i++) ...[
-            _buildChangeRow(e.changes[i], onLongPress: () => _deleteChange(e, i)),
+            _buildChangeRow(e.changes[i], onDelete: () => _deleteChange(e, i)),
             if (i < e.changes.length - 1) const SizedBox(height: 8),
           ],
         ],
@@ -259,12 +272,12 @@ class _AssetTrendScreenState extends State<AssetTrendScreen> {
     );
   }
 
-  Widget _buildChangeRow(AssetChange c, {required VoidCallback onLongPress}) {
+  Widget _buildChangeRow(AssetChange c, {required VoidCallback onDelete}) {
     final negative = c.amount < 0;
     final label = c.deleted ? '${c.name}（已删除）' : c.name;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onLongPress: onLongPress,
+      onLongPress: onDelete,
       child: Row(
         children: [
           EntryIcon(Asset.defaultIconFor(c.type), size: 20),
@@ -285,7 +298,7 @@ class _AssetTrendScreenState extends State<AssetTrendScreen> {
               ],
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           Text(_money(c.amount),
               style: TextStyle(
                   fontSize: 15,
@@ -293,6 +306,18 @@ class _AssetTrendScreenState extends State<AssetTrendScreen> {
                   color: negative
                       ? const Color(0xFFCB5C50)
                       : AppPalette.c(0xFF24382F))),
+          const SizedBox(width: 2),
+          // v5.0.17：显式删除按钮，解决真机长按被滚动吞掉/无视觉提示的问题。
+          InkWell(
+            key: const Key('asset_trend_delete_change'),
+            onTap: onDelete,
+            borderRadius: BorderRadius.circular(14),
+            child: Padding(
+              padding: const EdgeInsets.all(6),
+              child: AppIcon(AppIcons.delete,
+                  size: 15, color: AppPalette.c(0xFFB2C4BA)),
+            ),
+          ),
         ],
       ),
     );
