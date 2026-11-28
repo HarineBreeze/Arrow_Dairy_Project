@@ -166,16 +166,17 @@ void main() {
       expect(find.text('完成'), findsOneWidget);
     });
 
-    testWidgets('资产编辑页：金额提示为「输入数额」', (tester) async {
+    testWidgets('资产编辑页：金额提示为 v5.0.23 的「输入金额」', (tester) async {
       await tester.pumpWidget(const MaterialApp(home: AssetEditScreen()));
       await _settle(tester);
-      expect(find.text('输入数额'), findsOneWidget);
+      expect(find.text('输入金额'), findsOneWidget);
     });
 
-    testWidgets('物品编辑页：v5.0.19 附加价格提示改为「输入附加价格，如卖出/折扣（选填）」', (tester) async {
+    testWidgets('物品编辑页：v5.0.23 附加价格提示为「如卖出/折扣（选填）」', (tester) async {
       await tester.pumpWidget(const MaterialApp(home: ItemEditScreen()));
       await _settle(tester);
-      expect(find.text('输入附加价格，如卖出/折扣（选填）'), findsOneWidget);
+      expect(find.text('如卖出/折扣（选填）'), findsOneWidget);
+      expect(find.text('输入附加价格，如卖出/折扣（选填）'), findsNothing);
       expect(find.text('¥ 可为负数（选填）'), findsNothing);
     });
 

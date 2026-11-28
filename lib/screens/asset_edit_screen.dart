@@ -247,38 +247,38 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
             ),
             const SizedBox(height: 16),
 
-            // 资产备注：v5.0.19 移除节标题，占位文案已能自解释
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: _box(),
-              child: TextField(
+            // v5.0.23：资产备注 / 资产金额改为档案页昵称行同款
+            // ——白卡内左侧 76px 标签 + 右侧无边框输入，与档案 _buildFieldLabel 对齐
+            _buildLabeledField(
+              label: '资产备注',
+              field: TextField(
                 controller: _noteCtrl,
                 maxLength: 15,
                 style: const TextStyle(fontSize: 15),
                 decoration: InputDecoration(
-                  hintText: '如：工资卡、应急金、基金账户',
-                  hintStyle: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
+                  hintText: '工资卡、应急金、养老金...',
+                  hintStyle:
+                      TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
                   counterText: '',
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(vertical: 14),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
                 ),
               ),
             ),
             const SizedBox(height: 16),
 
             // 资产金额（必填）
-            // v5.0.19：移除节标题；金额输入移除 ¥ 金钱符号、取消加粗，
-            // 提示语与其他待输入提示语同格式（13 灰），字号与正文统一 15。
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: _box(),
-              child: TextField(
+            // v5.0.23：改为档案昵称行同款，提示语统一为「输入金额」
+            // 金额输入移除 ¥ 金钱符号、取消加粗，字号与正文统一 15。
+            _buildLabeledField(
+              label: '资产金额',
+              field: TextField(
                 controller: _amountCtrl,
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
                 style: const TextStyle(fontSize: 15),
                 decoration: InputDecoration(
-                  hintText: _isLiability ? '输入欠款金额' : '输入数额',
+                  hintText: '输入金额',
                   hintStyle:
                       TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
                   border: InputBorder.none,
@@ -335,7 +335,7 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                   child: Row(
                     children: [
                       SizedBox(
-                        width: 92,
+                        width: 112,
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -347,18 +347,18 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                                     color: _repayEnabled
                                         ? AppPalette.c(0xFF24382F)
                                         : AppPalette.c(0xFFC2D4C9))),
-                            if (!_isVip) ...[
-                              SizedBox(width: 4),
-                              const IdentityBadge(
-                                  badge: UserProfile.badgeVip, scale: 0.5),
-                            ],
+                            // v5.0.23：VIP 牌与其它点位一致大小（0.85），
+                            // 且无论是否拥有权益都常驻显示，不再随 _isVip 消失
+                            const SizedBox(width: 4),
+                            const IdentityBadge(
+                                badge: UserProfile.badgeVip, scale: 0.85),
                           ],
                         ),
                       ),
                       Expanded(
                         child: Text(
                           _repayEnabled && _repayDate != null
-                              ? '${_repayDate!.year}.${_repayDate!.month.toString().padLeft(2, '0')}.${_repayDate!.day.toString().padLeft(2, '0')}'
+                              ? '${_repayDate!.year}/${_repayDate!.month}/${_repayDate!.day}'
                               : '',
                           textAlign: TextAlign.right,
                           maxLines: 1,
@@ -467,7 +467,14 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
       maximum: DateTime.now().add(const Duration(days: 365 * 30)),
       title: '还款时间',
     );
-    if (picked != null && mounted) setState(() => _repayDate = picked);
+    if (picked != null && mounted) {
+      setState(() => _repayDate = picked);
+      // v5.0.23：设置成功提示（与提醒链路的「年/月/日」文案一致）
+      AppToast.show(
+        context,
+        '设置成功，阿尤会在${picked.year}年${picked.month}月${picked.day}日提醒哦～',
+      );
+    }
   }
 
   /// 资产所有人：选项型抽屉（无标题 + 打勾 + 箭头左侧显示当前值）
@@ -701,6 +708,31 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
           },
         );
       },
+    );
+  }
+
+  /// v5.0.23：档案页昵称行同款——白卡内左侧固定宽 76 的标签 + 右侧无边框输入。
+  /// 与档案 `_buildFieldLabel`、物品编辑 `_buildLabeledField` 对齐。
+  Widget _buildLabeledField({
+    required String label,
+    required TextField field,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: _box(),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 76,
+            child: Text(
+              label,
+              style: TextStyle(fontSize: 15, color: AppPalette.c(0xFF24382F)),
+            ),
+          ),
+          Expanded(child: field),
+        ],
+      ),
     );
   }
 

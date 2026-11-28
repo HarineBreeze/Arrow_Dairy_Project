@@ -33,18 +33,18 @@ void main() {
       expect(find.text('选择还款日期'), findsNothing);
 
       // 资产金额 → 资产归属 → 还款时间 的垂直顺序
-      final amountTop = tester.getTopLeft(find.text('输入数额')).dy;
+      final amountTop = tester.getTopLeft(find.text('资产金额')).dy;
       final ownerTop = tester.getTopLeft(find.text('资产归属')).dy;
       final repayTop = tester.getTopLeft(find.text('还款时间')).dy;
       expect(amountTop, lessThan(ownerTop), reason: '资产金额行应位于资产归属之上');
       expect(ownerTop, lessThan(repayTop), reason: '资产归属应位于还款时间之上');
     });
 
-    test('源码：还款时间标题不换行、VIP 徽章 0.5、移除占位文案', () {
+    test('源码：还款时间标题不换行、VIP 徽章 0.85 常驻、移除占位文案', () {
       expect(assetEditSrc, contains("Text('还款时间',\n                                maxLines: 1"));
       expect(assetEditSrc, contains('overflow: TextOverflow.clip'));
       expect(assetEditSrc,
-          contains('badge: UserProfile.badgeVip, scale: 0.5'));
+          contains('badge: UserProfile.badgeVip, scale: 0.85'));
       expect(assetEditSrc, isNot(contains("'选择还款日期'")));
     });
   });
@@ -81,7 +81,7 @@ void main() {
       }
       expect(find.text('输入物品名'), findsOneWidget);
       expect(find.text('输入物品价格'), findsOneWidget);
-      expect(find.text('输入附加价格，如卖出/折扣（选填）'), findsOneWidget);
+      expect(find.text('如卖出/折扣（选填）'), findsOneWidget);
     });
 
     test('源码：三行统一走 _buildLabeledField，标签列宽 76，与档案昵称一致', () {
@@ -109,7 +109,7 @@ void main() {
     test('源码：三处 hintText 保持原样（不改变待输入提示语）', () {
       expect(itemEditSrc, contains("hintText: '输入物品名'"));
       expect(itemEditSrc, contains("hintText: '输入物品价格'"));
-      expect(itemEditSrc, contains("hintText: '输入附加价格，如卖出/折扣（选填）'"));
+      expect(itemEditSrc, contains("hintText: '如卖出/折扣（选填）'"));
     });
   });
 }

@@ -35,7 +35,7 @@ void main() {
 
       expect(find.text('输入物品名'), findsOneWidget);
       expect(find.text('输入物品价格'), findsOneWidget);
-      expect(find.text('输入附加价格，如卖出/折扣（选填）'), findsOneWidget);
+      expect(find.text('如卖出/折扣（选填）'), findsOneWidget);
       expect(find.text('请输入物品名'), findsNothing);
       expect(find.text('请输入物品价格'), findsNothing);
 
@@ -48,7 +48,7 @@ void main() {
               w is TextField && w.decoration?.hintText == '输入物品价格'));
       final extraField = tester.widget<TextField>(
           find.byWidgetPredicate((w) => w is TextField &&
-              w.decoration?.hintText == '输入附加价格，如卖出/折扣（选填）'));
+              w.decoration?.hintText == '如卖出/折扣（选填）'));
       expect(nameField.decoration!.hintStyle!.fontSize, 13);
       expect(priceField.decoration!.hintStyle!.fontSize, 13);
       expect(extraField.decoration!.hintStyle!.fontSize, 13);

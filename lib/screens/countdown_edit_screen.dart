@@ -288,11 +288,11 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
             ),
             const SizedBox(height: 16),
 
-            // v5.0.19：移除「事件名称」节标题，字段名由输入框占位文案表达
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: _box(),
-              child: TextField(
+            // v5.0.23：事件名称 / 事件备注改为档案页昵称行同款，
+            // 白卡内左侧 76px 标签 + 右侧无边框输入，待输入提示语保持原样
+            _buildLabeledField(
+              label: '事件名称',
+              field: TextField(
                 controller: _nameCtrl,
                 focusNode: _nameFocus,
                 textInputAction: TextInputAction.next,
@@ -301,7 +301,8 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                 style: const TextStyle(fontSize: 15),
                 decoration: InputDecoration(
                   hintText: '纪念日/生日/表白日/节日...',
-                  hintStyle: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
+                  hintStyle:
+                      TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
                   counterText: '',
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 14),
@@ -310,11 +311,9 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
             ),
             const SizedBox(height: 16),
 
-            // v5.0.19：移除「事件备注」节标题，待输入占位文案改为「奖励一顿火锅?」
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: _box(),
-              child: TextField(
+            _buildLabeledField(
+              label: '事件备注',
+              field: TextField(
                 controller: _noteCtrl,
                 focusNode: _noteFocus,
                 textInputAction: TextInputAction.done,
@@ -323,7 +322,8 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
                 style: const TextStyle(fontSize: 15),
                 decoration: InputDecoration(
                   hintText: '奖励一顿火锅?',
-                  hintStyle: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
+                  hintStyle:
+                      TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
                   counterText: '',
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 14),
@@ -712,6 +712,30 @@ class _CountdownEditScreenState extends State<CountdownEditScreen> {
       _type = t;
       if (followType) _iconCtrl.text = newDefault;
     });
+  }
+
+  /// v5.0.23：档案页昵称行同款——白卡内左侧固定宽 76 的标签 + 右侧无边框输入。
+  Widget _buildLabeledField({
+    required String label,
+    required TextField field,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: _box(),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 76,
+            child: Text(
+              label,
+              style: TextStyle(fontSize: 15, color: AppPalette.c(0xFF24382F)),
+            ),
+          ),
+          Expanded(child: field),
+        ],
+      ),
+    );
   }
 
   BoxDecoration _box() => BoxDecoration(

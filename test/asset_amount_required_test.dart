@@ -40,10 +40,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
   });
 
-  testWidgets('v5.0.19：金额标题已移除，必填校验仍生效', (tester) async {
+  testWidgets('v5.0.23：金额行改为档案昵称行样式，必填校验仍生效', (tester) async {
     await openEditor(tester);
-    // 标题与星号随 v5.0.19 去标题化一并移除
-    expect(find.text('资产金额'), findsNothing);
+    // v5.0.23：资产金额改为行标签（左侧 76px），星号仍不展示
+    expect(find.text('资产金额'), findsOneWidget);
     expect(find.text(' *'), findsNothing);
     // 必填语义由空值拦截保留：点完成仍被拦下
     await tester.tap(find.text('完成'));

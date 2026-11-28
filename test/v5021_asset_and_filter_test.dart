@@ -118,9 +118,9 @@ void main() {
       // v5.0.22：移除「选择还款日期」占位，未选日期时右侧留空
       expect(find.text('选择还款日期'), findsNothing);
     });
-    test('源码：VIP 身份牌用在还款时间行（v5.0.22 缩小到 0.5）', () {
+    test('源码：VIP 身份牌用在还款时间行（v5.0.23 恢复 0.85 且常驻）', () {
       expect(assetEditSrc, contains('const IdentityBadge('));
-      expect(assetEditSrc, contains('badge: UserProfile.badgeVip, scale: 0.5'));
+      expect(assetEditSrc, contains('badge: UserProfile.badgeVip, scale: 0.85'));
     });
   });
 

@@ -942,9 +942,9 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         keyboardType: const TextInputType.numberWithOptions(
             decimal: true, signed: true),
         style: const TextStyle(fontSize: 15),
-        // v5.0.20：hintStyle 与「输入物品名」一致（13/灰）
+        // v5.0.23：移除「输入附加价格，」前缀，仅保留后半段提示
         decoration: InputDecoration(
-          hintText: '输入附加价格，如卖出/折扣（选填）',
+          hintText: '如卖出/折扣（选填）',
           hintStyle:
               TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
           border: InputBorder.none,

@@ -43,7 +43,7 @@ void main() {
       }
       expect(find.text('输入物品名'), findsOneWidget);
       expect(find.text('输入物品价格'), findsOneWidget);
-      expect(find.text('输入附加价格，如卖出/折扣（选填）'), findsOneWidget);
+      expect(find.text('如卖出/折扣（选填）'), findsOneWidget);
       expect(find.text('请输入物品名'), findsNothing);
       expect(find.text('请输入物品价格'), findsNothing);
       expect(find.text('¥ 0.00'), findsNothing);
@@ -65,11 +65,13 @@ void main() {
       await tester.pumpWidget(const MaterialApp(home: CountdownEditScreen()));
       await tester.pumpAndSettle();
 
+      // v5.0.23：事件名称/事件备注改为档案昵称行同款的行标签（左侧 76px）
       for (final label in ['事件名称', '事件备注']) {
-        expect(find.text(label), findsNothing, reason: '$label 节标题应移除');
+        expect(find.text(label), findsOneWidget, reason: '$label 行标签应存在');
       }
+      expect(find.text('纪念日/生日/表白日/节日...'), findsOneWidget);
       expect(find.text('奖励一顿火锅?'), findsOneWidget,
-          reason: '备注待输入占位文案应改为「奖励一顿火锅?」');
+          reason: '备注待输入占位文案保持不变');
       expect(find.text('写点什么…（选填）'), findsNothing);
       // 「事件日期」原为节标题，v5.0.19 移除标题后改用同名占位文字承担字段说明，
       // 因此此处恰好一处（即日期块空态占位），不再有独立标题。
@@ -97,12 +99,16 @@ void main() {
       await tester.pumpWidget(const MaterialApp(home: AssetEditScreen()));
       await tester.pumpAndSettle();
 
-      for (final label in ['资产类型', '资产备注', '资产金额']) {
-        expect(find.text(label), findsNothing, reason: '$label 节标题应移除');
+      // 资产类型仍为节标题移除后无独立标签；资产备注/资产金额在 v5.0.23
+      // 改为档案昵称行同款的行标签（左侧 76px）
+      expect(find.text('资产类型'), findsNothing, reason: '资产类型节标题应移除');
+      for (final label in ['资产备注', '资产金额']) {
+        expect(find.text(label), findsOneWidget, reason: '$label 行标签应存在');
       }
       expect(find.text(' *'), findsNothing, reason: '必填星号随标题移除');
-      // 金额输入框提示语保留「输入数额」，格式与其他提示语一致（13 灰）
-      expect(find.text('输入数额'), findsOneWidget);
+      // v5.0.23：金额提示语改为「输入金额」，备注为「工资卡、应急金、养老金...」
+      expect(find.text('输入金额'), findsOneWidget);
+      expect(find.text('工资卡、应急金、养老金...'), findsOneWidget);
     });
 
     test('源码：金额列移除 Text(¥) 与 w600 加粗', () {
