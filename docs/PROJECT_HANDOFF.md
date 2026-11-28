@@ -1,6 +1,6 @@
 # 阿尤日记 · 项目交接与推进指南
 
-> 截至 **v5.0.23**（versionCode 181，全量 **767** 项测试通过）。
+> 截至 **v5.0.24**（versionCode 182，全量 **776** 项测试通过）。
 > v5.0.2 / v5.0.3 由电脑端发布：隐私锁 4 步向导（`app_lock_setup_wizard.dart`）、关闭验证、深色默认关闭、通用密码向导 `pin_setup_wizard.dart`（3 步资产 / 2 步笔记）、多页 UI 优化。
 > **v5.0.4**（本会话叠加）：① 深色模式下向导「未选中项」由亮灰白改为同主题暗底纹（`0xFFF5F8F6` 登记进 darkMap → `0xFF233A2F`，随主题色变）；② 修改资产密码在验证身份后复用通用 3 步向导（设置密码→确认密码→设置密保），与「开启加密访问」样式/流程完全一致。版本号顺延至 5.0.4 是因为远程已有 v5.0.3 tag。
 > **v5.0.5**：① 笔记预览卡图片由 4:3 改为 **1:1** 方图（卡片高度与编辑页尺寸不变，文字区自然左移）；② **暖棕**主题从免费改为「灵感杂货店」**1400 点永久兑换**（商品名「主题·暖棕」），位置移到墨灰与藕粉之间；未解锁时置灰，点击提示「未解锁，赶紧前往灵感杂货店兑换吧～」。
@@ -179,7 +179,7 @@ lib/
    - `pubspec.yaml` → `version: x.y.z+BUILD`
    - `lib/utils/app_version.dart` → `displayVersion = 'Vx.y.z'`
 2. **静态分析**：`flutter analyze`，要求 0 error / 0 warning（约 127 条 info 为历史基线，允许）。
-3. **全量测试**：`flutter test`，要求全绿（当前 **767** 项）。新增改动必须配套回归测试，命名 `test/vXXYY_features_test.dart`。
+3. **全量测试**：`flutter test`，要求全绿（当前 **776** 项）。新增改动必须配套回归测试，命名 `test/vXXYY_features_test.dart`。
    - 测试偶发：全量并行时 trash / 手势类测试偶有 1 项时序失败，重跑一遍通常即过；不要因此反复改测试。
    - 含真实文件 IO 的页面（TrashScreen 等）测试要用 `runAsync` 让 IO 完成（参考 `_settleWithIo`），否则 `_loading` 未结束、内容未渲染。
 4. **构建**：
@@ -264,6 +264,7 @@ lib/
 | **v5.0.21** | 资产编辑增强 + 通知链路 + 筛选抽屉按钮 + 转正特效：① **三个主页筛选抽屉**（资产「筛选」/物品「排序方式」/事件「按事件类型筛选」）的取消/确定/完成按钮由底部移到**标题栏同一行右侧**，不涉及动画；② **资产编辑页新增「资产所有人」**（选项型，默认本人，选项 本人/对象/配偶/父亲/母亲/兄弟/姐妹/朋友），`Asset.owner` 字段 + JSON 兼容；③ **资产编辑页新增「还款时间」**（VIP 权益 + 仅负资产生效）：功能行带 VIP 身份牌，正资产置灰点击提示「选择负资产时可用」、未解锁提示「还款时间是VIP专属权益，请充值后再尝试～」，负资产+VIP 点击展开**日期轮盘**；`Asset.repayDate` 字段。切到正资产自动清空。④ **还款到期通知**：新增 `AssetRepayReminder`（Dart）+ `asset_repay_banner.dart`（站内横幅）+ `AssetRepayBannerLog`（去重），当天 **9:00** 推通知栏 + App 内横幅；原生新增 `vector_diary/asset_repay` 通道、`AssetRepayAlarm`/`AssetRepayReceiver`（独立 id 段 REQ_BASE 81000 / NOTIFY_BASE 40000）并在 Manifest 注册；首页 `_initAssetRepay` 接入同步 + 到期横幅，点击切资产 tab 打开对应资产；⑤ **愿望单攒满转正**新增 `wishlist_convert_celebration.dart`（粉色对勾徽章 + 粒子迸发 + 震动），替代原纯 toast；⑥ 物品编辑页「使用次数」样式改为与愿望单「已攒金额」同款（加减靠左 + 数值右对齐可点 + 行尾箭头）。全走 `AppPalette` 主题适配。新增 `v5021_asset_and_filter_test.dart`（21 项），全量 **748** 项通过 |
 | **v5.0.22** | 资产编辑文案/布局 + 转正特效 + 物品编辑行样式：① 资产编辑页**「资产所有人」更名「资产归属」**；② **资产归属 + 还款时间两行移到「资产金额」行下方**（顺序：图标→类型→备注→金额→资产归属→还款时间）；③ 修复还款时间行 bug——**标题「还款时间」不换行**（`maxLines:1`/`overflow:clip`，label 区 92px）、**VIP 身份牌由 0.62 缩到 0.5**、**移除「选择还款日期」占位文案**（未选日期右侧留空）；④ **愿望单转正特效改为直接作用在卡片上**——`wishlist_convert_celebration.dart` 由 dialog 重构为 `WishlistConvertEffect`（卡片绕 Y 轴翻转一圈 + 粒子 `CustomPaint` + 震动），`item_list_screen.dart` 用 `_celebratingIds` 按物品 id 集合锚定、卡片 `ValueKey(it.id)` 复用 State，换物理位置特效不丢；**移除转正弹窗**（无「愿望成真/太棒了」文案）；⑤ **物品编辑页物品名/物品价格/附加价格三行改为档案昵称行同款**——统一走 `_buildLabeledField`：白卡内左侧 76px 标签 + 右侧无边框输入、行标签与档案 `_buildFieldLabel` 对齐，**待输入提示语（hintText）保持不变**。同步 `edit_relayout`/`v5019`/`v5021` 旧断言；新增 `v5022_labels_and_card_effect_test.dart`（7 项），全量 **755** 项通过 |
 | **v5.0.23** | 还款时间交互 + 编辑页行样式对齐：① 资产编辑页**设置还款时间后弹「设置成功，阿尤会在x年x月x日提醒哦～」**；② 还款时间显示格式由 `2026.11.06` 改为 **`2026/11/6`**（斜杠、不补零）；③ 还款时间行 **VIP 身份牌由 0.5 恢复为 0.85**（与其它点位一致大小）且**常驻显示**（移除 `if (!_isVip)`，拥有权益时不再消失）；④ 愿望单转正翻转**由 2 圈改为 1 圈**（`angle = t * math.pi`，播完 `reverse()` 归正面避免镜像）；⑤ **资产编辑页「资产备注」「资产金额」改为档案昵称行同款**（`_buildLabeledField` 左 76px 标签 + 右无边框输入，提示语改为「工资卡、应急金、养老金...」「输入金额」）；⑥ **事件编辑页「事件名称」「事件备注」改为档案昵称行同款**（提示语保持不变）；⑦ 物品编辑页附加价格提示语**移除「输入附加价格，」前缀**，仅保留「如卖出/折扣（选填）」。全走 `AppPalette` 主题适配；同步 `v4939`/`v5019`/`v5020`/`v5021`/`v5022`/`asset_amount_required` 旧断言；新增 `v5023_repay_and_labeled_fields_test.dart`（12 项），全量 **767** 项通过 |
+| **v5.0.24** | ① **权益身份失去后自动还原默认主题**：`RewardService.syncVipAccent(profile)` 在「当前主题为 VIP 专属（藕粉/雾蓝/霞紫）且档案无 VIP 权益」时 `setAccentId(bamboo)`；挂接点＝`novip` 兑换码清除身份分支 + `main()` 启动兜底（覆盖限时 VIP 到期这类无即时事件的自然失去）。② **修复愿望单转正翻转 bug**：由 v5.0.23 的「半圈 + reverse 翻回来」改为**单向翻一整圈**（`angle = t * math.pi * 2`）后直接结束，翻过去即从愿望单变成已拥有、停在正面；去掉 `reverse()`/`dismissed`。③ **回收站预览卡片整体下移对齐间距**：普通态 ListView padding top 由 6 改为 8，与卡片间距 `SizedBox(height: 8)` 保持一致（选择态无筛选栏仍 14）。同步 v5023 翻转断言；新增 `v5024_rights_theme_and_polish_test.dart`（9 项），全量 **776** 项通过 |
 
 > v4.9.32 及更早（深色模式、AppSheet、震动总开关、用户 ID 顺序号等奠基改动）见 git log，此处不再展开。
 
@@ -332,9 +333,9 @@ lib/
 ## 9. 新会话交接检查清单
 
 - [ ] 读本文件 + `docs/redeem_codes.md`（+ 若涉及上云再读 `docs/CLOUD_ARCHITECTURE.md`）
-- [ ] `git fetch origin && git rebase origin/main`，确认未落后电脑端；`git log -1` 确认版本为 v5.0.23
-- [ ] `grep '^version:' pubspec.yaml` 与 `app_version.dart` 版本号一致（当前 5.0.23+181 / V5.0.23）
-- [ ] 改代码：analyze 0 error → 全量测试全绿（当前 767 项；手势类并行偶发失败用 `--concurrency=1` 复核）→ 构建 → commit/push → Release → present_files
+- [ ] `git fetch origin && git rebase origin/main`，确认未落后电脑端；`git log -1` 确认版本为 v5.0.24
+- [ ] `grep '^version:' pubspec.yaml` 与 `app_version.dart` 版本号一致（当前 5.0.24+182 / V5.0.24）
+- [ ] 改代码：analyze 0 error → 全量测试全绿（当前 776 项；手势类并行偶发失败用 `--concurrency=1` 复核）→ 构建 → commit/push → Release → present_files
 - [ ] 版本号两处同步 + 构建号 +1；新增改动配 `vXXYY_features_test.dart` 回归测试
 - [ ] 涉及 UI：遵守 §2 色板（尤其主题色走 `AppPalette.c()`、抽屉去标题）、§3 动效组件
 - [ ] 涉及 VIP：新增强功能按 §6.2 接入 `hasVipPrivilege` 门槛与提示文案

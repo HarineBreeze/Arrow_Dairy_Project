@@ -62,15 +62,15 @@ void main() {
     });
   });
 
-  group('v5.0.23 ③ 转正翻转由 2 圈改为 1 圈', () {
-    test('源码：翻转角为 math.pi（半圈 1 次）、无 math.pi * 2', () {
-      expect(convertSrc, contains('final angle = t * math.pi;'));
-      expect(convertSrc, isNot(contains('t * math.pi * 2')));
+  group('v5.0.23 ③ 转正翻转（v5.0.24 改为单向一整圈）', () {
+    test('源码：翻转角为 math.pi * 2（单向整圈，停在正面）', () {
+      expect(convertSrc, contains('final angle = t * math.pi * 2;'));
     });
 
-    test('源码：播完 reverse 归正面，避免停在镜像', () {
-      expect(convertSrc, contains('_ctrl.reverse();'));
-      expect(convertSrc, contains('AnimationStatus.dismissed'));
+    test('源码：播完直接结束，无 reverse 翻回', () {
+      expect(convertSrc, isNot(contains('_ctrl.reverse();')));
+      expect(convertSrc, isNot(contains('AnimationStatus.dismissed')));
+      expect(convertSrc, contains('AnimationStatus.completed'));
       expect(convertSrc, contains('widget.onDone?.call()'));
     });
   });

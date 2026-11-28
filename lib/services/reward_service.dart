@@ -1,4 +1,6 @@
 import '../models/user_profile.dart';
+import '../theme/app_palette.dart';
+import 'app_settings.dart';
 import 'user_storage.dart';
 
 /// 杂货店商品类型：永久身份 / 限时 VIP 日卡 / 限时 VIP 周卡 / 永久主题色
@@ -213,6 +215,8 @@ class RewardService {
       profile.vipCardCount = 0;
       profile.vipWeekCardCount = 0;
       await UserStorage.save(profile);
+      // v5.0.24：权益失去后若当前是 VIP 专属主题，自动还原默认主题
+      await syncVipAccent(profile);
       final msg = removed.isEmpty
           ? '已是普通版，无需清除'
           : '已清除身份与会员权益：${removed.map(_badgeName).join('、')}';
@@ -442,6 +446,22 @@ class RewardService {
     };
     return p.ownedBadges.any(vipBadges.contains) ||
         vipBadges.contains(p.badge);
+  }
+
+  /// v5.0.24：权益身份失去后，自动把 VIP 专属主题还原为默认「竹青」。
+  ///
+  /// 触发时机：
+  /// - `novip` 兑换码清除会员身份后（即时生效）；
+  /// - App 启动时（覆盖「限时 VIP 到期」这种随时间自然失去、没有即时事件的场景）。
+  ///
+  /// 只有「当前主题确实是 VIP 专属」且「档案确实无 VIP 权益」时才改动；
+  /// 否则零副作用。返回是否发生了还原，便于调用方记录日志。
+  static Future<bool> syncVipAccent(UserProfile profile) async {
+    final current = AppSettings.accentId;
+    if (!AccentCatalog.isVip(current)) return false;
+    if (hasVipPrivilege(profile)) return false;
+    await AppSettings.setAccentId(AccentCatalog.bamboo);
+    return true;
   }
 
   /// 免费用户最多可置顶的数量（笔记 / 事件分别计数）。

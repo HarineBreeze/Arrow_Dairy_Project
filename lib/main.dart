@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'services/app_settings.dart';
 import 'services/app_lock_storage.dart';
+import 'services/user_storage.dart';
+import 'services/reward_service.dart';
 import 'screens/home_screen.dart';
 import 'screens/app_lock_screen.dart';
 import 'theme/app_palette.dart';
@@ -16,6 +18,11 @@ void main() async {
   cache.maximumSize = 300;
   cache.maximumSizeBytes = 60 << 20;
   await AppSettings.load(); // 提前读入字体、主题模式等设置
+  // v5.0.24：限时 VIP 到期后权益自然失去（无即时事件），冷启动时校验一次：
+  // 若当前仍是 VIP 专属主题则还原为默认「竹青」。
+  try {
+    await RewardService.syncVipAccent(await UserStorage.load());
+  } catch (_) {}
   // 隐私锁：冷启动时若已开启，先展示解锁界面，验证通过才进入主 App。
   final locked = await AppLockStorage.hasLock();
   runApp(locked

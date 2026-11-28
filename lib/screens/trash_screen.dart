@@ -706,8 +706,10 @@ class TrashScreenState extends State<TrashScreen> {
                   ),
                 )
               : ListView(
+                  // v5.0.24：首卡与筛选栏间距对齐卡片间距 x=SizedBox(height:8)，
+                  // 整体小幅下移（6→8）；选择态无筛选栏，保持 14 不变。
                   padding: EdgeInsets.fromLTRB(
-                      16, _mode == null ? 6 : 14, 16, 12),
+                      16, _mode == null ? 8 : 14, 16, 12),
                   children: [
                     for (final e in list) ...[
                       _buildCard(e),

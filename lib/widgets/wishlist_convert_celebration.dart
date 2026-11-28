@@ -45,13 +45,12 @@ class _WishlistConvertEffectState extends State<WishlistConvertEffect>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl = AnimationController(
     vsync: this,
-    // v5.0.23：翻转由 2 圈收敛为 1 圈——单程 420ms，翻到 180° 后原路翻回
-    duration: const Duration(milliseconds: 420),
+    // v5.0.24：单次翻转一整圈（360°），翻过去即从「愿望单」变成「已拥有」，
+    // 停在正面；不再来回 reverse（v5.0.23 的「翻过去又翻回来」已废弃）。
+    duration: const Duration(milliseconds: 720),
   )..addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        // 翻到 180°（1 圈）后原路翻回正面，避免停在镜像背面
-        _ctrl.reverse();
-      } else if (status == AnimationStatus.dismissed) {
+        // 翻完一整圈直接结束，卡片已是「已拥有」内容且正面朝上
         widget.onDone?.call();
       }
     });
@@ -86,9 +85,9 @@ class _WishlistConvertEffectState extends State<WishlistConvertEffect>
       child: widget.child,
       builder: (context, child) {
         final t = _ctrl.value;
-        // v5.0.23：由 2 圈改为 1 圈——绕 Y 轴翻转半圈（π）即回到原位；
-        // 中途略微放大做出「弹一下」的手感，播完 _ctrl.reset() 归正面
-        final angle = t * math.pi;
+        // v5.0.24：绕 Y 轴单向翻转一整圈（2π），翻过去即从愿望单变成已拥有，
+        // 停在正面（内容可读）；不再 reverse 翻回来。
+        final angle = t * math.pi * 2;
         final scale = 1 + 0.06 * math.sin(t * math.pi);
         return Stack(
           fit: StackFit.passthrough,
