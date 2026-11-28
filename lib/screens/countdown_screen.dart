@@ -324,34 +324,35 @@ class CountdownScreenState extends State<CountdownScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('按事件类型筛选',
-                      style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: AppPalette.c(0xFF24382F))),
+                  // v5.0.21：确定按钮移到「按事件类型筛选」标题同一行右侧
+                  Row(
+                    children: [
+                      Text('按事件类型筛选',
+                          style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: AppPalette.c(0xFF24382F))),
+                      const Spacer(),
+                      Pressable(
+                        enabled: true,
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            setState(() {});
+                          },
+                          child: Text('确定',
+                              style: TextStyle(
+                                  color: AppPalette.c(0xFF3E8E6D),
+                                  fontWeight: FontWeight.w600)),
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 6),
                   Column(children: [
                     option('全部', null),
                     ...CountdownEvent.types.map((t) => option(t, t)),
                   ]),
-                  const SizedBox(height: 10),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Pressable(
-                      enabled: true,
-                      // v4.9.30：确定按钮去底纹色块，统一为文字按钮
-                      child: TextButton(
-                        onPressed: () {
-                          Navigator.pop(ctx);
-                          setState(() {});
-                        },
-                        child: Text('确定',
-                            style: TextStyle(
-                                color: AppPalette.c(0xFF3E8E6D),
-                                fontWeight: FontWeight.w600)),
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),

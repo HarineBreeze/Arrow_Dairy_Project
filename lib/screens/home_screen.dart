@@ -40,6 +40,9 @@ import '../widgets/countdown_banner.dart';
 import '../widgets/future_letter_banner.dart';
 import '../services/future_letter_reminder.dart';
 import '../services/future_letter_notice_log.dart';
+import '../services/asset_storage.dart';
+import '../services/asset_repay_reminder.dart';
+import '../widgets/asset_repay_banner.dart';
 import '../widgets/loading_skeleton.dart';
 import '../widgets/empty_state.dart';
 import '../utils/menu_gesture_gate.dart';
@@ -100,6 +103,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       GlobalKey<CountdownBannerHostState>();
   final GlobalKey<FutureLetterBannerHostState> _futureBannerKey =
       GlobalKey<FutureLetterBannerHostState>();
+  final GlobalKey<AssetRepayBannerHostState> _assetRepayBannerKey =
+      GlobalKey<AssetRepayBannerHostState>();
 
   @override
   void initState() {
@@ -119,6 +124,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _loadProfile();
     _initCountdown();
     _initFutureLetters();
+    _initAssetRepay();
   }
 
   void _onProfileChanged() {
@@ -176,6 +182,33 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     if (!mounted) return;
     Future.delayed(const Duration(milliseconds: 900), () {
       if (mounted) _futureBannerKey.currentState?.showFor(target);
+    });
+  }
+
+  /// v5.0.21 负资产还款：同步系统闹钟 + 当天到期弹一次 App 内横幅
+  Future<void> _initAssetRepay() async {
+    final list = await AssetStorage.load();
+    if (!mounted) return;
+    await AssetRepayReminder.syncAll(list);
+    if (!mounted) return;
+    final now = DateTime.now();
+    final due = list.where((a) {
+      final d = a.repayDate;
+      if (d == null) return false;
+      return d.year == now.year && d.month == now.month && d.day == now.day;
+    }).toList();
+    if (due.isEmpty) return;
+    final shown = await AssetRepayBannerLog.shownToday();
+    if (!mounted) return;
+    final fresh = due.where((a) => !shown.contains(a.id)).toList();
+    if (fresh.isEmpty) return;
+    final target = fresh.first;
+    await AssetRepayBannerLog.markShown(target.id);
+    // 兜底：闹钟可能已错过，补发一条通知栏消息
+    await AssetRepayReminder.notifyNow(target);
+    if (!mounted) return;
+    Future.delayed(const Duration(milliseconds: 1100), () {
+      if (mounted) _assetRepayBannerKey.currentState?.showFor(target);
     });
   }
 
@@ -944,13 +977,20 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         ),
         child: child!,
       ),
-      child: FutureLetterBannerHost(
-        key: _futureBannerKey,
-        onOpenLetter: _openNote,
-        child: CountdownBannerHost(
-          key: _bannerKey,
-          onOpenEvent: _openCountdownById,
-          child: WillPopScope(
+      child: AssetRepayBannerHost(
+        key: _assetRepayBannerKey,
+        onOpenAsset: (id) async {
+          _switchTab('assets');
+          await Future.delayed(const Duration(milliseconds: 300));
+          if (mounted) _assetListKey.currentState?.openAssetById(id);
+        },
+        child: FutureLetterBannerHost(
+          key: _futureBannerKey,
+          onOpenLetter: _openNote,
+          child: CountdownBannerHost(
+            key: _bannerKey,
+            onOpenEvent: _openCountdownById,
+            child: WillPopScope(
           onWillPop: _handleBack,
           child: Scaffold(
             backgroundColor: AppPalette.c(0xFFF5FAF7),
@@ -1155,6 +1195,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   ),
           ),
         ),
+      ),
       ),
       ),
     );

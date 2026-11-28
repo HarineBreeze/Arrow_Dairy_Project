@@ -1014,38 +1014,36 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
   }
 
   Widget _buildUsageField() {
+    // v5.0.21：改为与愿望单「已攒金额」同款——加减号并排靠左、
+    // 数值右对齐且可点直接输入、行尾箭头；不再居中布局。
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: _box(),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           _buildStepButton(AppIcons.minus, () => _changeUsage(-1)),
           const SizedBox(width: 8),
-          SizedBox(
-            width: 52,
-            child: TextField(
-              controller: _usageCtrl,
-              focusNode: _usageFocus,
-              textInputAction: TextInputAction.done,
-              onSubmitted: (_) => FocusScope.of(context).unfocus(),
-              keyboardType: TextInputType.number,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 15),
-              decoration: const InputDecoration(
-                hintText: '0',
-                border: InputBorder.none,
-                isDense: true,
-                contentPadding: EdgeInsets.symmetric(vertical: 12),
-              ),
-              onChanged: (_) => setState(() {}),
+          _buildStepButton(AppIcons.plus, () => _changeUsage(1)),
+          const Spacer(),
+          GestureDetector(
+            onTap: () async {
+              final cur = int.tryParse(_usageCtrl.text.trim()) ?? 0;
+              final v = await _inputAmountDialog('使用次数', cur.toDouble());
+              if (v != null && v >= 0) {
+                setState(() => _usageCtrl.text = v.round().toString());
+              }
+            },
+            behavior: HitTestBehavior.opaque,
+            child: Text(
+              _usageCtrl.text.trim().isEmpty ? '0' : _usageCtrl.text.trim(),
+              style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: AppPalette.c(0xFF3E8E6D)),
             ),
           ),
-          const SizedBox(width: 8),
-          _buildStepButton(AppIcons.plus, () => _changeUsage(1)),
-          const SizedBox(width: 6),
-          Text('次',
-              style: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
+          const SizedBox(width: 4),
+          AppIcon(AppIcons.chevR, size: 18, color: AppPalette.c(0xFFC6D6CD)),
         ],
       ),
     );

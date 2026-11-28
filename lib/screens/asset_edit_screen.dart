@@ -2,13 +2,19 @@ import '../widgets/app_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/asset.dart';
+import '../models/user_profile.dart';
 import '../services/trash_storage.dart';
+import '../services/user_storage.dart';
+import '../services/reward_service.dart';
+import '../widgets/identity_badge.dart';
 import '../widgets/unsaved_guard.dart';
 import '../utils/haptics.dart';
+import '../utils/app_toast.dart';
 import '../widgets/pressable.dart';
 import '../widgets/save_done_button.dart';
 import '../widgets/save_bar.dart';
 import '../widgets/entry_icon.dart';
+import '../widgets/wheel_picker.dart';
 
 import '../theme/app_palette.dart';
 import '../theme/app_theme_scope.dart';
@@ -16,6 +22,10 @@ import '../utils/app_sheet.dart';
 /// 新增 / 编辑资产卡片。
 class AssetEditScreen extends StatefulWidget {
   final Asset? asset; // null = 新增
+
+  /// 测试注入：档案加载（默认 UserStorage.load）
+  static Future<UserProfile> Function()? loadProfileOverride;
+
   const AssetEditScreen({Key? key, this.asset}) : super(key: key);
 
   @override
@@ -27,6 +37,9 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
   late final TextEditingController _amountCtrl;
   late final TextEditingController _iconCtrl;
   late String _type;
+  late String _owner;
+  DateTime? _repayDate;
+  bool _isVip = false; // 还款时间为权益功能（v5.0.21）
 
   final GlobalKey<SaveDoneButtonState> _doneKey =
       GlobalKey<SaveDoneButtonState>();
@@ -43,6 +56,8 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
         _amountCtrl.text,
         _iconCtrl.text,
         _type,
+        _owner,
+        _repayDate?.millisecondsSinceEpoch.toString() ?? '',
       ].join('\u0001');
 
   bool get _dirty => _snapshot() != _initial;
@@ -68,7 +83,19 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
     );
     _iconCtrl = TextEditingController(text: a?.icon ?? Asset.defaultIconFor(a?.type ?? '银行储蓄'));
     _type = a?.type ?? '银行储蓄';
+    _owner = a?.owner ?? '本人';
+    _repayDate = a?.repayDate;
     _initial = _snapshot();
+    _loadVip();
+  }
+
+  /// 还款时间属权益功能，读取档案判断 VIP 身份（失败按未解锁处理）。
+  Future<void> _loadVip() async {
+    try {
+      final profile = await (AssetEditScreen.loadProfileOverride ?? UserStorage.load)();
+      final vip = RewardService.hasVipPrivilege(profile);
+      if (mounted && vip != _isVip) setState(() => _isVip = vip);
+    } catch (_) {}
   }
 
   @override
@@ -136,6 +163,9 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
         : _iconCtrl.text.trim().characters.first;
     a.note = _noteCtrl.text.trim();
     a.type = _type;
+    a.owner = _owner;
+    // 负资产 + 有 VIP 才保留还款时间；正资产/未解锁一律清空，避免脏数据
+    a.repayDate = (_isLiability && _isVip) ? _repayDate : null;
     // 负债类型强制为负数展示语义：存正数，由类型决定正负
     a.amount = amount.abs() * (_isLiability ? -1 : 1);
     // 返回交给完成动画播完后执行（见 onDone），这里只暂存结果
@@ -210,6 +240,97 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                       ),
                       AppIcon(AppIcons.chevR,
                           size: 18, color: AppPalette.c(0xFF647A70)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // 资产所有人（v5.0.21，选项型，默认「本人」）
+            Pressable(
+              enabled: true,
+              child: GestureDetector(
+                onTap: _pickOwnerSheet,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  decoration: _box(),
+                  height: 48,
+                  child: Row(
+                    children: [
+                      const SizedBox(
+                        width: 76,
+                        child: Text('资产所有人',
+                            style: TextStyle(
+                                fontSize: 15,
+                                color: Color(0xFF24382F))),
+                      ),
+                      Expanded(
+                        child: Text(_owner,
+                            textAlign: TextAlign.right,
+                            style: TextStyle(
+                                fontSize: 14, color: AppPalette.c(0xFF647A70))),
+                      ),
+                      const SizedBox(width: 6),
+                      AppIcon(AppIcons.chevR,
+                          size: 18, color: AppPalette.c(0xFF647A70)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // 还款时间（v5.0.21，权益功能 + 仅负资产生效）
+            Pressable(
+              enabled: true,
+              child: GestureDetector(
+                onTap: _onRepayTap,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  decoration: _box(),
+                  height: 48,
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 76,
+                        child: Row(
+                          children: [
+                            Flexible(
+                              child: Text('还款时间',
+                                  style: TextStyle(
+                                      fontSize: 15,
+                                      color: _repayEnabled
+                                          ? AppPalette.c(0xFF24382F)
+                                          : AppPalette.c(0xFFC2D4C9))),
+                            ),
+                            if (!_isVip)
+                              const IdentityBadge(
+                                  badge: UserProfile.badgeVip, scale: 0.62),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          _repayDate == null
+                              ? '选择还款日期'
+                              : '${_repayDate!.year}.${_repayDate!.month.toString().padLeft(2, '0')}.${_repayDate!.day.toString().padLeft(2, '0')}',
+                          textAlign: TextAlign.right,
+                          style: TextStyle(
+                              fontSize: 14,
+                              color: _repayEnabled
+                                  ? (_repayDate == null
+                                      ? AppPalette.c(0xFF8FA09A)
+                                      : AppPalette.c(0xFF647A70))
+                                  : AppPalette.c(0xFFC2D4C9)),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      AppIcon(AppIcons.chevR,
+                          size: 18,
+                          color: _repayEnabled
+                              ? AppPalette.c(0xFF647A70)
+                              : AppPalette.c(0xFFC2D4C9)),
                     ],
                   ),
                 ),
@@ -320,6 +441,86 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
     );
   }
 
+  /// 还款时间是否可用：需同时满足「负资产」+「VIP 权益」
+  bool get _repayEnabled => _isLiability && _isVip;
+
+  /// 还款时间点击：正资产提示换类型、未解锁提示 VIP、否则开滚轮
+  Future<void> _onRepayTap() async {
+    Haptics.light();
+    if (!_isLiability) {
+      AppToast.show(context, '选择负资产时可用');
+      return;
+    }
+    if (!_isVip) {
+      // 规范 5 统一口径：x是VIP专属权益，请充值后再尝试～
+      AppToast.show(context, '还款时间是VIP专属权益，请充值后再尝试～');
+      return;
+    }
+    final picked = await showWheelDatePicker(
+      context,
+      initial: _repayDate ?? DateTime.now(),
+      minimum: DateTime.now(),
+      maximum: DateTime.now().add(const Duration(days: 365 * 30)),
+      title: '还款时间',
+    );
+    if (picked != null && mounted) setState(() => _repayDate = picked);
+  }
+
+  /// 资产所有人：选项型抽屉（无标题 + 打勾 + 箭头左侧显示当前值）
+  Future<void> _pickOwnerSheet() async {
+    Haptics.light();
+    await AppSheet.show(
+      context,
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppPalette.c(0xFFFFFFFF),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final o in Asset.owners)
+                  InkWell(
+                    onTap: () {
+                      Haptics.light();
+                      setState(() => _owner = o);
+                      Navigator.pop(ctx);
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 13),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(o,
+                                style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: o == _owner
+                                        ? FontWeight.w600
+                                        : FontWeight.normal,
+                                    color: o == _owner
+                                        ? AppPalette.c(0xFF3E8E6D)
+                                        : AppPalette.c(0xFF24382F))),
+                          ),
+                          if (o == _owner)
+                            AppIcon(AppIcons.check,
+                                size: 16, color: AppPalette.c(0xFF3E8E6D)),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   /// v4.9.43：资产类型 → 右箭头打开的抽屉选择（沿用 _pickOptionSheet 同款样式）
   Future<void> _pickTypeSheet() async {
     Haptics.light();
@@ -345,6 +546,11 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                           Haptics.light();
                           setState(() {
                             _type = t;
+                            // v5.0.21：切到正资产时清空还款时间（负资产专属）
+                            final nowLiability = t == '信用卡' ||
+                                t == '欠款' ||
+                                t == '账单';
+                            if (!nowLiability) _repayDate = null;
                             // 未手动改过图标时跟随类型换默认图标
                             if (Asset.defaultIconFor(t) !=
                                     _iconCtrl.text.trim() &&

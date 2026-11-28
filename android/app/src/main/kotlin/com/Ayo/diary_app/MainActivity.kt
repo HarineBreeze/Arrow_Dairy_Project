@@ -26,6 +26,7 @@ class MainActivity : FlutterActivity() {
     private val channelName = "vector_diary/countdown"
     private val hapticChannelName = "vector_diary/haptic"
     private val futureLetterChannelName = "vector_diary/future_letter"
+    private val assetRepayChannelName = "vector_diary/asset_repay"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -105,6 +106,34 @@ class MainActivity : FlutterActivity() {
                     "show" -> {
                         val body = call.argument<String>("body") ?: ""
                         FutureLetterAlarm.showNow(context, body)
+                        result.success(true)
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+
+        // v5.0.21「负资产还款」通知通道：独立 id 段，避免与倒数日/信件互相 cancel
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, assetRepayChannelName)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "schedule" -> {
+                        val id = call.argument<Int>("id") ?: 0
+                        val body = call.argument<String>("body") ?: ""
+                        val at = call.argument<Long>("at") ?: 0L
+                        try {
+                            AssetRepayAlarm.schedule(context, id, body, at)
+                            result.success(true)
+                        } catch (e: Exception) {
+                            result.success(false)
+                        }
+                    }
+                    "cancelAll" -> {
+                        AssetRepayAlarm.cancelAll(context)
+                        result.success(true)
+                    }
+                    "show" -> {
+                        val body = call.argument<String>("body") ?: ""
+                        AssetRepayAlarm.showNow(context, body)
                         result.success(true)
                     }
                     else -> result.notImplemented()
@@ -402,5 +431,101 @@ class FutureLetterReceiver : BroadcastReceiver() {
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE)
             as NotificationManager
         nm.notify(FutureLetterAlarm.notifyId(id), FutureLetterAlarm.buildNotification(context, body, id))
+    }
+}
+
+/** v5.0.21 负资产还款提醒：独立通道 / id 段，避免与倒数日、信件互相 cancel。 */
+object AssetRepayAlarm {
+    const val CHANNEL_ID = "asset_repay_reminders"
+    private const val REQ_BASE = 81000
+    private const val NOTIFY_BASE = 40000
+    private const val TITLE = "还款提醒"
+
+    private fun flags(): Int =
+        if (Build.VERSION.SDK_INT >= 23)
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        else PendingIntent.FLAG_UPDATE_CURRENT
+
+    fun notifyId(id: Int) = NOTIFY_BASE + id
+
+    fun schedule(context: Context, id: Int, body: String, at: Long) {
+        val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(context, AssetRepayReceiver::class.java).apply {
+            putExtra("body", body)
+            putExtra("id", id)
+            data = android.net.Uri.parse("assetrepay://asset/$id")
+        }
+        val pi = PendingIntent.getBroadcast(context, REQ_BASE + id, intent, flags())
+        if (Build.VERSION.SDK_INT >= 31 && !am.canScheduleExactAlarms()) {
+            am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pi)
+        } else if (Build.VERSION.SDK_INT >= 23) {
+            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pi)
+        } else {
+            am.setExact(AlarmManager.RTC_WAKEUP, at, pi)
+        }
+    }
+
+    fun showNow(context: Context, body: String) {
+        ensureChannel(context)
+        val nm = context.getSystemService(Context.NOTIFICATION_SERVICE)
+            as NotificationManager
+        nm.notify(NOTIFY_BASE + 1999, buildNotification(context, body, 1999))
+    }
+
+    fun cancelAll(context: Context) {
+        val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(context, AssetRepayReceiver::class.java)
+        for (id in 0..2000) {
+            am.cancel(PendingIntent.getBroadcast(context, REQ_BASE + id, intent, flags()))
+        }
+    }
+
+    fun buildNotification(context: Context, body: String, id: Int): android.app.Notification {
+        val launch = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("asset_repay", "1")
+        }
+        val contentPi = PendingIntent.getActivity(
+            context, REQ_BASE + id, launch, flags()
+        )
+        val smallIcon = context.applicationInfo.icon
+        return NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(if (smallIcon != 0) smallIcon else android.R.drawable.ic_dialog_info)
+            .setContentTitle(TITLE)
+            .setContentText(body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .setContentIntent(contentPi)
+            .build()
+    }
+
+    fun ensureChannel(context: Context) {
+        if (Build.VERSION.SDK_INT >= 26) {
+            val nm = context.getSystemService(Context.NOTIFICATION_SERVICE)
+                as NotificationManager
+            if (nm.getNotificationChannel(CHANNEL_ID) == null) {
+                val ch = NotificationChannel(
+                    CHANNEL_ID,
+                    "还款提醒",
+                    NotificationManager.IMPORTANCE_HIGH
+                ).apply {
+                    description = "负资产还款日到期时提醒"
+                    enableVibration(true)
+                }
+                nm.createNotificationChannel(ch)
+            }
+        }
+    }
+}
+
+class AssetRepayReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        val body = intent.getStringExtra("body") ?: ""
+        val id = intent.getIntExtra("id", 0)
+        AssetRepayAlarm.ensureChannel(context)
+        val nm = context.getSystemService(Context.NOTIFICATION_SERVICE)
+            as NotificationManager
+        nm.notify(AssetRepayAlarm.notifyId(id), AssetRepayAlarm.buildNotification(context, body, id))
     }
 }

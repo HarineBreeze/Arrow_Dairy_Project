@@ -1,6 +1,6 @@
 # 阿尤日记 · 项目交接与推进指南
 
-> 截至 **v5.0.20**（versionCode 178，全量 **727** 项测试通过）。
+> 截至 **v5.0.21**（versionCode 179，全量 **748** 项测试通过）。
 > v5.0.2 / v5.0.3 由电脑端发布：隐私锁 4 步向导（`app_lock_setup_wizard.dart`）、关闭验证、深色默认关闭、通用密码向导 `pin_setup_wizard.dart`（3 步资产 / 2 步笔记）、多页 UI 优化。
 > **v5.0.4**（本会话叠加）：① 深色模式下向导「未选中项」由亮灰白改为同主题暗底纹（`0xFFF5F8F6` 登记进 darkMap → `0xFF233A2F`，随主题色变）；② 修改资产密码在验证身份后复用通用 3 步向导（设置密码→确认密码→设置密保），与「开启加密访问」样式/流程完全一致。版本号顺延至 5.0.4 是因为远程已有 v5.0.3 tag。
 > **v5.0.5**：① 笔记预览卡图片由 4:3 改为 **1:1** 方图（卡片高度与编辑页尺寸不变，文字区自然左移）；② **暖棕**主题从免费改为「灵感杂货店」**1400 点永久兑换**（商品名「主题·暖棕」），位置移到墨灰与藕粉之间；未解锁时置灰，点击提示「未解锁，赶紧前往灵感杂货店兑换吧～」。
@@ -261,6 +261,7 @@ lib/
 | **v5.0.18** | 资产页/资产趋势视觉与交互微调 7 项：① 更新记录日期栏右侧**净资产改与日期相同的灰色**（`0xFF8FA09A`，去红色/加粗/正负判断）；② 资产趋势页**底部「本页面包含手工录入数据…」提示语移除**（含 `_buildTipText` 方法）；③ 折线图**全资产(蓝)/负债(绿)由实线改虚线**（`_drawStepLine` 加 `dashed` 参数，`path.computeMetrics()` 逐段截取 dash，净资产(红)仍实线）；④ 资产页设置抽屉「资产趋势」副标题改**「查看资产变化趋势」**；⑤ **最新资产节点钉在图表最右侧**——`xOf`/`_nearestIndex`/`_tooltipLeft` 三处单点(span≤0)口径由 `left` 改 `right`；⑥ **长按记录弹删除确认框时同步震动**（`Haptics.mediumNow()` 先震后弹，绑定 `onLongPress`）；⑦ 饼图看板卡**移除左上角「资产细分」标题**、padding 改 `symmetric(horizontal:16, vertical:12)`、内容列 `MainAxisAlignment.center`（顺位上移、上下/左右边距各自相等）。同步 `overview_stack_test.dart` 三处锚点「资产细分」→「正」、`v5014` 底部提示语断言改 `findsNothing`；新增 `v5018_trend_polish_test.dart`（11 项），全量 **712** 项通过 |
 | **v5.0.19** | 三个编辑页**去标题化** + 占位文案统一：① 物品编辑页移除「物品名称/物品价格/附加价格/日期」4 个节标题，价格占位改「请输入物品价格」、附加价格占位改「输入附加价格，如卖出/折扣（选填）」；② 事件编辑页移除「事件名称/事件备注/事件日期」3 个节标题，备注占位改「奖励一顿火锅?」，日期/时间块空态占位「选择日期/选择时间」改「事件日期/发生时间」（仅编辑页占位，滚轮弹窗 title 不动）；③ 资产编辑页移除「资产类型/资产备注/资产金额」3 个节标题（含必填星号），金额列移除 ¥ 金钱符号、取消加粗（17 w600→15）、hintStyle 与其他待输入提示语统一；④ 搜索结果分区标题由 `left:2` 改 `left:14`，与预览卡片标题（内边距 14）左对齐。同步 `edit_relayout`/`asset_amount_required`/`v4939`/`event_copy_and_pickers` 旧断言，删除 countdown/asset 两页未用的 `_sectionLabel` 方法；新增 `v5019_edit_and_search_test.dart`（7 项），全量 **719** 项通过 |
 | **v5.0.20** | 提示语/底纹/筛选器/对齐 7 项微调：① 物品编辑页「输入物品名/输入物品价格/输入附加价格…」三处 hintStyle 统一为 13 灰（`0xFF8FA09A`），且名称/价格去掉「请」字；② 资产类型抽屉**移除选中项浅绿底纹**，与其它选项抽屉一致（选中只用加粗/主色文字 + 右侧勾选）；③ 资产趋势页**图例信息条与「查看时间」胶囊选中底纹**由写死的 `0xFFEDF3FD`/`0xFFE4E8EB` 改用主题色浅底纹 `0xFFE4F2EB`，常规/深色随主题自适应；④ 设置页「导入数据」副标题改**「将备份的数据导入到APP」**；⑤ 物品列表「排序方式」抽屉由 Wrap 多按钮改**独占一行勾选列表**（选中右侧 AppIcon.check），样式参考其他选项抽屉；⑥ 事件页「按事件类型筛选」抽屉同理改独占一行勾选列表；⑦ 搜索结果**分区标题/卡片标题/卡片副标题**三者左边缘统一对齐筛选栏「全部」文字左边缘——build 用 `LayoutBuilder` 算 `allLeft=(cellW-26)/2`（「全部」2 字 13px），`_buildSection` 标题与 `Divider.indent`、`_ResultRow` 的 `fromLTRB(allLeft,11,14,11)` 共用该基线。同步 `edit_relayout`/`v5019`/`v4929` 旧断言（含 v5019 搜索对齐断言改动态 allLeft）；新增 `v5020_polish_and_align_test.dart`（8 项），全量 **727** 项通过 |
+| **v5.0.21** | 资产编辑增强 + 通知链路 + 筛选抽屉按钮 + 转正特效：① **三个主页筛选抽屉**（资产「筛选」/物品「排序方式」/事件「按事件类型筛选」）的取消/确定/完成按钮由底部移到**标题栏同一行右侧**，不涉及动画；② **资产编辑页新增「资产所有人」**（选项型，默认本人，选项 本人/对象/配偶/父亲/母亲/兄弟/姐妹/朋友），`Asset.owner` 字段 + JSON 兼容；③ **资产编辑页新增「还款时间」**（VIP 权益 + 仅负资产生效）：功能行带 VIP 身份牌，正资产置灰点击提示「选择负资产时可用」、未解锁提示「还款时间是VIP专属权益，请充值后再尝试～」，负资产+VIP 点击展开**日期轮盘**；`Asset.repayDate` 字段。切到正资产自动清空。④ **还款到期通知**：新增 `AssetRepayReminder`（Dart）+ `asset_repay_banner.dart`（站内横幅）+ `AssetRepayBannerLog`（去重），当天 **9:00** 推通知栏 + App 内横幅；原生新增 `vector_diary/asset_repay` 通道、`AssetRepayAlarm`/`AssetRepayReceiver`（独立 id 段 REQ_BASE 81000 / NOTIFY_BASE 40000）并在 Manifest 注册；首页 `_initAssetRepay` 接入同步 + 到期横幅，点击切资产 tab 打开对应资产；⑤ **愿望单攒满转正**新增 `wishlist_convert_celebration.dart`（粉色对勾徽章 + 粒子迸发 + 震动），替代原纯 toast；⑥ 物品编辑页「使用次数」样式改为与愿望单「已攒金额」同款（加减靠左 + 数值右对齐可点 + 行尾箭头）。全走 `AppPalette` 主题适配。新增 `v5021_asset_and_filter_test.dart`（21 项），全量 **748** 项通过 |
 
 > v4.9.32 及更早（深色模式、AppSheet、震动总开关、用户 ID 顺序号等奠基改动）见 git log，此处不再展开。
 
@@ -329,9 +330,9 @@ lib/
 ## 9. 新会话交接检查清单
 
 - [ ] 读本文件 + `docs/redeem_codes.md`（+ 若涉及上云再读 `docs/CLOUD_ARCHITECTURE.md`）
-- [ ] `git fetch origin && git rebase origin/main`，确认未落后电脑端；`git log -1` 确认版本为 v5.0.20
+- [ ] `git fetch origin && git rebase origin/main`，确认未落后电脑端；`git log -1` 确认版本为 v5.0.21
 - [ ] `grep '^version:' pubspec.yaml` 与 `app_version.dart` 版本号一致（当前 5.0.19+177 / V5.0.19）
-- [ ] 改代码：analyze 0 error → 全量测试全绿（当前 727 项；手势类并行偶发失败用 `--concurrency=1` 复核）→ 构建 → commit/push → Release → present_files
+- [ ] 改代码：analyze 0 error → 全量测试全绿（当前 748 项；手势类并行偶发失败用 `--concurrency=1` 复核）→ 构建 → commit/push → Release → present_files
 - [ ] 版本号两处同步 + 构建号 +1；新增改动配 `vXXYY_features_test.dart` 回归测试
 - [ ] 涉及 UI：遵守 §2 色板（尤其主题色走 `AppPalette.c()`、抽屉去标题）、§3 动效组件
 - [ ] 涉及 VIP：新增强功能按 §6.2 接入 `hasVipPrivilege` 门槛与提示文案

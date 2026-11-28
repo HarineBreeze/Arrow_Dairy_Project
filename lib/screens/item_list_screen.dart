@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../utils/app_motion.dart';
 import 'package:flutter/services.dart';
-import '../utils/app_toast.dart';
 import '../models/item.dart';
 import '../services/item_storage.dart';
 import '../services/trash_storage.dart';
@@ -14,6 +13,7 @@ import 'item_edit_screen.dart';
 import '../utils/haptics.dart';
 import '../widgets/pressable.dart';
 import '../widgets/entry_icon.dart';
+import '../widgets/wishlist_convert_celebration.dart';
 
 import '../theme/app_palette.dart';
 import '../theme/app_theme_scope.dart';
@@ -173,8 +173,9 @@ class ItemListScreenState extends State<ItemListScreen> {
       it.acquiredDate = DateTime.now();
       await ItemStorage.save(list);
       if (!mounted) return;
-      AppToast.show(context, '攒钱完成，「${it.name}」已加入拥有中！');
+      // v5.0.21：转正特效 + 粒子（替代原纯 toast 提示）
       _load();
+      await showWishlistConvertCelebration(context, name: it.name);
       return;
     }
     it.savedAmount = saved;
@@ -293,11 +294,31 @@ class ItemListScreenState extends State<ItemListScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('排序方式',
-                        style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: AppPalette.c(0xFF24382F))),
+                    // v5.0.21：完成按钮移到「排序方式」标题同一行右侧
+                    Row(
+                      children: [
+                        Text('排序方式',
+                            style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: AppPalette.c(0xFF24382F))),
+                        const Spacer(),
+                        Pressable(
+                          enabled: true,
+                          child: TextButton(
+                            onPressed: () {
+                              Navigator.pop(ctx);
+                              setState(() {});
+                            },
+                            child: Text('完成',
+                                style: TextStyle(
+                                    fontSize: 15,
+                                    color: AppPalette.c(0xFF3E8E6D),
+                                    fontWeight: FontWeight.w600)),
+                          ),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 6),
                     // v5.0.20：由 Wrap 多按钮改为独占一行的选择，
                     // 样式与其他选项抽屉一致——文字左对齐，选中项右侧勾选、无底纹
@@ -326,25 +347,6 @@ class ItemListScreenState extends State<ItemListScreen> {
                           ),
                         ),
                       ),
-                    const SizedBox(height: 10),
-                    // v4.9.30：完成按钮去底纹色块，与取消统一为主/次文字按钮
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: Pressable(
-                        enabled: true,
-                        child: TextButton(
-                          onPressed: () {
-                            Navigator.pop(ctx);
-                            setState(() {});
-                          },
-                          child: Text('完成',
-                              style: TextStyle(
-                                  fontSize: 15,
-                                  color: AppPalette.c(0xFF3E8E6D),
-                                  fontWeight: FontWeight.w600)),
-                        ),
-                      ),
-                    ),
                   ],
                 ),
               ),

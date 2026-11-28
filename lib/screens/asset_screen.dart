@@ -129,6 +129,13 @@ class AssetScreenState extends State<AssetScreen> {
     }
   }
 
+  /// 供首页还款横幅点击：按 id 打开对应资产编辑页
+  Future<void> openAssetById(String id) async {
+    final a = _assets.where((e) => e.id == id).toList();
+    if (a.isEmpty) return;
+    await _openEditor(a.first);
+  }
+
   // ---------- 密码流程 ----------
 
   Route<dynamic> _slideRoute(Widget page) => AppMotion.slide<dynamic>(page);
@@ -424,18 +431,13 @@ class AssetScreenState extends State<AssetScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('筛选',
-                        style: TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 16),
-                    group('按资产类型', ['全部', '总资产', '负资产', '现金流', '理财金'],
-                        _typeFilter, (v) => _typeFilter = v),
-                    group('按资产性质', ['全部', '金额为正', '金额为负'],
-                        _signFilter, (v) => _signFilter = v),
-                    // v4.9.29：取消不再带底纹描边，双按钮统一收至右下角
+                    // v5.0.21：取消/确定按钮移到「筛选」标题同一行右侧
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [
+                        const Text('筛选',
+                            style: TextStyle(
+                                fontSize: 15, fontWeight: FontWeight.w600)),
+                        const Spacer(),
                         Pressable(
                           enabled: true,
                           child: TextButton(
@@ -450,7 +452,6 @@ class AssetScreenState extends State<AssetScreen> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        // v4.9.30：确定按钮去底纹色块，与取消统一为主/次文字按钮
                         Pressable(
                           enabled: true,
                           child: TextButton(
@@ -466,6 +467,11 @@ class AssetScreenState extends State<AssetScreen> {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 16),
+                    group('按资产类型', ['全部', '总资产', '负资产', '现金流', '理财金'],
+                        _typeFilter, (v) => _typeFilter = v),
+                    group('按资产性质', ['全部', '金额为正', '金额为负'],
+                        _signFilter, (v) => _signFilter = v),
                   ],
                 ),
               ),
