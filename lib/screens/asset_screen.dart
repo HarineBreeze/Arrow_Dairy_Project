@@ -6,8 +6,10 @@ import '../utils/app_motion.dart';
 import '../utils/app_toast.dart';
 import '../services/reward_service.dart';
 import '../models/asset.dart';
+import '../models/asset_history.dart';
 import '../models/user_profile.dart';
 import '../services/app_settings.dart';
+import '../services/asset_history_storage.dart';
 import '../services/asset_storage.dart';
 import '../services/user_storage.dart';
 import '../services/trash_storage.dart';
@@ -22,7 +24,9 @@ import '../widgets/pressable.dart';
 import '../widgets/asset_pie_card.dart';
 import '../widgets/asset_sankey_card.dart';
 import '../widgets/app_icons.dart';
+import '../widgets/identity_badge.dart';
 import '../widgets/pin_setup_wizard.dart';
+import 'asset_trend_screen.dart';
 
 import '../theme/app_palette.dart';
 import '../theme/app_theme_scope.dart';
@@ -113,6 +117,8 @@ class AssetScreenState extends State<AssetScreen> {
     if (r is Asset) {
       _assets.add(r);
       await AssetStorage.save(_assets);
+      await _recordAssetChange(AssetChange(
+        name: _assetName(r), type: r.type, amount: r.amount));
       if (mounted) setState(() {});
       // 首次新增资产奖励灵感
       RewardService.awardFirstAdd(FirstAddKind.asset).then((n) {
@@ -156,6 +162,28 @@ class AssetScreenState extends State<AssetScreen> {
           children: [
             // v5.0.3：移除「设置」标题，抽屉直接列出选项
             const SizedBox(height: 14),
+            // v5.0.14：资产趋势（VIP 权益入口）
+            ListTile(
+              leading: AppIcon(AppIcons.asset,
+                  color: AppPalette.c(0xFF3E8E6D)),
+              title: Row(
+                children: [
+                  const Text('资产趋势'),
+                  const SizedBox(width: 6),
+                  IdentityBadge(
+                      badge: UserProfile.badgeVip, scale: 0.85),
+                ],
+              ),
+              subtitle: Text('按天记录每次金额调整，查看资产走势',
+                  style: TextStyle(
+                      fontSize: 13, color: AppPalette.c(0xFF8FA09A))),
+              trailing: AppIcon(AppIcons.chevR,
+                  size: 18, color: AppPalette.c(0xFF647A70)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _openAssetTrend();
+              },
+            ),
             // 加密访问开关（在上方）
             ListTile(
               leading: AppIcon(
@@ -217,6 +245,27 @@ class AssetScreenState extends State<AssetScreen> {
         ),
       ),
     );
+  }
+
+  /// 打开「资产趋势」（VIP 权益）。点击时重新读取档案判断，避免刚进页面
+  /// 时 _isVip 尚未异步加载完成导致误判。测试可通过 loadProfileOverride 注入。
+  Future<void> _openAssetTrend() async {
+    bool vip = _isVip;
+    try {
+      final profile = await (widget.loadProfileOverride ?? UserStorage.load)();
+      vip = RewardService.hasVipPrivilege(profile);
+    } catch (_) {}
+    if (!mounted) return;
+    if (!vip) {
+      AppToast.vipRequired(context, '资产趋势');
+      return;
+    }
+    await Navigator.push(
+      context,
+      _slideRoute(const AssetTrendScreen()),
+    );
+    // 从趋势页返回后刷新历史/资产（趋势页内可能删除了某条记录）
+    if (mounted) setState(() {});
   }
 
   /// 开启加密访问：3 步向导（设置密码 → 确认密码 → 密保）。
@@ -446,6 +495,32 @@ class AssetScreenState extends State<AssetScreen> {
 
   // ---------- 操作 ----------
 
+  /// 记录一次资产金额调整（关键：在 _assets 已经更新、save 之后调用）。
+  /// 失败不影响资产主流程。历史是附加能力，优先保证资产已正确落盘。
+  Future<void> _recordAssetChange(AssetChange change) async {
+    try {
+      double ta = 0, td = 0;
+      for (final a in _assets) {
+        if (a.amount > 0) ta += a.amount;
+        if (a.amount < 0) td += a.amount;
+      }
+      await AssetHistoryStorage.append(AssetHistoryEntry(
+        id: '${DateTime.now().microsecondsSinceEpoch}-${_historySeq++}',
+        time: DateTime.now(),
+        changes: [change],
+        totalAssets: ta,
+        totalDebt: td,
+        netWorth: ta + td,
+      ));
+    } catch (_) {}
+  }
+
+  int _historySeq = 0;
+
+  /// 资产名显示规则：备注优先，其次类型。
+  static String _assetName(Asset a) =>
+      a.note.trim().isEmpty ? a.type : a.note.trim();
+
   Future<void> _openEditor([Asset? asset]) async {
     // 点击会立刻 push 新页面，原页面的 PointerUp 多半收不到，
     // 卡片会永久停在按压缩放态。跳转前主动复位。
@@ -459,12 +534,19 @@ class AssetScreenState extends State<AssetScreen> {
       // 编辑页右上角删除
       _assets.removeWhere((e) => e.id == asset!.id);
       await AssetStorage.save(_assets);
+      await _recordAssetChange(AssetChange(
+          name: _assetName(asset!),
+          type: asset.type,
+          amount: asset.amount,
+          deleted: true));
       if (mounted) setState(() {});
       return;
     }
     if (r is Asset) {
-      // 编辑/新增保存
+      // 编辑/新增保存：记录调整后的金额（r 即保存后的资产对象）
       await AssetStorage.save(_assets);
+      await _recordAssetChange(AssetChange(
+          name: _assetName(r), type: r.type, amount: r.amount));
       if (mounted) setState(() {});
       // 仅新增（非编辑）发首次奖励
       if (asset == null) {
@@ -652,6 +734,11 @@ class AssetScreenState extends State<AssetScreen> {
                   _assets.removeWhere((e) => e.id == a.id);
                   await AssetStorage.save(_assets);
                   await TrashStorage.addAsset(a);
+                  await _recordAssetChange(AssetChange(
+                      name: _assetName(a),
+                      type: a.type,
+                      amount: a.amount,
+                      deleted: true));
                   if (mounted) setState(() {});
                 }
               },

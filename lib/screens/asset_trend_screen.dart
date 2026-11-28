@@ -1,0 +1,312 @@
+import 'package:flutter/material.dart';
+
+import '../models/asset.dart';
+import '../models/asset_history.dart';
+import '../services/asset_history_storage.dart';
+import '../services/asset_storage.dart';
+import '../theme/app_palette.dart';
+import '../theme/app_theme_scope.dart';
+import '../utils/app_motion.dart';
+import '../utils/haptics.dart';
+import '../widgets/app_icons.dart';
+import '../widgets/asset_trend_chart.dart';
+import '../widgets/entry_icon.dart';
+
+/// 资产趋势（VIP 权益）：按天快照的折线图 + 更新记录明细。
+///
+/// 入口在资产页设置里，由调用方做 VIP 判定；本页只负责展示与记录删除。
+class AssetTrendScreen extends StatefulWidget {
+  /// 仅供测试：注入历史记录加载（跳过 path_provider / dart:io）。
+  final Future<List<AssetHistoryEntry>> Function()? loadHistoryOverride;
+
+  /// 仅供测试：注入当前资产列表（用于历史为空时的基线种子）。
+  final Future<List<Asset>> Function()? loadAssetsOverride;
+
+  const AssetTrendScreen({
+    Key? key,
+    this.loadHistoryOverride,
+    this.loadAssetsOverride,
+  }) : super(key: key);
+
+  @override
+  State<AssetTrendScreen> createState() => _AssetTrendScreenState();
+}
+
+class _AssetTrendScreenState extends State<AssetTrendScreen> {
+  List<AssetHistoryEntry> _entries = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final assets = await (widget.loadAssetsOverride ?? AssetStorage.load)();
+    // 历史为空且从未建过基线：用当前资产建立当日起点（折线图才有第一个点）。
+    // 测试注入了历史/资产时跳过真实 seed（避免 dart:io），保持注入数据不变。
+    if (widget.loadHistoryOverride == null && widget.loadAssetsOverride == null) {
+      await AssetHistoryStorage.seedIfEmpty(assets);
+    }
+    final entries =
+        await (widget.loadHistoryOverride ?? AssetHistoryStorage.load)();
+    if (!mounted) return;
+    setState(() {
+      _entries = entries;
+      _loading = false;
+    });
+  }
+
+  /// 按天分组（最新在前），同一天内保持存储顺序（最新在前）。
+  List<_DayGroup> _groupByDay() {
+    final groups = <_DayGroup>[];
+    for (final e in _entries) {
+      final key = '${e.time.year}-${e.time.month.toString().padLeft(2, '0')}-${e.time.day.toString().padLeft(2, '0')}';
+      if (groups.isEmpty || groups.last.key != key) {
+        groups.add(_DayGroup(key, [e]));
+      } else {
+        groups.last.entries.add(e);
+      }
+    }
+    return groups;
+  }
+
+  /// 按天聚合：同一天多次调整只取「当天最后一次」快照打点。
+  /// 用户要求「以天为纬度在折线图打点」，因此每天恰好一个点。
+  List<TrendPoint> _chartPoints() {
+    final seenDays = <String>{};
+    final points = <TrendPoint>[];
+    // _entries 最新在前：同一天遇到的第一条即当天最后一次调整。
+    for (final e in _entries) {
+      final key = '${e.time.year}-${e.time.month.toString().padLeft(2, '0')}-${e.time.day.toString().padLeft(2, '0')}';
+      if (seenDays.contains(key)) continue;
+      seenDays.add(key);
+      points.add(TrendPoint(
+        time: e.time,
+        totalAssets: e.totalAssets,
+        totalDebt: e.totalDebt,
+      ));
+    }
+    // 图表需要时间升序。
+    points.sort((a, b) => a.time.compareTo(b.time));
+    return points;
+  }
+
+  Future<void> _deleteEntry(AssetHistoryEntry e) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('删除这条调整记录？'),
+        content: const Text('删除后资产趋势与更新记录将同步更新'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('删除',
+                style: TextStyle(color: Color(0xFFCB5C50))),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    Haptics.medium();
+    await AssetHistoryStorage.removeById(e.id);
+    await _load();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    AppThemeScope.watch(context);
+    return Scaffold(
+      backgroundColor: AppPalette.c(0xFFF5FAF7),
+      appBar: AppBar(
+        toolbarHeight: 48,
+        backgroundColor: AppPalette.c(0xB33E8E6D),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        title: const Text('资产趋势'),
+        leading: IconButton(
+          icon: const AppIcon(AppIcons.back),
+          tooltip: '返回',
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: _loading
+          ? const SizedBox()
+          : SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  AssetTrendChart(points: _chartPoints()),
+                  const SizedBox(height: 20),
+                  _buildRecordsHeader(),
+                  const SizedBox(height: 8),
+                  if (_entries.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 40),
+                      child: Center(
+                        child: Text('暂无更新记录',
+                            style: TextStyle(
+                                fontSize: 13,
+                                color: AppPalette.c(0xFF8FA09A))),
+                      ),
+                    )
+                  else
+                    ..._buildDayGroups(_groupByDay()),
+                  const SizedBox(height: 18),
+                  _buildTipText(),
+                ],
+              ),
+            ),
+    );
+  }
+
+  Widget _buildRecordsHeader() {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4),
+      child: Text('更新记录',
+          style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: AppPalette.c(0xFF24382F))),
+    );
+  }
+
+  List<Widget> _buildDayGroups(List<_DayGroup> groups) {
+    final widgets = <Widget>[];
+    for (final g in groups) {
+      widgets.add(_buildDayLabel(g.key));
+      widgets.add(const SizedBox(height: 6));
+      widgets.add(Container(
+        decoration: BoxDecoration(
+          color: AppPalette.c(0xFFFFFFFF),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Column(
+          children: [
+            for (var i = 0; i < g.entries.length; i++) ...[
+              _buildEntryTile(g.entries[i]),
+              if (i < g.entries.length - 1)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  child: Divider(
+                      height: 1, color: AppPalette.c(0xFFE6EDE9)),
+                ),
+            ],
+          ],
+        ),
+      ));
+      widgets.add(const SizedBox(height: 14));
+    }
+    return widgets;
+  }
+
+  Widget _buildDayLabel(String day) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 6),
+      child: Row(
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: AppPalette.c(0xFFB7C9C0), width: 1.5),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(day,
+              style: TextStyle(
+                  fontSize: 12, color: AppPalette.c(0xFF8FA09A))),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEntryTile(AssetHistoryEntry e) {
+    // 一条记录可能含多张卡片的变更（基线种子时会有多条），逐条展开。
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onLongPress: () => _deleteEntry(e),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (var i = 0; i < e.changes.length; i++) ...[
+              _buildChangeRow(e.changes[i]),
+              if (i < e.changes.length - 1) const SizedBox(height: 8),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChangeRow(AssetChange c) {
+    final negative = c.amount < 0;
+    final label = c.deleted ? '${c.name}（已删除）' : c.name;
+    return Row(
+      children: [
+        EntryIcon(Asset.defaultIconFor(c.type), size: 20),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      fontSize: 14, color: AppPalette.c(0xFF24382F))),
+              if (c.autoImported)
+                Text('自动导入',
+                    style: TextStyle(
+                        fontSize: 11, color: AppPalette.c(0xFF8FA09A))),
+            ],
+          ),
+        ),
+        const SizedBox(width: 10),
+        Text(_money(c.amount),
+            style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: negative
+                    ? const Color(0xFFCB5C50)
+                    : AppPalette.c(0xFF24382F))),
+      ],
+    );
+  }
+
+  static String _money(double v) {
+    final neg = v < 0;
+    final digits = v.abs().round().toString();
+    final buf = StringBuffer();
+    for (var i = 0; i < digits.length; i++) {
+      if (i > 0 && (digits.length - i) % 3 == 0) buf.write(',');
+      buf.write(digits[i]);
+    }
+    return '${neg ? '-' : ''}$buf';
+  }
+
+  Widget _buildTipText() {
+    return Center(
+      child: Text('本页面包含手工录入数据，不作为对账凭证。',
+          style: TextStyle(
+              fontSize: 11, color: AppPalette.c(0xFF8FA09A).withOpacity(0.9))),
+    );
+  }
+}
+
+class _DayGroup {
+  final String key;
+  final List<AssetHistoryEntry> entries;
+  _DayGroup(this.key, this.entries);
+}
