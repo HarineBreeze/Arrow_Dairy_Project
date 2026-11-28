@@ -196,8 +196,9 @@ class _AssetTrendChartState extends State<AssetTrendChart> {
     var best = 0;
     var bestDist = double.infinity;
     for (var i = 0; i < pts.length; i++) {
+      // v5.0.18：与 painter 的 xOf 口径一致——单点(span<=0)时最新节点在最右。
       final x = span <= 0
-          ? left
+          ? right
           : left + pts[i].time.difference(first).inMilliseconds / span * plotW;
       final dist = (x - dx).abs();
       if (dist < bestDist) {
@@ -216,8 +217,9 @@ class _AssetTrendChartState extends State<AssetTrendChart> {
     final plotW = right - left;
     final first = _visible.first.time;
     final span = _visible.last.time.difference(first).inMilliseconds.toDouble();
+    // v5.0.18：与 painter 的 xOf 口径一致——单点(span<=0)时节点在最右。
     final x = span <= 0
-        ? left
+        ? right
         : left + p.time.difference(first).inMilliseconds / span * plotW;
     return (x - cardW / 2).clamp(0.0, (width - cardW).clamp(0.0, double.infinity));
   }
@@ -386,8 +388,11 @@ class _TrendPainter extends CustomPainter {
     final last = points.last.time;
     final span = last.difference(first).inMilliseconds.toDouble();
 
+    // v5.0.18：最新（时间最晚）的节点始终钉在图表最右侧 right。
+    // span>0 时 last 本就映射到 right（保持不变）；只有一天数据（span<=0）
+    // 时把唯一节点也放最右，避免"最新资产节点跑到最左边"。
     double xOf(DateTime t) => span <= 0
-        ? left
+        ? right
         : left + t.difference(first).inMilliseconds / span * plotW;
     double yOf(double value) => bottom - (value / axisTop).clamp(0.0, 1.0) * plotH;
 
@@ -410,13 +415,14 @@ class _TrendPainter extends CustomPainter {
       tp.paint(canvas, Offset(left - 8 - tp.width, y - tp.height / 2));
     }
 
-    // 2) 三条阶梯线：全资产（蓝）、净资产（红）、负债（绿）
+    // 2) 三条阶梯线：全资产（蓝，虚线）、净资产（红，实线）、负债（绿，虚线）
+    // v5.0.18：全资产与负债由实线改为虚线，净资产仍为实线以便一眼区分。
     _drawStepLine(canvas, points, left, right, xOf, yOf, _kAssetColor,
-        (p) => p.totalAssets);
+        (p) => p.totalAssets, dashed: true);
     _drawStepLine(canvas, points, left, right, xOf, yOf, _kNetWorthColor,
         (p) => p.netWorth);
     _drawStepLine(canvas, points, left, right, xOf, yOf, _kDebtColor,
-        (p) => p.totalDebt.abs());
+        (p) => p.totalDebt.abs(), dashed: true);
 
     // 3) 末端竖直虚线（落到 0 线）+ 三色端点
     final lx = xOf(last);
@@ -446,8 +452,9 @@ class _TrendPainter extends CustomPainter {
     double Function(DateTime) xOf,
     double Function(double) yOf,
     Color color,
-    double Function(TrendPoint) value,
-  ) {
+    double Function(TrendPoint) value, {
+    bool dashed = false,
+  }) {
     final path = Path();
     path.moveTo(left, yOf(value(pts.first)));
     for (var i = 0; i < pts.length; i++) {
@@ -458,6 +465,26 @@ class _TrendPainter extends CustomPainter {
       }
     }
     path.lineTo(right, yOf(value(pts.last)));
+    if (dashed) {
+      // v5.0.18：全资产/负债改虚线——沿阶梯 path 逐段截取 dash 绘制，
+      // computeMetrics 保留阶梯拐角，虚线段沿线走而非两点直连。
+      const dash = 6.0;
+      const gap = 4.0;
+      final paint = Paint()
+        ..color = color
+        ..strokeWidth = 2
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round;
+      for (final metric in path.computeMetrics()) {
+        var at = 0.0;
+        while (at < metric.length) {
+          final end = (at + dash).clamp(0.0, metric.length);
+          canvas.drawPath(metric.extractPath(at, end), paint);
+          at += dash + gap;
+        }
+      }
+      return;
+    }
     canvas.drawPath(
         path,
         Paint()

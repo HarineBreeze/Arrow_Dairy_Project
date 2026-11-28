@@ -779,7 +779,10 @@ class _AssetPieCardState extends State<AssetPieCard>
   Widget build(BuildContext context) {
     final total = widget.slices.fold<double>(0, (s, e) => s + e.amount);
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      // v5.0.18：移除左上角「资产细分」标题，padding 改上下左右各自相等
+      // （水平 16 / 垂直 12），内容列垂直居中——卡片被 OverviewStack 拉伸
+      // 到统一高度后，图表与文字整体上移且上下留白相等。
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: AppPalette.c(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(16),
@@ -792,18 +795,9 @@ class _AssetPieCardState extends State<AssetPieCard>
         ],
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text('资产细分',
-                  style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppPalette.c(0xFF24382F))),
-            ],
-          ),
-          const SizedBox(height: 10),
           if (widget.slices.isEmpty)
             Padding(
               padding: EdgeInsets.symmetric(vertical: 26),

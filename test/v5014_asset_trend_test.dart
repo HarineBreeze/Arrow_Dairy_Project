@@ -61,7 +61,7 @@ void main() {
     expect(TrendRange.thisYear.cutoff(now), DateTime(2026, 1, 1));
   });
 
-  testWidgets('趋势页渲染：折线图 + 更新记录 + 底部说明', (tester) async {
+  testWidgets('趋势页渲染：折线图 + 更新记录（v5.0.18 已移除底部提示语）', (tester) async {
     final now = DateTime.now();
     AssetHistoryStorage.loadOverride = [
       _entry(id: 'a', time: now, assets: 38609, debt: -1075),
@@ -80,7 +80,8 @@ void main() {
     expect(find.text('更新记录'), findsOneWidget);
     expect(find.textContaining('全资产'), findsWidgets);
     expect(find.textContaining('负债'), findsWidgets);
-    expect(find.text('本页面包含手工录入数据，不作为对账凭证。'), findsOneWidget);
+    // v5.0.18：底部「本页面包含手工录入数据…」提示语已移除
+    expect(find.text('本页面包含手工录入数据，不作为对账凭证。'), findsNothing);
     // 时间范围四个标签
     for (final label in ['近3月', '近6月', '今年', '近1年']) {
       expect(find.text(label), findsOneWidget);

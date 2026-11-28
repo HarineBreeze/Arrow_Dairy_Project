@@ -188,7 +188,7 @@ class AssetScreenState extends State<AssetScreen> {
                       badge: UserProfile.badgeVip, scale: 0.85),
                 ],
               ),
-              subtitle: Text('按天记录每次金额调整，查看资产走势',
+              subtitle: Text('查看资产变化趋势',
                   style: TextStyle(
                       fontSize: 13,
                       color: _isVip

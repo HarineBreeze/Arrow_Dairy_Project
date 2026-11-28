@@ -301,7 +301,7 @@ void main() {
         // 不能是「空的卡升上来、换完层才画出内容」——那就是闪白
         expect(_visible(tester, 'pie'), isTrue,
             reason: '第 ${i + 1} 帧：拖动中背面卡应立即可见');
-        expect(find.text('资产细分'), findsOneWidget,
+        expect(find.text('正资产'), findsOneWidget,
             reason: '第 ${i + 1} 帧：背面卡内容必须已经铺好');
         checked++;
       }
@@ -311,7 +311,7 @@ void main() {
       await g.up();
       for (var i = 0; i < 25; i++) {
         await tester.pump(const Duration(milliseconds: 16));
-        expect(find.text('资产细分'), findsOneWidget,
+        expect(find.text('正资产'), findsOneWidget,
             reason: '翻页动画第 ${i + 1} 帧内容不应消失');
       }
       await tester.pumpAndSettle();
@@ -402,7 +402,7 @@ void main() {
           find.byKey(const ValueKey('card1')), const Offset(-260, 0));
       await tester.pumpAndSettle();
 
-      expect(find.text('资产细分'), findsOneWidget);
+      expect(find.text('正资产'), findsOneWidget);
       expect(find.text('50%'), findsOneWidget);
       expect(find.text('30%'), findsOneWidget);
       expect(find.text('20%'), findsOneWidget);

@@ -174,8 +174,6 @@ class _AssetTrendScreenState extends State<AssetTrendScreen> {
                     )
                   else
                     ..._buildDayGroups(_groupByDay()),
-                  const SizedBox(height: 18),
-                  _buildTipText(),
                 ],
               ),
             ),
@@ -224,7 +222,6 @@ class _AssetTrendScreenState extends State<AssetTrendScreen> {
   }
 
   Widget _buildDayLabel(String day, double netWorth) {
-    final negative = netWorth < 0;
     return Padding(
       padding: const EdgeInsets.only(left: 6, right: 6),
       child: Row(
@@ -242,13 +239,10 @@ class _AssetTrendScreenState extends State<AssetTrendScreen> {
               style: TextStyle(
                   fontSize: 12, color: AppPalette.c(0xFF8FA09A))),
           const Spacer(),
+          // v5.0.18：净资产显示改为与日期相同的灰色（原为红/深绿加粗）。
           Text('净资产 ${_money(netWorth)}',
               style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: negative
-                      ? const Color(0xFFCB5C50)
-                      : AppPalette.c(0xFF24382F))),
+                  fontSize: 12, color: AppPalette.c(0xFF8FA09A))),
         ],
       ),
     );
@@ -277,7 +271,12 @@ class _AssetTrendScreenState extends State<AssetTrendScreen> {
     final label = c.deleted ? '${c.name}（已删除）' : c.name;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onLongPress: onDelete,
+      // v5.0.18：长按弹出删除确认弹窗时同步震动（与全站「长按弹菜单」口径一致），
+      // 先震后弹，避免部分 ROM 在 UI 切换后吞掉这次振动。
+      onLongPress: () {
+        Haptics.mediumNow();
+        onDelete();
+      },
       child: Row(
         children: [
           EntryIcon(Asset.defaultIconFor(c.type), size: 20),
@@ -332,14 +331,6 @@ class _AssetTrendScreenState extends State<AssetTrendScreen> {
       buf.write(digits[i]);
     }
     return '${neg ? '-' : ''}$buf';
-  }
-
-  Widget _buildTipText() {
-    return Center(
-      child: Text('本页面包含手工录入数据，不作为对账凭证。',
-          style: TextStyle(
-              fontSize: 11, color: AppPalette.c(0xFF8FA09A).withOpacity(0.9))),
-    );
   }
 }
 
