@@ -824,7 +824,7 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         maxLength: 20,
         style: const TextStyle(fontSize: 15),
         decoration: InputDecoration(
-          hintText: '请输入物品名',
+          hintText: '输入物品名',
           hintStyle: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
           border: InputBorder.none,
           counterText: '',
@@ -887,11 +887,12 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
         onSubmitted: (_) => _extraFocus.requestFocus(),
         keyboardType: TextInputType.number,
         style: const TextStyle(fontSize: 15),
-        // v5.0.19：待输入提示语改为「请输入物品价格」
-        decoration: const InputDecoration(
-          hintText: '请输入物品价格',
+        // v5.0.20：去掉「请」字，hintStyle 与「输入物品名」一致（13/灰）
+        decoration: InputDecoration(
+          hintText: '输入物品价格',
+          hintStyle: TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(vertical: 14),
         ),
       ),
     );
@@ -915,11 +916,13 @@ class _ItemEditScreenState extends State<ItemEditScreen> {
               keyboardType: const TextInputType.numberWithOptions(
                   decimal: true, signed: true),
               style: const TextStyle(fontSize: 15),
-              // v5.0.19：待输入提示语改为「输入附加价格，如卖出/折扣（选填）」
-              decoration: const InputDecoration(
+              // v5.0.20：hintStyle 与「输入物品名」一致（13/灰）
+              decoration: InputDecoration(
                 hintText: '输入附加价格，如卖出/折扣（选填）',
+                hintStyle:
+                    TextStyle(fontSize: 13, color: AppPalette.c(0xFF8FA09A)),
                 border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(vertical: 14),
+                contentPadding: const EdgeInsets.symmetric(vertical: 14),
               ),
               onChanged: (_) => setState(() {}),
             ),

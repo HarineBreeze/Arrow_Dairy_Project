@@ -288,32 +288,30 @@ class CountdownScreenState extends State<CountdownScreen> {
       context,
       builder: (ctx) {
         return StatefulBuilder(builder: (ctx, setSheet) {
+          // v5.0.20：由 Wrap 多按钮改为独占一行的选择，
+          // 样式与其他选项抽屉一致——文字左对齐，选中项右侧勾选、无底纹
           Widget option(String label, String? value) {
             final on = _typeFilter == value;
-            return Padding(
-              padding: const EdgeInsets.only(right: 8, bottom: 8),
-              child: GestureDetector(
-                onTap: () {
-                  Haptics.light();
-                  setSheet(() {
-                    // 再次点击已选项 → 恢复全部
-                    _typeFilter = on ? null : value;
-                  });
-                },
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    color:
-                        on ? AppPalette.c(0xFF3E8E6D) : AppPalette.c(0xFFF5FAF7),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(label,
-                      style: TextStyle(
-                          fontSize: 13,
-                          color: on ? Colors.white : AppPalette.c(0xFF24382F),
-                          fontWeight:
-                              on ? FontWeight.w600 : FontWeight.normal)),
+            return InkWell(
+              onTap: () {
+                Haptics.light();
+                setSheet(() {
+                  // 再次点击已选项 → 恢复全部
+                  _typeFilter = on ? null : value;
+                });
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 12),
+                child: Row(
+                  children: [
+                    Text(label,
+                        style: TextStyle(
+                            fontSize: 14, color: AppPalette.c(0xFF647A70))),
+                    const Spacer(),
+                    if (on)
+                      AppIcon(AppIcons.check,
+                          size: 20, color: AppPalette.c(0xFF3E8E6D)),
+                  ],
                 ),
               ),
             );
@@ -331,8 +329,8 @@ class CountdownScreenState extends State<CountdownScreen> {
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: AppPalette.c(0xFF24382F))),
-                  const SizedBox(height: 14),
-                  Wrap(children: [
+                  const SizedBox(height: 6),
+                  Column(children: [
                     option('全部', null),
                     ...CountdownEvent.types.map((t) => option(t, t)),
                   ]),

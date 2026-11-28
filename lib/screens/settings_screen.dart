@@ -383,7 +383,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         icon: AppIcons.download,
                         iconColor: AppPalette.c(0xFF3E8E6D),
                         title: '导入数据',
-                        subtitle: '支持增添合并或完全覆盖两种导入方式',
+                        subtitle: '将备份的数据导入到APP',
                         busy: _importing,
                         onTap: _import,
                       ),

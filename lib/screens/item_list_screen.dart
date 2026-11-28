@@ -298,37 +298,34 @@ class ItemListScreenState extends State<ItemListScreen> {
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
                             color: AppPalette.c(0xFF24382F))),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: _ItemSortField.values.map((f) {
-                        final sel = f == _sortField;
-                        return GestureDetector(
-                          onTap: () => setSheetState(() => _sortField = f),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 8),
-                            // v4.9.39：未选选项加浅绿底纹，与事件页筛选抽屉同款
-                            decoration: BoxDecoration(
-                              color: sel
-                                  ? AppPalette.c(0xFF3E8E6D)
-                                  : AppPalette.c(0xFFF5FAF7),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Text(
-                              _sortFieldLabel(f),
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: sel
-                                    ? Colors.white
-                                    : AppPalette.c(0xFF647A70),
+                    const SizedBox(height: 6),
+                    // v5.0.20：由 Wrap 多按钮改为独占一行的选择，
+                    // 样式与其他选项抽屉一致——文字左对齐，选中项右侧勾选、无底纹
+                    for (final f in _ItemSortField.values)
+                      InkWell(
+                        onTap: () {
+                          Haptics.light();
+                          setSheetState(() => _sortField = f);
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 2, vertical: 12),
+                          child: Row(
+                            children: [
+                              Text(
+                                _sortFieldLabel(f),
+                                style: TextStyle(
+                                    fontSize: 14,
+                                    color: AppPalette.c(0xFF647A70)),
                               ),
-                            ),
+                              const Spacer(),
+                              if (f == _sortField)
+                                AppIcon(AppIcons.check,
+                                    size: 20, color: AppPalette.c(0xFF3E8E6D)),
+                            ],
                           ),
-                        );
-                      }).toList(),
-                    ),
+                        ),
+                      ),
                     const SizedBox(height: 10),
                     // v4.9.30：完成按钮去底纹色块，与取消统一为主/次文字按钮
                     Align(

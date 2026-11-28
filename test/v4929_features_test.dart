@@ -6,6 +6,7 @@ import 'package:ayodiray/models/diary_entry.dart';
 import 'package:ayodiray/screens/asset_screen.dart';
 import 'package:ayodiray/screens/item_list_screen.dart';
 import 'package:ayodiray/screens/note_view_screen.dart';
+import 'package:ayodiray/widgets/app_icons.dart';
 import 'package:ayodiray/widgets/entry_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -105,13 +106,13 @@ void main() {
       expect(find.text('排序方式'), findsOneWidget);
       expect(find.text('完成'), findsOneWidget);
 
-      // 选项 chip 不再带 Border 描边
-      final chip = tester.widget<Container>(
-        find.ancestor(
-            of: find.text('购买时间'), matching: find.byType(Container)).first,
-      );
-      final decor = chip.decoration as BoxDecoration;
-      expect(decor.border, isNull, reason: '排序选项不应再有描边');
+      // v5.0.20：选项改为独占一行的勾选样式，选中项右侧带 AppIcon 勾选、
+      // 无描边/底纹 chip。默认「购买时间」为选中项。
+      final optRow = find.ancestor(
+          of: find.text('购买时间'), matching: find.byType(Row)).first;
+      expect(find.descendant(of: optRow, matching: find.byType(AppIcon)),
+          findsWidgets,
+          reason: '选中排序项应带勾选图标');
 
       // 完成按钮收至右下角，不再占满整行
       final doneRect = tester.getRect(find.text('完成'));

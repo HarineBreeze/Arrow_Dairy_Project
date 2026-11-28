@@ -35,9 +35,11 @@ void main() {
       for (final label in ['物品名称', '物品价格', '附加价格', '日期']) {
         expect(find.text(label), findsNothing, reason: '$label 节标题应移除');
       }
-      expect(find.text('请输入物品名'), findsOneWidget);
-      expect(find.text('请输入物品价格'), findsOneWidget);
+      expect(find.text('输入物品名'), findsOneWidget);
+      expect(find.text('输入物品价格'), findsOneWidget);
       expect(find.text('输入附加价格，如卖出/折扣（选填）'), findsOneWidget);
+      expect(find.text('请输入物品名'), findsNothing);
+      expect(find.text('请输入物品价格'), findsNothing);
       expect(find.text('¥ 0.00'), findsNothing);
       expect(find.text('¥ 可为负数（选填）'), findsNothing);
     });
@@ -113,16 +115,21 @@ void main() {
     });
   });
 
-  group('v5.0.19 ④ 搜索结果分区标题对齐', () {
-    test('源码：分区标题 left:14 与预览卡片标题左对齐', () {
-      expect(searchSrc, contains('EdgeInsets.only(left: 14, bottom: 7)'),
-          reason: '分区标题应改为 left:14 与卡片标题对齐');
+  group('v5.0.19 ④ 搜索结果分区标题对齐（v5.0.20 改为对齐「全部」）', () {
+    test('源码：分区标题/卡片标题/副标题统一用动态 allLeft 对齐筛选栏「全部」', () {
+      // v5.0.20：三者左边缘不再写死 14，而是统一用 LayoutBuilder 算出的
+      // allLeft（= 筛选栏「全部」文字左边缘），保证与筛选栏左对齐。
+      expect(searchSrc, contains('final allLeft = (cellW - 26) / 2'),
+          reason: '应按「全部」2 字 13px 计算文字左边缘');
+      expect(searchSrc, contains('EdgeInsets.only(left: allLeft, bottom: 7)'),
+          reason: '分区标题应改用动态 allLeft');
+      expect(searchSrc, contains('EdgeInsets.fromLTRB(allLeft, 11, 14, 11)'),
+          reason: '卡片标题/副标题应改用动态 allLeft');
       expect(searchSrc, isNot(contains('EdgeInsets.only(left: 2, bottom: 7)')),
           reason: '旧的 left:2 应移除');
-      // 预览卡片标题内边距仍为 14
       expect(searchSrc,
-          contains('EdgeInsets.symmetric(horizontal: 14, vertical: 11)'),
-          reason: '预览卡片标题内边距应为 14，作为对齐基准');
+          isNot(contains('EdgeInsets.symmetric(horizontal: 14, vertical: 11)')),
+          reason: '旧的写死 14 基线应移除');
     });
   });
 }

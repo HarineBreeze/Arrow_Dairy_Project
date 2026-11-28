@@ -146,19 +146,29 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
 
     // 主页选项卡形态：不自带 Scaffold / 状态栏处理。状态栏贯通与
     // 左右滑跟手菜单均由 HomeScreen 统一提供，这里只输出页内内容。
-    return Column(
-      children: [
-        _buildSearchBar(),
-        // v5.0.12：分类栏固定在搜索栏下方，不随是否有搜索结果而显隐。
-        _buildFilterBar(),
-        Expanded(
-          child: _loading
-              ? const SizedBox()
-              : query.isEmpty
-                  ? _buildEmptyHint()
-                  : _buildResults(diaries, items, events, assets),
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // v5.0.20：筛选栏「全部」在 1/5 等宽 cell 内居中，
+        // 文字左边缘 = cellW/2 - 文字宽/2（「全部」2 字、13px ≈ 26px）。
+        // 结果区分区标题/卡片标题/副标题统一对齐到这条基线。
+        final cellW = constraints.maxWidth / 5;
+        final allLeft = (cellW - 26) / 2;
+        return Column(
+          children: [
+            _buildSearchBar(),
+            // v5.0.12：分类栏固定在搜索栏下方，不随是否有搜索结果而显隐。
+            _buildFilterBar(),
+            Expanded(
+              child: _loading
+                  ? const SizedBox()
+                  : query.isEmpty
+                      ? _buildEmptyHint()
+                      : _buildResults(
+                          diaries, items, events, assets, allLeft),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -254,6 +264,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
     List<Item> items,
     List<CountdownEvent> events,
     List<Asset> assets,
+    double allLeft,
   ) {
     final total = diaries.length + items.length + events.length + assets.length;
     final queryText = _ctrl.text.trim();
@@ -280,8 +291,10 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           if (diaries.isNotEmpty)
             _buildSection(
               '笔记',
+              allLeft,
               diaries
                   .map((e) => _ResultRow(
+                        allLeft: allLeft,
                         query: queryText,
                         title: e.encrypted
                             ? (e.subtitle.isNotEmpty ? e.subtitle : '加密笔记')
@@ -297,8 +310,10 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           if (items.isNotEmpty)
             _buildSection(
               '物品',
+              allLeft,
               items
                   .map((e) => _ResultRow(
+                        allLeft: allLeft,
                         query: queryText,
                         title: e.name,
                         subtitle:
@@ -314,8 +329,10 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           if (events.isNotEmpty)
             _buildSection(
               '事件',
+              allLeft,
               events
                   .map((e) => _ResultRow(
+                        allLeft: allLeft,
                         query: queryText,
                         title: e.name,
                         subtitle:
@@ -331,8 +348,10 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           if (assets.isNotEmpty)
             _buildSection(
               '资产',
+              allLeft,
               assets
                   .map((e) => _ResultRow(
+                        allLeft: allLeft,
                         query: queryText,
                         title: e.note.isNotEmpty ? e.note : e.type,
                         subtitle: '${e.type} · ${_assetAmountLabel(e)}',
@@ -441,16 +460,16 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
     );
   }
 
-  Widget _buildSection(String title, List<_ResultRow> rows) {
+  Widget _buildSection(String title, double allLeft, List<_ResultRow> rows) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // v5.0.19：标题原为 left:2，比预览卡片标题（内边距 14）偏左；
-          // 改为 left:14，与卡片标题左边缘对齐。
+          // v5.0.20：分区标题左边缘与筛选栏「全部」文字左对齐（动态 allLeft），
+          // 同时卡片标题/副标题在 _ResultRow 内也用同一 allLeft，三者齐平。
           Padding(
-            padding: const EdgeInsets.only(left: 14, bottom: 7),
+            padding: EdgeInsets.only(left: allLeft, bottom: 7),
             child: Text(title,
                 style: TextStyle(
                     fontSize: 13,
@@ -466,7 +485,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
             child: Column(
               children: [
                 for (var i = 0; i < rows.length; i++) ...[
-                  if (i > 0) const Divider(height: 1, indent: 14),
+                  if (i > 0) Divider(height: 1, indent: allLeft),
                   rows[i],
                 ],
               ],
@@ -541,6 +560,7 @@ class _ResultRow extends StatelessWidget {
   final VoidCallback onTap;
   final Widget? trailing; // 行尾附加控件（如资产卡小眼睛）
   final String query; // 命中关键词高亮
+  final double allLeft; // v5.0.20：标题/副标题左边缘，与筛选栏「全部」对齐
 
   const _ResultRow({
     Key? key,
@@ -549,6 +569,7 @@ class _ResultRow extends StatelessWidget {
     required this.onTap,
     this.trailing,
     this.query = '',
+    this.allLeft = 14,
   }) : super(key: key);
 
   @override
@@ -560,7 +581,8 @@ class _ResultRow extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+          // v5.0.20：左内边距用 allLeft，与分区标题/筛选栏「全部」齐平
+          padding: EdgeInsets.fromLTRB(allLeft, 11, 14, 11),
           child: Row(
             children: [
               Expanded(

@@ -85,8 +85,8 @@ void main() {
     expect(find.text('附加价格'), findsNothing);
     expect(find.text('日期'), findsNothing);
     // 占位文案承担字段说明
-    expect(find.text('请输入物品名'), findsOneWidget);
-    expect(find.text('请输入物品价格'), findsOneWidget);
+    expect(find.text('输入物品名'), findsOneWidget);
+    expect(find.text('输入物品价格'), findsOneWidget);
 
     // v4.9.43：移除「物品图标」节标题
     expect(find.text('物品图标'), findsNothing);

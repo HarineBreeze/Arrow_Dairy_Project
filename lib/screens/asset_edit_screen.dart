@@ -360,12 +360,8 @@ class _AssetEditScreenState extends State<AssetEditScreen> {
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 13),
-                          decoration: BoxDecoration(
-                            color: t == _type
-                                ? AppPalette.c(0xFFE4F2EB)
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                          // v5.0.20：移除选中项底纹，与其它选项型抽屉一致——
+                          // 选中态只用加粗/主色文字 + 右侧勾选图标表达，不再铺底色
                           child: Row(
                             children: [
                               Expanded(

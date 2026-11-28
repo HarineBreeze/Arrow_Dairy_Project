@@ -157,8 +157,10 @@ class _AssetTrendChartState extends State<AssetTrendChart> {
   Widget _buildInfoBar() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+      // v5.0.20：底纹改用主题色浅底纹 0xFFE4F2EB（深色下 darkMap 翻为
+      // 0xFF233A2F），常规/深色都随主题色一起换，与全 App 选项底一致
       decoration: BoxDecoration(
-        color: AppPalette.c(0xFFEDF3FD),
+        color: AppPalette.c(0xFFE4F2EB),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -330,8 +332,9 @@ class PressableRangeChip extends StatelessWidget {
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 9),
+        // v5.0.20：选中底纹改用主题色浅底纹 0xFFE4F2EB，随主题色/深色自适应
         decoration: BoxDecoration(
-          color: selected ? AppPalette.c(0xFFE4E8EB) : Colors.transparent,
+          color: selected ? AppPalette.c(0xFFE4F2EB) : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
         ),
         alignment: Alignment.center,
